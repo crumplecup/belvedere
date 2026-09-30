@@ -121,7 +121,35 @@ fn ui_ir_projection_preserves_trace_widgets_for_auditor_deep_dives() -> Result<(
     Ok(())
 }
 
+#[test]
+fn ui_ir_projection_labels_assessment_recency() -> Result<()> {
+    belvedere::init_tracing();
+
+    let (projection, _receipt) = ElicitUiProjection
+        .project(fixture_input_with_assessments(
+            STALE_ASSESSMENTS.as_bytes().to_vec(),
+        )?)
+        .into_diagnostic()
+        .wrap_err("fixture view model should project recency into elicit_ui")?;
+
+    assert!(projection.trace_widgets().iter().any(|widget| {
+        widget
+            .label()
+            .starts_with("Assessment assess-current (current, supersedes 1 older assessment)")
+    }));
+    assert!(projection.trace_widgets().iter().any(|widget| {
+        widget
+            .label()
+            .starts_with("Assessment assess-old (superseded)")
+    }));
+    Ok(())
+}
+
 fn fixture_input() -> Result<UiIrInput> {
+    fixture_input_with_assessments(include_bytes!("fixtures/proof_assessments.jsonl").to_vec())
+}
+
+fn fixture_input_with_assessments(assessment_bytes: Vec<u8>) -> Result<UiIrInput> {
     let registry_artifact = RawAmenableArtifact::new(
         "tests/fixtures/registry_dump.json",
         ArtifactKind::RegistryDump,
@@ -130,7 +158,7 @@ fn fixture_input() -> Result<UiIrInput> {
     let assessment_artifact = RawAmenableArtifact::new(
         "tests/fixtures/proof_assessments.jsonl",
         ArtifactKind::ProofAssessments,
-        include_bytes!("fixtures/proof_assessments.jsonl").to_vec(),
+        assessment_bytes,
     );
 
     let (registry, _registry_receipt) = RegistryDumpIngestion
@@ -153,3 +181,14 @@ fn fixture_input() -> Result<UiIrInput> {
 
     Ok(UiIrInput::new(model))
 }
+
+const STALE_ASSESSMENTS: &str = concat!(
+    r#"{"version":"0.1.0","assessment_id":"assess-old","proof_id":"belvedere::ingestion::record_identity_is_preserved","reviewer":"belvedere-maintainers","timestamp":1790550000,"#,
+    r#""rubric":{"claim_alignment":4,"assumption_adequacy":4,"model_fidelity":4,"assertion_strength":2,"adversarial_coverage":3,"clarity":4},"#,
+    r#""recommendation":"strengthen","resolution_path":"strengthen_current_proof","comment":"Older review remains visible but is no longer current."}"#,
+    "\n",
+    r#"{"version":"0.1.0","assessment_id":"assess-current","proof_id":"belvedere::ingestion::record_identity_is_preserved","reviewer":"belvedere-maintainers","timestamp":1790550060,"#,
+    r#""rubric":{"claim_alignment":4,"assumption_adequacy":4,"model_fidelity":4,"assertion_strength":4,"adversarial_coverage":4,"clarity":4},"#,
+    r#""recommendation":"accept","resolution_path":"keep_current_proof","comment":"Latest review supersedes the earlier strengthening request."}"#,
+    "\n",
+);

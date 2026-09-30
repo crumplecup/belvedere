@@ -203,6 +203,10 @@ pub struct AssessmentQueueItem {
     assessment_id: String,
     proof_id: String,
     #[getter(skip)]
+    current: bool,
+    #[getter(skip)]
+    superseded_count: usize,
+    #[getter(skip)]
     recommendation: Recommendation,
     #[getter(skip)]
     resolution_path: Option<ResolutionPath>,
@@ -212,6 +216,18 @@ pub struct AssessmentQueueItem {
 }
 
 impl AssessmentQueueItem {
+    /// Whether this is the latest known assessment for the proof.
+    #[must_use]
+    pub const fn current(&self) -> bool {
+        self.current
+    }
+
+    /// Number of older assessment events superseded by this queue item.
+    #[must_use]
+    pub const fn superseded_count(&self) -> usize {
+        self.superseded_count
+    }
+
     /// Recommendation.
     #[must_use]
     pub const fn recommendation(&self) -> Recommendation {

@@ -204,6 +204,10 @@ pub struct LandscapeAssessment {
     resolution_path: Option<ResolutionPath>,
     comment: String,
     #[getter(skip)]
+    current: bool,
+    #[getter(skip)]
+    superseded_by: Option<String>,
+    #[getter(skip)]
     source_line: usize,
 }
 
@@ -225,6 +229,8 @@ impl LandscapeAssessment {
             recommendation: record.recommendation(),
             resolution_path: record.resolution_path(),
             comment: record.comment().to_owned(),
+            current: true,
+            superseded_by: None,
             source_line: record.source_line(),
         }
     }
@@ -253,9 +259,34 @@ impl LandscapeAssessment {
         self.resolution_path
     }
 
+    /// Whether this is the latest known assessment for its proof ID.
+    #[must_use]
+    pub const fn current(&self) -> bool {
+        self.current
+    }
+
+    /// Assessment ID that supersedes this event, if a newer one exists.
+    #[must_use]
+    #[instrument(level = "trace", skip(self))]
+    pub fn superseded_by(&self) -> Option<&str> {
+        self.superseded_by.as_deref()
+    }
+
     /// Source line from the JSON Lines artifact.
     #[must_use]
     pub const fn source_line(&self) -> usize {
         self.source_line
+    }
+
+    #[instrument(level = "debug", skip(self))]
+    pub(crate) fn mark_current(&mut self) {
+        self.current = true;
+        self.superseded_by = None;
+    }
+
+    #[instrument(level = "debug", skip(self, assessment_id))]
+    pub(crate) fn mark_superseded_by(&mut self, assessment_id: impl Into<String>) {
+        self.current = false;
+        self.superseded_by = Some(assessment_id.into());
     }
 }

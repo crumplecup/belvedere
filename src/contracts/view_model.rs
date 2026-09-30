@@ -161,7 +161,7 @@ impl BelvedereContract for AuditorNavigationContract {
             "filter facets expose deterministic auditor narrowing axes with trace IDs",
             "claim explorer entries retain bases, verifier coverage, contracts, assessments, gaps, and trace IDs",
             "proof-chain entries retain direct bases, resolved roots, verifier coverage, gaps, and trace IDs",
-            "assessment queue entries preserve recommendation and resolution vocabulary",
+            "assessment queue entries preserve recommendation, resolution, and recency vocabulary",
             "witness surface entries preserve support counts",
             "provenance root entries preserve explicit root identities",
             "gap entries preserve conservative gap kinds and trace IDs",

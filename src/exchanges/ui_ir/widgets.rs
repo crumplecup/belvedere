@@ -85,11 +85,12 @@ pub(super) fn assessment_widget(
     item: &AssessmentQueueItem,
     trace_widgets: &mut Vec<TraceWidgetRef>,
 ) -> Result<WidgetId, UiIrError> {
+    let recency = assessment_recency_label(item);
     labeled_widget(
         backend,
         "button",
         format!(
-            "Assessment {} recommends {:?} for {}",
+            "Assessment {} ({recency}) recommends {:?} for {}",
             item.assessment_id(),
             item.recommendation(),
             item.proof_id()
@@ -97,6 +98,22 @@ pub(super) fn assessment_widget(
         item.trace().clone(),
         trace_widgets,
     )
+}
+
+#[instrument(level = "trace", skip(item))]
+fn assessment_recency_label(item: &AssessmentQueueItem) -> String {
+    if item.current() && item.superseded_count() == 0 {
+        "current".to_owned()
+    } else if item.current() && item.superseded_count() == 1 {
+        "current, supersedes 1 older assessment".to_owned()
+    } else if item.current() {
+        format!(
+            "current, supersedes {} older assessments",
+            item.superseded_count()
+        )
+    } else {
+        "superseded".to_owned()
+    }
 }
 
 #[instrument(level = "debug", skip(backend, item, trace_widgets))]

@@ -122,6 +122,7 @@ impl BelvedereContract for LandscapeModelingContract {
             "witness exports attach support summaries to claims",
             "Kani proof registrations remain addressable as proof claims",
             "assessment events attach by proof ID without losing reviewer vocabulary",
+            "latest and superseded assessment events are distinguished per proof ID",
             "missing proofs, missing assessments, replacement, retirement, and trusted or opaque support remain visible as gaps",
         ]
     }

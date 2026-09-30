@@ -76,6 +76,7 @@ impl BelvedereContract for ElicitUiProjectionContract {
             "top-level auditor sections carry stable section IDs in projection receipts",
             "auditor filter facets are represented as traceable UI controls",
             "claim, assessment, witness, provenance, and gap widgets retain source trace references",
+            "assessment widgets preserve review recency status in auditor-visible labels",
             "source record navigation widgets retain ingested source record IDs",
             "IrSourced is asserted at the projection boundary and WcagVerified is proven from the emitted tree",
             "the projection records which elicit_ui props were lifted into Amenable standards",

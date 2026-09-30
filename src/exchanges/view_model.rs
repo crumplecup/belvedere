@@ -108,6 +108,7 @@ impl BelvedereExchange<AuditorNavigationContract> for AuditorNavigationProjectio
             })
             .collect::<Result<Vec<_>, _>>()?;
 
+        let superseded_counts = superseded_counts_by_current_assessment(landscape.assessments());
         let assessment_queue = landscape
             .assessments()
             .iter()
@@ -115,6 +116,13 @@ impl BelvedereExchange<AuditorNavigationContract> for AuditorNavigationProjectio
                 AssessmentQueueItemBuilder::default()
                     .assessment_id(assessment.id())
                     .proof_id(assessment.proof_id())
+                    .current(assessment.current())
+                    .superseded_count(
+                        superseded_counts
+                            .get(assessment.id())
+                            .copied()
+                            .unwrap_or_default(),
+                    )
                     .recommendation(assessment.recommendation())
                     .resolution_path(assessment.resolution_path())
                     .weak_dimensions(weak_dimensions(assessment.rubric()))
@@ -186,6 +194,19 @@ impl BelvedereExchange<AuditorNavigationContract> for AuditorNavigationProjectio
 
         Ok((model, receipt))
     }
+}
+
+#[instrument(level = "debug", skip(assessments))]
+fn superseded_counts_by_current_assessment(
+    assessments: &[crate::contracts::LandscapeAssessment],
+) -> BTreeMap<String, usize> {
+    let mut counts = BTreeMap::new();
+    for assessment in assessments {
+        if let Some(current_id) = assessment.superseded_by() {
+            increment_count(&mut counts, current_id);
+        }
+    }
+    counts
 }
 
 #[instrument(level = "debug", skip(source_record_ids))]

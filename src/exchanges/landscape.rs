@@ -97,6 +97,7 @@ impl BelvedereExchange<LandscapeModelingContract> for LandscapeModeling {
             assessments.push(assessment);
         }
 
+        mark_assessment_recency(&mut assessments);
         let gaps = model_gaps(&claims, &assessments);
         let graph = LandscapeGraphBuilder::default()
             .claims(claims)
@@ -123,6 +124,36 @@ impl BelvedereExchange<LandscapeModelingContract> for LandscapeModeling {
             .map_err(|error| BelvedereConstructionError::new("LandscapeReceipt", error))?;
 
         Ok((graph, receipt))
+    }
+}
+
+#[instrument(level = "debug", skip(assessments))]
+fn mark_assessment_recency(assessments: &mut [LandscapeAssessment]) {
+    let mut latest_by_proof: BTreeMap<String, (u64, String)> = BTreeMap::new();
+    for assessment in assessments.iter() {
+        latest_by_proof
+            .entry(assessment.proof_id().to_owned())
+            .and_modify(|latest| {
+                let timestamp = assessment.timestamp();
+                let id = assessment.id();
+                if timestamp > latest.0
+                    || (timestamp == latest.0 && id.as_str() > latest.1.as_str())
+                {
+                    *latest = (timestamp, id.to_owned());
+                }
+            })
+            .or_insert_with(|| (assessment.timestamp(), assessment.id().to_owned()));
+    }
+
+    for assessment in assessments {
+        let latest_id = latest_by_proof
+            .get(assessment.proof_id())
+            .map(|(_timestamp, id)| id.as_str());
+        match latest_id {
+            Some(id) if id == assessment.id() => assessment.mark_current(),
+            Some(id) => assessment.mark_superseded_by(id),
+            None => assessment.mark_current(),
+        }
     }
 }
 
