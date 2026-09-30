@@ -10,20 +10,20 @@ fmt-check:
     cargo fmt --all -- --check
 
 check:
-    cargo check --locked --workspace --all-targets
+    cargo check --workspace --all-targets
 
 check-all:
-    cargo check --locked --workspace --all-targets --all-features
+    cargo check --workspace --all-targets --all-features
 
 check-features:
-    cargo check --locked --workspace --all-targets --no-default-features
-    cargo check --locked --workspace --all-targets --all-features
+    cargo check --workspace --all-targets --no-default-features
+    cargo check --workspace --all-targets --all-features
 
 test:
-    cargo test --locked --workspace --all-targets --all-features
+    cargo test --workspace --all-targets --all-features
 
 clippy:
-    cargo clippy --locked --workspace --all-targets --all-features -- -D warnings
+    cargo clippy --workspace --all-targets --all-features -- -D warnings
 
 cordial-quality:
     cordial quality

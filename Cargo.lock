@@ -141,6 +141,7 @@ dependencies = [
  "derive-new",
  "derive_builder",
  "derive_more",
+ "derive_setters",
  "inventory",
  "strum",
  "tracing",
