@@ -13,11 +13,12 @@ mod items;
 mod trace;
 
 pub use items::{
-    AssessmentQueueItem, ClaimExplorerCounts, ClaimExplorerItem, GapItem, ProofChainItem,
-    ProvenanceRootItem, WitnessSurfaceItem,
+    AssessmentQueueItem, AuditorFilterFacet, ClaimExplorerCounts, ClaimExplorerItem, GapItem,
+    ProofChainItem, ProvenanceRootItem, WitnessSurfaceItem,
 };
 pub(crate) use items::{
-    AssessmentQueueItemBuilder, GapItemBuilder, ProofChainItemBuilder, WitnessSurfaceItemBuilder,
+    AssessmentQueueItemBuilder, AuditorFilterFacetBuilder, GapItemBuilder, ProofChainItemBuilder,
+    WitnessSurfaceItemBuilder,
 };
 pub use trace::TraceRef;
 
@@ -47,6 +48,7 @@ impl ViewModelInput {
 pub struct AuditorNavigationModel {
     #[getter(skip)]
     overview: OverviewView,
+    filter_facets: Vec<AuditorFilterFacet>,
     claim_explorer: Vec<ClaimExplorerItem>,
     proof_chains: Vec<ProofChainItem>,
     assessment_queue: Vec<AssessmentQueueItem>,
@@ -155,6 +157,7 @@ impl BelvedereContract for AuditorNavigationContract {
     fn ensures() -> &'static [&'static str] {
         &[
             "overview totals are derived from landscape counts",
+            "filter facets expose deterministic auditor narrowing axes with trace IDs",
             "claim explorer entries retain bases, verifier coverage, contracts, assessments, gaps, and trace IDs",
             "proof-chain entries retain direct bases, resolved roots, verifier coverage, gaps, and trace IDs",
             "assessment queue entries preserve recommendation and resolution vocabulary",

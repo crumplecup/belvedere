@@ -12,9 +12,9 @@ mod standards;
 
 pub use projection::{
     TraceWidgetRef, UI_IR_SECTION_ASSESSMENT_QUEUE, UI_IR_SECTION_CLAIM_EXPLORER,
-    UI_IR_SECTION_GAP_QUEUE, UI_IR_SECTION_OVERVIEW, UI_IR_SECTION_PROOF_CHAINS,
-    UI_IR_SECTION_PROVENANCE_ROOTS, UI_IR_SECTION_WITNESS_SURFACE, UiIrProjection, UiIrProofBundle,
-    UiIrSection, UiStandardMint,
+    UI_IR_SECTION_FILTERS, UI_IR_SECTION_GAP_QUEUE, UI_IR_SECTION_OVERVIEW,
+    UI_IR_SECTION_PROOF_CHAINS, UI_IR_SECTION_PROVENANCE_ROOTS, UI_IR_SECTION_WITNESS_SURFACE,
+    UiIrProjection, UiIrProofBundle, UiIrSection, UiStandardMint,
 };
 pub(crate) use projection::{TraceWidgetRefBuilder, UiIrProjectionBuilder};
 pub use standards::{
@@ -74,6 +74,7 @@ impl BelvedereContract for ElicitUiProjectionContract {
             "the emitted tree is an elicit_ui VerifiedTree",
             "top-level auditor sections are represented as named UI regions",
             "top-level auditor sections carry stable section IDs in projection receipts",
+            "auditor filter facets are represented as traceable UI controls",
             "claim, assessment, witness, provenance, and gap widgets retain source trace references",
             "IrSourced is asserted at the projection boundary and WcagVerified is proven from the emitted tree",
             "the projection records which elicit_ui props were lifted into Amenable standards",

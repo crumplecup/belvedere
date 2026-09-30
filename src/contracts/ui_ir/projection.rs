@@ -14,6 +14,9 @@ pub const UI_IR_SECTION_OVERVIEW: &str = "belvedere.ui.section.overview";
 /// Stable section ID for the claim explorer surface.
 pub const UI_IR_SECTION_CLAIM_EXPLORER: &str = "belvedere.ui.section.claim_explorer";
 
+/// Stable section ID for auditor filter controls.
+pub const UI_IR_SECTION_FILTERS: &str = "belvedere.ui.section.filters";
+
 /// Stable section ID for the proof-chain navigation surface.
 pub const UI_IR_SECTION_PROOF_CHAINS: &str = "belvedere.ui.section.proof_chains";
 

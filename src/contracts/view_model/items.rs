@@ -11,6 +11,34 @@ use crate::contracts::{
     view_model::TraceRef,
 };
 
+/// Auditor filter facet for narrowing the displayed defensive landscape.
+#[derive(Debug, Clone, PartialEq, Eq, Getters, Builder)]
+#[builder(vis = "pub(crate)", setter(into))]
+pub struct AuditorFilterFacet {
+    facet_id: String,
+    group: String,
+    value: String,
+    label: String,
+    #[getter(skip)]
+    count: usize,
+    #[getter(skip)]
+    trace: TraceRef,
+}
+
+impl AuditorFilterFacet {
+    /// Number of visible items selected by this facet.
+    #[must_use]
+    pub const fn count(&self) -> usize {
+        self.count
+    }
+
+    /// Trace reference.
+    #[must_use]
+    pub const fn trace(&self) -> &TraceRef {
+        &self.trace
+    }
+}
+
 /// Claim explorer row/card evidence.
 #[derive(Debug, Clone, PartialEq, Eq, Getters)]
 pub struct ClaimExplorerItem {

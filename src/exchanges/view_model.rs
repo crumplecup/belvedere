@@ -1,6 +1,6 @@
 //! Auditor navigation view-model exchange implementations.
 
-use std::collections::BTreeSet;
+use std::collections::{BTreeMap, BTreeSet};
 
 use tracing::instrument;
 
@@ -49,6 +49,12 @@ impl BelvedereExchange<AuditorNavigationContract> for AuditorNavigationProjectio
         let landscape = input.landscape();
         let source_record_ids = landscape.source_record_ids().to_vec();
         let gaps = project_gaps(landscape.gaps(), &source_record_ids)?;
+        let filter_facets = project_filter_facets(
+            landscape.claims().values(),
+            landscape.assessments(),
+            &gaps,
+            &source_record_ids,
+        )?;
         let high_priority_gap_count = gaps.iter().filter(|gap| gap.high_priority()).count();
         let overview = OverviewView::new(
             landscape.claims().len(),
@@ -145,6 +151,7 @@ impl BelvedereExchange<AuditorNavigationContract> for AuditorNavigationProjectio
 
         let counts = ViewModelReceiptCounts::new(
             landscape.claims().len(),
+            filter_facets.len(),
             proof_chains.len(),
             landscape.assessments().len(),
             witness_surface.len(),
@@ -154,6 +161,7 @@ impl BelvedereExchange<AuditorNavigationContract> for AuditorNavigationProjectio
 
         let model = AuditorNavigationModelBuilder::default()
             .overview(overview)
+            .filter_facets(filter_facets)
             .claim_explorer(claim_explorer)
             .proof_chains(proof_chains)
             .assessment_queue(assessment_queue)
@@ -173,6 +181,89 @@ impl BelvedereExchange<AuditorNavigationContract> for AuditorNavigationProjectio
 
         Ok((model, receipt))
     }
+}
+
+#[instrument(level = "debug", skip(claims, assessments, gaps))]
+fn project_filter_facets<'a>(
+    claims: impl Iterator<Item = &'a LandscapeClaim>,
+    assessments: &[crate::contracts::LandscapeAssessment],
+    gaps: &[GapItem],
+    source_record_ids: &[String],
+) -> Result<Vec<crate::contracts::AuditorFilterFacet>, BelvedereConstructionError> {
+    let mut verifier_counts = BTreeMap::new();
+    for claim in claims {
+        for verifier in claim.proofs() {
+            increment_count(&mut verifier_counts, verifier);
+        }
+    }
+
+    let mut recommendation_counts = BTreeMap::new();
+    for assessment in assessments {
+        increment_count(
+            &mut recommendation_counts,
+            &format!("{:?}", assessment.recommendation()),
+        );
+    }
+
+    let mut gap_kind_counts = BTreeMap::new();
+    for gap in gaps {
+        increment_count(&mut gap_kind_counts, &format!("{:?}", gap.kind()));
+    }
+
+    let mut facets = Vec::new();
+    push_facets(
+        "verifier",
+        "Verifier",
+        verifier_counts,
+        source_record_ids,
+        &mut facets,
+    )?;
+    push_facets(
+        "recommendation",
+        "Recommendation",
+        recommendation_counts,
+        source_record_ids,
+        &mut facets,
+    )?;
+    push_facets(
+        "gap_kind",
+        "Gap kind",
+        gap_kind_counts,
+        source_record_ids,
+        &mut facets,
+    )?;
+
+    Ok(facets)
+}
+
+#[instrument(level = "trace", skip(counts))]
+fn increment_count(counts: &mut BTreeMap<String, usize>, value: &str) {
+    *counts.entry(value.to_owned()).or_default() += 1;
+}
+
+#[instrument(level = "debug", skip(counts, facets))]
+fn push_facets(
+    group: &'static str,
+    label_prefix: &'static str,
+    counts: BTreeMap<String, usize>,
+    source_record_ids: &[String],
+    facets: &mut Vec<crate::contracts::AuditorFilterFacet>,
+) -> Result<(), BelvedereConstructionError> {
+    for (value, count) in counts {
+        let facet_id = format!("belvedere.filter.{group}:{value}");
+        facets.push(
+            crate::contracts::AuditorFilterFacetBuilder::default()
+                .facet_id(facet_id.clone())
+                .group(group)
+                .value(value.clone())
+                .label(format!("{label_prefix} {value}"))
+                .count(count)
+                .trace(trace(&facet_id, source_record_ids))
+                .build()
+                .map_err(|error| BelvedereConstructionError::new("AuditorFilterFacet", error))?,
+        );
+    }
+    Ok(())
 }
 
 #[instrument(level = "debug", skip(claims))]

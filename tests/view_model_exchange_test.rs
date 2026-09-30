@@ -20,6 +20,7 @@ fn view_model_projection_builds_auditor_navigation_evidence() -> Result<()> {
     assert_eq!(model.overview().high_priority_gap_count(), 1);
 
     assert_eq!(receipt.counts().claim_cards(), 4);
+    assert_eq!(receipt.counts().filter_facets(), 6);
     assert_eq!(receipt.counts().proof_chain_items(), 4);
     assert_eq!(receipt.counts().assessment_items(), 2);
     assert_eq!(receipt.counts().witness_items(), 1);
@@ -50,6 +51,47 @@ fn view_model_projection_builds_auditor_navigation_evidence() -> Result<()> {
             .contains(&"belvedere::ingestion::RawAmenableArtifact".to_owned())
     );
     assert_eq!(decoded_chain.gap_count(), decoded_item.gap_count());
+    Ok(())
+}
+
+#[test]
+fn view_model_projection_builds_auditor_filter_facets() -> Result<()> {
+    belvedere::init_tracing();
+
+    let (model, receipt) = AuditorNavigationProjection
+        .project(fixture_input()?)
+        .into_diagnostic()
+        .wrap_err("view-model projection should expose auditor filter facets")?;
+
+    assert_eq!(
+        receipt.counts().filter_facets(),
+        model.filter_facets().len()
+    );
+
+    let verifier = model
+        .filter_facets()
+        .iter()
+        .find(|facet| facet.facet_id() == "belvedere.filter.verifier:kani")
+        .ok_or_else(|| miette!("kani verifier facet should be available"))?;
+    assert_eq!(verifier.group(), "verifier");
+    assert_eq!(verifier.value(), "kani");
+    assert_eq!(verifier.count(), 2);
+    assert_eq!(verifier.trace().claim_id(), verifier.facet_id());
+
+    let strengthen = model
+        .filter_facets()
+        .iter()
+        .find(|facet| facet.facet_id() == "belvedere.filter.recommendation:Strengthen")
+        .ok_or_else(|| miette!("strengthen recommendation facet should be available"))?;
+    assert_eq!(strengthen.label(), "Recommendation Strengthen");
+    assert_eq!(strengthen.count(), 1);
+
+    let missing_proof = model
+        .filter_facets()
+        .iter()
+        .find(|facet| facet.facet_id() == "belvedere.filter.gap_kind:MissingProof")
+        .ok_or_else(|| miette!("missing-proof gap facet should be available"))?;
+    assert_eq!(missing_proof.count(), 2);
     Ok(())
 }
 
