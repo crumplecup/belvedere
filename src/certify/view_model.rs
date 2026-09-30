@@ -26,6 +26,7 @@ impl ViewModelReceipt {
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub struct ViewModelReceiptCounts {
     claim_cards: usize,
+    proof_chain_items: usize,
     assessment_items: usize,
     witness_items: usize,
     root_items: usize,
@@ -37,6 +38,7 @@ impl ViewModelReceiptCounts {
     #[must_use]
     pub const fn new(
         claim_cards: usize,
+        proof_chain_items: usize,
         assessment_items: usize,
         witness_items: usize,
         root_items: usize,
@@ -44,6 +46,7 @@ impl ViewModelReceiptCounts {
     ) -> Self {
         Self {
             claim_cards,
+            proof_chain_items,
             assessment_items,
             witness_items,
             root_items,
@@ -55,6 +58,12 @@ impl ViewModelReceiptCounts {
     #[must_use]
     pub const fn claim_cards(self) -> usize {
         self.claim_cards
+    }
+
+    /// Number of proof-chain navigation items.
+    #[must_use]
+    pub const fn proof_chain_items(self) -> usize {
+        self.proof_chain_items
     }
 
     /// Number of assessment queue items.

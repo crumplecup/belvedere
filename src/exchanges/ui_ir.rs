@@ -16,9 +16,9 @@ use crate::{
     contracts::{
         AssessmentQueueItem, BelvedereContract, ClaimExplorerItem, ElicitUiIrSourcedStandard,
         ElicitUiProjectionContract, ElicitUiRenderCompleteStandard, ElicitUiRolePreservedStandard,
-        ElicitUiWcagVerifiedStandard, GapItem, ProvenanceRootItem, TraceRef, TraceWidgetRef,
-        TraceWidgetRefBuilder, UiIrInput, UiIrProjection, UiIrProjectionBuilder, UiIrProofBundle,
-        UiIrSection, UiStandardMint, WitnessSurfaceItem,
+        ElicitUiWcagVerifiedStandard, GapItem, ProofChainItem, ProvenanceRootItem, TraceRef,
+        TraceWidgetRef, TraceWidgetRefBuilder, UiIrInput, UiIrProjection, UiIrProjectionBuilder,
+        UiIrProofBundle, UiIrSection, UiStandardMint, WitnessSurfaceItem,
     },
     error::BelvedereConstructionError,
     exchanges::BelvedereExchange,
@@ -73,6 +73,13 @@ impl BelvedereExchange<ElicitUiProjectionContract> for ElicitUiProjection {
             .map(|item| claim_widget(&backend, item, &mut trace_widgets))
             .collect::<Result<Vec<_>, _>>()?;
         sections.push(section(&backend, "claim explorer", claim_widgets)?);
+
+        let proof_chain_widgets = model
+            .proof_chains()
+            .iter()
+            .map(|item| proof_chain_widget(&backend, item, &mut trace_widgets))
+            .collect::<Result<Vec<_>, _>>()?;
+        sections.push(section(&backend, "proof chains", proof_chain_widgets)?);
 
         let assessment_widgets = model
             .assessment_queue()
@@ -153,6 +160,28 @@ fn claim_widget(
         format!(
             "Claim {} with {} verifier proofs and {} gaps",
             item.claim_id(),
+            item.verifiers().len(),
+            item.gap_count()
+        ),
+        item.trace().clone(),
+        trace_widgets,
+    )
+}
+
+#[instrument(level = "debug", skip(backend, item, trace_widgets))]
+fn proof_chain_widget(
+    backend: &AccessKitUiBackend,
+    item: &ProofChainItem,
+    trace_widgets: &mut Vec<TraceWidgetRef>,
+) -> Result<WidgetId, UiIrError> {
+    labeled_widget(
+        backend,
+        "button",
+        format!(
+            "Proof chain {} reaches {} roots through {} direct bases with {} verifier proofs and {} gaps",
+            item.claim_id(),
+            item.root_ids().len(),
+            item.basis_ids().len(),
             item.verifiers().len(),
             item.gap_count()
         ),

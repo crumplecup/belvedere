@@ -13,10 +13,12 @@ mod items;
 mod trace;
 
 pub use items::{
-    AssessmentQueueItem, ClaimExplorerCounts, ClaimExplorerItem, GapItem, ProvenanceRootItem,
-    WitnessSurfaceItem,
+    AssessmentQueueItem, ClaimExplorerCounts, ClaimExplorerItem, GapItem, ProofChainItem,
+    ProvenanceRootItem, WitnessSurfaceItem,
 };
-pub(crate) use items::{AssessmentQueueItemBuilder, GapItemBuilder, WitnessSurfaceItemBuilder};
+pub(crate) use items::{
+    AssessmentQueueItemBuilder, GapItemBuilder, ProofChainItemBuilder, WitnessSurfaceItemBuilder,
+};
 pub use trace::TraceRef;
 
 /// Landscape evidence accepted by the view-model exchange.
@@ -46,6 +48,7 @@ pub struct AuditorNavigationModel {
     #[getter(skip)]
     overview: OverviewView,
     claim_explorer: Vec<ClaimExplorerItem>,
+    proof_chains: Vec<ProofChainItem>,
     assessment_queue: Vec<AssessmentQueueItem>,
     witness_surface: Vec<WitnessSurfaceItem>,
     provenance_roots: Vec<ProvenanceRootItem>,
@@ -153,6 +156,7 @@ impl BelvedereContract for AuditorNavigationContract {
         &[
             "overview totals are derived from landscape counts",
             "claim explorer entries retain bases, verifier coverage, contracts, assessments, gaps, and trace IDs",
+            "proof-chain entries retain direct bases, resolved roots, verifier coverage, gaps, and trace IDs",
             "assessment queue entries preserve recommendation and resolution vocabulary",
             "witness surface entries preserve support counts",
             "provenance root entries preserve explicit root identities",

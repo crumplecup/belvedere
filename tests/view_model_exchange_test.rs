@@ -20,6 +20,7 @@ fn view_model_projection_builds_auditor_navigation_evidence() -> Result<()> {
     assert_eq!(model.overview().high_priority_gap_count(), 1);
 
     assert_eq!(receipt.counts().claim_cards(), 4);
+    assert_eq!(receipt.counts().proof_chain_items(), 4);
     assert_eq!(receipt.counts().assessment_items(), 2);
     assert_eq!(receipt.counts().witness_items(), 1);
     assert_eq!(receipt.counts().root_items(), 3);
@@ -37,6 +38,18 @@ fn view_model_projection_builds_auditor_navigation_evidence() -> Result<()> {
             &"proof_record:belvedere::ingestion::DecodedRegistrySnapshot@kani".to_owned()
         )
     );
+
+    let decoded_chain = model
+        .proof_chains()
+        .iter()
+        .find(|item| item.claim_id() == "belvedere::ingestion::DecodedRegistrySnapshot")
+        .ok_or_else(|| miette!("decoded registry claim should have a proof-chain item"))?;
+    assert!(
+        decoded_chain
+            .root_ids()
+            .contains(&"belvedere::ingestion::RawAmenableArtifact".to_owned())
+    );
+    assert_eq!(decoded_chain.gap_count(), decoded_item.gap_count());
     Ok(())
 }
 

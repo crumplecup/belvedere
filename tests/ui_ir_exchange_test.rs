@@ -14,7 +14,7 @@ fn ui_ir_projection_mints_elicit_ui_standards_and_tree_proofs() -> Result<()> {
         .into_diagnostic()
         .wrap_err("fixture view model should project into elicit_ui")?;
 
-    assert_eq!(projection.sections().len(), 6);
+    assert_eq!(projection.sections().len(), 7);
     assert!(
         projection
             .minted_standards()
@@ -63,6 +63,12 @@ fn ui_ir_projection_preserves_trace_widgets_for_auditor_deep_dives() -> Result<(
         .find(|widget| widget.label().starts_with("Gap "))
         .ok_or_else(|| miette!("gap queue should have traceable widgets"))?;
     assert!(!gap_widget.source_record_ids().is_empty());
+    let chain_widget = projection
+        .trace_widgets()
+        .iter()
+        .find(|widget| widget.label().starts_with("Proof chain "))
+        .ok_or_else(|| miette!("proof-chain view should have traceable widgets"))?;
+    assert!(!chain_widget.source_record_ids().is_empty());
     let preserved_trace_refs = projection
         .trace_widgets()
         .iter()

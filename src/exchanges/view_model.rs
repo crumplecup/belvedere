@@ -1,5 +1,7 @@
 //! Auditor navigation view-model exchange implementations.
 
+use std::collections::BTreeSet;
+
 use tracing::instrument;
 
 use crate::{
@@ -7,8 +9,9 @@ use crate::{
     contracts::{
         AssessmentQueueItemBuilder, AuditorNavigationContract, AuditorNavigationModel,
         AuditorNavigationModelBuilder, BelvedereContract, ClaimExplorerCounts, ClaimExplorerItem,
-        GapItem, GapItemBuilder, LandscapeGap, LandscapeGapKind, OverviewView, ProvenanceRootItem,
-        Rubric, TraceRef, ViewModelInput, WitnessSurfaceItemBuilder,
+        GapItem, GapItemBuilder, LandscapeClaim, LandscapeGap, LandscapeGapKind, OverviewView,
+        ProofChainItem, ProofChainItemBuilder, ProvenanceRootItem, Rubric, TraceRef,
+        ViewModelInput, WitnessSurfaceItemBuilder,
     },
     error::{BelvedereConstructionError, BelvedereError},
     exchanges::BelvedereExchange,
@@ -79,6 +82,26 @@ impl BelvedereExchange<AuditorNavigationContract> for AuditorNavigationProjectio
             })
             .collect();
 
+        let proof_chains: Vec<ProofChainItem> = landscape
+            .claims()
+            .values()
+            .map(|claim| {
+                let claim_gap_count = gaps
+                    .iter()
+                    .filter(|gap| gap.claim_id() == claim.id())
+                    .count();
+                ProofChainItemBuilder::default()
+                    .claim_id(claim.id())
+                    .basis_ids(claim.bases().iter().cloned().collect::<Vec<_>>())
+                    .root_ids(chain_roots(claim.id(), landscape.claims()))
+                    .verifiers(claim.proofs().iter().cloned().collect::<Vec<_>>())
+                    .gap_count(claim_gap_count)
+                    .trace(trace(claim.id(), &source_record_ids))
+                    .build()
+                    .map_err(|error| BelvedereConstructionError::new("ProofChainItem", error))
+            })
+            .collect::<Result<Vec<_>, _>>()?;
+
         let assessment_queue = landscape
             .assessments()
             .iter()
@@ -122,6 +145,7 @@ impl BelvedereExchange<AuditorNavigationContract> for AuditorNavigationProjectio
 
         let counts = ViewModelReceiptCounts::new(
             landscape.claims().len(),
+            proof_chains.len(),
             landscape.assessments().len(),
             witness_surface.len(),
             landscape.root_claim_ids().len(),
@@ -131,6 +155,7 @@ impl BelvedereExchange<AuditorNavigationContract> for AuditorNavigationProjectio
         let model = AuditorNavigationModelBuilder::default()
             .overview(overview)
             .claim_explorer(claim_explorer)
+            .proof_chains(proof_chains)
             .assessment_queue(assessment_queue)
             .witness_surface(witness_surface)
             .provenance_roots(provenance_roots)
@@ -148,6 +173,44 @@ impl BelvedereExchange<AuditorNavigationContract> for AuditorNavigationProjectio
 
         Ok((model, receipt))
     }
+}
+
+#[instrument(level = "debug", skip(claims))]
+fn chain_roots(
+    claim_id: &str,
+    claims: &std::collections::BTreeMap<String, LandscapeClaim>,
+) -> Vec<String> {
+    let mut roots = BTreeSet::new();
+    let mut visiting = BTreeSet::new();
+    collect_chain_roots(claim_id, claims, &mut visiting, &mut roots);
+    roots.into_iter().collect()
+}
+
+#[instrument(level = "trace", skip(claims, visiting, roots))]
+fn collect_chain_roots(
+    claim_id: &str,
+    claims: &std::collections::BTreeMap<String, LandscapeClaim>,
+    visiting: &mut BTreeSet<String>,
+    roots: &mut BTreeSet<String>,
+) {
+    if !visiting.insert(claim_id.to_owned()) {
+        roots.insert(claim_id.to_owned());
+        return;
+    }
+    let Some(claim) = claims.get(claim_id) else {
+        roots.insert(claim_id.to_owned());
+        visiting.remove(claim_id);
+        return;
+    };
+    if claim.is_root() {
+        roots.insert(claim.id().to_owned());
+        visiting.remove(claim_id);
+        return;
+    }
+    for basis in claim.bases() {
+        collect_chain_roots(basis, claims, visiting, roots);
+    }
+    visiting.remove(claim_id);
 }
 
 #[instrument(level = "debug", skip(gaps))]

@@ -122,6 +122,34 @@ impl ClaimExplorerCounts {
     }
 }
 
+/// Proof-chain navigation item for one claim.
+#[derive(Debug, Clone, PartialEq, Eq, Getters, Builder)]
+#[builder(vis = "pub(crate)", setter(into))]
+pub struct ProofChainItem {
+    claim_id: String,
+    basis_ids: Vec<String>,
+    root_ids: Vec<String>,
+    verifiers: Vec<String>,
+    #[getter(skip)]
+    gap_count: usize,
+    #[getter(skip)]
+    trace: TraceRef,
+}
+
+impl ProofChainItem {
+    /// Number of gaps currently attached to the chain subject.
+    #[must_use]
+    pub const fn gap_count(&self) -> usize {
+        self.gap_count
+    }
+
+    /// Trace reference.
+    #[must_use]
+    pub const fn trace(&self) -> &TraceRef {
+        &self.trace
+    }
+}
+
 /// Assessment queue item.
 #[derive(Debug, Clone, PartialEq, Eq, Getters, Builder)]
 #[builder(vis = "pub(crate)", setter(into))]

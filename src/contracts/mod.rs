@@ -30,10 +30,10 @@ pub use ui_ir::{
 pub(crate) use ui_ir::{TraceWidgetRefBuilder, UiIrProjectionBuilder};
 pub use view_model::{
     AssessmentQueueItem, AuditorNavigationContract, AuditorNavigationModel, ClaimExplorerCounts,
-    ClaimExplorerItem, GapItem, OverviewView, ProvenanceRootItem, TraceRef, ViewModelInput,
-    WitnessSurfaceItem,
+    ClaimExplorerItem, GapItem, OverviewView, ProofChainItem, ProvenanceRootItem, TraceRef,
+    ViewModelInput, WitnessSurfaceItem,
 };
 pub(crate) use view_model::{
     AssessmentQueueItemBuilder, AuditorNavigationModelBuilder, GapItemBuilder,
-    WitnessSurfaceItemBuilder,
+    ProofChainItemBuilder, WitnessSurfaceItemBuilder,
 };
