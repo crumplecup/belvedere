@@ -89,6 +89,33 @@ fn run_certificate_is_reproducible_portable_evidence() -> Result<()> {
 }
 
 #[test]
+fn cli_help_is_a_successful_public_output_contract() -> Result<()> {
+    belvedere::init_tracing();
+
+    let args = ["--help"]
+        .into_iter()
+        .map(str::to_owned)
+        .collect::<Vec<_>>();
+    let command = BelvedereCli::from_args(args.clone())
+        .into_diagnostic()
+        .wrap_err("help should be part of the public CLI API")?;
+
+    assert_eq!(command.output(), BelvedereCliOutput::Help);
+
+    let mut output = Vec::new();
+    let status = run_cli_with_writer(args, &mut output);
+    assert_eq!(status, ExitCode::SUCCESS);
+
+    let help = String::from_utf8(output)
+        .into_diagnostic()
+        .wrap_err("help output should be UTF-8")?;
+    assert!(help.contains("usage: belvedere"));
+    assert!(help.contains("--certificate-json"));
+    assert!(help.contains("--certificate-file"));
+    Ok(())
+}
+
+#[test]
 fn cli_can_emit_the_run_certificate_as_json() -> Result<()> {
     belvedere::init_tracing();
 

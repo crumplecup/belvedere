@@ -8,7 +8,6 @@ use std::{
     process::ExitCode,
 };
 
-use derive_getters::Getters;
 use thiserror::Error;
 use tracing::{error, info, instrument};
 
@@ -18,12 +17,29 @@ use crate::{
 };
 
 /// Parsed Belvedere command-line invocation.
-#[derive(Debug, Clone, PartialEq, Eq, Getters)]
+#[derive(Debug, Clone, PartialEq, Eq)]
 pub struct BelvedereCli {
-    input: BelvedereRunInput,
-    #[getter(skip)]
-    output: BelvedereCliOutput,
+    command: BelvedereCliCommand,
 }
+
+#[derive(Debug, Clone, PartialEq, Eq)]
+enum BelvedereCliCommand {
+    Help,
+    Run {
+        input: BelvedereRunInput,
+        output: BelvedereCliOutput,
+    },
+}
+
+/// Stable CLI help text.
+pub const BELVEDERE_CLI_HELP: &str = "\
+usage: belvedere [--help] [--certificate-json | --certificate-file <path>] <registry-dump.json> <proof-assessments.jsonl>
+
+Options:
+  -h, --help                 Show this help text.
+      --certificate-json     Write the complete run certificate as JSON to stdout.
+      --certificate-file     Write the complete run certificate as JSON to a file.
+";
 
 impl BelvedereCli {
     /// Parse a Belvedere pipeline run from positional artifact paths.
@@ -34,6 +50,15 @@ impl BelvedereCli {
     #[instrument(level = "debug", skip(args))]
     pub fn from_args(args: impl IntoIterator<Item = String>) -> Result<Self, BelvedereError> {
         let arguments = args.into_iter().collect::<Vec<_>>();
+        if arguments
+            .iter()
+            .any(|argument| matches!(argument.as_str(), "-h" | "--help"))
+        {
+            return Ok(Self {
+                command: BelvedereCliCommand::Help,
+            });
+        }
+
         let mut output = BelvedereCliOutput::LogSummary;
         let mut paths = Vec::new();
         let mut index = 0;
@@ -65,12 +90,14 @@ impl BelvedereCli {
             return Err(BelvedereCliUsageError::new().into());
         }
         Ok(Self {
-            input: BelvedereRunInput::with_invocation(
-                registry_path,
-                assessments_path,
-                BelvedereRunInvocation::cli(arguments),
-            ),
-            output,
+            command: BelvedereCliCommand::Run {
+                input: BelvedereRunInput::with_invocation(
+                    registry_path,
+                    assessments_path,
+                    BelvedereRunInvocation::cli(arguments),
+                ),
+                output,
+            },
         })
     }
 
@@ -79,23 +106,31 @@ impl BelvedereCli {
     /// # Errors
     ///
     /// Returns an error when artifact collection or any pipeline exchange
-    /// rejects its input evidence.
+    /// rejects its input evidence. Help invocations return no run report.
     #[instrument(level = "debug", skip(self))]
-    pub fn act(self) -> Result<BelvedereRunReport, BelvedereError> {
-        run_belvedere_pipeline(self.input)
+    pub fn act(self) -> Result<Option<BelvedereRunReport>, BelvedereError> {
+        match self.command {
+            BelvedereCliCommand::Help => Ok(None),
+            BelvedereCliCommand::Run { input, .. } => run_belvedere_pipeline(input).map(Some),
+        }
     }
 
     /// Output requested for this command invocation.
     #[must_use]
     #[instrument(level = "trace", skip(self))]
     pub fn output(&self) -> BelvedereCliOutput {
-        self.output.clone()
+        match &self.command {
+            BelvedereCliCommand::Help => BelvedereCliOutput::Help,
+            BelvedereCliCommand::Run { output, .. } => output.clone(),
+        }
     }
 }
 
 /// Public CLI output contract.
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub enum BelvedereCliOutput {
+    /// Write CLI help text.
+    Help,
     /// Log the run summary through the configured tracing subscriber.
     LogSummary,
     /// Write the complete run certificate as JSON.
@@ -106,10 +141,9 @@ pub enum BelvedereCliOutput {
 
 /// Error emitted when the Belvedere CLI receives invalid arguments.
 #[derive(Debug, Error)]
-#[error(
-    "usage: belvedere [--certificate-json | --certificate-file <path>] <registry-dump.json> <proof-assessments.jsonl> at {file}:{line}"
-)]
+#[error("invalid Belvedere CLI arguments at {file}:{line}: {usage}")]
 pub struct BelvedereCliUsageError {
+    usage: String,
     file: String,
     line: u32,
 }
@@ -120,6 +154,7 @@ impl BelvedereCliUsageError {
     pub(crate) fn new() -> Self {
         let location = Location::caller();
         Self {
+            usage: BELVEDERE_CLI_HELP.to_owned(),
             file: location.file().to_owned(),
             line: location.line(),
         }
@@ -230,7 +265,7 @@ pub fn run_cli(args: impl IntoIterator<Item = String>) -> ExitCode {
 #[instrument(level = "info", skip(args, writer))]
 pub fn run_cli_with_writer(args: impl IntoIterator<Item = String>, writer: impl Write) -> ExitCode {
     match run_cli_report(args, writer) {
-        Ok(report) => {
+        Ok(Some(report)) => {
             info!(
                 claims = report.landscape_receipt().claim_count(),
                 proofs = report.landscape_receipt().proof_count(),
@@ -244,6 +279,7 @@ pub fn run_cli_with_writer(args: impl IntoIterator<Item = String>, writer: impl 
             );
             ExitCode::SUCCESS
         }
+        Ok(None) => ExitCode::SUCCESS,
         Err(error) => {
             error!(%error, "belvedere pipeline failed");
             ExitCode::FAILURE
@@ -255,12 +291,19 @@ pub fn run_cli_with_writer(args: impl IntoIterator<Item = String>, writer: impl 
 fn run_cli_report(
     args: impl IntoIterator<Item = String>,
     writer: impl Write,
-) -> Result<BelvedereRunReport, BelvedereError> {
+) -> Result<Option<BelvedereRunReport>, BelvedereError> {
     let command = BelvedereCli::from_args(args)?;
     let output = command.output();
-    let report = command.act()?;
+    if output == BelvedereCliOutput::Help {
+        write_cli_help(writer)?;
+        return Ok(None);
+    }
+
+    let Some(report) = command.act()? else {
+        return Err(BelvedereCliUsageError::new().into());
+    };
     write_cli_output(output, report.certificate(), writer)?;
-    Ok(report)
+    Ok(Some(report))
 }
 
 #[instrument(level = "info", skip(output, certificate, writer))]
@@ -270,6 +313,7 @@ fn write_cli_output(
     writer: impl Write,
 ) -> Result<(), BelvedereError> {
     match output {
+        BelvedereCliOutput::Help => write_cli_help(writer),
         BelvedereCliOutput::LogSummary => Ok(()),
         BelvedereCliOutput::RunCertificateJson => write_certificate_json(certificate, writer),
         BelvedereCliOutput::RunCertificateFile(path) => {
@@ -277,6 +321,14 @@ fn write_cli_output(
             write_certificate_json(certificate, file)
         }
     }
+}
+
+#[instrument(level = "info", skip(writer))]
+fn write_cli_help(mut writer: impl Write) -> Result<(), BelvedereError> {
+    writer
+        .write_all(BELVEDERE_CLI_HELP.as_bytes())
+        .map_err(BelvedereCliOutputError::write)?;
+    Ok(())
 }
 
 #[instrument(level = "info", skip(certificate, writer))]
