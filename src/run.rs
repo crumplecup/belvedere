@@ -8,7 +8,9 @@ use derive_new::new;
 use tracing::instrument;
 
 use crate::{
-    certify::{IngestionReceipt, LandscapeReceipt, UiIrReceipt, ViewModelReceipt},
+    certify::{
+        BelvedereRunCertificate, IngestionReceipt, LandscapeReceipt, UiIrReceipt, ViewModelReceipt,
+    },
     collect::read_raw_artifact,
     contracts::{ArtifactKind, LandscapeInput, UiIrInput, UiIrProjection, ViewModelInput},
     error::{BelvedereConstructionError, BelvedereError},
@@ -36,6 +38,7 @@ pub struct BelvedereRunReport {
     landscape_receipt: LandscapeReceipt,
     view_model_receipt: ViewModelReceipt,
     ui_ir_receipt: UiIrReceipt,
+    certificate: BelvedereRunCertificate,
     projection: UiIrProjection,
 }
 
@@ -61,6 +64,13 @@ pub fn run_belvedere_pipeline(
     let (view_model, view_model_receipt) =
         AuditorNavigationProjection.project(ViewModelInput::new(landscape))?;
     let (projection, ui_ir_receipt) = ElicitUiProjection.project(UiIrInput::new(view_model))?;
+    let certificate = BelvedereRunCertificate::from_receipts(
+        &registry_receipt,
+        &assessment_receipt,
+        &landscape_receipt,
+        &view_model_receipt,
+        &ui_ir_receipt,
+    );
 
     BelvedereRunReportBuilder::default()
         .registry_receipt(registry_receipt)
@@ -68,6 +78,7 @@ pub fn run_belvedere_pipeline(
         .landscape_receipt(landscape_receipt)
         .view_model_receipt(view_model_receipt)
         .ui_ir_receipt(ui_ir_receipt)
+        .certificate(certificate)
         .projection(projection)
         .build()
         .map_err(|error| BelvedereConstructionError::new("BelvedereRunReport", error).into())

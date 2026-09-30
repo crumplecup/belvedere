@@ -1,10 +1,12 @@
 //! Audit artifacts emitted by Belvedere pipeline exchanges.
 
+mod certificate;
 mod landscape;
 mod receipt;
 mod ui_ir;
 mod view_model;
 
+pub use certificate::{BelvederePipelineStage, BelvedereRunCertificate, BelvedereStageCertificate};
 pub(crate) use landscape::LandscapeReceiptBuilder;
 pub use landscape::{LandscapeReceipt, LandscapeReceiptCounts};
 pub use receipt::IngestionReceipt;

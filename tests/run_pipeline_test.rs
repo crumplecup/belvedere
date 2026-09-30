@@ -17,6 +17,9 @@ fn run_pipeline_uses_the_normal_amenable_artifact_path() -> Result<()> {
     assert_eq!(report.landscape_receipt().claim_count(), 4);
     assert_eq!(report.view_model_receipt().counts().claim_cards(), 4);
     assert_eq!(report.ui_ir_receipt().counts().section_count(), 6);
+    assert_eq!(report.certificate().stage_certificates().len(), 5);
+    assert_eq!(report.certificate().input_artifact_ids().len(), 2);
+    assert_eq!(report.certificate().stage_certificate_ids().len(), 5);
     assert!(report.projection().trace_widgets().len() >= 4);
     Ok(())
 }
