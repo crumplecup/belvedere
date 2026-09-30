@@ -35,8 +35,8 @@ pub use collect::{
 pub use contracts::{
     AcceptedAmenableArtifactFormat, ArtifactKind, AssessmentQueueItem, AssessmentRecord,
     AssessmentStreamIngestionContract, AuditorFilterFacet, AuditorNavigationContract,
-    AuditorNavigationModel, BelvedereContract, ClaimEdge, ClaimExplorerCounts, ClaimExplorerItem,
-    ContractRecordRecord, DecodedAssessmentStream, DecodedRegistrySnapshot,
+    AuditorNavigationModel, BackendCoverageItem, BelvedereContract, ClaimEdge, ClaimExplorerCounts,
+    ClaimExplorerItem, ContractRecordRecord, DecodedAssessmentStream, DecodedRegistrySnapshot,
     ElicitUiIrSourcedStandard, ElicitUiProjectionContract, ElicitUiRenderCompleteStandard,
     ElicitUiRolePreservedStandard, ElicitUiWcagVerifiedStandard, EvidenceLinkRecord, GapItem,
     KaniProofRecord, KaniProofSummary, LandscapeAssessment, LandscapeClaim,
@@ -44,12 +44,12 @@ pub use contracts::{
     LandscapeModelingContract, MintedElicitUiStandard, OverviewView, ProofRecordRecord,
     ProvenanceRootItem, RawAmenableArtifact, Recommendation, RegistryDumpIngestionContract,
     ResolutionPath, Rubric, SourceNavigationItem, TraceRef, TraceWidgetRef,
-    UI_IR_SECTION_ASSESSMENT_QUEUE, UI_IR_SECTION_CLAIM_EXPLORER, UI_IR_SECTION_FILTERS,
-    UI_IR_SECTION_GAP_QUEUE, UI_IR_SECTION_OVERVIEW, UI_IR_SECTION_PROOF_CHAINS,
-    UI_IR_SECTION_PROVENANCE_ROOTS, UI_IR_SECTION_SOURCE_NAVIGATION, UI_IR_SECTION_WITNESS_SURFACE,
-    UiIrInput, UiIrProjection, UiIrProofBundle, UiIrSection, UiStandardMint, UnsupportedField,
-    ViewModelInput, WitnessExportRecord, WitnessSurfaceItem, WitnessSurfaceSummary,
-    elicit_ui_provenance,
+    UI_IR_SECTION_ASSESSMENT_QUEUE, UI_IR_SECTION_BACKEND_COVERAGE, UI_IR_SECTION_CLAIM_EXPLORER,
+    UI_IR_SECTION_FILTERS, UI_IR_SECTION_GAP_QUEUE, UI_IR_SECTION_OVERVIEW,
+    UI_IR_SECTION_PROOF_CHAINS, UI_IR_SECTION_PROVENANCE_ROOTS, UI_IR_SECTION_SOURCE_NAVIGATION,
+    UI_IR_SECTION_WITNESS_SURFACE, UiIrInput, UiIrProjection, UiIrProofBundle, UiIrSection,
+    UiStandardMint, UnsupportedField, ViewModelInput, WitnessExportRecord, WitnessSurfaceItem,
+    WitnessSurfaceSummary, elicit_ui_provenance,
 };
 pub use error::{BelvedereConstructionError, BelvedereError};
 pub use exchanges::{

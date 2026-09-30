@@ -21,6 +21,7 @@ fn view_model_projection_builds_auditor_navigation_evidence() -> Result<()> {
 
     assert_eq!(receipt.counts().claim_cards(), 4);
     assert_eq!(receipt.counts().filter_facets(), 6);
+    assert_eq!(receipt.counts().backend_coverage_items(), 12);
     assert_eq!(receipt.counts().proof_chain_items(), 4);
     assert_eq!(receipt.counts().assessment_items(), 2);
     assert_eq!(receipt.counts().witness_items(), 1);
@@ -52,6 +53,46 @@ fn view_model_projection_builds_auditor_navigation_evidence() -> Result<()> {
             .contains(&"belvedere::ingestion::RawAmenableArtifact".to_owned())
     );
     assert_eq!(decoded_chain.gap_count(), decoded_item.gap_count());
+    Ok(())
+}
+
+#[test]
+fn view_model_projection_builds_backend_coverage_items() -> Result<()> {
+    belvedere::init_tracing();
+
+    let (model, receipt) = AuditorNavigationProjection
+        .project(fixture_input()?)
+        .into_diagnostic()
+        .wrap_err("view-model projection should expose backend coverage")?;
+
+    assert_eq!(
+        receipt.counts().backend_coverage_items(),
+        model.backend_coverage().len()
+    );
+    let covered = model
+        .backend_coverage()
+        .iter()
+        .find(|item| {
+            item.claim_id() == "belvedere::ingestion::DecodedRegistrySnapshot"
+                && item.verifier() == "kani"
+        })
+        .ok_or_else(|| miette!("Kani coverage should be visible for decoded registry"))?;
+    assert!(covered.covered());
+
+    let missing = model
+        .backend_coverage()
+        .iter()
+        .find(|item| {
+            item.claim_id() == "belvedere::ingestion::DecodedRegistrySnapshot"
+                && item.verifier() == "creusot"
+        })
+        .ok_or_else(|| miette!("missing Creusot coverage should be visible"))?;
+    assert!(!missing.covered());
+    assert!(
+        missing.trace().source_record_ids().contains(
+            &"proof_record:belvedere::ingestion::DecodedRegistrySnapshot@kani".to_owned()
+        )
+    );
     Ok(())
 }
 

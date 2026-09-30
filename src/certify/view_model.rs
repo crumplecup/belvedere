@@ -28,6 +28,7 @@ impl ViewModelReceipt {
 pub struct ViewModelReceiptCounts {
     claim_cards: usize,
     filter_facets: usize,
+    backend_coverage_items: usize,
     proof_chain_items: usize,
     assessment_items: usize,
     witness_items: usize,
@@ -47,6 +48,12 @@ impl ViewModelReceiptCounts {
     #[must_use]
     pub const fn filter_facets(self) -> usize {
         self.filter_facets
+    }
+
+    /// Number of backend coverage status entries.
+    #[must_use]
+    pub const fn backend_coverage_items(self) -> usize {
+        self.backend_coverage_items
     }
 
     /// Number of proof-chain navigation items.

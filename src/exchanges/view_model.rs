@@ -8,14 +8,17 @@ use crate::{
     certify::{ViewModelReceipt, ViewModelReceiptBuilder, ViewModelReceiptCountsBuilder},
     contracts::{
         AssessmentQueueItemBuilder, AuditorNavigationContract, AuditorNavigationModel,
-        AuditorNavigationModelBuilder, BelvedereContract, ClaimExplorerCounts, ClaimExplorerItem,
-        GapItem, GapItemBuilder, LandscapeClaim, LandscapeGap, LandscapeGapKind, OverviewView,
-        ProofChainItem, ProofChainItemBuilder, ProvenanceRootItem, Rubric,
-        SourceNavigationItemBuilder, TraceRef, ViewModelInput, WitnessSurfaceItemBuilder,
+        AuditorNavigationModelBuilder, BackendCoverageItemBuilder, BelvedereContract,
+        ClaimExplorerCounts, ClaimExplorerItem, GapItem, GapItemBuilder, LandscapeClaim,
+        LandscapeGap, LandscapeGapKind, OverviewView, ProofChainItem, ProofChainItemBuilder,
+        ProvenanceRootItem, Rubric, SourceNavigationItemBuilder, TraceRef, ViewModelInput,
+        WitnessSurfaceItemBuilder,
     },
     error::{BelvedereConstructionError, BelvedereError},
     exchanges::BelvedereExchange,
 };
+
+const TARGET_VERIFIERS: [&str; 3] = ["kani", "creusot", "verus"];
 
 /// Exchange from a landscape graph into UI-neutral auditor navigation evidence.
 #[derive(Debug, Clone, Copy, Default)]
@@ -64,6 +67,9 @@ impl BelvedereExchange<AuditorNavigationContract> for AuditorNavigationProjectio
             gaps.len(),
             high_priority_gap_count,
         );
+
+        let backend_coverage =
+            project_backend_coverage(landscape.claims().values(), &source_record_ids)?;
 
         let claim_explorer: Vec<ClaimExplorerItem> = landscape
             .claims()
@@ -162,6 +168,7 @@ impl BelvedereExchange<AuditorNavigationContract> for AuditorNavigationProjectio
         let counts = ViewModelReceiptCountsBuilder::default()
             .claim_cards(landscape.claims().len())
             .filter_facets(filter_facets.len())
+            .backend_coverage_items(backend_coverage.len())
             .proof_chain_items(proof_chains.len())
             .assessment_items(landscape.assessments().len())
             .witness_items(witness_surface.len())
@@ -174,6 +181,7 @@ impl BelvedereExchange<AuditorNavigationContract> for AuditorNavigationProjectio
         let model = AuditorNavigationModelBuilder::default()
             .overview(overview)
             .filter_facets(filter_facets)
+            .backend_coverage(backend_coverage)
             .claim_explorer(claim_explorer)
             .proof_chains(proof_chains)
             .assessment_queue(assessment_queue)
@@ -194,6 +202,30 @@ impl BelvedereExchange<AuditorNavigationContract> for AuditorNavigationProjectio
 
         Ok((model, receipt))
     }
+}
+
+#[instrument(level = "debug", skip(claims, source_record_ids))]
+fn project_backend_coverage<'a>(
+    claims: impl Iterator<Item = &'a LandscapeClaim>,
+    source_record_ids: &[String],
+) -> Result<Vec<crate::contracts::BackendCoverageItem>, BelvedereConstructionError> {
+    let mut items = Vec::new();
+    for claim in claims {
+        for verifier in TARGET_VERIFIERS {
+            items.push(
+                BackendCoverageItemBuilder::default()
+                    .claim_id(claim.id())
+                    .verifier(verifier)
+                    .covered(claim.proofs().contains(verifier))
+                    .trace(trace(claim.id(), source_record_ids))
+                    .build()
+                    .map_err(|error| {
+                        BelvedereConstructionError::new("BackendCoverageItem", error)
+                    })?,
+            );
+        }
+    }
+    Ok(items)
 }
 
 #[instrument(level = "debug", skip(assessments))]

@@ -57,6 +57,32 @@ impl SourceNavigationItem {
     }
 }
 
+/// Backend coverage status for one claim and verifier.
+#[derive(Debug, Clone, PartialEq, Eq, Getters, Builder)]
+#[builder(vis = "pub(crate)", setter(into))]
+pub struct BackendCoverageItem {
+    claim_id: String,
+    verifier: String,
+    #[getter(skip)]
+    covered: bool,
+    #[getter(skip)]
+    trace: TraceRef,
+}
+
+impl BackendCoverageItem {
+    /// Whether this verifier has modeled proof coverage for the claim.
+    #[must_use]
+    pub const fn covered(&self) -> bool {
+        self.covered
+    }
+
+    /// Trace reference.
+    #[must_use]
+    pub const fn trace(&self) -> &TraceRef {
+        &self.trace
+    }
+}
+
 /// Claim explorer row/card evidence.
 #[derive(Debug, Clone, PartialEq, Eq, Getters)]
 pub struct ClaimExplorerItem {

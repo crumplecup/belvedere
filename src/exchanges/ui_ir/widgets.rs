@@ -8,9 +8,9 @@ use elicit_ui::{
 use tracing::instrument;
 
 use crate::contracts::{
-    AssessmentQueueItem, AuditorFilterFacet, ClaimExplorerItem, GapItem, ProofChainItem,
-    ProvenanceRootItem, SourceNavigationItem, TraceRef, TraceWidgetRef, TraceWidgetRefBuilder,
-    UiIrSection, WitnessSurfaceItem,
+    AssessmentQueueItem, AuditorFilterFacet, BackendCoverageItem, ClaimExplorerItem, GapItem,
+    ProofChainItem, ProvenanceRootItem, SourceNavigationItem, TraceRef, TraceWidgetRef,
+    TraceWidgetRefBuilder, UiIrSection, WitnessSurfaceItem,
 };
 
 use super::UiIrError;
@@ -31,6 +31,26 @@ pub(super) fn filter_widget(
             item.group(),
             item.value(),
             item.count()
+        ),
+        item.trace().clone(),
+        trace_widgets,
+    )
+}
+
+#[instrument(level = "debug", skip(backend, item, trace_widgets))]
+pub(super) fn backend_coverage_widget(
+    backend: &AccessKitUiBackend,
+    item: &BackendCoverageItem,
+    trace_widgets: &mut Vec<TraceWidgetRef>,
+) -> Result<WidgetId, UiIrError> {
+    let status = if item.covered() { "covered" } else { "missing" };
+    labeled_widget(
+        backend,
+        "status",
+        format!(
+            "Backend coverage {} for {} is {status}",
+            item.verifier(),
+            item.claim_id()
         ),
         item.trace().clone(),
         trace_widgets,

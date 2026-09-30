@@ -1,8 +1,9 @@
 use belvedere::{
     ArtifactKind, AssessmentStreamIngestion, AuditorNavigationProjection, ElicitUiProjection,
     LandscapeInput, LandscapeModeling, RawAmenableArtifact, RegistryDumpIngestion,
-    UI_IR_SECTION_CLAIM_EXPLORER, UI_IR_SECTION_FILTERS, UI_IR_SECTION_OVERVIEW,
-    UI_IR_SECTION_PROOF_CHAINS, UI_IR_SECTION_SOURCE_NAVIGATION, UiIrInput, ViewModelInput,
+    UI_IR_SECTION_BACKEND_COVERAGE, UI_IR_SECTION_CLAIM_EXPLORER, UI_IR_SECTION_FILTERS,
+    UI_IR_SECTION_OVERVIEW, UI_IR_SECTION_PROOF_CHAINS, UI_IR_SECTION_SOURCE_NAVIGATION, UiIrInput,
+    ViewModelInput,
 };
 use miette::{IntoDiagnostic, Result, WrapErr, miette};
 
@@ -15,7 +16,7 @@ fn ui_ir_projection_mints_elicit_ui_standards_and_tree_proofs() -> Result<()> {
         .into_diagnostic()
         .wrap_err("fixture view model should project into elicit_ui")?;
 
-    assert_eq!(projection.sections().len(), 9);
+    assert_eq!(projection.sections().len(), 10);
     assert!(
         projection
             .sections()
@@ -31,6 +32,11 @@ fn ui_ir_projection_mints_elicit_ui_standards_and_tree_proofs() -> Result<()> {
         receipt
             .section_ids()
             .contains(&UI_IR_SECTION_FILTERS.to_owned())
+    );
+    assert!(
+        receipt
+            .section_ids()
+            .contains(&UI_IR_SECTION_BACKEND_COVERAGE.to_owned())
     );
     assert!(
         receipt
@@ -96,6 +102,19 @@ fn ui_ir_projection_preserves_trace_widgets_for_auditor_deep_dives() -> Result<(
         .find(|widget| widget.label().starts_with("Filter verifier kani"))
         .ok_or_else(|| miette!("filter facets should have traceable widgets"))?;
     assert_eq!(filter_widget.claim_id(), "belvedere.filter.verifier:kani");
+    let coverage_widget = projection
+        .trace_widgets()
+        .iter()
+        .find(|widget| {
+            widget.label().starts_with(
+                "Backend coverage creusot for belvedere::ingestion::DecodedRegistrySnapshot is missing",
+            )
+        })
+        .ok_or_else(|| miette!("backend coverage should have traceable widgets"))?;
+    assert_eq!(
+        coverage_widget.claim_id(),
+        "belvedere::ingestion::DecodedRegistrySnapshot"
+    );
     let chain_widget = projection
         .trace_widgets()
         .iter()

@@ -13,12 +13,13 @@ mod items;
 mod trace;
 
 pub use items::{
-    AssessmentQueueItem, AuditorFilterFacet, ClaimExplorerCounts, ClaimExplorerItem, GapItem,
-    ProofChainItem, ProvenanceRootItem, SourceNavigationItem, WitnessSurfaceItem,
+    AssessmentQueueItem, AuditorFilterFacet, BackendCoverageItem, ClaimExplorerCounts,
+    ClaimExplorerItem, GapItem, ProofChainItem, ProvenanceRootItem, SourceNavigationItem,
+    WitnessSurfaceItem,
 };
 pub(crate) use items::{
-    AssessmentQueueItemBuilder, AuditorFilterFacetBuilder, GapItemBuilder, ProofChainItemBuilder,
-    SourceNavigationItemBuilder, WitnessSurfaceItemBuilder,
+    AssessmentQueueItemBuilder, AuditorFilterFacetBuilder, BackendCoverageItemBuilder,
+    GapItemBuilder, ProofChainItemBuilder, SourceNavigationItemBuilder, WitnessSurfaceItemBuilder,
 };
 pub use trace::TraceRef;
 
@@ -49,6 +50,7 @@ pub struct AuditorNavigationModel {
     #[getter(skip)]
     overview: OverviewView,
     filter_facets: Vec<AuditorFilterFacet>,
+    backend_coverage: Vec<BackendCoverageItem>,
     claim_explorer: Vec<ClaimExplorerItem>,
     proof_chains: Vec<ProofChainItem>,
     assessment_queue: Vec<AssessmentQueueItem>,
@@ -159,6 +161,7 @@ impl BelvedereContract for AuditorNavigationContract {
         &[
             "overview totals are derived from landscape counts",
             "filter facets expose deterministic auditor narrowing axes with trace IDs",
+            "backend coverage entries expose Kani, Creusot, and Verus status per claim",
             "claim explorer entries retain bases, verifier coverage, contracts, assessments, gaps, and trace IDs",
             "proof-chain entries retain direct bases, resolved roots, verifier coverage, gaps, and trace IDs",
             "assessment queue entries preserve recommendation, resolution, and recency vocabulary",
