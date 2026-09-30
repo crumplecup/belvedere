@@ -21,7 +21,10 @@ pub use certify::{
     LandscapeReceipt, LandscapeReceiptCounts, UiIrReceipt, UiIrReceiptCounts, ViewModelReceipt,
     ViewModelReceiptCounts,
 };
-pub use cli::{BelvedereCli, BelvedereCliUsageError, run_cli};
+pub use cli::{
+    BelvedereCli, BelvedereCliOutput, BelvedereCliOutputError, BelvedereCliUsageError, run_cli,
+    run_cli_with_writer,
+};
 pub use collect::{
     ArtifactReadError, decode_assessments, decode_registry_dump, raw_assessments,
     raw_registry_dump, read_raw_artifact,

@@ -1,5 +1,11 @@
-use belvedere::{BelvedereRunInput, run_belvedere_pipeline};
+use std::process::ExitCode;
+
+use belvedere::{
+    BelvedereCli, BelvedereCliOutput, BelvedereRunInput, run_belvedere_pipeline,
+    run_cli_with_writer,
+};
 use miette::{IntoDiagnostic, Result, WrapErr};
+use serde_json::Value;
 
 #[test]
 fn run_pipeline_uses_the_normal_amenable_artifact_path() -> Result<()> {
@@ -52,5 +58,46 @@ fn run_certificate_is_reproducible_portable_evidence() -> Result<()> {
         .wrap_err("run certificate should serialize as portable JSON evidence")?;
     assert!(encoded.contains("belvedere.run:"));
     assert!(encoded.contains("ui_ir_projection"));
+    Ok(())
+}
+
+#[test]
+fn cli_can_emit_the_run_certificate_as_json() -> Result<()> {
+    belvedere::init_tracing();
+
+    let args = [
+        "--certificate-json",
+        "tests/fixtures/registry_dump.json",
+        "tests/fixtures/proof_assessments.jsonl",
+    ]
+    .into_iter()
+    .map(str::to_owned)
+    .collect::<Vec<_>>();
+    let command = BelvedereCli::from_args(args.clone())
+        .into_diagnostic()
+        .wrap_err("certificate JSON flag should be part of the public CLI API")?;
+
+    assert_eq!(command.output(), BelvedereCliOutput::RunCertificateJson);
+
+    let mut output = Vec::new();
+    let status = run_cli_with_writer(args, &mut output);
+    assert_eq!(status, ExitCode::SUCCESS);
+
+    let certificate: Value = serde_json::from_slice(&output)
+        .into_diagnostic()
+        .wrap_err("CLI certificate output should be parseable JSON")?;
+    assert!(
+        certificate["id"]
+            .as_str()
+            .is_some_and(|id| id.starts_with("belvedere.run:"))
+    );
+    assert_eq!(
+        certificate["stage_certificates"].as_array().map(Vec::len),
+        Some(5)
+    );
+    assert_eq!(
+        certificate["input_artifact_ids"].as_array().map(Vec::len),
+        Some(2)
+    );
     Ok(())
 }

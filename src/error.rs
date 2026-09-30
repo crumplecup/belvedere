@@ -6,7 +6,7 @@ use thiserror::Error;
 use tracing::instrument;
 
 use crate::{
-    cli::BelvedereCliUsageError,
+    cli::{BelvedereCliOutputError, BelvedereCliUsageError},
     collect::ArtifactReadError,
     exchanges::{IngestionError, UiIrError},
 };
@@ -66,10 +66,20 @@ impl From<BelvedereCliUsageError> for BelvedereError {
     }
 }
 
+impl From<BelvedereCliOutputError> for BelvedereError {
+    #[instrument(level = "debug", skip(source))]
+    #[track_caller]
+    fn from(source: BelvedereCliOutputError) -> Self {
+        Self::new(BelvedereErrorKind::CliOutput(source))
+    }
+}
+
 #[derive(Debug, Error)]
 enum BelvedereErrorKind {
     #[error(transparent)]
     CliUsage(BelvedereCliUsageError),
+    #[error(transparent)]
+    CliOutput(BelvedereCliOutputError),
     #[error(transparent)]
     ArtifactRead(ArtifactReadError),
     #[error(transparent)]
