@@ -7,6 +7,11 @@ use serde::Serialize;
 use sha2::{Digest as _, Sha256};
 use tracing::instrument;
 
+use crate::contracts::{
+    AssessmentStreamIngestionContract, AuditorNavigationContract, BelvedereContract,
+    ElicitUiProjectionContract, LandscapeModelingContract, RegistryDumpIngestionContract,
+};
+
 use super::{IngestionReceipt, LandscapeReceipt, UiIrReceipt, ViewModelReceipt};
 
 /// Named stage in a complete Belvedere pipeline run.
@@ -109,6 +114,8 @@ pub struct BelvedereStageCertificate {
     #[getter(skip)]
     stage: BelvederePipelineStage,
     contract: String,
+    requires: Vec<String>,
+    ensures: Vec<String>,
     input_ids: Vec<String>,
     output_ids: Vec<String>,
     counts: BTreeMap<String, usize>,
@@ -116,19 +123,37 @@ pub struct BelvedereStageCertificate {
     digest: String,
 }
 
+#[derive(Debug)]
+struct StageCertificateEvidence {
+    stage: BelvederePipelineStage,
+    contract: String,
+    requires: Vec<String>,
+    ensures: Vec<String>,
+    input_ids: Vec<String>,
+    output_ids: Vec<String>,
+    counts: BTreeMap<String, usize>,
+    warning_count: usize,
+}
+
 impl BelvedereStageCertificate {
     /// Certificate the registry dump ingestion stage.
     #[instrument(level = "debug", skip(receipt))]
     #[must_use]
     pub fn registry_ingestion(receipt: &IngestionReceipt) -> Self {
-        Self::ingestion(BelvederePipelineStage::RegistryIngestion, receipt)
+        Self::ingestion::<RegistryDumpIngestionContract>(
+            BelvederePipelineStage::RegistryIngestion,
+            receipt,
+        )
     }
 
     /// Certificate the assessment stream ingestion stage.
     #[instrument(level = "debug", skip(receipt))]
     #[must_use]
     pub fn assessment_ingestion(receipt: &IngestionReceipt) -> Self {
-        Self::ingestion(BelvederePipelineStage::AssessmentIngestion, receipt)
+        Self::ingestion::<AssessmentStreamIngestionContract>(
+            BelvederePipelineStage::AssessmentIngestion,
+            receipt,
+        )
     }
 
     /// Certificate the landscape modeling stage.
@@ -144,14 +169,16 @@ impl BelvedereStageCertificate {
             ("roots".to_owned(), receipt.root_count()),
             ("warnings".to_owned(), receipt.warnings().len()),
         ]);
-        Self::new(
-            BelvederePipelineStage::LandscapeModeling,
-            receipt.contract().to_owned(),
-            receipt.source_record_ids().clone(),
-            vec!["landscape_graph".to_owned()],
+        Self::new(StageCertificateEvidence {
+            stage: BelvederePipelineStage::LandscapeModeling,
+            contract: receipt.contract().to_owned(),
+            requires: contract_requirements::<LandscapeModelingContract>(),
+            ensures: contract_guarantees::<LandscapeModelingContract>(),
+            input_ids: receipt.source_record_ids().clone(),
+            output_ids: vec!["landscape_graph".to_owned()],
             counts,
-            receipt.warnings().len(),
-        )
+            warning_count: receipt.warnings().len(),
+        })
     }
 
     /// Certificate the auditor navigation view-model stage.
@@ -169,14 +196,16 @@ impl BelvedereStageCertificate {
             ("warnings".to_owned(), receipt.warnings().len()),
             ("witness_items".to_owned(), receipt.counts().witness_items()),
         ]);
-        Self::new(
-            BelvederePipelineStage::AuditorNavigation,
-            receipt.contract().to_owned(),
-            receipt.source_record_ids().clone(),
-            vec!["auditor_navigation_model".to_owned()],
+        Self::new(StageCertificateEvidence {
+            stage: BelvederePipelineStage::AuditorNavigation,
+            contract: receipt.contract().to_owned(),
+            requires: contract_requirements::<AuditorNavigationContract>(),
+            ensures: contract_guarantees::<AuditorNavigationContract>(),
+            input_ids: receipt.source_record_ids().clone(),
+            output_ids: vec!["auditor_navigation_model".to_owned()],
             counts,
-            receipt.warnings().len(),
-        )
+            warning_count: receipt.warnings().len(),
+        })
     }
 
     /// Certificate the `elicit_ui` projection stage.
@@ -193,14 +222,16 @@ impl BelvedereStageCertificate {
             ("widgets".to_owned(), receipt.counts().widget_count()),
             ("tree_nodes".to_owned(), receipt.counts().node_count()),
         ]);
-        Self::new(
-            BelvederePipelineStage::UiIrProjection,
-            receipt.contract().to_owned(),
-            receipt.source_record_ids().clone(),
-            receipt.minted_standards().clone(),
+        Self::new(StageCertificateEvidence {
+            stage: BelvederePipelineStage::UiIrProjection,
+            contract: receipt.contract().to_owned(),
+            requires: contract_requirements::<ElicitUiProjectionContract>(),
+            ensures: contract_guarantees::<ElicitUiProjectionContract>(),
+            input_ids: receipt.source_record_ids().clone(),
+            output_ids: receipt.minted_standards().clone(),
             counts,
-            0,
-        )
+            warning_count: 0,
+        })
     }
 
     /// Pipeline stage named by this certificate.
@@ -210,48 +241,56 @@ impl BelvedereStageCertificate {
     }
 
     #[instrument(level = "debug", skip(stage, receipt))]
-    fn ingestion(stage: BelvederePipelineStage, receipt: &IngestionReceipt) -> Self {
+    fn ingestion<C: BelvedereContract>(
+        stage: BelvederePipelineStage,
+        receipt: &IngestionReceipt,
+    ) -> Self {
         let mut counts = receipt.decoded_counts().clone();
         counts.insert(
             "unsupported_fields".to_owned(),
             receipt.unsupported_fields().len(),
         );
         counts.insert("warnings".to_owned(), receipt.warnings().len());
-        Self::new(
+        Self::new(StageCertificateEvidence {
             stage,
-            receipt.contract().to_owned(),
-            vec![format!(
+            contract: receipt.contract().to_owned(),
+            requires: contract_requirements::<C>(),
+            ensures: contract_guarantees::<C>(),
+            input_ids: vec![format!(
                 "{}:{}:{}:{}",
                 receipt.artifact_kind(),
                 receipt.format(),
                 receipt.path().display(),
                 receipt.digest()
             )],
-            receipt.source_record_ids().clone(),
+            output_ids: receipt.source_record_ids().clone(),
             counts,
-            receipt.warnings().len(),
-        )
+            warning_count: receipt.warnings().len(),
+        })
     }
 
-    #[instrument(level = "debug", skip(stage, counts))]
-    fn new(
-        stage: BelvederePipelineStage,
-        contract: String,
-        input_ids: Vec<String>,
-        output_ids: Vec<String>,
-        counts: BTreeMap<String, usize>,
-        warning_count: usize,
-    ) -> Self {
-        let digest = stage_digest(stage, &contract, &input_ids, &output_ids, &counts);
-        let id = format!("belvedere.stage.{stage}:{digest}");
+    #[instrument(level = "debug", skip(evidence))]
+    fn new(evidence: StageCertificateEvidence) -> Self {
+        let digest = stage_digest(
+            evidence.stage,
+            &evidence.contract,
+            &evidence.requires,
+            &evidence.ensures,
+            &evidence.input_ids,
+            &evidence.output_ids,
+            &evidence.counts,
+        );
+        let id = format!("belvedere.stage.{}:{digest}", evidence.stage);
         Self {
             id,
-            stage,
-            contract,
-            input_ids,
-            output_ids,
-            counts,
-            warning_count,
+            stage: evidence.stage,
+            contract: evidence.contract,
+            requires: evidence.requires,
+            ensures: evidence.ensures,
+            input_ids: evidence.input_ids,
+            output_ids: evidence.output_ids,
+            counts: evidence.counts,
+            warning_count: evidence.warning_count,
             digest,
         }
     }
@@ -369,6 +408,8 @@ fn artifact_id(receipt: &IngestionReceipt) -> String {
 fn stage_digest(
     stage: BelvederePipelineStage,
     contract: &str,
+    requires: &[String],
+    ensures: &[String],
     input_ids: &[String],
     output_ids: &[String],
     counts: &BTreeMap<String, usize>,
@@ -376,6 +417,8 @@ fn stage_digest(
     let mut hasher = Sha256::new();
     update_field(&mut hasher, stage.as_str());
     update_field(&mut hasher, contract);
+    update_fields(&mut hasher, requires);
+    update_fields(&mut hasher, ensures);
     update_fields(&mut hasher, input_ids);
     update_fields(&mut hasher, output_ids);
     for (name, count) in counts {
@@ -383,6 +426,22 @@ fn stage_digest(
         update_field(&mut hasher, &count.to_string());
     }
     hex_digest(hasher)
+}
+
+#[instrument(level = "trace")]
+fn contract_requirements<C: BelvedereContract>() -> Vec<String> {
+    C::requires()
+        .iter()
+        .map(|requirement| (*requirement).to_owned())
+        .collect()
+}
+
+#[instrument(level = "trace")]
+fn contract_guarantees<C: BelvedereContract>() -> Vec<String> {
+    C::ensures()
+        .iter()
+        .map(|guarantee| (*guarantee).to_owned())
+        .collect()
 }
 
 #[instrument(level = "info", skip(invocation))]

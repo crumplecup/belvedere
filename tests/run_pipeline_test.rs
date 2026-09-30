@@ -26,6 +26,14 @@ fn run_pipeline_uses_the_normal_amenable_artifact_path() -> Result<()> {
     assert_eq!(report.certificate().stage_certificates().len(), 5);
     assert_eq!(report.certificate().input_artifact_ids().len(), 2);
     assert_eq!(report.certificate().stage_certificate_ids().len(), 5);
+    assert!(
+        report
+            .certificate()
+            .stage_certificates()
+            .iter()
+            .all(|certificate| !certificate.requires().is_empty()
+                && !certificate.ensures().is_empty())
+    );
     assert!(report.projection().trace_widgets().len() >= 4);
     Ok(())
 }
@@ -62,6 +70,8 @@ fn run_certificate_is_reproducible_portable_evidence() -> Result<()> {
         .wrap_err("run certificate should serialize as portable JSON evidence")?;
     assert!(encoded.contains("belvedere.run:"));
     assert!(encoded.contains("ui_ir_projection"));
+    assert!(encoded.contains("source record identities remain available for traceability"));
+    assert!(encoded.contains("the emitted tree is an elicit_ui VerifiedTree"));
     Ok(())
 }
 
@@ -102,6 +112,20 @@ fn cli_can_emit_the_run_certificate_as_json() -> Result<()> {
     assert_eq!(
         certificate["input_artifact_ids"].as_array().map(Vec::len),
         Some(2)
+    );
+    assert!(
+        certificate["stage_certificates"]
+            .as_array()
+            .is_some_and(
+                |stage_certificates| stage_certificates.iter().all(|stage_certificate| {
+                    stage_certificate["requires"]
+                        .as_array()
+                        .is_some_and(|requirements| !requirements.is_empty())
+                        && stage_certificate["ensures"]
+                            .as_array()
+                            .is_some_and(|guarantees| !guarantees.is_empty())
+                })
+            )
     );
     assert_eq!(certificate["invocation"]["surface"].as_str(), Some("cli"));
     assert_eq!(
