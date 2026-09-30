@@ -9,8 +9,8 @@ use tracing::instrument;
 
 use crate::contracts::{
     AssessmentQueueItem, AuditorFilterFacet, ClaimExplorerItem, GapItem, ProofChainItem,
-    ProvenanceRootItem, TraceRef, TraceWidgetRef, TraceWidgetRefBuilder, UiIrSection,
-    WitnessSurfaceItem,
+    ProvenanceRootItem, SourceNavigationItem, TraceRef, TraceWidgetRef, TraceWidgetRefBuilder,
+    UiIrSection, WitnessSurfaceItem,
 };
 
 use super::UiIrError;
@@ -151,6 +151,21 @@ pub(super) fn gap_widget(
             item.claim_id(),
             item.detail()
         ),
+        item.trace().clone(),
+        trace_widgets,
+    )
+}
+
+#[instrument(level = "debug", skip(backend, item, trace_widgets))]
+pub(super) fn source_navigation_widget(
+    backend: &AccessKitUiBackend,
+    item: &SourceNavigationItem,
+    trace_widgets: &mut Vec<TraceWidgetRef>,
+) -> Result<WidgetId, UiIrError> {
+    labeled_widget(
+        backend,
+        "link",
+        item.label().to_owned(),
         item.trace().clone(),
         trace_widgets,
     )

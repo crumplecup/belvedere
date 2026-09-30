@@ -23,7 +23,8 @@ impl ViewModelReceipt {
 }
 
 /// Counts emitted by an auditor navigation receipt.
-#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Builder)]
+#[builder(vis = "pub(crate)", setter(into))]
 pub struct ViewModelReceiptCounts {
     claim_cards: usize,
     filter_facets: usize,
@@ -32,31 +33,10 @@ pub struct ViewModelReceiptCounts {
     witness_items: usize,
     root_items: usize,
     gap_items: usize,
+    source_items: usize,
 }
 
 impl ViewModelReceiptCounts {
-    /// Build view-model counts.
-    #[must_use]
-    pub const fn new(
-        claim_cards: usize,
-        filter_facets: usize,
-        proof_chain_items: usize,
-        assessment_items: usize,
-        witness_items: usize,
-        root_items: usize,
-        gap_items: usize,
-    ) -> Self {
-        Self {
-            claim_cards,
-            filter_facets,
-            proof_chain_items,
-            assessment_items,
-            witness_items,
-            root_items,
-            gap_items,
-        }
-    }
-
     /// Number of claim explorer cards.
     #[must_use]
     pub const fn claim_cards(self) -> usize {
@@ -97,5 +77,11 @@ impl ViewModelReceiptCounts {
     #[must_use]
     pub const fn gap_items(self) -> usize {
         self.gap_items
+    }
+
+    /// Number of source navigation items.
+    #[must_use]
+    pub const fn source_items(self) -> usize {
+        self.source_items
     }
 }

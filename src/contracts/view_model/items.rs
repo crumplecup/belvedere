@@ -39,6 +39,24 @@ impl AuditorFilterFacet {
     }
 }
 
+/// Source record navigation item for jumping back to ingested evidence.
+#[derive(Debug, Clone, PartialEq, Eq, Getters, Builder)]
+#[builder(vis = "pub(crate)", setter(into))]
+pub struct SourceNavigationItem {
+    source_record_id: String,
+    label: String,
+    #[getter(skip)]
+    trace: TraceRef,
+}
+
+impl SourceNavigationItem {
+    /// Trace reference.
+    #[must_use]
+    pub const fn trace(&self) -> &TraceRef {
+        &self.trace
+    }
+}
+
 /// Claim explorer row/card evidence.
 #[derive(Debug, Clone, PartialEq, Eq, Getters)]
 pub struct ClaimExplorerItem {

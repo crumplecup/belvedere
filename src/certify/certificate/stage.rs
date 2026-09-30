@@ -154,6 +154,7 @@ impl BelvedereStageCertificate {
                 receipt.counts().proof_chain_items(),
             ),
             ("root_items".to_owned(), receipt.counts().root_items()),
+            ("source_items".to_owned(), receipt.counts().source_items()),
             ("warnings".to_owned(), receipt.warnings().len()),
             ("witness_items".to_owned(), receipt.counts().witness_items()),
         ]);

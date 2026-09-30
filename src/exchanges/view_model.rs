@@ -5,13 +5,13 @@ use std::collections::{BTreeMap, BTreeSet};
 use tracing::instrument;
 
 use crate::{
-    certify::{ViewModelReceipt, ViewModelReceiptBuilder, ViewModelReceiptCounts},
+    certify::{ViewModelReceipt, ViewModelReceiptBuilder, ViewModelReceiptCountsBuilder},
     contracts::{
         AssessmentQueueItemBuilder, AuditorNavigationContract, AuditorNavigationModel,
         AuditorNavigationModelBuilder, BelvedereContract, ClaimExplorerCounts, ClaimExplorerItem,
         GapItem, GapItemBuilder, LandscapeClaim, LandscapeGap, LandscapeGapKind, OverviewView,
-        ProofChainItem, ProofChainItemBuilder, ProvenanceRootItem, Rubric, TraceRef,
-        ViewModelInput, WitnessSurfaceItemBuilder,
+        ProofChainItem, ProofChainItemBuilder, ProvenanceRootItem, Rubric,
+        SourceNavigationItemBuilder, TraceRef, ViewModelInput, WitnessSurfaceItemBuilder,
     },
     error::{BelvedereConstructionError, BelvedereError},
     exchanges::BelvedereExchange,
@@ -149,15 +149,19 @@ impl BelvedereExchange<AuditorNavigationContract> for AuditorNavigationProjectio
             .map(|claim_id| ProvenanceRootItem::new(claim_id, trace(claim_id, &source_record_ids)))
             .collect();
 
-        let counts = ViewModelReceiptCounts::new(
-            landscape.claims().len(),
-            filter_facets.len(),
-            proof_chains.len(),
-            landscape.assessments().len(),
-            witness_surface.len(),
-            landscape.root_claim_ids().len(),
-            gaps.len(),
-        );
+        let source_navigation = project_source_navigation(&source_record_ids)?;
+
+        let counts = ViewModelReceiptCountsBuilder::default()
+            .claim_cards(landscape.claims().len())
+            .filter_facets(filter_facets.len())
+            .proof_chain_items(proof_chains.len())
+            .assessment_items(landscape.assessments().len())
+            .witness_items(witness_surface.len())
+            .root_items(landscape.root_claim_ids().len())
+            .gap_items(gaps.len())
+            .source_items(source_navigation.len())
+            .build()
+            .map_err(|error| BelvedereConstructionError::new("ViewModelReceiptCounts", error))?;
 
         let model = AuditorNavigationModelBuilder::default()
             .overview(overview)
@@ -168,6 +172,7 @@ impl BelvedereExchange<AuditorNavigationContract> for AuditorNavigationProjectio
             .witness_surface(witness_surface)
             .provenance_roots(provenance_roots)
             .gaps(gaps)
+            .source_navigation(source_navigation)
             .source_record_ids(source_record_ids.clone())
             .build()
             .map_err(|error| BelvedereConstructionError::new("AuditorNavigationModel", error))?;
@@ -181,6 +186,26 @@ impl BelvedereExchange<AuditorNavigationContract> for AuditorNavigationProjectio
 
         Ok((model, receipt))
     }
+}
+
+#[instrument(level = "debug", skip(source_record_ids))]
+fn project_source_navigation(
+    source_record_ids: &[String],
+) -> Result<Vec<crate::contracts::SourceNavigationItem>, BelvedereConstructionError> {
+    source_record_ids
+        .iter()
+        .map(|source_record_id| {
+            SourceNavigationItemBuilder::default()
+                .source_record_id(source_record_id)
+                .label(format!("Source record {source_record_id}"))
+                .trace(TraceRef::new(
+                    format!("belvedere.source_record:{source_record_id}"),
+                    vec![source_record_id.to_owned()],
+                ))
+                .build()
+                .map_err(|error| BelvedereConstructionError::new("SourceNavigationItem", error))
+        })
+        .collect()
 }
 
 #[instrument(level = "debug", skip(claims, assessments, gaps))]

@@ -25,6 +25,7 @@ fn view_model_projection_builds_auditor_navigation_evidence() -> Result<()> {
     assert_eq!(receipt.counts().assessment_items(), 2);
     assert_eq!(receipt.counts().witness_items(), 1);
     assert_eq!(receipt.counts().root_items(), 3);
+    assert_eq!(receipt.counts().source_items(), 7);
 
     let decoded_item = model
         .claim_explorer()
@@ -51,6 +52,40 @@ fn view_model_projection_builds_auditor_navigation_evidence() -> Result<()> {
             .contains(&"belvedere::ingestion::RawAmenableArtifact".to_owned())
     );
     assert_eq!(decoded_chain.gap_count(), decoded_item.gap_count());
+    Ok(())
+}
+
+#[test]
+fn view_model_projection_builds_source_navigation_items() -> Result<()> {
+    belvedere::init_tracing();
+
+    let (model, receipt) = AuditorNavigationProjection
+        .project(fixture_input()?)
+        .into_diagnostic()
+        .wrap_err("view-model projection should expose source navigation")?;
+
+    assert_eq!(
+        receipt.counts().source_items(),
+        model.source_navigation().len()
+    );
+    let proof_record = model
+        .source_navigation()
+        .iter()
+        .find(|item| {
+            item.source_record_id()
+                == "proof_record:belvedere::ingestion::DecodedRegistrySnapshot@kani"
+        })
+        .ok_or_else(|| miette!("proof source record should be navigable"))?;
+    assert_eq!(
+        proof_record.label(),
+        "Source record proof_record:belvedere::ingestion::DecodedRegistrySnapshot@kani"
+    );
+    assert_eq!(proof_record.trace().source_record_ids().len(), 1);
+    assert!(
+        proof_record.trace().source_record_ids().contains(
+            &"proof_record:belvedere::ingestion::DecodedRegistrySnapshot@kani".to_owned()
+        )
+    );
     Ok(())
 }
 

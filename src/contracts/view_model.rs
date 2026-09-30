@@ -14,11 +14,11 @@ mod trace;
 
 pub use items::{
     AssessmentQueueItem, AuditorFilterFacet, ClaimExplorerCounts, ClaimExplorerItem, GapItem,
-    ProofChainItem, ProvenanceRootItem, WitnessSurfaceItem,
+    ProofChainItem, ProvenanceRootItem, SourceNavigationItem, WitnessSurfaceItem,
 };
 pub(crate) use items::{
     AssessmentQueueItemBuilder, AuditorFilterFacetBuilder, GapItemBuilder, ProofChainItemBuilder,
-    WitnessSurfaceItemBuilder,
+    SourceNavigationItemBuilder, WitnessSurfaceItemBuilder,
 };
 pub use trace::TraceRef;
 
@@ -55,6 +55,7 @@ pub struct AuditorNavigationModel {
     witness_surface: Vec<WitnessSurfaceItem>,
     provenance_roots: Vec<ProvenanceRootItem>,
     gaps: Vec<GapItem>,
+    source_navigation: Vec<SourceNavigationItem>,
     source_record_ids: Vec<String>,
 }
 
@@ -164,6 +165,7 @@ impl BelvedereContract for AuditorNavigationContract {
             "witness surface entries preserve support counts",
             "provenance root entries preserve explicit root identities",
             "gap entries preserve conservative gap kinds and trace IDs",
+            "source navigation entries preserve ingested source record identities",
         ]
     }
 }

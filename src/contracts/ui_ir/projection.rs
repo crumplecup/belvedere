@@ -32,6 +32,9 @@ pub const UI_IR_SECTION_PROVENANCE_ROOTS: &str = "belvedere.ui.section.provenanc
 /// Stable section ID for the gap queue.
 pub const UI_IR_SECTION_GAP_QUEUE: &str = "belvedere.ui.section.gap_queue";
 
+/// Stable section ID for source record navigation.
+pub const UI_IR_SECTION_SOURCE_NAVIGATION: &str = "belvedere.ui.section.source_navigation";
+
 /// A minted-standard entry returned with the UI IR projection.
 #[derive(Debug, Clone, PartialEq, Eq, Getters)]
 pub struct UiStandardMint {

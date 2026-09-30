@@ -12,8 +12,8 @@ use crate::{
         ElicitUiWcagVerifiedStandard, TraceRef, UI_IR_SECTION_ASSESSMENT_QUEUE,
         UI_IR_SECTION_CLAIM_EXPLORER, UI_IR_SECTION_FILTERS, UI_IR_SECTION_GAP_QUEUE,
         UI_IR_SECTION_OVERVIEW, UI_IR_SECTION_PROOF_CHAINS, UI_IR_SECTION_PROVENANCE_ROOTS,
-        UI_IR_SECTION_WITNESS_SURFACE, UiIrInput, UiIrProjection, UiIrProjectionBuilder,
-        UiIrProofBundle, UiStandardMint,
+        UI_IR_SECTION_SOURCE_NAVIGATION, UI_IR_SECTION_WITNESS_SURFACE, UiIrInput, UiIrProjection,
+        UiIrProjectionBuilder, UiIrProofBundle, UiStandardMint,
     },
     exchanges::BelvedereExchange,
 };
@@ -25,7 +25,7 @@ pub use errors::UiIrError;
 
 use widgets::{
     assessment_widget, claim_widget, filter_widget, gap_widget, labeled_widget, proof_chain_widget,
-    provenance_root_widget, section, witness_widget,
+    provenance_root_widget, section, source_navigation_widget, witness_widget,
 };
 
 /// Exchange from auditor navigation evidence into `elicit_ui` IR.
@@ -156,6 +156,18 @@ impl BelvedereExchange<ElicitUiProjectionContract> for ElicitUiProjection {
             UI_IR_SECTION_GAP_QUEUE,
             "gap queue",
             gap_widgets,
+        )?);
+
+        let source_widgets = model
+            .source_navigation()
+            .iter()
+            .map(|item| source_navigation_widget(&backend, item, &mut trace_widgets))
+            .collect::<Result<Vec<_>, _>>()?;
+        sections.push(section(
+            &backend,
+            UI_IR_SECTION_SOURCE_NAVIGATION,
+            "source navigation",
+            source_widgets,
         )?);
 
         let tree = backend.to_verified_tree(Viewport::new(1440, 960));

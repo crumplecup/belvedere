@@ -43,12 +43,13 @@ pub use contracts::{
     LandscapeContractFragment, LandscapeGap, LandscapeGapKind, LandscapeGraph, LandscapeInput,
     LandscapeModelingContract, MintedElicitUiStandard, OverviewView, ProofRecordRecord,
     ProvenanceRootItem, RawAmenableArtifact, Recommendation, RegistryDumpIngestionContract,
-    ResolutionPath, Rubric, TraceRef, TraceWidgetRef, UI_IR_SECTION_ASSESSMENT_QUEUE,
-    UI_IR_SECTION_CLAIM_EXPLORER, UI_IR_SECTION_FILTERS, UI_IR_SECTION_GAP_QUEUE,
-    UI_IR_SECTION_OVERVIEW, UI_IR_SECTION_PROOF_CHAINS, UI_IR_SECTION_PROVENANCE_ROOTS,
-    UI_IR_SECTION_WITNESS_SURFACE, UiIrInput, UiIrProjection, UiIrProofBundle, UiIrSection,
-    UiStandardMint, UnsupportedField, ViewModelInput, WitnessExportRecord, WitnessSurfaceItem,
-    WitnessSurfaceSummary, elicit_ui_provenance,
+    ResolutionPath, Rubric, SourceNavigationItem, TraceRef, TraceWidgetRef,
+    UI_IR_SECTION_ASSESSMENT_QUEUE, UI_IR_SECTION_CLAIM_EXPLORER, UI_IR_SECTION_FILTERS,
+    UI_IR_SECTION_GAP_QUEUE, UI_IR_SECTION_OVERVIEW, UI_IR_SECTION_PROOF_CHAINS,
+    UI_IR_SECTION_PROVENANCE_ROOTS, UI_IR_SECTION_SOURCE_NAVIGATION, UI_IR_SECTION_WITNESS_SURFACE,
+    UiIrInput, UiIrProjection, UiIrProofBundle, UiIrSection, UiStandardMint, UnsupportedField,
+    ViewModelInput, WitnessExportRecord, WitnessSurfaceItem, WitnessSurfaceSummary,
+    elicit_ui_provenance,
 };
 pub use error::{BelvedereConstructionError, BelvedereError};
 pub use exchanges::{
