@@ -93,6 +93,9 @@ pub struct WitnessSurfaceItem {
     claim_id: String,
     verifier: String,
     destination_module: String,
+    support_kind: String,
+    #[getter(skip)]
+    trivial: usize,
     #[getter(skip)]
     checked: usize,
     #[getter(skip)]
@@ -104,6 +107,12 @@ pub struct WitnessSurfaceItem {
 }
 
 impl WitnessSurfaceItem {
+    /// Trivial support count.
+    #[must_use]
+    pub const fn trivial(&self) -> usize {
+        self.trivial
+    }
+
     /// Checked support count.
     #[must_use]
     pub const fn checked(&self) -> usize {

@@ -235,6 +235,8 @@ fn view_model_projection_preserves_review_queues_and_traceability() -> Result<()
         witness.claim_id(),
         "belvedere::ingestion::DecodedRegistrySnapshot"
     );
+    assert_eq!(witness.support_kind(), "checked_with_trusted");
+    assert_eq!(witness.trivial(), 0);
     assert_eq!(witness.checked(), 1);
     assert_eq!(witness.trusted(), 1);
 

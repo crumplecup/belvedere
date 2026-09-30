@@ -147,6 +147,8 @@ impl BelvedereExchange<AuditorNavigationContract> for AuditorNavigationProjectio
                     .claim_id(claim.id())
                     .verifier(witness.verifier())
                     .destination_module(witness.destination_module())
+                    .support_kind(witness.support_kind())
+                    .trivial(witness.trivial())
                     .checked(witness.checked())
                     .trusted(witness.trusted())
                     .opaque(witness.opaque())

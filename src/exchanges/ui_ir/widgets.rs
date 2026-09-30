@@ -171,9 +171,11 @@ pub(super) fn witness_widget(
         backend,
         "button",
         format!(
-            "Witness {} for {} has {} checked, {} trusted, {} opaque supports",
+            "Witness {} {} for {} has {} trivial, {} checked, {} trusted, {} opaque supports",
             item.verifier(),
+            item.support_kind(),
             item.claim_id(),
+            item.trivial(),
             item.checked(),
             item.trusted(),
             item.opaque()
