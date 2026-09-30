@@ -1,0 +1,44 @@
+#![forbid(unsafe_code)]
+#![warn(missing_docs)]
+
+//! Belvedere's certification-navigation library.
+//!
+//! The crate is organized around Amenable-shaped pipeline boundaries:
+//! contracts name the obligations, exchanges perform lawful transformations,
+//! and certificates/receipts preserve audit evidence for reviewers.
+
+mod certify;
+mod collect;
+mod contracts;
+mod error;
+mod exchanges;
+mod telemetry;
+
+pub use certify::{
+    IngestionReceipt, LandscapeReceipt, LandscapeReceiptCounts, UiIrReceipt, UiIrReceiptCounts,
+    ViewModelReceipt, ViewModelReceiptCounts,
+};
+pub use collect::{
+    ArtifactReadError, decode_assessments, decode_registry_dump, raw_assessments,
+    raw_registry_dump, read_raw_artifact,
+};
+pub use contracts::{
+    AcceptedAmenableArtifactFormat, ArtifactKind, AssessmentQueueItem, AssessmentRecord,
+    AssessmentStreamIngestionContract, AuditorNavigationContract, AuditorNavigationModel,
+    BelvedereContract, ClaimEdge, ClaimExplorerCounts, ClaimExplorerItem, ContractRecordRecord,
+    DecodedAssessmentStream, DecodedRegistrySnapshot, ElicitUiIrSourcedStandard,
+    ElicitUiProjectionContract, ElicitUiRenderCompleteStandard, ElicitUiRolePreservedStandard,
+    ElicitUiWcagVerifiedStandard, EvidenceLinkRecord, GapItem, KaniProofRecord, KaniProofSummary,
+    LandscapeAssessment, LandscapeClaim, LandscapeContractFragment, LandscapeGap, LandscapeGapKind,
+    LandscapeGraph, LandscapeInput, LandscapeModelingContract, MintedElicitUiStandard,
+    OverviewView, ProofRecordRecord, ProvenanceRootItem, RawAmenableArtifact, Recommendation,
+    RegistryDumpIngestionContract, ResolutionPath, Rubric, TraceRef, TraceWidgetRef, UiIrInput,
+    UiIrProjection, UiIrProofBundle, UiIrSection, UiStandardMint, UnsupportedField, ViewModelInput,
+    WitnessExportRecord, WitnessSurfaceItem, WitnessSurfaceSummary, elicit_ui_provenance,
+};
+pub use error::{BelvedereConstructionError, BelvedereError};
+pub use exchanges::{
+    AssessmentStreamIngestion, AuditorNavigationProjection, BelvedereExchange, ElicitUiProjection,
+    IngestionError, LandscapeModeling, RegistryDumpIngestion, UiIrError, WrongArtifactKindError,
+};
+pub use telemetry::init_tracing;

@@ -1,0 +1,27 @@
+[package]
+name = "belvedere"
+version = "0.1.0"
+edition = "2024"
+license = "Apache-2.0 OR MIT"
+authors = ["Erik Rose <erik.w.rose@gmail.com>"]
+description = "A beautiful view of the amenable library."
+
+[dependencies]
+amenable = { path = "../amenable/crates/amenable", version = "0.1.0" }
+amenable_core = { path = "../amenable/crates/amenable_core", version = "0.1.0" }
+amenable_derive = { path = "../amenable/crates/amenable_derive", version = "0.1.0" }
+derive-getters = "0.5.0"
+derive-new = "0.7.0"
+derive_builder = "0.20.2"
+elicitation = { path = "../elicitation/crates/elicitation" }
+elicit_ui = { path = "../elicitation/crates/elicit_ui" }
+inventory = "0.3.24"
+serde = { version = "1.0.228", features = ["derive"] }
+serde_json = "1.0.145"
+sha2 = "0.11.0"
+thiserror = "2.0.16"
+tracing = "0.1.41"
+tracing-subscriber = { version = "0.3.20", features = ["env-filter", "fmt"] }
+
+[dev-dependencies]
+miette = "7.6.0"
