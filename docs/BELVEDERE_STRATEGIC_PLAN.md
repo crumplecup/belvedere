@@ -249,7 +249,7 @@ first, then implement the product surface that depends on it.
    Belvedere can later display.
 10. Continue through the remaining phases with the same structure: landscape
     contracts and exchanges, auditor navigation view models, `elicit_ui`
-    projection, dogfood certificates, and reviewer-facing workflows.
+    projection, stage certificates, and reviewer-facing workflows.
 
 This is not a viability test. It is the first product increment because
 ingestion is the first place where auditor-facing trust can be preserved or
@@ -275,34 +275,34 @@ shape as the rest of the product.
   different available records or generated artifacts.
 - Reviewer empathy: every screen should answer the next review question rather
   than merely display all data.
-- Dogfood without circular trust: Belvedere should produce Amenable evidence
-  about its own pipeline, then render that evidence as one landscape among
-  others. The fact that Belvedere can display a claim must never become the
-  evidence that the claim is true.
+- Ordinary inputs only: Belvedere's own repository may be used as a validation
+  corpus, but it must enter through the same Amenable artifact path as any
+  other project.
 
 ## Making Belvedere Amenable
 
-Belvedere should not merely visualize Amenable outputs. It should itself be an
-Amenable subject: a codebase with named claims, explicit roots, generated
-certificates, machine-checkable proofs where practical, and human assessments
-where judgment is still required.
+Belvedere should not merely visualize Amenable outputs. Its own pipeline should
+also be written in a way Amenable can evaluate: named contracts, explicit
+roots, generated certificates, machine-checkable proofs where practical, and
+human assessments where judgment is still required.
 
-That gives the project a useful recursive test:
+That gives the project a useful acceptance scenario:
 
-1. Amenable describes Belvedere's own defensive posture.
+1. Amenable describes a repository's defensive posture.
 2. Belvedere ingests that Amenable output.
-3. Belvedere renders a landscape of itself.
-4. Reviewers use that self-landscape to find gaps in Belvedere's ingestion,
-   modeling, projection, accessibility, and proof coverage.
+3. Belvedere renders a landscape for that repository.
+4. Reviewers use the landscape to inspect ingestion, modeling, projection,
+   accessibility, and proof coverage.
 
-The loop is powerful only if it is stratified. Belvedere should be allowed to
-display its own evidence, but not to mint trust in itself by displaying it. The
+Belvedere's repository can be one such repository, but it should not receive a
+special contract family, exchange, certificate, receipt, or view model. The
 authority remains the underlying Amenable records, backend verifier results,
 explicit provenance roots, and reviewer assessments.
 
-### Belvedere's Own Claims
+### Pipeline Claims
 
-The first self-claims should track the pipeline boundaries that matter most:
+The first Belvedere claims should track the project-neutral pipeline boundaries
+that matter most:
 
 - Input fidelity: a registry dump or assessment log is parsed without dropping
   record identity, source path, verifier name, recommendation, or provenance
@@ -343,9 +343,9 @@ Each Belvedere layer should emit or expose evidence that Amenable can register:
 - UI projection should produce a `UiProjectionCertificate`: source view model
   ID, `elicit_ui` verification result, widget IDs emitted, accessibility
   checks, and any renderer-independent warnings.
-- A dogfood run should produce a `BelvedereRunCertificate`: Belvedere version,
-  Amenable version, Elicitation version, input artifact digests, generated
-  certificate digests, and the command line used.
+- A full Belvedere run should produce a `BelvedereRunCertificate`: Belvedere
+  version, Amenable version, Elicitation version, input artifact digests,
+  generated certificate digests, and the command line used.
 
 These certificates do not need to be visually fancy. They need to be structured,
 deterministic, and boring enough that Amenable can treat them as evidence
@@ -353,8 +353,8 @@ records.
 
 ### Standards, Proofs, And Assessments
 
-Belvedere's self-evidence should use the same trust vocabulary it displays for
-other projects:
+Belvedere's pipeline evidence should use the same trust vocabulary it displays
+for every project:
 
 - Standards are explicit roots for things that are certified rather than
   derived, such as the accepted registry-dump schema, assessment-log schema,
@@ -367,44 +367,29 @@ other projects:
   and translation support make sense.
 - Assessments should cover human judgment: whether the visual vocabulary is
   honest, whether labels communicate uncertainty, whether a reviewer can trace
-  a displayed assertion back to its source, and whether a self-landscape is
-  useful rather than self-congratulatory.
+  a displayed assertion back to its source, and whether the landscape helps an
+  auditor act instead of merely looking complete.
 
 This keeps the promise crisp: Belvedere can prove and certify properties of
 its pipeline, while still making human review explicit for product and
 communication quality.
 
-### Dogfood Workflow
+### Repository Fixture Workflow
 
 A mature local gate should eventually look like this:
 
 1. Build Belvedere and run focused tests.
-2. Run Amenable over Belvedere to generate registry, proof, certificate, and
-   assessment artifacts.
-3. Run Belvedere against those artifacts to create a self-landscape snapshot.
-4. Verify the self-landscape view models and `elicit_ui` layouts.
-5. Publish or store the resulting dogfood certificates under the configured
+2. Generate or load Amenable registry, proof, certificate, and assessment
+   artifacts for one or more representative repositories.
+3. Run Belvedere against those artifacts to create landscape snapshots.
+4. Verify the view models and `elicit_ui` layouts.
+5. Publish or store the resulting stage certificates under the configured
    artifact location.
 6. Fail the gate on parser loss, invalid landscape invariants, broken UI IR,
-   missing source traceability, or open high-severity self-findings.
+   missing source traceability, or open high-severity findings.
 
-The first version can be smaller: one fixture generated from Belvedere's own
-Amenable registry dump, one self-overview view model, one verified `elicit_ui`
-layout, and one certificate proving the projection preserved source IDs.
-
-### Avoiding The Bootstrap Trap
-
-Belvedere should make its self-reference explicit:
-
-- `B0`: hand-written standards and schemas reviewed by humans.
-- `B1`: Amenable evidence about Belvedere's code and artifacts.
-- `B2`: Belvedere-rendered views of the `B1` evidence.
-- `B3`: Amenable evidence about the `B2` projection pipeline.
-
-A `B2` view can help a reviewer understand `B1`, but it cannot certify `B1`.
-Likewise, `B3` can certify properties of the projection from evidence to UI
-IR, but not the semantic truth of the underlying proof claims. This prevents a
-pleasant-looking self-dashboard from becoming a trust shortcut.
+Belvedere's own repository can be included in that fixture set because it is a
+real Amenable codebase. It should be treated exactly like the others.
 
 ## Early Data Questions
 
@@ -422,8 +407,8 @@ These are the main questions to resolve during implementation:
   a single misleading score?
 - Which view model invariants should get their own tests before any renderer
   exists?
-- Which Belvedere self-claims should become Amenable records in the first
-  dogfood pass?
+- Which Belvedere pipeline claims should become Amenable records in the first
+  certification pass?
 - What is the smallest certificate shape that preserves source traceability
   without turning every view computation into a heavyweight proof artifact?
 - Which roots should be explicit Belvedere standards rather than machine
@@ -458,15 +443,15 @@ Belvedere's checks should be executable product gates:
 - verify the resulting layout at multiple viewports
 - emit a certificate for each successful collection, landscape, view-model, and
   UI projection step
-- run at least one dogfood fixture where Belvedere displays Amenable evidence
-  about Belvedere itself
+- run fixtures where Belvedere displays Amenable evidence for representative
+  repositories, including this repository when useful
 - run `cargo fmt`, focused tests, and the repository's cordial gate before
   calling implementation work complete
 
 Once real code exists, every new view should have tests at both levels: the
 view model it intends to communicate and the `elicit_ui` layout it emits.
-For dogfood-facing behavior, tests should also assert that visible claims retain
-source IDs back to the collected evidence that produced them.
+Fixture-facing tests should also assert that visible claims retain source IDs
+back to the collected evidence that produced them.
 
 ## Suggested Repository Shape
 
@@ -512,11 +497,11 @@ tests/
   fixtures/
     registry_dump.json
     proof_assessments.jsonl
-    belvedere_self_registry_dump.json
+    belvedere_registry_dump.json
   ingestion_exchange_test.rs
   landscape_snapshot_test.rs
   ui_projection_test.rs
-  dogfood_snapshot_test.rs
+  repository_fixture_snapshot_test.rs
 ```
 
 This shape keeps the Amenable-facing interfaces visible instead of burying them
