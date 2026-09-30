@@ -1,6 +1,7 @@
 //! Audit artifacts emitted by Belvedere pipeline exchanges.
 
 mod certificate;
+mod invariant;
 mod landscape;
 mod receipt;
 mod ui_ir;
@@ -10,6 +11,8 @@ pub use certificate::{
     BelvedereInvocationSurface, BelvederePipelineStage, BelvedereRunCertificate,
     BelvedereRunInvocation, BelvedereStageCertificate,
 };
+pub use invariant::BelvedereInvariantCheck;
+pub(crate) use invariant::stage_invariant_checks;
 pub(crate) use landscape::LandscapeReceiptBuilder;
 pub use landscape::{LandscapeReceipt, LandscapeReceiptCounts};
 pub use receipt::IngestionReceipt;

@@ -17,9 +17,9 @@ mod run;
 mod telemetry;
 
 pub use certify::{
-    BelvedereInvocationSurface, BelvederePipelineStage, BelvedereRunCertificate,
-    BelvedereRunInvocation, BelvedereStageCertificate, IngestionReceipt, LandscapeReceipt,
-    LandscapeReceiptCounts, UiIrReceipt, UiIrReceiptCounts, ViewModelReceipt,
+    BelvedereInvariantCheck, BelvedereInvocationSurface, BelvederePipelineStage,
+    BelvedereRunCertificate, BelvedereRunInvocation, BelvedereStageCertificate, IngestionReceipt,
+    LandscapeReceipt, LandscapeReceiptCounts, UiIrReceipt, UiIrReceiptCounts, ViewModelReceipt,
     ViewModelReceiptCounts,
 };
 pub use cli::{

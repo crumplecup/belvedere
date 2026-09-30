@@ -12,7 +12,10 @@ use crate::contracts::{
     ElicitUiProjectionContract, LandscapeModelingContract, RegistryDumpIngestionContract,
 };
 
-use super::{IngestionReceipt, LandscapeReceipt, UiIrReceipt, ViewModelReceipt};
+use super::{
+    BelvedereInvariantCheck, IngestionReceipt, LandscapeReceipt, UiIrReceipt, ViewModelReceipt,
+    stage_invariant_checks,
+};
 
 /// Named stage in a complete Belvedere pipeline run.
 #[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash, Serialize)]
@@ -119,6 +122,7 @@ pub struct BelvedereStageCertificate {
     input_ids: Vec<String>,
     output_ids: Vec<String>,
     counts: BTreeMap<String, usize>,
+    invariant_checks: Vec<BelvedereInvariantCheck>,
     warning_count: usize,
     digest: String,
 }
@@ -271,15 +275,14 @@ impl BelvedereStageCertificate {
 
     #[instrument(level = "debug", skip(evidence))]
     fn new(evidence: StageCertificateEvidence) -> Self {
-        let digest = stage_digest(
-            evidence.stage,
-            &evidence.contract,
+        let invariant_checks = stage_invariant_checks(
             &evidence.requires,
             &evidence.ensures,
             &evidence.input_ids,
-            &evidence.output_ids,
             &evidence.counts,
+            evidence.warning_count,
         );
+        let digest = stage_digest(&evidence, &invariant_checks);
         let id = format!("belvedere.stage.{}:{digest}", evidence.stage);
         Self {
             id,
@@ -290,6 +293,7 @@ impl BelvedereStageCertificate {
             input_ids: evidence.input_ids,
             output_ids: evidence.output_ids,
             counts: evidence.counts,
+            invariant_checks,
             warning_count: evidence.warning_count,
             digest,
         }
@@ -404,26 +408,26 @@ fn artifact_id(receipt: &IngestionReceipt) -> String {
     )
 }
 
-#[instrument(level = "debug", skip(stage, counts))]
+#[instrument(level = "debug", skip(evidence, invariant_checks))]
 fn stage_digest(
-    stage: BelvederePipelineStage,
-    contract: &str,
-    requires: &[String],
-    ensures: &[String],
-    input_ids: &[String],
-    output_ids: &[String],
-    counts: &BTreeMap<String, usize>,
+    evidence: &StageCertificateEvidence,
+    invariant_checks: &[BelvedereInvariantCheck],
 ) -> String {
     let mut hasher = Sha256::new();
-    update_field(&mut hasher, stage.as_str());
-    update_field(&mut hasher, contract);
-    update_fields(&mut hasher, requires);
-    update_fields(&mut hasher, ensures);
-    update_fields(&mut hasher, input_ids);
-    update_fields(&mut hasher, output_ids);
-    for (name, count) in counts {
+    update_field(&mut hasher, evidence.stage.as_str());
+    update_field(&mut hasher, &evidence.contract);
+    update_fields(&mut hasher, &evidence.requires);
+    update_fields(&mut hasher, &evidence.ensures);
+    update_fields(&mut hasher, &evidence.input_ids);
+    update_fields(&mut hasher, &evidence.output_ids);
+    for (name, count) in &evidence.counts {
         update_field(&mut hasher, name);
         update_field(&mut hasher, &count.to_string());
+    }
+    for check in invariant_checks {
+        update_field(&mut hasher, check.name());
+        update_field(&mut hasher, &check.passed().to_string());
+        update_field(&mut hasher, check.detail());
     }
     hex_digest(hasher)
 }

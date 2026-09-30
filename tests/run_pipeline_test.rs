@@ -37,6 +37,14 @@ fn run_pipeline_uses_the_normal_amenable_artifact_path() -> Result<()> {
             .all(|certificate| !certificate.requires().is_empty()
                 && !certificate.ensures().is_empty())
     );
+    assert!(
+        report
+            .certificate()
+            .stage_certificates()
+            .iter()
+            .flat_map(|certificate| certificate.invariant_checks())
+            .all(|check| check.passed())
+    );
     assert!(report.projection().trace_widgets().len() >= 4);
     Ok(())
 }
@@ -75,6 +83,8 @@ fn run_certificate_is_reproducible_portable_evidence() -> Result<()> {
     assert!(encoded.contains("ui_ir_projection"));
     assert!(encoded.contains("source record identities remain available for traceability"));
     assert!(encoded.contains("the emitted tree is an elicit_ui VerifiedTree"));
+    assert!(encoded.contains("contract_obligations_named"));
+    assert!(encoded.contains("warning_count_consistent"));
     Ok(())
 }
 
@@ -127,6 +137,13 @@ fn cli_can_emit_the_run_certificate_as_json() -> Result<()> {
                         && stage_certificate["ensures"]
                             .as_array()
                             .is_some_and(|guarantees| !guarantees.is_empty())
+                        && stage_certificate["invariant_checks"]
+                            .as_array()
+                            .is_some_and(|checks| {
+                                checks
+                                    .iter()
+                                    .all(|check| check["passed"].as_bool() == Some(true))
+                            })
                 })
             )
     );
@@ -185,6 +202,17 @@ fn cli_can_persist_the_run_certificate_as_json() -> Result<()> {
     assert_eq!(
         certificate["stage_certificates"].as_array().map(Vec::len),
         Some(5)
+    );
+    assert!(
+        certificate["stage_certificates"]
+            .as_array()
+            .is_some_and(
+                |stage_certificates| stage_certificates.iter().all(|stage_certificate| {
+                    stage_certificate["invariant_checks"]
+                        .as_array()
+                        .is_some_and(|checks| !checks.is_empty())
+                })
+            )
     );
 
     fs::remove_file(&certificate_path)
