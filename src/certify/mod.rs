@@ -6,7 +6,10 @@ mod receipt;
 mod ui_ir;
 mod view_model;
 
-pub use certificate::{BelvederePipelineStage, BelvedereRunCertificate, BelvedereStageCertificate};
+pub use certificate::{
+    BelvedereInvocationSurface, BelvederePipelineStage, BelvedereRunCertificate,
+    BelvedereRunInvocation, BelvedereStageCertificate,
+};
 pub(crate) use landscape::LandscapeReceiptBuilder;
 pub use landscape::{LandscapeReceipt, LandscapeReceiptCounts};
 pub use receipt::IngestionReceipt;

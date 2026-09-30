@@ -11,8 +11,8 @@ use thiserror::Error;
 use tracing::{error, info, instrument};
 
 use crate::{
-    BelvedereError, BelvedereRunCertificate, BelvedereRunInput, BelvedereRunReport,
-    run_belvedere_pipeline,
+    BelvedereError, BelvedereRunCertificate, BelvedereRunInput, BelvedereRunInvocation,
+    BelvedereRunReport, run_belvedere_pipeline,
 };
 
 /// Parsed Belvedere command-line invocation.
@@ -31,14 +31,15 @@ impl BelvedereCli {
     /// Returns a usage error unless exactly two artifact paths are supplied.
     #[instrument(level = "debug", skip(args))]
     pub fn from_args(args: impl IntoIterator<Item = String>) -> Result<Self, BelvedereError> {
+        let arguments = args.into_iter().collect::<Vec<_>>();
         let mut output = BelvedereCliOutput::LogSummary;
         let mut paths = Vec::new();
 
-        for arg in args {
+        for arg in &arguments {
             match arg.as_str() {
                 "--certificate-json" => output = BelvedereCliOutput::RunCertificateJson,
                 _ if arg.starts_with("--") => return Err(BelvedereCliUsageError::new().into()),
-                _ => paths.push(arg),
+                _ => paths.push(arg.clone()),
             }
         }
 
@@ -53,7 +54,11 @@ impl BelvedereCli {
             return Err(BelvedereCliUsageError::new().into());
         }
         Ok(Self {
-            input: BelvedereRunInput::new(registry_path, assessments_path),
+            input: BelvedereRunInput::with_invocation(
+                registry_path,
+                assessments_path,
+                BelvedereRunInvocation::cli(arguments),
+            ),
             output,
         })
     }

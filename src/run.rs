@@ -4,12 +4,12 @@ use std::path::PathBuf;
 
 use derive_builder::Builder;
 use derive_getters::Getters;
-use derive_new::new;
 use tracing::instrument;
 
 use crate::{
     certify::{
-        BelvedereRunCertificate, IngestionReceipt, LandscapeReceipt, UiIrReceipt, ViewModelReceipt,
+        BelvedereRunCertificate, BelvedereRunInvocation, IngestionReceipt, LandscapeReceipt,
+        UiIrReceipt, ViewModelReceipt,
     },
     collect::read_raw_artifact,
     contracts::{ArtifactKind, LandscapeInput, UiIrInput, UiIrProjection, ViewModelInput},
@@ -21,12 +21,39 @@ use crate::{
 };
 
 /// Input artifact paths for a normal Belvedere pipeline run.
-#[derive(Debug, Clone, PartialEq, Eq, Getters, new)]
+#[derive(Debug, Clone, PartialEq, Eq, Getters)]
 pub struct BelvedereRunInput {
-    #[new(into)]
     registry_path: PathBuf,
-    #[new(into)]
     assessments_path: PathBuf,
+    invocation: BelvedereRunInvocation,
+}
+
+impl BelvedereRunInput {
+    /// Create run input for direct library use.
+    #[instrument(level = "debug", skip(registry_path, assessments_path))]
+    #[must_use]
+    pub fn new(registry_path: impl Into<PathBuf>, assessments_path: impl Into<PathBuf>) -> Self {
+        Self::with_invocation(
+            registry_path,
+            assessments_path,
+            BelvedereRunInvocation::library(),
+        )
+    }
+
+    /// Create run input with explicit invocation provenance.
+    #[instrument(level = "trace", skip(registry_path, assessments_path, invocation))]
+    #[must_use]
+    pub fn with_invocation(
+        registry_path: impl Into<PathBuf>,
+        assessments_path: impl Into<PathBuf>,
+        invocation: BelvedereRunInvocation,
+    ) -> Self {
+        Self {
+            registry_path: registry_path.into(),
+            assessments_path: assessments_path.into(),
+            invocation,
+        }
+    }
 }
 
 /// Evidence emitted by a complete Belvedere pipeline run.
@@ -64,7 +91,8 @@ pub fn run_belvedere_pipeline(
     let (view_model, view_model_receipt) =
         AuditorNavigationProjection.project(ViewModelInput::new(landscape))?;
     let (projection, ui_ir_receipt) = ElicitUiProjection.project(UiIrInput::new(view_model))?;
-    let certificate = BelvedereRunCertificate::from_receipts(
+    let certificate = BelvedereRunCertificate::from_receipts_with_invocation(
+        input.invocation().clone(),
         &registry_receipt,
         &assessment_receipt,
         &landscape_receipt,

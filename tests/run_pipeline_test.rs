@@ -1,8 +1,8 @@
 use std::process::ExitCode;
 
 use belvedere::{
-    BelvedereCli, BelvedereCliOutput, BelvedereRunInput, run_belvedere_pipeline,
-    run_cli_with_writer,
+    BelvedereCli, BelvedereCliOutput, BelvedereInvocationSurface, BelvedereRunInput,
+    run_belvedere_pipeline, run_cli_with_writer,
 };
 use miette::{IntoDiagnostic, Result, WrapErr};
 use serde_json::Value;
@@ -48,6 +48,10 @@ fn run_certificate_is_reproducible_portable_evidence() -> Result<()> {
     .wrap_err("second fixture pipeline run should produce a certificate")?;
 
     assert_eq!(first.certificate().id(), second.certificate().id());
+    assert_eq!(
+        first.certificate().invocation().surface(),
+        BelvedereInvocationSurface::Library
+    );
     assert_eq!(
         first.certificate().stage_certificate_ids(),
         second.certificate().stage_certificate_ids()
@@ -98,6 +102,13 @@ fn cli_can_emit_the_run_certificate_as_json() -> Result<()> {
     assert_eq!(
         certificate["input_artifact_ids"].as_array().map(Vec::len),
         Some(2)
+    );
+    assert_eq!(certificate["invocation"]["surface"].as_str(), Some("cli"));
+    assert_eq!(
+        certificate["invocation"]["arguments"]
+            .as_array()
+            .map(Vec::len),
+        Some(3)
     );
     Ok(())
 }
