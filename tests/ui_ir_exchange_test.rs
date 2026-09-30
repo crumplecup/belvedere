@@ -93,7 +93,11 @@ fn ui_ir_projection_preserves_trace_widgets_for_auditor_deep_dives() -> Result<(
     let gap_widget = projection
         .trace_widgets()
         .iter()
-        .find(|widget| widget.label().starts_with("Gap "))
+        .find(|widget| {
+            widget.label().starts_with(
+                "Gap MissingAssessment for belvedere::ingestion::DecodedRegistrySnapshot is review priority; next action: assess proof coverage",
+            )
+        })
         .ok_or_else(|| miette!("gap queue should have traceable widgets"))?;
     assert!(!gap_widget.source_record_ids().is_empty());
     let filter_widget = projection

@@ -14,8 +14,8 @@ mod trace;
 
 pub use items::{
     AssessmentQueueItem, AssessmentWorkItem, AuditorFilterFacet, BackendCoverageItem,
-    ClaimExplorerCounts, ClaimExplorerItem, GapItem, ProofChainItem, ProvenanceRootItem,
-    SourceNavigationItem, WitnessSurfaceItem,
+    ClaimExplorerCounts, ClaimExplorerItem, GapItem, GapSeverity, ProofChainItem,
+    ProvenanceRootItem, SourceNavigationItem, WitnessSurfaceItem,
 };
 pub(crate) use items::{
     AssessmentQueueItemBuilder, AssessmentWorkItemBuilder, AuditorFilterFacetBuilder,
@@ -170,7 +170,7 @@ impl BelvedereContract for AuditorNavigationContract {
             "assessment work entries expose missing reviews and current reviewer actions with trace IDs",
             "witness surface entries preserve support kind and support counts",
             "provenance root entries preserve explicit root identities",
-            "gap entries preserve conservative gap kinds and trace IDs",
+            "gap entries preserve conservative gap kinds, severity, action, and trace IDs",
             "source navigation entries preserve ingested source record identities",
         ]
     }

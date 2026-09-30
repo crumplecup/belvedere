@@ -1,6 +1,7 @@
 use belvedere::{
-    ArtifactKind, AssessmentStreamIngestion, AuditorNavigationProjection, LandscapeGapKind,
-    LandscapeInput, LandscapeModeling, RawAmenableArtifact, RegistryDumpIngestion, ViewModelInput,
+    ArtifactKind, AssessmentStreamIngestion, AuditorNavigationProjection, GapSeverity,
+    LandscapeGapKind, LandscapeInput, LandscapeModeling, RawAmenableArtifact,
+    RegistryDumpIngestion, ViewModelInput,
 };
 use miette::{IntoDiagnostic, Result, WrapErr, miette};
 
@@ -17,7 +18,7 @@ fn view_model_projection_builds_auditor_navigation_evidence() -> Result<()> {
     assert_eq!(model.overview().root_count(), 3);
     assert_eq!(model.overview().proof_coverage_count(), 2);
     assert_eq!(model.overview().assessment_count(), 2);
-    assert_eq!(model.overview().high_priority_gap_count(), 1);
+    assert_eq!(model.overview().high_priority_gap_count(), 3);
 
     assert_eq!(receipt.counts().claim_cards(), 4);
     assert_eq!(receipt.counts().filter_facets(), 6);
@@ -240,9 +241,41 @@ fn view_model_projection_preserves_review_queues_and_traceability() -> Result<()
     assert_eq!(witness.checked(), 1);
     assert_eq!(witness.trusted(), 1);
 
-    assert!(model.gaps().iter().any(|gap| {
-        gap.kind() == LandscapeGapKind::TrustedOrOpaqueWitnessSupport && gap.high_priority()
-    }));
+    let missing_assessment_gap = model
+        .gaps()
+        .iter()
+        .find(|gap| {
+            gap.claim_id() == "belvedere::ingestion::DecodedRegistrySnapshot"
+                && gap.kind() == LandscapeGapKind::MissingAssessment
+        })
+        .ok_or_else(|| miette!("missing-assessment gap should be visible"))?;
+    assert_eq!(missing_assessment_gap.severity(), GapSeverity::Review);
+    assert_eq!(missing_assessment_gap.action(), "assess proof coverage");
+    assert!(!missing_assessment_gap.high_priority());
+
+    let missing_proof_gap = model
+        .gaps()
+        .iter()
+        .find(|gap| gap.kind() == LandscapeGapKind::MissingProof)
+        .ok_or_else(|| miette!("missing-proof gap should be visible"))?;
+    assert_eq!(missing_proof_gap.severity(), GapSeverity::Blocking);
+    assert_eq!(
+        missing_proof_gap.action(),
+        "establish modeled proof coverage"
+    );
+    assert!(missing_proof_gap.high_priority());
+
+    let witness_gap = model
+        .gaps()
+        .iter()
+        .find(|gap| gap.kind() == LandscapeGapKind::TrustedOrOpaqueWitnessSupport)
+        .ok_or_else(|| miette!("trusted witness gap should be visible"))?;
+    assert_eq!(witness_gap.severity(), GapSeverity::Elevated);
+    assert_eq!(
+        witness_gap.action(),
+        "review trusted or opaque witness support"
+    );
+    assert!(witness_gap.high_priority());
     assert!(
         model
             .provenance_roots()

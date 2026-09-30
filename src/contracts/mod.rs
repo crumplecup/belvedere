@@ -34,7 +34,7 @@ pub(crate) use ui_ir::{TraceWidgetRefBuilder, UiIrProjectionBuilder};
 pub use view_model::{
     AssessmentQueueItem, AssessmentWorkItem, AuditorFilterFacet, AuditorNavigationContract,
     AuditorNavigationModel, BackendCoverageItem, ClaimExplorerCounts, ClaimExplorerItem, GapItem,
-    OverviewView, ProofChainItem, ProvenanceRootItem, SourceNavigationItem, TraceRef,
+    GapSeverity, OverviewView, ProofChainItem, ProvenanceRootItem, SourceNavigationItem, TraceRef,
     ViewModelInput, WitnessSurfaceItem,
 };
 pub(crate) use view_model::{

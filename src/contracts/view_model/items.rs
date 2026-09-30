@@ -4,15 +4,18 @@ use derive_builder::Builder;
 use derive_getters::Getters;
 use derive_new::new;
 
-use crate::contracts::{landscape::LandscapeGapKind, view_model::TraceRef};
+use crate::contracts::view_model::TraceRef;
 
 mod assessment;
 mod claim;
+mod gap;
 
 pub use assessment::{AssessmentQueueItem, AssessmentWorkItem};
 pub(crate) use assessment::{AssessmentQueueItemBuilder, AssessmentWorkItemBuilder};
 pub(crate) use claim::ProofChainItemBuilder;
 pub use claim::{ClaimExplorerCounts, ClaimExplorerItem, ProofChainItem};
+pub(crate) use gap::GapItemBuilder;
+pub use gap::{GapItem, GapSeverity};
 
 /// Auditor filter facet for narrowing the displayed defensive landscape.
 #[derive(Debug, Clone, PartialEq, Eq, Getters, Builder)]
@@ -148,40 +151,6 @@ pub struct ProvenanceRootItem {
 }
 
 impl ProvenanceRootItem {
-    /// Trace reference.
-    #[must_use]
-    pub const fn trace(&self) -> &TraceRef {
-        &self.trace
-    }
-}
-
-/// Gap item.
-#[derive(Debug, Clone, PartialEq, Eq, Getters, Builder)]
-#[builder(vis = "pub(crate)", setter(into))]
-pub struct GapItem {
-    claim_id: String,
-    #[getter(skip)]
-    kind: LandscapeGapKind,
-    detail: String,
-    #[getter(skip)]
-    high_priority: bool,
-    #[getter(skip)]
-    trace: TraceRef,
-}
-
-impl GapItem {
-    /// Gap kind.
-    #[must_use]
-    pub const fn kind(&self) -> LandscapeGapKind {
-        self.kind
-    }
-
-    /// Whether this item should be elevated in overview.
-    #[must_use]
-    pub const fn high_priority(&self) -> bool {
-        self.high_priority
-    }
-
     /// Trace reference.
     #[must_use]
     pub const fn trace(&self) -> &TraceRef {

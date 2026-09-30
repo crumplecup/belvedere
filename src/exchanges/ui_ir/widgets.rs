@@ -210,9 +210,11 @@ pub(super) fn gap_widget(
         backend,
         "button",
         format!(
-            "Gap {:?} for {}: {}",
+            "Gap {:?} for {} is {} priority; next action: {}; detail: {}",
             item.kind(),
             item.claim_id(),
+            item.severity().label(),
+            item.action(),
             item.detail()
         ),
         item.trace().clone(),

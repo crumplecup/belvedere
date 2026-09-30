@@ -1,24 +1,32 @@
 //! Auditor navigation view-model exchange implementations.
 
-use std::collections::{BTreeMap, BTreeSet};
-
 use tracing::instrument;
 
 use crate::{
     certify::{ViewModelReceipt, ViewModelReceiptBuilder, ViewModelReceiptCountsBuilder},
     contracts::{
-        AssessmentQueueItemBuilder, AssessmentWorkItemBuilder, AuditorNavigationContract,
-        AuditorNavigationModel, AuditorNavigationModelBuilder, BackendCoverageItemBuilder,
-        BelvedereContract, ClaimExplorerCounts, ClaimExplorerItem, GapItem, GapItemBuilder,
-        LandscapeAssessment, LandscapeClaim, LandscapeGap, LandscapeGapKind, OverviewView,
-        ProofChainItem, ProofChainItemBuilder, ProvenanceRootItem, Recommendation, Rubric,
-        SourceNavigationItemBuilder, TraceRef, ViewModelInput, WitnessSurfaceItemBuilder,
+        AuditorNavigationContract, AuditorNavigationModel, AuditorNavigationModelBuilder,
+        BelvedereContract, OverviewView, ProvenanceRootItem, TraceRef, ViewModelInput,
     },
     error::{BelvedereConstructionError, BelvedereError},
     exchanges::BelvedereExchange,
 };
 
-const TARGET_VERIFIERS: [&str; 3] = ["kani", "creusot", "verus"];
+mod assessments;
+mod claims;
+mod coverage;
+mod facets;
+mod gaps;
+mod sources;
+mod witness;
+
+use assessments::{project_assessment_queue, project_assessment_work};
+use claims::{project_claim_explorer, project_proof_chains};
+use coverage::project_backend_coverage;
+use facets::project_filter_facets;
+use gaps::project_gaps;
+use sources::project_source_navigation;
+use witness::project_witness_surface;
 
 /// Exchange from a landscape graph into UI-neutral auditor navigation evidence.
 #[derive(Debug, Clone, Copy, Default)]
@@ -71,95 +79,15 @@ impl BelvedereExchange<AuditorNavigationContract> for AuditorNavigationProjectio
         let backend_coverage =
             project_backend_coverage(landscape.claims().values(), &source_record_ids)?;
 
-        let claim_explorer: Vec<ClaimExplorerItem> = landscape
-            .claims()
-            .values()
-            .map(|claim| {
-                let claim_gap_count = gaps
-                    .iter()
-                    .filter(|gap| gap.claim_id() == claim.id())
-                    .count();
-                ClaimExplorerItem::new(
-                    claim.id(),
-                    claim.is_root(),
-                    claim.bases().iter().cloned().collect(),
-                    claim.proofs().iter().cloned().collect(),
-                    ClaimExplorerCounts::new(
-                        claim.contracts().len(),
-                        claim.assessment_ids().len(),
-                        claim_gap_count,
-                    ),
-                    trace(claim.id(), &source_record_ids),
-                )
-            })
-            .collect();
-
-        let proof_chains: Vec<ProofChainItem> = landscape
-            .claims()
-            .values()
-            .map(|claim| {
-                let claim_gap_count = gaps
-                    .iter()
-                    .filter(|gap| gap.claim_id() == claim.id())
-                    .count();
-                ProofChainItemBuilder::default()
-                    .claim_id(claim.id())
-                    .basis_ids(claim.bases().iter().cloned().collect::<Vec<_>>())
-                    .root_ids(chain_roots(claim.id(), landscape.claims()))
-                    .verifiers(claim.proofs().iter().cloned().collect::<Vec<_>>())
-                    .gap_count(claim_gap_count)
-                    .trace(trace(claim.id(), &source_record_ids))
-                    .build()
-                    .map_err(|error| BelvedereConstructionError::new("ProofChainItem", error))
-            })
-            .collect::<Result<Vec<_>, _>>()?;
-
-        let superseded_counts = superseded_counts_by_current_assessment(landscape.assessments());
-        let assessment_queue = landscape
-            .assessments()
-            .iter()
-            .map(|assessment| {
-                AssessmentQueueItemBuilder::default()
-                    .assessment_id(assessment.id())
-                    .proof_id(assessment.proof_id())
-                    .current(assessment.current())
-                    .superseded_count(
-                        superseded_counts
-                            .get(assessment.id())
-                            .copied()
-                            .unwrap_or_default(),
-                    )
-                    .recommendation(assessment.recommendation())
-                    .resolution_path(assessment.resolution_path())
-                    .weak_dimensions(weak_dimensions(assessment.rubric()))
-                    .trace(trace(assessment.proof_id(), &source_record_ids))
-                    .build()
-                    .map_err(|error| BelvedereConstructionError::new("AssessmentQueueItem", error))
-            })
-            .collect::<Result<Vec<_>, _>>()?;
+        let claim_explorer =
+            project_claim_explorer(landscape.claims().values(), &gaps, &source_record_ids);
+        let proof_chains = project_proof_chains(landscape.claims(), &gaps, &source_record_ids)?;
+        let assessment_queue =
+            project_assessment_queue(landscape.assessments(), &source_record_ids)?;
         let assessment_work =
             project_assessment_work(landscape.assessments(), &gaps, &source_record_ids)?;
-
-        let mut witness_surface = Vec::new();
-        for claim in landscape.claims().values() {
-            for witness in claim.witness_surfaces() {
-                let item = WitnessSurfaceItemBuilder::default()
-                    .claim_id(claim.id())
-                    .verifier(witness.verifier())
-                    .destination_module(witness.destination_module())
-                    .support_kind(witness.support_kind())
-                    .trivial(witness.trivial())
-                    .checked(witness.checked())
-                    .trusted(witness.trusted())
-                    .opaque(witness.opaque())
-                    .trace(trace(claim.id(), &source_record_ids))
-                    .build()
-                    .map_err(|error| {
-                        BelvedereConstructionError::new("WitnessSurfaceItem", error)
-                    })?;
-                witness_surface.push(item);
-            }
-        }
+        let witness_surface =
+            project_witness_surface(landscape.claims().values(), &source_record_ids)?;
 
         let provenance_roots: Vec<ProvenanceRootItem> = landscape
             .root_claim_ids()
@@ -210,287 +138,7 @@ impl BelvedereExchange<AuditorNavigationContract> for AuditorNavigationProjectio
     }
 }
 
-#[instrument(level = "debug", skip(assessments, gaps, source_record_ids))]
-fn project_assessment_work(
-    assessments: &[LandscapeAssessment],
-    gaps: &[GapItem],
-    source_record_ids: &[String],
-) -> Result<Vec<crate::contracts::AssessmentWorkItem>, BelvedereConstructionError> {
-    let mut items = Vec::new();
-    for gap in gaps {
-        if gap.kind() == LandscapeGapKind::MissingAssessment {
-            items.push(
-                AssessmentWorkItemBuilder::default()
-                    .claim_id(gap.claim_id())
-                    .action("assess proof coverage")
-                    .reason(gap.detail())
-                    .high_priority(gap.high_priority())
-                    .trace(gap.trace().clone())
-                    .build()
-                    .map_err(|error| {
-                        BelvedereConstructionError::new("AssessmentWorkItem", error)
-                    })?,
-            );
-        }
-    }
-
-    for assessment in assessments {
-        if !assessment.current() || assessment.recommendation() == Recommendation::Accept {
-            continue;
-        }
-        let action = match assessment.recommendation() {
-            Recommendation::Accept => "accept proof",
-            Recommendation::Strengthen => "strengthen proof",
-            Recommendation::Replace => "replace proof",
-            Recommendation::Retire => "retire claim",
-        };
-        let high_priority = matches!(
-            assessment.recommendation(),
-            Recommendation::Replace | Recommendation::Retire
-        );
-        items.push(
-            AssessmentWorkItemBuilder::default()
-                .claim_id(assessment.proof_id())
-                .action(action)
-                .reason(format!(
-                    "current assessment {} recommends {:?}",
-                    assessment.id(),
-                    assessment.recommendation()
-                ))
-                .high_priority(high_priority)
-                .trace(trace(assessment.proof_id(), source_record_ids))
-                .build()
-                .map_err(|error| BelvedereConstructionError::new("AssessmentWorkItem", error))?,
-        );
-    }
-
-    Ok(items)
-}
-
-#[instrument(level = "debug", skip(claims, source_record_ids))]
-fn project_backend_coverage<'a>(
-    claims: impl Iterator<Item = &'a LandscapeClaim>,
-    source_record_ids: &[String],
-) -> Result<Vec<crate::contracts::BackendCoverageItem>, BelvedereConstructionError> {
-    let mut items = Vec::new();
-    for claim in claims {
-        for verifier in TARGET_VERIFIERS {
-            items.push(
-                BackendCoverageItemBuilder::default()
-                    .claim_id(claim.id())
-                    .verifier(verifier)
-                    .covered(claim.proofs().contains(verifier))
-                    .trace(trace(claim.id(), source_record_ids))
-                    .build()
-                    .map_err(|error| {
-                        BelvedereConstructionError::new("BackendCoverageItem", error)
-                    })?,
-            );
-        }
-    }
-    Ok(items)
-}
-
-#[instrument(level = "debug", skip(assessments))]
-fn superseded_counts_by_current_assessment(
-    assessments: &[crate::contracts::LandscapeAssessment],
-) -> BTreeMap<String, usize> {
-    let mut counts = BTreeMap::new();
-    for assessment in assessments {
-        if let Some(current_id) = assessment.superseded_by() {
-            increment_count(&mut counts, current_id);
-        }
-    }
-    counts
-}
-
-#[instrument(level = "debug", skip(source_record_ids))]
-fn project_source_navigation(
-    source_record_ids: &[String],
-) -> Result<Vec<crate::contracts::SourceNavigationItem>, BelvedereConstructionError> {
-    source_record_ids
-        .iter()
-        .map(|source_record_id| {
-            SourceNavigationItemBuilder::default()
-                .source_record_id(source_record_id)
-                .label(format!("Source record {source_record_id}"))
-                .trace(TraceRef::new(
-                    format!("belvedere.source_record:{source_record_id}"),
-                    vec![source_record_id.to_owned()],
-                ))
-                .build()
-                .map_err(|error| BelvedereConstructionError::new("SourceNavigationItem", error))
-        })
-        .collect()
-}
-
-#[instrument(level = "debug", skip(claims, assessments, gaps))]
-fn project_filter_facets<'a>(
-    claims: impl Iterator<Item = &'a LandscapeClaim>,
-    assessments: &[crate::contracts::LandscapeAssessment],
-    gaps: &[GapItem],
-    source_record_ids: &[String],
-) -> Result<Vec<crate::contracts::AuditorFilterFacet>, BelvedereConstructionError> {
-    let mut verifier_counts = BTreeMap::new();
-    for claim in claims {
-        for verifier in claim.proofs() {
-            increment_count(&mut verifier_counts, verifier);
-        }
-    }
-
-    let mut recommendation_counts = BTreeMap::new();
-    for assessment in assessments {
-        increment_count(
-            &mut recommendation_counts,
-            &format!("{:?}", assessment.recommendation()),
-        );
-    }
-
-    let mut gap_kind_counts = BTreeMap::new();
-    for gap in gaps {
-        increment_count(&mut gap_kind_counts, &format!("{:?}", gap.kind()));
-    }
-
-    let mut facets = Vec::new();
-    push_facets(
-        "verifier",
-        "Verifier",
-        verifier_counts,
-        source_record_ids,
-        &mut facets,
-    )?;
-    push_facets(
-        "recommendation",
-        "Recommendation",
-        recommendation_counts,
-        source_record_ids,
-        &mut facets,
-    )?;
-    push_facets(
-        "gap_kind",
-        "Gap kind",
-        gap_kind_counts,
-        source_record_ids,
-        &mut facets,
-    )?;
-
-    Ok(facets)
-}
-
-#[instrument(level = "trace", skip(counts))]
-fn increment_count(counts: &mut BTreeMap<String, usize>, value: &str) {
-    *counts.entry(value.to_owned()).or_default() += 1;
-}
-
-#[instrument(level = "debug", skip(counts, facets))]
-fn push_facets(
-    group: &'static str,
-    label_prefix: &'static str,
-    counts: BTreeMap<String, usize>,
-    source_record_ids: &[String],
-    facets: &mut Vec<crate::contracts::AuditorFilterFacet>,
-) -> Result<(), BelvedereConstructionError> {
-    for (value, count) in counts {
-        let facet_id = format!("belvedere.filter.{group}:{value}");
-        facets.push(
-            crate::contracts::AuditorFilterFacetBuilder::default()
-                .facet_id(facet_id.clone())
-                .group(group)
-                .value(value.clone())
-                .label(format!("{label_prefix} {value}"))
-                .count(count)
-                .trace(trace(&facet_id, source_record_ids))
-                .build()
-                .map_err(|error| BelvedereConstructionError::new("AuditorFilterFacet", error))?,
-        );
-    }
-    Ok(())
-}
-
-#[instrument(level = "debug", skip(claims))]
-fn chain_roots(
-    claim_id: &str,
-    claims: &std::collections::BTreeMap<String, LandscapeClaim>,
-) -> Vec<String> {
-    let mut roots = BTreeSet::new();
-    let mut visiting = BTreeSet::new();
-    collect_chain_roots(claim_id, claims, &mut visiting, &mut roots);
-    roots.into_iter().collect()
-}
-
-#[instrument(level = "trace", skip(claims, visiting, roots))]
-fn collect_chain_roots(
-    claim_id: &str,
-    claims: &std::collections::BTreeMap<String, LandscapeClaim>,
-    visiting: &mut BTreeSet<String>,
-    roots: &mut BTreeSet<String>,
-) {
-    if !visiting.insert(claim_id.to_owned()) {
-        roots.insert(claim_id.to_owned());
-        return;
-    }
-    let Some(claim) = claims.get(claim_id) else {
-        roots.insert(claim_id.to_owned());
-        visiting.remove(claim_id);
-        return;
-    };
-    if claim.is_root() {
-        roots.insert(claim.id().to_owned());
-        visiting.remove(claim_id);
-        return;
-    }
-    for basis in claim.bases() {
-        collect_chain_roots(basis, claims, visiting, roots);
-    }
-    visiting.remove(claim_id);
-}
-
-#[instrument(level = "debug", skip(gaps))]
-fn project_gaps(
-    gaps: &[LandscapeGap],
-    source_record_ids: &[String],
-) -> Result<Vec<GapItem>, BelvedereConstructionError> {
-    gaps.iter()
-        .map(|gap| {
-            GapItemBuilder::default()
-                .claim_id(gap.claim_id())
-                .kind(gap.kind())
-                .detail(gap.detail())
-                .high_priority(high_priority(gap.kind()))
-                .trace(trace(gap.claim_id(), source_record_ids))
-                .build()
-                .map_err(|error| BelvedereConstructionError::new("GapItem", error))
-        })
-        .collect()
-}
-
-#[instrument(level = "debug", skip(kind))]
-fn high_priority(kind: LandscapeGapKind) -> bool {
-    matches!(
-        kind,
-        LandscapeGapKind::ReplacementRecommended
-            | LandscapeGapKind::RetirementRecommended
-            | LandscapeGapKind::TrustedOrOpaqueWitnessSupport
-    )
-}
-
 #[instrument(level = "debug")]
-fn trace(claim_id: &str, source_record_ids: &[String]) -> TraceRef {
+pub(super) fn trace(claim_id: &str, source_record_ids: &[String]) -> TraceRef {
     TraceRef::new(claim_id, source_record_ids.to_vec())
-}
-
-#[instrument(level = "debug", skip(rubric))]
-fn weak_dimensions(rubric: Rubric) -> Vec<String> {
-    [
-        ("claim_alignment", rubric.claim_alignment()),
-        ("assumption_adequacy", rubric.assumption_adequacy()),
-        ("model_fidelity", rubric.model_fidelity()),
-        ("assertion_strength", rubric.assertion_strength()),
-        ("adversarial_coverage", rubric.adversarial_coverage()),
-        ("clarity", rubric.clarity()),
-    ]
-    .into_iter()
-    .filter(|(_dimension, score)| *score < 4)
-    .map(|(dimension, _score)| dimension.to_owned())
-    .collect()
 }
