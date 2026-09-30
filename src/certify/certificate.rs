@@ -3,13 +3,15 @@
 use std::{collections::BTreeMap, fmt::Display};
 
 use derive_getters::Getters;
+use serde::Serialize;
 use sha2::{Digest as _, Sha256};
 use tracing::instrument;
 
 use super::{IngestionReceipt, LandscapeReceipt, UiIrReceipt, ViewModelReceipt};
 
 /// Named stage in a complete Belvedere pipeline run.
-#[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash, Serialize)]
+#[serde(rename_all = "snake_case")]
 pub enum BelvederePipelineStage {
     /// Registry dump ingestion.
     RegistryIngestion,
@@ -45,7 +47,7 @@ impl Display for BelvederePipelineStage {
 }
 
 /// Certificate for one successful Belvedere pipeline stage.
-#[derive(Debug, Clone, PartialEq, Eq, Getters)]
+#[derive(Debug, Clone, PartialEq, Eq, Getters, Serialize)]
 pub struct BelvedereStageCertificate {
     id: String,
     #[getter(skip)]
@@ -200,7 +202,7 @@ impl BelvedereStageCertificate {
 }
 
 /// Certificate for a complete Belvedere pipeline run.
-#[derive(Debug, Clone, PartialEq, Eq, Getters)]
+#[derive(Debug, Clone, PartialEq, Eq, Getters, Serialize)]
 pub struct BelvedereRunCertificate {
     id: String,
     belvedere_version: String,
