@@ -1,0 +1,48 @@
+{
+  "evidence_links": [
+    {
+      "name": "belvedere::ingestion::DecodedRegistrySnapshot",
+      "basis": "belvedere::ingestion::RawAmenableArtifact",
+      "index": 0,
+      "future_field": "preserved"
+    }
+  ],
+  "proof_records": [
+    {
+      "evidence": "belvedere::ingestion::DecodedRegistrySnapshot",
+      "verifier": "kani"
+    }
+  ],
+  "contract_records": [
+    {
+      "evidence": "belvedere::ingestion::DecodedRegistrySnapshot",
+      "verifier": "kani",
+      "kind": "ensures",
+      "fragment": "record_identity_is_preserved"
+    }
+  ],
+  "witness_export_records": [
+    {
+      "verifier": "kani",
+      "evidence": "belvedere::ingestion::DecodedRegistrySnapshot",
+      "destination_module": "belvedere::proofs::ingestion",
+      "support_kind": "checked_with_trusted",
+      "trivial": 0,
+      "checked": 1,
+      "trusted": 1,
+      "opaque": 0,
+      "artifact": {
+        "shape": "struct",
+        "kind": "decoded_registry_snapshot"
+      }
+    }
+  ],
+  "kani_proofs": [
+    {
+      "id": "belvedere::ingestion::record_identity_is_preserved",
+      "harness": "verify_record_identity_is_preserved",
+      "package": "belvedere"
+    }
+  ],
+  "next_schema_hint": "also preserved"
+}
