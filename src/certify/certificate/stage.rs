@@ -146,6 +146,10 @@ impl BelvedereStageCertificate {
                 "assessment_items".to_owned(),
                 receipt.counts().assessment_items(),
             ),
+            (
+                "assessment_work_items".to_owned(),
+                receipt.counts().assessment_work_items(),
+            ),
             ("claim_cards".to_owned(), receipt.counts().claim_cards()),
             ("filter_facets".to_owned(), receipt.counts().filter_facets()),
             (

@@ -121,6 +121,20 @@ fn ui_ir_projection_preserves_trace_widgets_for_auditor_deep_dives() -> Result<(
         .find(|widget| widget.label().starts_with("Proof chain "))
         .ok_or_else(|| miette!("proof-chain view should have traceable widgets"))?;
     assert!(!chain_widget.source_record_ids().is_empty());
+    let assessment_work_widget = projection
+        .trace_widgets()
+        .iter()
+        .find(|widget| {
+            widget.label().starts_with(
+                "Assessment work assess proof coverage for belvedere::ingestion::DecodedRegistrySnapshot",
+            )
+        })
+        .ok_or_else(|| miette!("assessment work should have traceable widgets"))?;
+    assert!(
+        assessment_work_widget.source_record_ids().contains(
+            &"proof_record:belvedere::ingestion::DecodedRegistrySnapshot@kani".to_owned()
+        )
+    );
     let source_widget = projection
         .trace_widgets()
         .iter()

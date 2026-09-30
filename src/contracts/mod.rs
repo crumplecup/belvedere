@@ -32,13 +32,13 @@ pub use ui_ir::{
 };
 pub(crate) use ui_ir::{TraceWidgetRefBuilder, UiIrProjectionBuilder};
 pub use view_model::{
-    AssessmentQueueItem, AuditorFilterFacet, AuditorNavigationContract, AuditorNavigationModel,
-    BackendCoverageItem, ClaimExplorerCounts, ClaimExplorerItem, GapItem, OverviewView,
-    ProofChainItem, ProvenanceRootItem, SourceNavigationItem, TraceRef, ViewModelInput,
-    WitnessSurfaceItem,
+    AssessmentQueueItem, AssessmentWorkItem, AuditorFilterFacet, AuditorNavigationContract,
+    AuditorNavigationModel, BackendCoverageItem, ClaimExplorerCounts, ClaimExplorerItem, GapItem,
+    OverviewView, ProofChainItem, ProvenanceRootItem, SourceNavigationItem, TraceRef,
+    ViewModelInput, WitnessSurfaceItem,
 };
 pub(crate) use view_model::{
-    AssessmentQueueItemBuilder, AuditorFilterFacetBuilder, AuditorNavigationModelBuilder,
-    BackendCoverageItemBuilder, GapItemBuilder, ProofChainItemBuilder, SourceNavigationItemBuilder,
-    WitnessSurfaceItemBuilder,
+    AssessmentQueueItemBuilder, AssessmentWorkItemBuilder, AuditorFilterFacetBuilder,
+    AuditorNavigationModelBuilder, BackendCoverageItemBuilder, GapItemBuilder,
+    ProofChainItemBuilder, SourceNavigationItemBuilder, WitnessSurfaceItemBuilder,
 };

@@ -8,9 +8,9 @@ use elicit_ui::{
 use tracing::instrument;
 
 use crate::contracts::{
-    AssessmentQueueItem, AuditorFilterFacet, BackendCoverageItem, ClaimExplorerItem, GapItem,
-    ProofChainItem, ProvenanceRootItem, SourceNavigationItem, TraceRef, TraceWidgetRef,
-    TraceWidgetRefBuilder, UiIrSection, WitnessSurfaceItem,
+    AssessmentQueueItem, AssessmentWorkItem, AuditorFilterFacet, BackendCoverageItem,
+    ClaimExplorerItem, GapItem, ProofChainItem, ProvenanceRootItem, SourceNavigationItem, TraceRef,
+    TraceWidgetRef, TraceWidgetRefBuilder, UiIrSection, WitnessSurfaceItem,
 };
 
 use super::UiIrError;
@@ -114,6 +114,31 @@ pub(super) fn assessment_widget(
             item.assessment_id(),
             item.recommendation(),
             item.proof_id()
+        ),
+        item.trace().clone(),
+        trace_widgets,
+    )
+}
+
+#[instrument(level = "debug", skip(backend, item, trace_widgets))]
+pub(super) fn assessment_work_widget(
+    backend: &AccessKitUiBackend,
+    item: &AssessmentWorkItem,
+    trace_widgets: &mut Vec<TraceWidgetRef>,
+) -> Result<WidgetId, UiIrError> {
+    let priority = if item.high_priority() {
+        "high priority"
+    } else {
+        "normal priority"
+    };
+    labeled_widget(
+        backend,
+        "button",
+        format!(
+            "Assessment work {} for {} ({priority}): {}",
+            item.action(),
+            item.claim_id(),
+            item.reason()
         ),
         item.trace().clone(),
         trace_widgets,

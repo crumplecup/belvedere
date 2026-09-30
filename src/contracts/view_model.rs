@@ -13,13 +13,14 @@ mod items;
 mod trace;
 
 pub use items::{
-    AssessmentQueueItem, AuditorFilterFacet, BackendCoverageItem, ClaimExplorerCounts,
-    ClaimExplorerItem, GapItem, ProofChainItem, ProvenanceRootItem, SourceNavigationItem,
-    WitnessSurfaceItem,
+    AssessmentQueueItem, AssessmentWorkItem, AuditorFilterFacet, BackendCoverageItem,
+    ClaimExplorerCounts, ClaimExplorerItem, GapItem, ProofChainItem, ProvenanceRootItem,
+    SourceNavigationItem, WitnessSurfaceItem,
 };
 pub(crate) use items::{
-    AssessmentQueueItemBuilder, AuditorFilterFacetBuilder, BackendCoverageItemBuilder,
-    GapItemBuilder, ProofChainItemBuilder, SourceNavigationItemBuilder, WitnessSurfaceItemBuilder,
+    AssessmentQueueItemBuilder, AssessmentWorkItemBuilder, AuditorFilterFacetBuilder,
+    BackendCoverageItemBuilder, GapItemBuilder, ProofChainItemBuilder, SourceNavigationItemBuilder,
+    WitnessSurfaceItemBuilder,
 };
 pub use trace::TraceRef;
 
@@ -54,6 +55,7 @@ pub struct AuditorNavigationModel {
     claim_explorer: Vec<ClaimExplorerItem>,
     proof_chains: Vec<ProofChainItem>,
     assessment_queue: Vec<AssessmentQueueItem>,
+    assessment_work: Vec<AssessmentWorkItem>,
     witness_surface: Vec<WitnessSurfaceItem>,
     provenance_roots: Vec<ProvenanceRootItem>,
     gaps: Vec<GapItem>,
@@ -165,6 +167,7 @@ impl BelvedereContract for AuditorNavigationContract {
             "claim explorer entries retain bases, verifier coverage, contracts, assessments, gaps, and trace IDs",
             "proof-chain entries retain direct bases, resolved roots, verifier coverage, gaps, and trace IDs",
             "assessment queue entries preserve recommendation, resolution, and recency vocabulary",
+            "assessment work entries expose missing reviews and current reviewer actions with trace IDs",
             "witness surface entries preserve support counts",
             "provenance root entries preserve explicit root identities",
             "gap entries preserve conservative gap kinds and trace IDs",

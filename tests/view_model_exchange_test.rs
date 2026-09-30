@@ -24,6 +24,7 @@ fn view_model_projection_builds_auditor_navigation_evidence() -> Result<()> {
     assert_eq!(receipt.counts().backend_coverage_items(), 12);
     assert_eq!(receipt.counts().proof_chain_items(), 4);
     assert_eq!(receipt.counts().assessment_items(), 2);
+    assert_eq!(receipt.counts().assessment_work_items(), 2);
     assert_eq!(receipt.counts().witness_items(), 1);
     assert_eq!(receipt.counts().root_items(), 3);
     assert_eq!(receipt.counts().source_items(), 7);
@@ -200,6 +201,34 @@ fn view_model_projection_preserves_review_queues_and_traceability() -> Result<()
             .source_record_ids()
             .contains(&"assessment:assess-belvedere-ingestion-1".to_owned())
     );
+
+    let missing_assessment = model
+        .assessment_work()
+        .iter()
+        .find(|item| {
+            item.claim_id() == "belvedere::ingestion::DecodedRegistrySnapshot"
+                && item.action() == "assess proof coverage"
+        })
+        .ok_or_else(|| miette!("missing-assessment work should be queued"))?;
+    assert_eq!(
+        missing_assessment.reason(),
+        "claim has proof coverage but no assessment"
+    );
+    assert!(
+        missing_assessment.trace().source_record_ids().contains(
+            &"proof_record:belvedere::ingestion::DecodedRegistrySnapshot@kani".to_owned()
+        )
+    );
+
+    let strengthen = model
+        .assessment_work()
+        .iter()
+        .find(|item| {
+            item.claim_id() == "belvedere::ingestion::record_identity_is_preserved"
+                && item.action() == "strengthen proof"
+        })
+        .ok_or_else(|| miette!("strengthening work should be queued"))?;
+    assert!(strengthen.reason().contains("assess-belvedere-ingestion-1"));
 
     let witness = &model.witness_surface()[0];
     assert_eq!(

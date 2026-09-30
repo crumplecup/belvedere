@@ -36,6 +36,10 @@ fn run_pipeline_uses_the_normal_amenable_artifact_path() -> Result<()> {
             .backend_coverage_items(),
         12
     );
+    assert_eq!(
+        report.view_model_receipt().counts().assessment_work_items(),
+        2
+    );
     assert_eq!(report.view_model_receipt().counts().source_items(), 7);
     assert_eq!(report.ui_ir_receipt().counts().section_count(), 10);
     assert!(

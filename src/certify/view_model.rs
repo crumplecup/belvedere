@@ -31,6 +31,7 @@ pub struct ViewModelReceiptCounts {
     backend_coverage_items: usize,
     proof_chain_items: usize,
     assessment_items: usize,
+    assessment_work_items: usize,
     witness_items: usize,
     root_items: usize,
     gap_items: usize,
@@ -66,6 +67,12 @@ impl ViewModelReceiptCounts {
     #[must_use]
     pub const fn assessment_items(self) -> usize {
         self.assessment_items
+    }
+
+    /// Number of assessment work items.
+    #[must_use]
+    pub const fn assessment_work_items(self) -> usize {
+        self.assessment_work_items
     }
 
     /// Number of witness surface items.

@@ -7,12 +7,12 @@ use tracing::instrument;
 use crate::{
     certify::{ViewModelReceipt, ViewModelReceiptBuilder, ViewModelReceiptCountsBuilder},
     contracts::{
-        AssessmentQueueItemBuilder, AuditorNavigationContract, AuditorNavigationModel,
-        AuditorNavigationModelBuilder, BackendCoverageItemBuilder, BelvedereContract,
-        ClaimExplorerCounts, ClaimExplorerItem, GapItem, GapItemBuilder, LandscapeClaim,
-        LandscapeGap, LandscapeGapKind, OverviewView, ProofChainItem, ProofChainItemBuilder,
-        ProvenanceRootItem, Rubric, SourceNavigationItemBuilder, TraceRef, ViewModelInput,
-        WitnessSurfaceItemBuilder,
+        AssessmentQueueItemBuilder, AssessmentWorkItemBuilder, AuditorNavigationContract,
+        AuditorNavigationModel, AuditorNavigationModelBuilder, BackendCoverageItemBuilder,
+        BelvedereContract, ClaimExplorerCounts, ClaimExplorerItem, GapItem, GapItemBuilder,
+        LandscapeAssessment, LandscapeClaim, LandscapeGap, LandscapeGapKind, OverviewView,
+        ProofChainItem, ProofChainItemBuilder, ProvenanceRootItem, Recommendation, Rubric,
+        SourceNavigationItemBuilder, TraceRef, ViewModelInput, WitnessSurfaceItemBuilder,
     },
     error::{BelvedereConstructionError, BelvedereError},
     exchanges::BelvedereExchange,
@@ -137,6 +137,8 @@ impl BelvedereExchange<AuditorNavigationContract> for AuditorNavigationProjectio
                     .map_err(|error| BelvedereConstructionError::new("AssessmentQueueItem", error))
             })
             .collect::<Result<Vec<_>, _>>()?;
+        let assessment_work =
+            project_assessment_work(landscape.assessments(), &gaps, &source_record_ids)?;
 
         let mut witness_surface = Vec::new();
         for claim in landscape.claims().values() {
@@ -171,6 +173,7 @@ impl BelvedereExchange<AuditorNavigationContract> for AuditorNavigationProjectio
             .backend_coverage_items(backend_coverage.len())
             .proof_chain_items(proof_chains.len())
             .assessment_items(landscape.assessments().len())
+            .assessment_work_items(assessment_work.len())
             .witness_items(witness_surface.len())
             .root_items(landscape.root_claim_ids().len())
             .gap_items(gaps.len())
@@ -185,6 +188,7 @@ impl BelvedereExchange<AuditorNavigationContract> for AuditorNavigationProjectio
             .claim_explorer(claim_explorer)
             .proof_chains(proof_chains)
             .assessment_queue(assessment_queue)
+            .assessment_work(assessment_work)
             .witness_surface(witness_surface)
             .provenance_roots(provenance_roots)
             .gaps(gaps)
@@ -202,6 +206,63 @@ impl BelvedereExchange<AuditorNavigationContract> for AuditorNavigationProjectio
 
         Ok((model, receipt))
     }
+}
+
+#[instrument(level = "debug", skip(assessments, gaps, source_record_ids))]
+fn project_assessment_work(
+    assessments: &[LandscapeAssessment],
+    gaps: &[GapItem],
+    source_record_ids: &[String],
+) -> Result<Vec<crate::contracts::AssessmentWorkItem>, BelvedereConstructionError> {
+    let mut items = Vec::new();
+    for gap in gaps {
+        if gap.kind() == LandscapeGapKind::MissingAssessment {
+            items.push(
+                AssessmentWorkItemBuilder::default()
+                    .claim_id(gap.claim_id())
+                    .action("assess proof coverage")
+                    .reason(gap.detail())
+                    .high_priority(gap.high_priority())
+                    .trace(gap.trace().clone())
+                    .build()
+                    .map_err(|error| {
+                        BelvedereConstructionError::new("AssessmentWorkItem", error)
+                    })?,
+            );
+        }
+    }
+
+    for assessment in assessments {
+        if !assessment.current() || assessment.recommendation() == Recommendation::Accept {
+            continue;
+        }
+        let action = match assessment.recommendation() {
+            Recommendation::Accept => "accept proof",
+            Recommendation::Strengthen => "strengthen proof",
+            Recommendation::Replace => "replace proof",
+            Recommendation::Retire => "retire claim",
+        };
+        let high_priority = matches!(
+            assessment.recommendation(),
+            Recommendation::Replace | Recommendation::Retire
+        );
+        items.push(
+            AssessmentWorkItemBuilder::default()
+                .claim_id(assessment.proof_id())
+                .action(action)
+                .reason(format!(
+                    "current assessment {} recommends {:?}",
+                    assessment.id(),
+                    assessment.recommendation()
+                ))
+                .high_priority(high_priority)
+                .trace(trace(assessment.proof_id(), source_record_ids))
+                .build()
+                .map_err(|error| BelvedereConstructionError::new("AssessmentWorkItem", error))?,
+        );
+    }
+
+    Ok(items)
 }
 
 #[instrument(level = "debug", skip(claims, source_record_ids))]
