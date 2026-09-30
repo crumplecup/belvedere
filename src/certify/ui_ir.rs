@@ -11,6 +11,7 @@ pub struct UiIrReceipt {
     #[getter(skip)]
     counts: UiIrReceiptCounts,
     source_record_ids: Vec<String>,
+    section_ids: Vec<String>,
     minted_standards: Vec<String>,
 }
 

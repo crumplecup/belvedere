@@ -17,8 +17,11 @@ use crate::{
         AssessmentQueueItem, BelvedereContract, ClaimExplorerItem, ElicitUiIrSourcedStandard,
         ElicitUiProjectionContract, ElicitUiRenderCompleteStandard, ElicitUiRolePreservedStandard,
         ElicitUiWcagVerifiedStandard, GapItem, ProofChainItem, ProvenanceRootItem, TraceRef,
-        TraceWidgetRef, TraceWidgetRefBuilder, UiIrInput, UiIrProjection, UiIrProjectionBuilder,
-        UiIrProofBundle, UiIrSection, UiStandardMint, WitnessSurfaceItem,
+        TraceWidgetRef, TraceWidgetRefBuilder, UI_IR_SECTION_ASSESSMENT_QUEUE,
+        UI_IR_SECTION_CLAIM_EXPLORER, UI_IR_SECTION_GAP_QUEUE, UI_IR_SECTION_OVERVIEW,
+        UI_IR_SECTION_PROOF_CHAINS, UI_IR_SECTION_PROVENANCE_ROOTS, UI_IR_SECTION_WITNESS_SURFACE,
+        UiIrInput, UiIrProjection, UiIrProjectionBuilder, UiIrProofBundle, UiIrSection,
+        UiStandardMint, WitnessSurfaceItem,
     },
     error::BelvedereConstructionError,
     exchanges::BelvedereExchange,
@@ -65,49 +68,84 @@ impl BelvedereExchange<ElicitUiProjectionContract> for ElicitUiProjection {
             TraceRef::new("belvedere::overview", model.source_record_ids().to_vec()),
             &mut trace_widgets,
         )?;
-        sections.push(section(&backend, "overview", vec![overview])?);
+        sections.push(section(
+            &backend,
+            UI_IR_SECTION_OVERVIEW,
+            "overview",
+            vec![overview],
+        )?);
 
         let claim_widgets = model
             .claim_explorer()
             .iter()
             .map(|item| claim_widget(&backend, item, &mut trace_widgets))
             .collect::<Result<Vec<_>, _>>()?;
-        sections.push(section(&backend, "claim explorer", claim_widgets)?);
+        sections.push(section(
+            &backend,
+            UI_IR_SECTION_CLAIM_EXPLORER,
+            "claim explorer",
+            claim_widgets,
+        )?);
 
         let proof_chain_widgets = model
             .proof_chains()
             .iter()
             .map(|item| proof_chain_widget(&backend, item, &mut trace_widgets))
             .collect::<Result<Vec<_>, _>>()?;
-        sections.push(section(&backend, "proof chains", proof_chain_widgets)?);
+        sections.push(section(
+            &backend,
+            UI_IR_SECTION_PROOF_CHAINS,
+            "proof chains",
+            proof_chain_widgets,
+        )?);
 
         let assessment_widgets = model
             .assessment_queue()
             .iter()
             .map(|item| assessment_widget(&backend, item, &mut trace_widgets))
             .collect::<Result<Vec<_>, _>>()?;
-        sections.push(section(&backend, "assessment queue", assessment_widgets)?);
+        sections.push(section(
+            &backend,
+            UI_IR_SECTION_ASSESSMENT_QUEUE,
+            "assessment queue",
+            assessment_widgets,
+        )?);
 
         let witness_widgets = model
             .witness_surface()
             .iter()
             .map(|item| witness_widget(&backend, item, &mut trace_widgets))
             .collect::<Result<Vec<_>, _>>()?;
-        sections.push(section(&backend, "witness surface", witness_widgets)?);
+        sections.push(section(
+            &backend,
+            UI_IR_SECTION_WITNESS_SURFACE,
+            "witness surface",
+            witness_widgets,
+        )?);
 
         let root_widgets = model
             .provenance_roots()
             .iter()
             .map(|item| provenance_root_widget(&backend, item, &mut trace_widgets))
             .collect::<Result<Vec<_>, _>>()?;
-        sections.push(section(&backend, "provenance roots", root_widgets)?);
+        sections.push(section(
+            &backend,
+            UI_IR_SECTION_PROVENANCE_ROOTS,
+            "provenance roots",
+            root_widgets,
+        )?);
 
         let gap_widgets = model
             .gaps()
             .iter()
             .map(|item| gap_widget(&backend, item, &mut trace_widgets))
             .collect::<Result<Vec<_>, _>>()?;
-        sections.push(section(&backend, "gap queue", gap_widgets)?);
+        sections.push(section(
+            &backend,
+            UI_IR_SECTION_GAP_QUEUE,
+            "gap queue",
+            gap_widgets,
+        )?);
 
         let tree = backend.to_verified_tree(Viewport::new(1440, 960));
         let proofs = UiIrProofBundle::new(
@@ -127,6 +165,12 @@ impl BelvedereExchange<ElicitUiProjectionContract> for ElicitUiProjection {
                 tree.nodes().len(),
             ))
             .source_record_ids(model.source_record_ids().to_vec())
+            .section_ids(
+                sections
+                    .iter()
+                    .map(|section| section.id().to_owned())
+                    .collect::<Vec<_>>(),
+            )
             .minted_standards(
                 minted_standards
                     .iter()
@@ -339,6 +383,7 @@ fn establish_interactive_proofs(
 #[instrument(level = "debug", skip(backend, content))]
 fn section(
     backend: &AccessKitUiBackend,
+    id: &'static str,
     name: &'static str,
     content: Vec<WidgetId>,
 ) -> Result<UiIrSection, UiIrError> {
@@ -348,7 +393,7 @@ fn section(
     backend
         .add_child(ROOT_CONTAINER, WidgetId(container.0))
         .map_err(UiIrError::elicit_ui)?;
-    Ok(UiIrSection::new(name, container.0))
+    Ok(UiIrSection::new(id, name, container.0))
 }
 
 #[instrument(level = "debug")]

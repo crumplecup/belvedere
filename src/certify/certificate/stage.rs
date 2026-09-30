@@ -182,13 +182,15 @@ impl BelvedereStageCertificate {
             ("widgets".to_owned(), receipt.counts().widget_count()),
             ("tree_nodes".to_owned(), receipt.counts().node_count()),
         ]);
+        let mut output_ids = receipt.minted_standards().clone();
+        output_ids.extend(receipt.section_ids().iter().cloned());
         Self::new(StageCertificateEvidence {
             stage: BelvederePipelineStage::UiIrProjection,
             contract: receipt.contract().to_owned(),
             requires: contract_requirements::<ElicitUiProjectionContract>(),
             ensures: contract_guarantees::<ElicitUiProjectionContract>(),
             input_ids: receipt.source_record_ids().clone(),
-            output_ids: receipt.minted_standards().clone(),
+            output_ids,
             counts,
             warning_count: 0,
         })

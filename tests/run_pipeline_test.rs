@@ -7,7 +7,7 @@ use belvedere::{
     BELVEDERE_RUN_CERTIFICATE_SCHEMA_ID, BELVEDERE_RUN_CERTIFICATE_SCHEMA_VERSION,
     BELVEDERE_STAGE_CERTIFICATE_SCHEMA_ID, BELVEDERE_STAGE_CERTIFICATE_SCHEMA_VERSION,
     BelvedereCli, BelvedereCliOutput, BelvedereInvocationSurface, BelvedereRunInput,
-    run_belvedere_pipeline, run_cli_with_writer,
+    UI_IR_SECTION_PROOF_CHAINS, run_belvedere_pipeline, run_cli_with_writer,
 };
 use miette::{IntoDiagnostic, Result, WrapErr};
 use serde_json::Value;
@@ -28,6 +28,12 @@ fn run_pipeline_uses_the_normal_amenable_artifact_path() -> Result<()> {
     assert_eq!(report.landscape_receipt().claim_count(), 4);
     assert_eq!(report.view_model_receipt().counts().claim_cards(), 4);
     assert_eq!(report.ui_ir_receipt().counts().section_count(), 7);
+    assert!(
+        report
+            .ui_ir_receipt()
+            .section_ids()
+            .contains(&UI_IR_SECTION_PROOF_CHAINS.to_owned())
+    );
     assert_eq!(
         report.certificate().schema_id(),
         BELVEDERE_RUN_CERTIFICATE_SCHEMA_ID
@@ -50,6 +56,15 @@ fn run_pipeline_uses_the_normal_amenable_artifact_path() -> Result<()> {
                     && !certificate.requires().is_empty()
                     && !certificate.ensures().is_empty()
             )
+    );
+    assert!(
+        report
+            .certificate()
+            .stage_certificates()
+            .iter()
+            .any(|certificate| certificate
+                .output_ids()
+                .contains(&UI_IR_SECTION_PROOF_CHAINS.to_owned()))
     );
     assert!(
         report

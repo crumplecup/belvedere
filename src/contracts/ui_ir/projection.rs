@@ -8,6 +8,27 @@ use tracing::instrument;
 
 use super::MintedElicitUiStandard;
 
+/// Stable section ID for the overview surface.
+pub const UI_IR_SECTION_OVERVIEW: &str = "belvedere.ui.section.overview";
+
+/// Stable section ID for the claim explorer surface.
+pub const UI_IR_SECTION_CLAIM_EXPLORER: &str = "belvedere.ui.section.claim_explorer";
+
+/// Stable section ID for the proof-chain navigation surface.
+pub const UI_IR_SECTION_PROOF_CHAINS: &str = "belvedere.ui.section.proof_chains";
+
+/// Stable section ID for the assessment queue surface.
+pub const UI_IR_SECTION_ASSESSMENT_QUEUE: &str = "belvedere.ui.section.assessment_queue";
+
+/// Stable section ID for the witness surface.
+pub const UI_IR_SECTION_WITNESS_SURFACE: &str = "belvedere.ui.section.witness_surface";
+
+/// Stable section ID for provenance roots.
+pub const UI_IR_SECTION_PROVENANCE_ROOTS: &str = "belvedere.ui.section.provenance_roots";
+
+/// Stable section ID for the gap queue.
+pub const UI_IR_SECTION_GAP_QUEUE: &str = "belvedere.ui.section.gap_queue";
+
 /// A minted-standard entry returned with the UI IR projection.
 #[derive(Debug, Clone, PartialEq, Eq, Getters)]
 pub struct UiStandardMint {
@@ -35,6 +56,8 @@ impl UiStandardMint {
 /// Top-level section projected into the UI IR.
 #[derive(Debug, Clone, PartialEq, Eq, Getters, new)]
 pub struct UiIrSection {
+    #[new(into)]
+    id: String,
     #[new(into)]
     name: String,
     #[getter(skip)]

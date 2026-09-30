@@ -1,6 +1,7 @@
 use belvedere::{
     ArtifactKind, AssessmentStreamIngestion, AuditorNavigationProjection, ElicitUiProjection,
-    LandscapeInput, LandscapeModeling, RawAmenableArtifact, RegistryDumpIngestion, UiIrInput,
+    LandscapeInput, LandscapeModeling, RawAmenableArtifact, RegistryDumpIngestion,
+    UI_IR_SECTION_CLAIM_EXPLORER, UI_IR_SECTION_OVERVIEW, UI_IR_SECTION_PROOF_CHAINS, UiIrInput,
     ViewModelInput,
 };
 use miette::{IntoDiagnostic, Result, WrapErr, miette};
@@ -15,6 +16,22 @@ fn ui_ir_projection_mints_elicit_ui_standards_and_tree_proofs() -> Result<()> {
         .wrap_err("fixture view model should project into elicit_ui")?;
 
     assert_eq!(projection.sections().len(), 7);
+    assert!(
+        projection
+            .sections()
+            .iter()
+            .any(|section| section.id() == UI_IR_SECTION_OVERVIEW && section.name() == "overview")
+    );
+    assert!(
+        receipt
+            .section_ids()
+            .contains(&UI_IR_SECTION_CLAIM_EXPLORER.to_owned())
+    );
+    assert!(
+        receipt
+            .section_ids()
+            .contains(&UI_IR_SECTION_PROOF_CHAINS.to_owned())
+    );
     assert!(
         projection
             .minted_standards()
