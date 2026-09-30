@@ -1,8 +1,10 @@
 //! Command-line entrypoints for Belvedere.
 
 use std::{
+    fs::File,
     io::{self, Write},
     panic::Location,
+    path::PathBuf,
     process::ExitCode,
 };
 
@@ -34,13 +36,22 @@ impl BelvedereCli {
         let arguments = args.into_iter().collect::<Vec<_>>();
         let mut output = BelvedereCliOutput::LogSummary;
         let mut paths = Vec::new();
+        let mut index = 0;
 
-        for arg in &arguments {
+        while let Some(arg) = arguments.get(index) {
             match arg.as_str() {
                 "--certificate-json" => output = BelvedereCliOutput::RunCertificateJson,
+                "--certificate-file" => {
+                    let Some(path) = arguments.get(index + 1) else {
+                        return Err(BelvedereCliUsageError::new().into());
+                    };
+                    output = BelvedereCliOutput::RunCertificateFile(PathBuf::from(path));
+                    index += 1;
+                }
                 _ if arg.starts_with("--") => return Err(BelvedereCliUsageError::new().into()),
                 _ => paths.push(arg.clone()),
             }
+            index += 1;
         }
 
         let mut paths = paths.into_iter();
@@ -76,24 +87,27 @@ impl BelvedereCli {
 
     /// Output requested for this command invocation.
     #[must_use]
-    pub const fn output(&self) -> BelvedereCliOutput {
-        self.output
+    #[instrument(level = "trace", skip(self))]
+    pub fn output(&self) -> BelvedereCliOutput {
+        self.output.clone()
     }
 }
 
 /// Public CLI output contract.
-#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+#[derive(Debug, Clone, PartialEq, Eq)]
 pub enum BelvedereCliOutput {
     /// Log the run summary through the configured tracing subscriber.
     LogSummary,
     /// Write the complete run certificate as JSON.
     RunCertificateJson,
+    /// Write the complete run certificate as JSON to an artifact file.
+    RunCertificateFile(PathBuf),
 }
 
 /// Error emitted when the Belvedere CLI receives invalid arguments.
 #[derive(Debug, Error)]
 #[error(
-    "usage: belvedere [--certificate-json] <registry-dump.json> <proof-assessments.jsonl> at {file}:{line}"
+    "usage: belvedere [--certificate-json | --certificate-file <path>] <registry-dump.json> <proof-assessments.jsonl> at {file}:{line}"
 )]
 pub struct BelvedereCliUsageError {
     file: String,
@@ -253,17 +267,27 @@ fn run_cli_report(
 fn write_cli_output(
     output: BelvedereCliOutput,
     certificate: &BelvedereRunCertificate,
-    mut writer: impl Write,
+    writer: impl Write,
 ) -> Result<(), BelvedereError> {
     match output {
         BelvedereCliOutput::LogSummary => Ok(()),
-        BelvedereCliOutput::RunCertificateJson => {
-            serde_json::to_writer_pretty(&mut writer, certificate)
-                .map_err(BelvedereCliOutputError::serialize)?;
-            writer
-                .write_all(b"\n")
-                .map_err(BelvedereCliOutputError::write)?;
-            Ok(())
+        BelvedereCliOutput::RunCertificateJson => write_certificate_json(certificate, writer),
+        BelvedereCliOutput::RunCertificateFile(path) => {
+            let file = File::create(path).map_err(BelvedereCliOutputError::write)?;
+            write_certificate_json(certificate, file)
         }
     }
+}
+
+#[instrument(level = "info", skip(certificate, writer))]
+fn write_certificate_json(
+    certificate: &BelvedereRunCertificate,
+    mut writer: impl Write,
+) -> Result<(), BelvedereError> {
+    serde_json::to_writer_pretty(&mut writer, certificate)
+        .map_err(BelvedereCliOutputError::serialize)?;
+    writer
+        .write_all(b"\n")
+        .map_err(BelvedereCliOutputError::write)?;
+    Ok(())
 }

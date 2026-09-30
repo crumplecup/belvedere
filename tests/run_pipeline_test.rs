@@ -1,4 +1,7 @@
-use std::process::ExitCode;
+use std::{
+    fs,
+    process::{self, ExitCode},
+};
 
 use belvedere::{
     BelvedereCli, BelvedereCliOutput, BelvedereInvocationSurface, BelvedereRunInput,
@@ -134,5 +137,58 @@ fn cli_can_emit_the_run_certificate_as_json() -> Result<()> {
             .map(Vec::len),
         Some(3)
     );
+    Ok(())
+}
+
+#[test]
+fn cli_can_persist_the_run_certificate_as_json() -> Result<()> {
+    belvedere::init_tracing();
+
+    let certificate_path =
+        std::env::temp_dir().join(format!("belvedere-certificate-{}.json", process::id()));
+    let args = [
+        "--certificate-file",
+        certificate_path
+            .to_str()
+            .ok_or_else(|| miette::miette!("temporary certificate path should be UTF-8"))?,
+        "tests/fixtures/registry_dump.json",
+        "tests/fixtures/proof_assessments.jsonl",
+    ]
+    .into_iter()
+    .map(str::to_owned)
+    .collect::<Vec<_>>();
+    let command = BelvedereCli::from_args(args.clone())
+        .into_diagnostic()
+        .wrap_err("certificate file flag should be part of the public CLI API")?;
+
+    assert_eq!(
+        command.output(),
+        BelvedereCliOutput::RunCertificateFile(certificate_path.clone())
+    );
+
+    let mut output = Vec::new();
+    let status = run_cli_with_writer(args, &mut output);
+    assert_eq!(status, ExitCode::SUCCESS);
+    assert!(output.is_empty());
+
+    let certificate_bytes = fs::read(&certificate_path)
+        .into_diagnostic()
+        .wrap_err("certificate file should be written")?;
+    let certificate: Value = serde_json::from_slice(&certificate_bytes)
+        .into_diagnostic()
+        .wrap_err("persisted certificate should be parseable JSON")?;
+    assert!(
+        certificate["id"]
+            .as_str()
+            .is_some_and(|id| id.starts_with("belvedere.run:"))
+    );
+    assert_eq!(
+        certificate["stage_certificates"].as_array().map(Vec::len),
+        Some(5)
+    );
+
+    fs::remove_file(&certificate_path)
+        .into_diagnostic()
+        .wrap_err("temporary certificate file should be removable")?;
     Ok(())
 }
