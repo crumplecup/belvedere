@@ -8,16 +8,19 @@
 //! and certificates/receipts preserve audit evidence for reviewers.
 
 mod certify;
+mod cli;
 mod collect;
 mod contracts;
 mod error;
 mod exchanges;
+mod run;
 mod telemetry;
 
 pub use certify::{
     IngestionReceipt, LandscapeReceipt, LandscapeReceiptCounts, UiIrReceipt, UiIrReceiptCounts,
     ViewModelReceipt, ViewModelReceiptCounts,
 };
+pub use cli::{BelvedereCli, BelvedereCliUsageError, run_cli};
 pub use collect::{
     ArtifactReadError, decode_assessments, decode_registry_dump, raw_assessments,
     raw_registry_dump, read_raw_artifact,
@@ -41,4 +44,5 @@ pub use exchanges::{
     AssessmentStreamIngestion, AuditorNavigationProjection, BelvedereExchange, ElicitUiProjection,
     IngestionError, LandscapeModeling, RegistryDumpIngestion, UiIrError, WrongArtifactKindError,
 };
+pub use run::{BelvedereRunInput, BelvedereRunReport, run_belvedere_pipeline};
 pub use telemetry::init_tracing;

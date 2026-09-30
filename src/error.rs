@@ -6,11 +6,12 @@ use thiserror::Error;
 use tracing::instrument;
 
 use crate::{
+    cli::BelvedereCliUsageError,
     collect::ArtifactReadError,
     exchanges::{IngestionError, UiIrError},
 };
 
-/// Umbrella error for Belvedere pipeline failures.
+/// Umbrella error for Belvedere CLI and pipeline failures.
 #[derive(Debug, Error)]
 #[error(transparent)]
 pub struct BelvedereError {
@@ -57,8 +58,18 @@ impl From<BelvedereConstructionError> for BelvedereError {
     }
 }
 
+impl From<BelvedereCliUsageError> for BelvedereError {
+    #[instrument(level = "debug", skip(source))]
+    #[track_caller]
+    fn from(source: BelvedereCliUsageError) -> Self {
+        Self::new(BelvedereErrorKind::CliUsage(source))
+    }
+}
+
 #[derive(Debug, Error)]
 enum BelvedereErrorKind {
+    #[error(transparent)]
+    CliUsage(BelvedereCliUsageError),
     #[error(transparent)]
     ArtifactRead(ArtifactReadError),
     #[error(transparent)]
