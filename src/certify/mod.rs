@@ -8,6 +8,8 @@ mod ui_ir;
 mod view_model;
 
 pub use certificate::{
+    BELVEDERE_RUN_CERTIFICATE_SCHEMA_ID, BELVEDERE_RUN_CERTIFICATE_SCHEMA_VERSION,
+    BELVEDERE_STAGE_CERTIFICATE_SCHEMA_ID, BELVEDERE_STAGE_CERTIFICATE_SCHEMA_VERSION,
     BelvedereInvocationSurface, BelvederePipelineStage, BelvedereRunCertificate,
     BelvedereRunInvocation, BelvedereStageCertificate,
 };

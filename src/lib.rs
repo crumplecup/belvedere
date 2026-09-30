@@ -17,6 +17,8 @@ mod run;
 mod telemetry;
 
 pub use certify::{
+    BELVEDERE_RUN_CERTIFICATE_SCHEMA_ID, BELVEDERE_RUN_CERTIFICATE_SCHEMA_VERSION,
+    BELVEDERE_STAGE_CERTIFICATE_SCHEMA_ID, BELVEDERE_STAGE_CERTIFICATE_SCHEMA_VERSION,
     BelvedereInvariantCheck, BelvedereInvocationSurface, BelvederePipelineStage,
     BelvedereRunCertificate, BelvedereRunInvocation, BelvedereStageCertificate, IngestionReceipt,
     LandscapeReceipt, LandscapeReceiptCounts, UiIrReceipt, UiIrReceiptCounts, ViewModelReceipt,

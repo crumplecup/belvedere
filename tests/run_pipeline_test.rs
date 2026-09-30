@@ -4,6 +4,8 @@ use std::{
 };
 
 use belvedere::{
+    BELVEDERE_RUN_CERTIFICATE_SCHEMA_ID, BELVEDERE_RUN_CERTIFICATE_SCHEMA_VERSION,
+    BELVEDERE_STAGE_CERTIFICATE_SCHEMA_ID, BELVEDERE_STAGE_CERTIFICATE_SCHEMA_VERSION,
     BelvedereCli, BelvedereCliOutput, BelvedereInvocationSurface, BelvedereRunInput,
     run_belvedere_pipeline, run_cli_with_writer,
 };
@@ -26,6 +28,14 @@ fn run_pipeline_uses_the_normal_amenable_artifact_path() -> Result<()> {
     assert_eq!(report.landscape_receipt().claim_count(), 4);
     assert_eq!(report.view_model_receipt().counts().claim_cards(), 4);
     assert_eq!(report.ui_ir_receipt().counts().section_count(), 7);
+    assert_eq!(
+        report.certificate().schema_id(),
+        BELVEDERE_RUN_CERTIFICATE_SCHEMA_ID
+    );
+    assert_eq!(
+        *report.certificate().schema_version(),
+        BELVEDERE_RUN_CERTIFICATE_SCHEMA_VERSION
+    );
     assert_eq!(report.certificate().stage_certificates().len(), 5);
     assert_eq!(report.certificate().input_artifact_ids().len(), 2);
     assert_eq!(report.certificate().stage_certificate_ids().len(), 5);
@@ -34,8 +44,12 @@ fn run_pipeline_uses_the_normal_amenable_artifact_path() -> Result<()> {
             .certificate()
             .stage_certificates()
             .iter()
-            .all(|certificate| !certificate.requires().is_empty()
-                && !certificate.ensures().is_empty())
+            .all(
+                |certificate| certificate.schema_id() == BELVEDERE_STAGE_CERTIFICATE_SCHEMA_ID
+                    && *certificate.schema_version() == BELVEDERE_STAGE_CERTIFICATE_SCHEMA_VERSION
+                    && !certificate.requires().is_empty()
+                    && !certificate.ensures().is_empty()
+            )
     );
     assert!(
         report
@@ -79,6 +93,8 @@ fn run_certificate_is_reproducible_portable_evidence() -> Result<()> {
     let encoded = serde_json::to_string(first.certificate())
         .into_diagnostic()
         .wrap_err("run certificate should serialize as portable JSON evidence")?;
+    assert!(encoded.contains(BELVEDERE_RUN_CERTIFICATE_SCHEMA_ID));
+    assert!(encoded.contains(BELVEDERE_STAGE_CERTIFICATE_SCHEMA_ID));
     assert!(encoded.contains("belvedere.run:"));
     assert!(encoded.contains("ui_ir_projection"));
     assert!(encoded.contains("source record identities remain available for traceability"));
@@ -146,6 +162,14 @@ fn cli_can_emit_the_run_certificate_as_json() -> Result<()> {
             .is_some_and(|id| id.starts_with("belvedere.run:"))
     );
     assert_eq!(
+        certificate["schema_id"].as_str(),
+        Some(BELVEDERE_RUN_CERTIFICATE_SCHEMA_ID)
+    );
+    assert_eq!(
+        certificate["schema_version"].as_u64(),
+        Some(u64::from(BELVEDERE_RUN_CERTIFICATE_SCHEMA_VERSION))
+    );
+    assert_eq!(
         certificate["stage_certificates"].as_array().map(Vec::len),
         Some(5)
     );
@@ -158,9 +182,13 @@ fn cli_can_emit_the_run_certificate_as_json() -> Result<()> {
             .as_array()
             .is_some_and(
                 |stage_certificates| stage_certificates.iter().all(|stage_certificate| {
-                    stage_certificate["requires"]
-                        .as_array()
-                        .is_some_and(|requirements| !requirements.is_empty())
+                    stage_certificate["schema_id"].as_str()
+                        == Some(BELVEDERE_STAGE_CERTIFICATE_SCHEMA_ID)
+                        && stage_certificate["schema_version"].as_u64()
+                            == Some(u64::from(BELVEDERE_STAGE_CERTIFICATE_SCHEMA_VERSION))
+                        && stage_certificate["requires"]
+                            .as_array()
+                            .is_some_and(|requirements| !requirements.is_empty())
                         && stage_certificate["ensures"]
                             .as_array()
                             .is_some_and(|guarantees| !guarantees.is_empty())
@@ -225,6 +253,14 @@ fn cli_can_persist_the_run_certificate_as_json() -> Result<()> {
         certificate["id"]
             .as_str()
             .is_some_and(|id| id.starts_with("belvedere.run:"))
+    );
+    assert_eq!(
+        certificate["schema_id"].as_str(),
+        Some(BELVEDERE_RUN_CERTIFICATE_SCHEMA_ID)
+    );
+    assert_eq!(
+        certificate["schema_version"].as_u64(),
+        Some(u64::from(BELVEDERE_RUN_CERTIFICATE_SCHEMA_VERSION))
     );
     assert_eq!(
         certificate["stage_certificates"].as_array().map(Vec::len),

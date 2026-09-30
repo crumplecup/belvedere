@@ -1,4 +1,4 @@
-//! Certificates emitted from Belvedere pipeline receipts.
+//! Stage certificate construction.
 
 use std::{collections::BTreeMap, fmt::Display};
 
@@ -7,14 +7,20 @@ use serde::Serialize;
 use sha2::{Digest as _, Sha256};
 use tracing::instrument;
 
-use crate::contracts::{
-    AssessmentStreamIngestionContract, AuditorNavigationContract, BelvedereContract,
-    ElicitUiProjectionContract, LandscapeModelingContract, RegistryDumpIngestionContract,
+use crate::{
+    certify::{
+        BelvedereInvariantCheck, IngestionReceipt, LandscapeReceipt, UiIrReceipt, ViewModelReceipt,
+        stage_invariant_checks,
+    },
+    contracts::{
+        AssessmentStreamIngestionContract, AuditorNavigationContract, BelvedereContract,
+        ElicitUiProjectionContract, LandscapeModelingContract, RegistryDumpIngestionContract,
+    },
 };
 
 use super::{
-    BelvedereInvariantCheck, IngestionReceipt, LandscapeReceipt, UiIrReceipt, ViewModelReceipt,
-    stage_invariant_checks,
+    BELVEDERE_STAGE_CERTIFICATE_SCHEMA_ID, BELVEDERE_STAGE_CERTIFICATE_SCHEMA_VERSION, hex_digest,
+    update_field, update_fields,
 };
 
 /// Named stage in a complete Belvedere pipeline run.
@@ -54,65 +60,11 @@ impl Display for BelvederePipelineStage {
     }
 }
 
-/// Public invocation surface that produced a Belvedere run.
-#[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash, Serialize)]
-#[serde(rename_all = "snake_case")]
-pub enum BelvedereInvocationSurface {
-    /// Belvedere was called through the library API.
-    Library,
-    /// Belvedere was called through the command-line API.
-    Cli,
-}
-
-impl BelvedereInvocationSurface {
-    /// Stable invocation surface identifier.
-    #[must_use]
-    pub const fn as_str(self) -> &'static str {
-        match self {
-            Self::Library => "library",
-            Self::Cli => "cli",
-        }
-    }
-}
-
-/// Invocation provenance recorded in a run certificate.
-#[derive(Debug, Clone, PartialEq, Eq, Getters, Serialize)]
-pub struct BelvedereRunInvocation {
-    #[getter(skip)]
-    surface: BelvedereInvocationSurface,
-    arguments: Vec<String>,
-}
-
-impl BelvedereRunInvocation {
-    /// Invocation provenance for direct library calls.
-    #[must_use]
-    pub const fn library() -> Self {
-        Self {
-            surface: BelvedereInvocationSurface::Library,
-            arguments: Vec::new(),
-        }
-    }
-
-    /// Invocation provenance for command-line calls.
-    #[instrument(level = "debug", skip(args))]
-    #[must_use]
-    pub fn cli(args: impl IntoIterator<Item = String>) -> Self {
-        Self {
-            surface: BelvedereInvocationSurface::Cli,
-            arguments: args.into_iter().collect(),
-        }
-    }
-
-    /// Public surface that produced the run.
-    #[must_use]
-    pub const fn surface(&self) -> BelvedereInvocationSurface {
-        self.surface
-    }
-}
-
 /// Certificate for one successful Belvedere pipeline stage.
 #[derive(Debug, Clone, PartialEq, Eq, Getters, Serialize)]
 pub struct BelvedereStageCertificate {
+    schema_id: String,
+    schema_version: u16,
     id: String,
     #[getter(skip)]
     stage: BelvederePipelineStage,
@@ -289,6 +241,8 @@ impl BelvedereStageCertificate {
         let digest = stage_digest(&evidence, &invariant_checks);
         let id = format!("belvedere.stage.{}:{digest}", evidence.stage);
         Self {
+            schema_id: BELVEDERE_STAGE_CERTIFICATE_SCHEMA_ID.to_owned(),
+            schema_version: BELVEDERE_STAGE_CERTIFICATE_SCHEMA_VERSION,
             id,
             stage: evidence.stage,
             contract: evidence.contract,
@@ -304,120 +258,17 @@ impl BelvedereStageCertificate {
     }
 }
 
-/// Certificate for a complete Belvedere pipeline run.
-#[derive(Debug, Clone, PartialEq, Eq, Getters, Serialize)]
-pub struct BelvedereRunCertificate {
-    id: String,
-    belvedere_version: String,
-    invocation: BelvedereRunInvocation,
-    input_artifact_ids: Vec<String>,
-    stage_certificates: Vec<BelvedereStageCertificate>,
-    stage_certificate_ids: Vec<String>,
-    digest: String,
-}
-
-impl BelvedereRunCertificate {
-    /// Build a run certificate from the receipts emitted by each stage.
-    #[instrument(
-        level = "debug",
-        skip(
-            registry_receipt,
-            assessment_receipt,
-            landscape_receipt,
-            view_model_receipt,
-            ui_ir_receipt
-        )
-    )]
-    #[must_use]
-    pub fn from_receipts(
-        registry_receipt: &IngestionReceipt,
-        assessment_receipt: &IngestionReceipt,
-        landscape_receipt: &LandscapeReceipt,
-        view_model_receipt: &ViewModelReceipt,
-        ui_ir_receipt: &UiIrReceipt,
-    ) -> Self {
-        Self::from_receipts_with_invocation(
-            BelvedereRunInvocation::library(),
-            registry_receipt,
-            assessment_receipt,
-            landscape_receipt,
-            view_model_receipt,
-            ui_ir_receipt,
-        )
-    }
-
-    /// Build a run certificate from a recorded invocation and stage receipts.
-    #[instrument(
-        level = "debug",
-        skip(
-            invocation,
-            registry_receipt,
-            assessment_receipt,
-            landscape_receipt,
-            view_model_receipt,
-            ui_ir_receipt
-        )
-    )]
-    #[must_use]
-    pub fn from_receipts_with_invocation(
-        invocation: BelvedereRunInvocation,
-        registry_receipt: &IngestionReceipt,
-        assessment_receipt: &IngestionReceipt,
-        landscape_receipt: &LandscapeReceipt,
-        view_model_receipt: &ViewModelReceipt,
-        ui_ir_receipt: &UiIrReceipt,
-    ) -> Self {
-        let stage_certificates = vec![
-            BelvedereStageCertificate::registry_ingestion(registry_receipt),
-            BelvedereStageCertificate::assessment_ingestion(assessment_receipt),
-            BelvedereStageCertificate::landscape_modeling(landscape_receipt),
-            BelvedereStageCertificate::auditor_navigation(view_model_receipt),
-            BelvedereStageCertificate::ui_ir_projection(ui_ir_receipt),
-        ];
-        let input_artifact_ids = vec![
-            artifact_id(registry_receipt),
-            artifact_id(assessment_receipt),
-        ];
-        let stage_certificate_ids = stage_certificates
-            .iter()
-            .map(|certificate| certificate.id().to_owned())
-            .collect::<Vec<_>>();
-        let belvedere_version = env!("CARGO_PKG_VERSION").to_owned();
-        let digest = run_digest(
-            &belvedere_version,
-            &invocation,
-            &input_artifact_ids,
-            &stage_certificate_ids,
-        );
-        let id = format!("belvedere.run:{digest}");
-        Self {
-            id,
-            belvedere_version,
-            invocation,
-            input_artifact_ids,
-            stage_certificates,
-            stage_certificate_ids,
-            digest,
-        }
-    }
-}
-
-#[instrument(level = "trace", skip(receipt))]
-fn artifact_id(receipt: &IngestionReceipt) -> String {
-    format!(
-        "{}:{}:{}",
-        receipt.artifact_kind(),
-        receipt.path().display(),
-        receipt.digest()
-    )
-}
-
 #[instrument(level = "debug", skip(evidence, invariant_checks))]
 fn stage_digest(
     evidence: &StageCertificateEvidence,
     invariant_checks: &[BelvedereInvariantCheck],
 ) -> String {
     let mut hasher = Sha256::new();
+    update_field(&mut hasher, BELVEDERE_STAGE_CERTIFICATE_SCHEMA_ID);
+    update_field(
+        &mut hasher,
+        &BELVEDERE_STAGE_CERTIFICATE_SCHEMA_VERSION.to_string(),
+    );
     update_field(&mut hasher, evidence.stage.as_str());
     update_field(&mut hasher, &evidence.contract);
     update_fields(&mut hasher, &evidence.requires);
@@ -449,45 +300,5 @@ fn contract_guarantees<C: BelvedereContract>() -> Vec<String> {
     C::ensures()
         .iter()
         .map(|guarantee| (*guarantee).to_owned())
-        .collect()
-}
-
-#[instrument(level = "info", skip(invocation))]
-fn run_digest(
-    belvedere_version: &str,
-    invocation: &BelvedereRunInvocation,
-    input_artifact_ids: &[String],
-    stage_certificate_ids: &[String],
-) -> String {
-    let mut hasher = Sha256::new();
-    update_field(&mut hasher, belvedere_version);
-    update_field(&mut hasher, invocation.surface().as_str());
-    update_fields(&mut hasher, invocation.arguments());
-    update_fields(&mut hasher, input_artifact_ids);
-    update_fields(&mut hasher, stage_certificate_ids);
-    hex_digest(hasher)
-}
-
-#[instrument(level = "trace", skip(hasher, fields))]
-fn update_fields(hasher: &mut Sha256, fields: &[String]) {
-    for field in fields {
-        update_field(hasher, field);
-    }
-}
-
-#[instrument(level = "trace", skip(hasher))]
-fn update_field(hasher: &mut Sha256, field: &str) {
-    hasher.update(field.len().to_string().as_bytes());
-    hasher.update(b":");
-    hasher.update(field.as_bytes());
-    hasher.update(b";");
-}
-
-#[instrument(level = "trace", skip(hasher))]
-fn hex_digest(hasher: Sha256) -> String {
-    hasher
-        .finalize()
-        .iter()
-        .map(|byte| format!("{byte:02x}"))
         .collect()
 }
