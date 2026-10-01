@@ -130,8 +130,24 @@ fn ui_ir_projection_preserves_trace_widgets_for_auditor_deep_dives() -> Result<(
     let chain_widget = projection
         .trace_widgets()
         .iter()
-        .find(|widget| widget.label().starts_with("Proof chain "))
+        .find(|widget| {
+            widget
+                .label()
+                .starts_with("Proof chain belvedere::ingestion::DecodedRegistrySnapshot")
+        })
         .ok_or_else(|| miette!("proof-chain view should have traceable widgets"))?;
+    assert!(
+        chain_widget
+            .label()
+            .contains("roots belvedere::ingestion::RawAmenableArtifact")
+    );
+    assert!(
+        chain_widget
+            .label()
+            .contains("direct bases belvedere::ingestion::RawAmenableArtifact")
+    );
+    assert!(chain_widget.label().contains("verifier proofs kani"));
+    assert!(chain_widget.label().contains("2 gaps"));
     assert!(!chain_widget.source_record_ids().is_empty());
     let witness_widget = projection
         .trace_widgets()

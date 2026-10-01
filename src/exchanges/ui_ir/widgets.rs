@@ -103,20 +103,29 @@ pub(super) fn proof_chain_widget(
     item: &ProofChainItem,
     trace_widgets: &mut Vec<TraceWidgetRef>,
 ) -> Result<WidgetId, UiIrError> {
+    let roots = list_label(item.root_ids(), "no modeled roots");
+    let bases = list_label(item.basis_ids(), "no direct bases");
+    let verifiers = list_label(item.verifiers(), "no verifier proofs");
     labeled_widget(
         backend,
         "button",
         format!(
-            "Proof chain {} reaches {} roots through {} direct bases with {} verifier proofs and {} gaps",
+            "Proof chain {} reaches roots {roots} through direct bases {bases}; verifier proofs {verifiers}; {}",
             item.claim_id(),
-            item.root_ids().len(),
-            item.basis_ids().len(),
-            item.verifiers().len(),
-            item.gap_count()
+            count_label(item.gap_count(), "gap", "gaps")
         ),
         item.trace().clone(),
         trace_widgets,
     )
+}
+
+#[instrument(level = "trace", skip(values))]
+fn list_label(values: &[String], empty: &str) -> String {
+    if values.is_empty() {
+        empty.to_owned()
+    } else {
+        values.join(", ")
+    }
 }
 
 #[instrument(level = "debug", skip(backend, item, trace_widgets))]
