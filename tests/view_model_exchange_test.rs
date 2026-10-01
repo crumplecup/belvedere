@@ -121,7 +121,7 @@ fn view_model_projection_builds_source_navigation_items() -> Result<()> {
         .ok_or_else(|| miette!("proof source record should be navigable"))?;
     assert_eq!(
         proof_record.label(),
-        "Source record proof_record:belvedere::ingestion::DecodedRegistrySnapshot@kani"
+        "Proof record belvedere::ingestion::DecodedRegistrySnapshot@kani"
     );
     assert_eq!(proof_record.trace().source_record_ids().len(), 1);
     assert!(

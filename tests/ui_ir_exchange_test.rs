@@ -183,7 +183,7 @@ fn ui_ir_projection_preserves_trace_widgets_for_auditor_deep_dives() -> Result<(
         .find(|widget| {
             widget
                 .label()
-                .starts_with("Source record proof_record:belvedere::ingestion")
+                .starts_with("Proof record belvedere::ingestion")
         })
         .ok_or_else(|| miette!("source navigation should have traceable widgets"))?;
     assert_eq!(source_widget.source_record_ids().len(), 1);
