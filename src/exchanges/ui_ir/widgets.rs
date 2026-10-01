@@ -27,12 +27,7 @@ pub(super) fn filter_widget(
     labeled_widget(
         backend,
         "checkbox",
-        format!(
-            "Filter {} {} selects {} items",
-            item.group(),
-            item.value(),
-            item.count()
-        ),
+        format!("Filter {} selects {} items", item.label(), item.count()),
         item.trace().clone(),
         trace_widgets,
     )

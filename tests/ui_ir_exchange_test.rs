@@ -111,7 +111,7 @@ fn ui_ir_projection_preserves_trace_widgets_for_auditor_deep_dives() -> Result<(
     let filter_widget = projection
         .trace_widgets()
         .iter()
-        .find(|widget| widget.label().starts_with("Filter verifier kani"))
+        .find(|widget| widget.label().starts_with("Filter Verifier kani"))
         .ok_or_else(|| miette!("filter facets should have traceable widgets"))?;
     assert_eq!(filter_widget.claim_id(), "belvedere.filter.verifier:kani");
     let coverage_widget = projection
