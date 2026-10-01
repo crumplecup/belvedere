@@ -9,8 +9,9 @@ use tracing::instrument;
 
 use crate::contracts::{
     AssessmentQueueItem, AssessmentWorkItem, AuditorFilterFacet, BackendCoverageItem,
-    ClaimExplorerItem, GapItem, ProofChainItem, ProvenanceRootItem, SourceNavigationItem, TraceRef,
-    TraceWidgetRef, TraceWidgetRefBuilder, UiIrSection, WitnessSurfaceItem,
+    ClaimExplorerItem, GapItem, ProofChainItem, ProvenanceRootItem, ResolutionPath,
+    SourceNavigationItem, TraceRef, TraceWidgetRef, TraceWidgetRefBuilder, UiIrSection,
+    WitnessSurfaceItem,
 };
 
 use super::UiIrError;
@@ -106,11 +107,13 @@ pub(super) fn assessment_widget(
     trace_widgets: &mut Vec<TraceWidgetRef>,
 ) -> Result<WidgetId, UiIrError> {
     let recency = assessment_recency_label(item);
+    let resolution = resolution_path_label(item.resolution_path());
+    let weaknesses = weak_dimensions_label(item);
     labeled_widget(
         backend,
         "button",
         format!(
-            "Assessment {} ({recency}) recommends {:?} for {}",
+            "Assessment {} ({recency}) recommends {:?} for {}; resolution: {resolution}; {weaknesses}",
             item.assessment_id(),
             item.recommendation(),
             item.proof_id()
@@ -118,6 +121,27 @@ pub(super) fn assessment_widget(
         item.trace().clone(),
         trace_widgets,
     )
+}
+
+#[instrument(level = "trace", skip(item))]
+fn weak_dimensions_label(item: &AssessmentQueueItem) -> String {
+    if item.weak_dimensions().is_empty() {
+        "no weak dimensions".to_owned()
+    } else {
+        format!("weak dimensions {}", item.weak_dimensions().join(", "))
+    }
+}
+
+#[instrument(level = "debug", skip(path))]
+fn resolution_path_label(path: Option<ResolutionPath>) -> &'static str {
+    match path {
+        Some(ResolutionPath::KeepCurrentProof) => "keep current proof",
+        Some(ResolutionPath::StrengthenCurrentProof) => "strengthen current proof",
+        Some(ResolutionPath::ReplaceWithProofSpecificModel) => "replace with proof-specific model",
+        Some(ResolutionPath::ReplaceWithAccommodationModel) => "replace with accommodation model",
+        Some(ResolutionPath::RetireClaim) => "retire claim",
+        None => "no resolution path",
+    }
 }
 
 #[instrument(level = "debug", skip(backend, item, trace_widgets))]

@@ -187,11 +187,19 @@ fn ui_ir_projection_labels_assessment_recency() -> Result<()> {
         widget
             .label()
             .starts_with("Assessment assess-current (current, supersedes 1 older assessment)")
+            && widget.label().contains("resolution: keep current proof")
+            && widget.label().contains("no weak dimensions")
     }));
     assert!(projection.trace_widgets().iter().any(|widget| {
         widget
             .label()
             .starts_with("Assessment assess-old (superseded)")
+            && widget
+                .label()
+                .contains("resolution: strengthen current proof")
+            && widget
+                .label()
+                .contains("weak dimensions assertion_strength, adversarial_coverage")
     }));
     Ok(())
 }
