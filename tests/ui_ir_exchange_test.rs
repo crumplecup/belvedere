@@ -81,9 +81,17 @@ fn ui_ir_projection_preserves_trace_widgets_for_auditor_deep_dives() -> Result<(
         .iter()
         .find(|widget| {
             widget.claim_id() == "belvedere::ingestion::DecodedRegistrySnapshot"
-                && widget.label().starts_with("Claim ")
+                && widget
+                    .label()
+                    .starts_with("Claim belvedere::ingestion::DecodedRegistrySnapshot")
         })
         .ok_or_else(|| miette!("claim explorer item should have a traceable widget"))?;
+    assert!(decoded_claim.label().contains("derived claim"));
+    assert!(decoded_claim.label().contains("1 direct basis"));
+    assert!(decoded_claim.label().contains("1 verifier proof"));
+    assert!(decoded_claim.label().contains("1 contract"));
+    assert!(decoded_claim.label().contains("0 assessments"));
+    assert!(decoded_claim.label().contains("2 gaps"));
     assert!(
         decoded_claim.source_record_ids().contains(
             &"proof_record:belvedere::ingestion::DecodedRegistrySnapshot@kani".to_owned()

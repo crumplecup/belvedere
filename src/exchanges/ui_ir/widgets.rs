@@ -64,18 +64,37 @@ pub(super) fn claim_widget(
     item: &ClaimExplorerItem,
     trace_widgets: &mut Vec<TraceWidgetRef>,
 ) -> Result<WidgetId, UiIrError> {
+    let role = claim_role_label(item);
     labeled_widget(
         backend,
         "button",
         format!(
-            "Claim {} with {} verifier proofs and {} gaps",
+            "Claim {} is a {role}; {}, {}, {}, {}, {}",
             item.claim_id(),
-            item.verifiers().len(),
-            item.gap_count()
+            count_label(item.basis_ids().len(), "direct basis", "direct bases"),
+            count_label(item.verifiers().len(), "verifier proof", "verifier proofs"),
+            count_label(item.contract_count(), "contract", "contracts"),
+            count_label(item.assessment_count(), "assessment", "assessments"),
+            count_label(item.gap_count(), "gap", "gaps")
         ),
         item.trace().clone(),
         trace_widgets,
     )
+}
+
+#[instrument(level = "trace", skip(item))]
+fn claim_role_label(item: &ClaimExplorerItem) -> &'static str {
+    if item.root() {
+        "provenance root"
+    } else {
+        "derived claim"
+    }
+}
+
+#[instrument(level = "trace", skip(singular, plural))]
+fn count_label(count: usize, singular: &str, plural: &str) -> String {
+    let noun = if count == 1 { singular } else { plural };
+    format!("{count} {noun}")
 }
 
 #[instrument(level = "debug", skip(backend, item, trace_widgets))]
