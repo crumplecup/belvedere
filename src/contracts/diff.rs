@@ -2,6 +2,7 @@
 
 use derive_getters::Getters;
 use derive_new::new;
+use serde::Serialize;
 use tracing::instrument;
 
 use crate::{
@@ -37,14 +38,14 @@ impl LandscapeDiffInput {
 }
 
 /// UI-neutral diff between two landscape snapshots.
-#[derive(Debug, Clone, PartialEq, Eq, Getters, new)]
+#[derive(Debug, Clone, PartialEq, Eq, Getters, Serialize, new)]
 pub struct LandscapeDiff {
     items: Vec<LandscapeDiffItem>,
     source_record_ids: Vec<String>,
 }
 
 /// One changed landscape item.
-#[derive(Debug, Clone, PartialEq, Eq, Getters, new)]
+#[derive(Debug, Clone, PartialEq, Eq, Getters, Serialize, new)]
 pub struct LandscapeDiffItem {
     #[new(into)]
     item_id: String,
@@ -75,7 +76,8 @@ impl LandscapeDiffItem {
 }
 
 /// Snapshot change category.
-#[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash, Serialize)]
+#[serde(rename_all = "snake_case")]
 pub enum LandscapeDiffChangeKind {
     /// Item exists only in the current snapshot.
     Added,

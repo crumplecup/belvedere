@@ -79,6 +79,7 @@ version = "0.1.0"
 dependencies = [
  "derive-getters",
  "derive-new",
+ "derive_builder",
  "proc-macro2",
  "quote",
  "syn 3.0.6",

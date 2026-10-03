@@ -182,8 +182,10 @@ fn cli_help_is_a_successful_public_output_contract() -> Result<()> {
         .into_diagnostic()
         .wrap_err("help output should be UTF-8")?;
     assert!(help.contains("usage: belvedere"));
+    assert!(help.contains("belvedere diff"));
     assert!(help.contains("--certificate-json"));
     assert!(help.contains("--certificate-file"));
+    assert!(help.contains("--diff-json"));
     Ok(())
 }
 
@@ -337,5 +339,129 @@ fn cli_can_persist_the_run_certificate_as_json() -> Result<()> {
     fs::remove_file(&certificate_path)
         .into_diagnostic()
         .wrap_err("temporary certificate file should be removable")?;
+    Ok(())
+}
+
+#[test]
+fn cli_can_emit_the_landscape_diff_certificate_as_json() -> Result<()> {
+    belvedere::init_tracing();
+
+    let previous_assessments_path = std::env::temp_dir().join(format!(
+        "belvedere-cli-empty-assessments-{}.jsonl",
+        process::id()
+    ));
+    fs::write(&previous_assessments_path, [])
+        .into_diagnostic()
+        .wrap_err("temporary empty assessment artifact should be writable")?;
+
+    let args = [
+        "diff",
+        "--certificate-json",
+        "tests/fixtures/registry_dump.json",
+        previous_assessments_path
+            .to_str()
+            .ok_or_else(|| miette::miette!("temporary assessment path should be UTF-8"))?,
+        "tests/fixtures/registry_dump.json",
+        "tests/fixtures/proof_assessments.jsonl",
+    ]
+    .into_iter()
+    .map(str::to_owned)
+    .collect::<Vec<_>>();
+    let command = BelvedereCli::from_args(args.clone())
+        .into_diagnostic()
+        .wrap_err("diff certificate flag should be part of the public CLI API")?;
+
+    assert_eq!(
+        command.output(),
+        BelvedereCliOutput::LandscapeDiffCertificateJson
+    );
+
+    let mut output = Vec::new();
+    let status = run_cli_with_writer(args, &mut output);
+    assert_eq!(status, ExitCode::SUCCESS);
+
+    let certificate: Value = serde_json::from_slice(&output)
+        .into_diagnostic()
+        .wrap_err("CLI diff certificate output should be parseable JSON")?;
+    assert!(
+        certificate["id"]
+            .as_str()
+            .is_some_and(|id| id.starts_with("belvedere.stage.landscape_diff:"))
+    );
+    assert_eq!(certificate["stage"].as_str(), Some("landscape_diff"));
+    assert_eq!(
+        certificate["contract"].as_str(),
+        Some("belvedere.diff.landscape")
+    );
+    assert_eq!(certificate["counts"]["total_items"].as_u64(), Some(6));
+    assert!(
+        certificate["invariant_checks"]
+            .as_array()
+            .is_some_and(|checks| {
+                checks
+                    .iter()
+                    .all(|check| check["passed"].as_bool() == Some(true))
+            })
+    );
+
+    fs::remove_file(&previous_assessments_path)
+        .into_diagnostic()
+        .wrap_err("temporary empty assessment artifact should be removable")?;
+    Ok(())
+}
+
+#[test]
+fn cli_can_emit_the_landscape_diff_as_json() -> Result<()> {
+    belvedere::init_tracing();
+
+    let previous_assessments_path = std::env::temp_dir().join(format!(
+        "belvedere-cli-diff-empty-assessments-{}.jsonl",
+        process::id()
+    ));
+    fs::write(&previous_assessments_path, [])
+        .into_diagnostic()
+        .wrap_err("temporary empty assessment artifact should be writable")?;
+
+    let args = [
+        "diff",
+        "--diff-json",
+        "tests/fixtures/registry_dump.json",
+        previous_assessments_path
+            .to_str()
+            .ok_or_else(|| miette::miette!("temporary assessment path should be UTF-8"))?,
+        "tests/fixtures/registry_dump.json",
+        "tests/fixtures/proof_assessments.jsonl",
+    ]
+    .into_iter()
+    .map(str::to_owned)
+    .collect::<Vec<_>>();
+    let command = BelvedereCli::from_args(args.clone())
+        .into_diagnostic()
+        .wrap_err("diff JSON flag should be part of the public CLI API")?;
+
+    assert_eq!(command.output(), BelvedereCliOutput::LandscapeDiffJson);
+
+    let mut output = Vec::new();
+    let status = run_cli_with_writer(args, &mut output);
+    assert_eq!(status, ExitCode::SUCCESS);
+
+    let diff: Value = serde_json::from_slice(&output)
+        .into_diagnostic()
+        .wrap_err("CLI diff output should be parseable JSON")?;
+    assert_eq!(diff["items"].as_array().map(Vec::len), Some(6));
+    assert_eq!(diff["source_record_ids"].as_array().map(Vec::len), Some(7));
+    assert!(diff["items"].as_array().is_some_and(|items| {
+        items.iter().any(|item| {
+            item["change_kind"].as_str() == Some("added")
+                && item["subject_kind"].as_str() == Some("assessment")
+                && item["trace"]["source_record_ids"]
+                    .as_array()
+                    .is_some_and(|source_record_ids| !source_record_ids.is_empty())
+        })
+    }));
+
+    fs::remove_file(previous_assessments_path)
+        .into_diagnostic()
+        .wrap_err("temporary empty assessment artifact should be removable")?;
     Ok(())
 }

@@ -25,3 +25,28 @@ tracing-subscriber = { version = "0.3.20", features = ["env-filter", "fmt"] }
 
 [dev-dependencies]
 miette = "7.6.0"
+
+[lints.clippy]
+# Temporarily disabled workspace-wide -- a confirmed upstream tooling
+# bug, not a real finding. Rust 1.99.0 (released 2026-09-28) started
+# misattributing this lint to `derive_new::new`'s generated
+# `Self { field: field }` constructor body back onto the struct's own
+# field declarations, rather than the macro's call site -- confirmed
+# with a minimal, zero-dependency, out-of-workspace repro (a bare
+# two-field struct, `#[derive(derive_new::new)]`, nothing else) that
+# reproduces the exact same misattributed error. `derive-new` 0.7.0 is
+# still the latest release as of this writing, so there is no upstream
+# fix to pick up yet, and the bug is universal to the derive (not
+# specific to any field shape, attribute, or combination with other
+# derives we tried) -- it would otherwise hit every one of the
+# `#[derive(derive_new::new)]` sites across this crate, not a handful of
+# real findings worth hand-fixing one at a time. A real
+# `redundant_field_names` finding in genuinely hand-written code is
+# still worth fixing on sight; this entry only silences the false
+# positive the macro itself triggers.
+#
+# Revisit by 2027-04-03 (six months out): check whether a newer
+# `derive-new` release or a clippy fix has landed, and either remove
+# this override, patch `derive-new` upstream ourselves, or replace it
+# crate-wide if neither has moved.
+redundant_field_names = "allow"

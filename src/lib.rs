@@ -25,8 +25,8 @@ pub use certify::{
     UiIrReceipt, UiIrReceiptCounts, ViewModelReceipt, ViewModelReceiptCounts,
 };
 pub use cli::{
-    BelvedereCli, BelvedereCliOutput, BelvedereCliOutputError, BelvedereCliUsageError, run_cli,
-    run_cli_with_writer,
+    BelvedereCli, BelvedereCliOutput, BelvedereCliOutputError, BelvedereCliReport,
+    BelvedereCliUsageError, run_cli, run_cli_with_writer,
 };
 pub use collect::{
     ArtifactReadError, decode_assessments, decode_registry_dump, raw_assessments,
