@@ -114,6 +114,21 @@ fn ui_ir_projection_preserves_trace_widgets_for_auditor_deep_dives() -> Result<(
         .find(|widget| widget.label().starts_with("Filter Verifier kani"))
         .ok_or_else(|| miette!("filter facets should have traceable widgets"))?;
     assert_eq!(filter_widget.claim_id(), "belvedere.filter.verifier:kani");
+    assert_filter_widget(
+        &projection,
+        "Filter Support kind checked_with_trusted selects 1 items",
+        "belvedere.filter.support_kind:checked_with_trusted",
+    )?;
+    assert_filter_widget(
+        &projection,
+        "Filter Package belvedere selects 1 items",
+        "belvedere.filter.package:belvedere",
+    )?;
+    assert_filter_widget(
+        &projection,
+        "Filter Priority high selects 3 items",
+        "belvedere.filter.priority:high",
+    )?;
     let coverage_widget = projection
         .trace_widgets()
         .iter()
@@ -263,6 +278,21 @@ fn fixture_input_with_assessments(assessment_bytes: Vec<u8>) -> Result<UiIrInput
         .wrap_err("view-model projection is trace-preserving and infallible")?;
 
     Ok(UiIrInput::new(model))
+}
+
+fn assert_filter_widget(
+    projection: &belvedere::UiIrProjection,
+    label: &str,
+    claim_id: &str,
+) -> Result<()> {
+    let widget = projection
+        .trace_widgets()
+        .iter()
+        .find(|widget| widget.label() == label)
+        .ok_or_else(|| miette!("{label} should have a traceable filter widget"))?;
+    assert_eq!(widget.claim_id(), claim_id);
+    assert!(!widget.source_record_ids().is_empty());
+    Ok(())
 }
 
 const STALE_ASSESSMENTS: &str = concat!(
