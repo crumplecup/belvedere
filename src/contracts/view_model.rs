@@ -169,7 +169,7 @@ impl BelvedereContract for AuditorNavigationContract {
             "assessment queue entries preserve recommendation, resolution, and recency vocabulary",
             "assessment work entries expose missing reviews and current reviewer actions with trace IDs",
             "witness surface entries preserve support kind and support counts",
-            "provenance root entries preserve explicit root identities",
+            "provenance root entries preserve explicit root identities, root kinds, coverage counts, assessment counts, and gap counts",
             "gap entries preserve conservative gap kinds, severity, action, and trace IDs",
             "source navigation entries preserve ingested source record identities, source kinds, and navigation targets",
         ]

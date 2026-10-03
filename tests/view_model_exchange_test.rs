@@ -328,12 +328,25 @@ fn view_model_projection_preserves_review_queues_and_traceability() -> Result<()
         "review trusted or opaque witness support"
     );
     assert!(witness_gap.high_priority());
-    assert!(
-        model
-            .provenance_roots()
-            .iter()
-            .any(|root| root.claim_id() == "belvedere::ingestion::RawAmenableArtifact")
-    );
+    let raw_root = model
+        .provenance_roots()
+        .iter()
+        .find(|root| root.claim_id() == "belvedere::ingestion::RawAmenableArtifact")
+        .ok_or_else(|| miette!("raw artifact root should be cataloged"))?;
+    assert_eq!(raw_root.root_kind(), "unmodeled_root");
+    assert_eq!(raw_root.verifier_count(), 0);
+    assert_eq!(raw_root.assessment_count(), 0);
+    assert_eq!(raw_root.gap_count(), 1);
+
+    let proof_root = model
+        .provenance_roots()
+        .iter()
+        .find(|root| root.claim_id() == "belvedere::ingestion::record_identity_is_preserved")
+        .ok_or_else(|| miette!("Kani proof root should be cataloged"))?;
+    assert_eq!(proof_root.root_kind(), "proof_registration_root");
+    assert_eq!(proof_root.verifier_count(), 1);
+    assert_eq!(proof_root.assessment_count(), 1);
+    assert_eq!(proof_root.gap_count(), 0);
     Ok(())
 }
 

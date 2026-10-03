@@ -197,6 +197,18 @@ fn ui_ir_projection_preserves_trace_widgets_for_auditor_deep_dives() -> Result<(
             &"proof_record:belvedere::ingestion::DecodedRegistrySnapshot@kani".to_owned()
         )
     );
+    let root_widget = projection
+        .trace_widgets()
+        .iter()
+        .find(|widget| {
+            widget.label().starts_with(
+                "Provenance root belvedere::ingestion::RawAmenableArtifact is unmodeled_root",
+            )
+        })
+        .ok_or_else(|| miette!("provenance root catalog should have traceable widgets"))?;
+    assert!(root_widget.label().contains("0 verifier proofs"));
+    assert!(root_widget.label().contains("0 assessments"));
+    assert!(root_widget.label().contains("1 gap"));
     let source_widget = projection
         .trace_widgets()
         .iter()

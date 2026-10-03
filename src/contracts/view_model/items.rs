@@ -148,11 +148,37 @@ impl WitnessSurfaceItem {
 pub struct ProvenanceRootItem {
     #[new(into)]
     claim_id: String,
+    #[new(into)]
+    root_kind: String,
+    #[getter(skip)]
+    verifier_count: usize,
+    #[getter(skip)]
+    assessment_count: usize,
+    #[getter(skip)]
+    gap_count: usize,
     #[getter(skip)]
     trace: TraceRef,
 }
 
 impl ProvenanceRootItem {
+    /// Number of verifier proofs attached to this root.
+    #[must_use]
+    pub const fn verifier_count(&self) -> usize {
+        self.verifier_count
+    }
+
+    /// Number of assessments attached to this root.
+    #[must_use]
+    pub const fn assessment_count(&self) -> usize {
+        self.assessment_count
+    }
+
+    /// Number of modeled gaps attached to this root.
+    #[must_use]
+    pub const fn gap_count(&self) -> usize {
+        self.gap_count
+    }
+
     /// Trace reference.
     #[must_use]
     pub const fn trace(&self) -> &TraceRef {

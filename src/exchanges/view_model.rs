@@ -92,7 +92,19 @@ impl BelvedereExchange<AuditorNavigationContract> for AuditorNavigationProjectio
         let provenance_roots: Vec<ProvenanceRootItem> = landscape
             .root_claim_ids()
             .into_iter()
-            .map(|claim_id| ProvenanceRootItem::new(claim_id, trace(claim_id, &source_record_ids)))
+            .filter_map(|claim_id| landscape.claims().get(claim_id))
+            .map(|claim| {
+                ProvenanceRootItem::new(
+                    claim.id(),
+                    provenance_root_kind(claim),
+                    claim.proofs().len(),
+                    claim.assessment_ids().len(),
+                    gaps.iter()
+                        .filter(|gap| gap.claim_id() == claim.id())
+                        .count(),
+                    trace(claim.id(), &source_record_ids),
+                )
+            })
             .collect();
 
         let source_navigation = project_source_navigation(&source_record_ids)?;
@@ -141,4 +153,17 @@ impl BelvedereExchange<AuditorNavigationContract> for AuditorNavigationProjectio
 #[instrument(level = "debug")]
 pub(super) fn trace(claim_id: &str, source_record_ids: &[String]) -> TraceRef {
     TraceRef::new(claim_id, source_record_ids.to_vec())
+}
+
+#[instrument(level = "trace", skip(claim))]
+fn provenance_root_kind(claim: &crate::contracts::LandscapeClaim) -> &'static str {
+    if !claim.kani_proofs().is_empty() {
+        "proof_registration_root"
+    } else if !claim.proofs().is_empty() {
+        "covered_root"
+    } else if !claim.assessment_ids().is_empty() {
+        "assessment_only_root"
+    } else {
+        "unmodeled_root"
+    }
 }

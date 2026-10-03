@@ -241,7 +241,14 @@ pub(super) fn provenance_root_widget(
     labeled_widget(
         backend,
         "link",
-        format!("Provenance root {}", item.claim_id()),
+        format!(
+            "Provenance root {} is {}; {}, {}, {}",
+            item.claim_id(),
+            item.root_kind(),
+            count_label(item.verifier_count(), "verifier proof", "verifier proofs"),
+            count_label(item.assessment_count(), "assessment", "assessments"),
+            count_label(item.gap_count(), "gap", "gaps")
+        ),
         item.trace().clone(),
         trace_widgets,
     )
