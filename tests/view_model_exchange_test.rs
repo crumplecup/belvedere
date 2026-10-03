@@ -290,6 +290,20 @@ fn view_model_projection_builds_auditor_filter_facets() -> Result<()> {
         receipt.counts().filter_facets(),
         model.filter_facets().len()
     );
+    assert_eq!(
+        receipt.facet_group_counts().get("facet_group_claim_family"),
+        Some(&1)
+    );
+    assert_eq!(
+        receipt.facet_group_counts().get("facet_group_gap_kind"),
+        Some(&3)
+    );
+    assert_eq!(
+        receipt
+            .facet_group_counts()
+            .get("facet_group_recommendation"),
+        Some(&2)
+    );
 
     let verifier = model
         .filter_facets()

@@ -194,6 +194,7 @@ impl BelvedereStageCertificate {
             ("witness_items".to_owned(), receipt.counts().witness_items()),
         ]);
         counts.extend(receipt.lane_counts().clone());
+        counts.extend(receipt.facet_group_counts().clone());
         counts.extend(receipt.source_artifact_counts().clone());
         Self::new(StageCertificateEvidence {
             stage: BelvederePipelineStage::AuditorNavigation,
