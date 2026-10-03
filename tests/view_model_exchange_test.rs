@@ -31,6 +31,35 @@ fn view_model_projection_builds_auditor_navigation_evidence() -> Result<()> {
     assert_eq!(receipt.counts().witness_items(), 1);
     assert_eq!(receipt.counts().root_items(), 3);
     assert_eq!(receipt.counts().source_items(), 7);
+    assert_eq!(
+        receipt.lane_counts().get("assessment_queue_lane_accepted"),
+        Some(&1)
+    );
+    assert_eq!(
+        receipt
+            .lane_counts()
+            .get("assessment_queue_lane_strengthening"),
+        Some(&1)
+    );
+    assert_eq!(
+        receipt.lane_counts().get("assessment_work_lane_assessment"),
+        Some(&1)
+    );
+    assert_eq!(
+        receipt
+            .lane_counts()
+            .get("assessment_work_lane_strengthening"),
+        Some(&1)
+    );
+    assert_eq!(receipt.lane_counts().get("gap_lane_assessment"), Some(&1));
+    assert_eq!(
+        receipt.lane_counts().get("gap_lane_proof_coverage"),
+        Some(&2)
+    );
+    assert_eq!(
+        receipt.lane_counts().get("gap_lane_witness_review"),
+        Some(&1)
+    );
 
     let decoded_item = model
         .claim_explorer()

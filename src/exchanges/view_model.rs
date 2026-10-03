@@ -1,13 +1,16 @@
 //! Auditor navigation view-model exchange implementations.
 
+use std::collections::BTreeMap;
+
 use tracing::instrument;
 
 use crate::{
     certify::{ViewModelReceipt, ViewModelReceiptBuilder, ViewModelReceiptCountsBuilder},
     contracts::{
-        AssessmentRecencySummary, AuditorNavigationContract, AuditorNavigationModel,
-        AuditorNavigationModelBuilder, BelvedereContract, LandscapeAssessment, OverviewView,
-        ProvenanceRootItem, TraceRef, ViewModelInput,
+        AssessmentQueueItem, AssessmentRecencySummary, AssessmentWorkItem,
+        AuditorNavigationContract, AuditorNavigationModel, AuditorNavigationModelBuilder,
+        BelvedereContract, GapItem, LandscapeAssessment, OverviewView, ProvenanceRootItem,
+        TraceRef, ViewModelInput,
     },
     error::{BelvedereConstructionError, BelvedereError},
     exchanges::BelvedereExchange,
@@ -113,6 +116,7 @@ impl BelvedereExchange<AuditorNavigationContract> for AuditorNavigationProjectio
             .collect();
 
         let source_navigation = project_source_navigation(&source_record_ids)?;
+        let receipt_lane_counts = lane_counts(&assessment_queue, &assessment_work, &gaps);
 
         let counts = ViewModelReceiptCountsBuilder::default()
             .claim_cards(landscape.claims().len())
@@ -146,6 +150,7 @@ impl BelvedereExchange<AuditorNavigationContract> for AuditorNavigationProjectio
         let receipt = ViewModelReceiptBuilder::default()
             .contract(AuditorNavigationContract::NAME)
             .counts(counts)
+            .lane_counts(receipt_lane_counts)
             .source_record_ids(source_record_ids)
             .warnings(Vec::new())
             .build()
@@ -167,6 +172,30 @@ fn assessment_recency_summary(assessments: &[LandscapeAssessment]) -> Assessment
             .filter(|assessment| !assessment.current())
             .count(),
     )
+}
+
+#[instrument(level = "debug", skip(assessment_queue, assessment_work, gaps))]
+fn lane_counts(
+    assessment_queue: &[AssessmentQueueItem],
+    assessment_work: &[AssessmentWorkItem],
+    gaps: &[GapItem],
+) -> BTreeMap<String, usize> {
+    let mut counts = BTreeMap::new();
+    for item in assessment_queue {
+        increment_lane_count(&mut counts, "assessment_queue_lane", item.queue_lane());
+    }
+    for item in assessment_work {
+        increment_lane_count(&mut counts, "assessment_work_lane", item.queue_lane());
+    }
+    for item in gaps {
+        increment_lane_count(&mut counts, "gap_lane", item.queue_lane());
+    }
+    counts
+}
+
+#[instrument(level = "trace", skip(counts))]
+fn increment_lane_count(counts: &mut BTreeMap<String, usize>, prefix: &str, lane: &str) {
+    *counts.entry(format!("{prefix}_{lane}")).or_default() += 1;
 }
 
 #[instrument(level = "debug")]

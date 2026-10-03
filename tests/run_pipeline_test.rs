@@ -40,6 +40,13 @@ fn run_pipeline_uses_the_normal_amenable_artifact_path() -> Result<()> {
         report.view_model_receipt().counts().assessment_work_items(),
         2
     );
+    assert_eq!(
+        report
+            .view_model_receipt()
+            .lane_counts()
+            .get("assessment_work_lane_assessment"),
+        Some(&1)
+    );
     assert_eq!(report.view_model_receipt().counts().source_items(), 7);
     assert_eq!(report.ui_ir_receipt().counts().section_count(), 10);
     assert!(
@@ -70,6 +77,13 @@ fn run_pipeline_uses_the_normal_amenable_artifact_path() -> Result<()> {
                     && !certificate.requires().is_empty()
                     && !certificate.ensures().is_empty()
             )
+    );
+    assert!(
+        report
+            .certificate()
+            .stage_certificates()
+            .iter()
+            .any(|certificate| certificate.counts().get("gap_lane_witness_review") == Some(&1))
     );
     assert!(
         report

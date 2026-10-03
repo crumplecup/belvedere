@@ -168,7 +168,7 @@ impl BelvedereStageCertificate {
     #[instrument(level = "debug", skip(receipt))]
     #[must_use]
     pub fn auditor_navigation(receipt: &ViewModelReceipt) -> Self {
-        let counts = BTreeMap::from([
+        let mut counts = BTreeMap::from([
             (
                 "assessment_items".to_owned(),
                 receipt.counts().assessment_items(),
@@ -193,6 +193,7 @@ impl BelvedereStageCertificate {
             ("warnings".to_owned(), receipt.warnings().len()),
             ("witness_items".to_owned(), receipt.counts().witness_items()),
         ]);
+        counts.extend(receipt.lane_counts().clone());
         Self::new(StageCertificateEvidence {
             stage: BelvederePipelineStage::AuditorNavigation,
             contract: receipt.contract().to_owned(),
