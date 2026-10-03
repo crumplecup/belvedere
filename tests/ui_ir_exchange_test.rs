@@ -161,6 +161,12 @@ fn ui_ir_projection_preserves_trace_widgets_for_auditor_deep_dives() -> Result<(
             .label()
             .contains("roots belvedere::ingestion::RawAmenableArtifact")
     );
+    assert!(chain_widget.label().contains("is elevated"));
+    assert!(
+        chain_widget
+            .label()
+            .contains("next action: review trusted or opaque witness support")
+    );
     assert!(
         chain_widget
             .label()

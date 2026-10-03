@@ -6,8 +6,8 @@ use tracing::instrument;
 
 use crate::{
     contracts::{
-        ClaimExplorerCounts, ClaimExplorerItem, GapItem, LandscapeClaim, ProofChainItem,
-        ProofChainItemBuilder,
+        ClaimExplorerCounts, ClaimExplorerItem, GapItem, GapSeverity, LandscapeClaim,
+        ProofChainItem, ProofChainItemBuilder,
     },
     error::BelvedereConstructionError,
 };
@@ -48,11 +48,15 @@ pub(super) fn project_proof_chains(
     claims
         .values()
         .map(|claim| {
+            let review_state = chain_review_state(claim.id(), gaps);
+            let next_action = chain_next_action(claim.id(), gaps);
             ProofChainItemBuilder::default()
                 .claim_id(claim.id())
                 .basis_ids(claim.bases().iter().cloned().collect::<Vec<_>>())
                 .root_ids(chain_roots(claim.id(), claims))
                 .verifiers(claim.proofs().iter().cloned().collect::<Vec<_>>())
+                .review_state(review_state)
+                .next_action(next_action)
                 .gap_count(claim_gap_count(claim.id(), gaps))
                 .trace(trace(claim.id(), source_record_ids))
                 .build()
@@ -64,6 +68,38 @@ pub(super) fn project_proof_chains(
 #[instrument(level = "trace", skip(gaps))]
 fn claim_gap_count(claim_id: &str, gaps: &[GapItem]) -> usize {
     gaps.iter().filter(|gap| gap.claim_id() == claim_id).count()
+}
+
+#[instrument(level = "trace", skip(gaps))]
+fn chain_review_state(claim_id: &str, gaps: &[GapItem]) -> &'static str {
+    let claim_gaps = gaps.iter().filter(|gap| gap.claim_id() == claim_id);
+    if claim_gaps
+        .clone()
+        .any(|gap| gap.severity() == GapSeverity::Blocking)
+    {
+        "blocked"
+    } else if claim_gaps
+        .clone()
+        .any(|gap| gap.severity() == GapSeverity::Elevated)
+    {
+        "elevated"
+    } else if claim_gaps.count() > 0 {
+        "review"
+    } else {
+        "ready"
+    }
+}
+
+#[instrument(level = "trace", skip(gaps))]
+fn chain_next_action(claim_id: &str, gaps: &[GapItem]) -> String {
+    gaps.iter()
+        .filter(|gap| gap.claim_id() == claim_id)
+        .find(|gap| gap.high_priority())
+        .or_else(|| gaps.iter().find(|gap| gap.claim_id() == claim_id))
+        .map_or_else(
+            || "continue review".to_owned(),
+            |gap| gap.action().to_owned(),
+        )
 }
 
 #[instrument(level = "debug", skip(claims))]

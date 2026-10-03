@@ -165,7 +165,7 @@ impl BelvedereContract for AuditorNavigationContract {
             "filter facets expose deterministic claim-family, verifier, recommendation, support, package, gap, and priority axes with trace IDs",
             "backend coverage entries expose Kani, Creusot, and Verus status per claim",
             "claim explorer entries retain bases, verifier coverage, contracts, assessments, gaps, and trace IDs",
-            "proof-chain entries retain direct bases, resolved roots, verifier coverage, gaps, and trace IDs",
+            "proof-chain entries retain direct bases, resolved roots, verifier coverage, review state, next action, gaps, and trace IDs",
             "assessment queue entries preserve recommendation, resolution, and recency vocabulary",
             "assessment work entries expose missing reviews and current reviewer actions with trace IDs",
             "witness surface entries preserve support kind and support counts",

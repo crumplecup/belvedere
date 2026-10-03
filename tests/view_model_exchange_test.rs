@@ -54,6 +54,11 @@ fn view_model_projection_builds_auditor_navigation_evidence() -> Result<()> {
             .root_ids()
             .contains(&"belvedere::ingestion::RawAmenableArtifact".to_owned())
     );
+    assert_eq!(decoded_chain.review_state(), "elevated");
+    assert_eq!(
+        decoded_chain.next_action(),
+        "review trusted or opaque witness support"
+    );
     assert_eq!(decoded_chain.gap_count(), decoded_item.gap_count());
     Ok(())
 }

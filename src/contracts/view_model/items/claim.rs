@@ -125,6 +125,8 @@ pub struct ProofChainItem {
     basis_ids: Vec<String>,
     root_ids: Vec<String>,
     verifiers: Vec<String>,
+    review_state: String,
+    next_action: String,
     #[getter(skip)]
     gap_count: usize,
     #[getter(skip)]

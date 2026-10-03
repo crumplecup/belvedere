@@ -105,8 +105,10 @@ pub(super) fn proof_chain_widget(
         backend,
         "button",
         format!(
-            "Proof chain {} reaches roots {roots} through direct bases {bases}; verifier proofs {verifiers}; {}",
+            "Proof chain {} is {}; next action: {}; reaches roots {roots} through direct bases {bases}; verifier proofs {verifiers}; {}",
             item.claim_id(),
+            item.review_state(),
+            item.next_action(),
             count_label(item.gap_count(), "gap", "gaps")
         ),
         item.trace().clone(),
