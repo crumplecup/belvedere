@@ -21,9 +21,17 @@ pub(super) fn project_filter_facets<'a>(
     source_record_ids: &[String],
 ) -> Result<Vec<AuditorFilterFacet>, BelvedereConstructionError> {
     let mut verifier_counts = BTreeMap::new();
+    let mut support_kind_counts = BTreeMap::new();
+    let mut package_counts = BTreeMap::new();
     for claim in claims {
         for verifier in claim.proofs() {
             increment_count(&mut verifier_counts, verifier);
+        }
+        for witness in claim.witness_surfaces() {
+            increment_count(&mut support_kind_counts, witness.support_kind());
+        }
+        for proof in claim.kani_proofs() {
+            increment_count(&mut package_counts, proof.package());
         }
     }
 
@@ -39,6 +47,7 @@ pub(super) fn project_filter_facets<'a>(
     for gap in gaps {
         increment_count(&mut gap_kind_counts, &format!("{:?}", gap.kind()));
     }
+    let high_priority_count = gaps.iter().filter(|gap| gap.high_priority()).count();
 
     let mut facets = Vec::new();
     push_facets(
@@ -56,12 +65,27 @@ pub(super) fn project_filter_facets<'a>(
         &mut facets,
     )?;
     push_facets(
+        "support_kind",
+        "Support kind",
+        support_kind_counts,
+        source_record_ids,
+        &mut facets,
+    )?;
+    push_facets(
+        "package",
+        "Package",
+        package_counts,
+        source_record_ids,
+        &mut facets,
+    )?;
+    push_facets(
         "gap_kind",
         "Gap kind",
         gap_kind_counts,
         source_record_ids,
         &mut facets,
     )?;
+    push_priority_facet(high_priority_count, source_record_ids, &mut facets)?;
 
     Ok(facets)
 }
@@ -93,5 +117,29 @@ fn push_facets(
                 .map_err(|error| BelvedereConstructionError::new("AuditorFilterFacet", error))?,
         );
     }
+    Ok(())
+}
+
+#[instrument(level = "debug", skip(source_record_ids, facets))]
+fn push_priority_facet(
+    high_priority_count: usize,
+    source_record_ids: &[String],
+    facets: &mut Vec<AuditorFilterFacet>,
+) -> Result<(), BelvedereConstructionError> {
+    if high_priority_count == 0 {
+        return Ok(());
+    }
+    let facet_id = "belvedere.filter.priority:high".to_owned();
+    facets.push(
+        AuditorFilterFacetBuilder::default()
+            .facet_id(facet_id.clone())
+            .group("priority")
+            .value("high")
+            .label("Priority high")
+            .count(high_priority_count)
+            .trace(trace(&facet_id, source_record_ids))
+            .build()
+            .map_err(|error| BelvedereConstructionError::new("AuditorFilterFacet", error))?,
+    );
     Ok(())
 }

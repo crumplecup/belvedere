@@ -21,7 +21,7 @@ fn view_model_projection_builds_auditor_navigation_evidence() -> Result<()> {
     assert_eq!(model.overview().high_priority_gap_count(), 3);
 
     assert_eq!(receipt.counts().claim_cards(), 4);
-    assert_eq!(receipt.counts().filter_facets(), 6);
+    assert_eq!(receipt.counts().filter_facets(), 9);
     assert_eq!(receipt.counts().backend_coverage_items(), 12);
     assert_eq!(receipt.counts().proof_chain_items(), 4);
     assert_eq!(receipt.counts().assessment_items(), 2);
@@ -170,6 +170,30 @@ fn view_model_projection_builds_auditor_filter_facets() -> Result<()> {
         .find(|facet| facet.facet_id() == "belvedere.filter.gap_kind:MissingProof")
         .ok_or_else(|| miette!("missing-proof gap facet should be available"))?;
     assert_eq!(missing_proof.count(), 2);
+
+    let support_kind = model
+        .filter_facets()
+        .iter()
+        .find(|facet| facet.facet_id() == "belvedere.filter.support_kind:checked_with_trusted")
+        .ok_or_else(|| miette!("support-kind facet should be available"))?;
+    assert_eq!(support_kind.label(), "Support kind checked_with_trusted");
+    assert_eq!(support_kind.count(), 1);
+
+    let package = model
+        .filter_facets()
+        .iter()
+        .find(|facet| facet.facet_id() == "belvedere.filter.package:belvedere")
+        .ok_or_else(|| miette!("package facet should be available"))?;
+    assert_eq!(package.label(), "Package belvedere");
+    assert_eq!(package.count(), 1);
+
+    let priority = model
+        .filter_facets()
+        .iter()
+        .find(|facet| facet.facet_id() == "belvedere.filter.priority:high")
+        .ok_or_else(|| miette!("high-priority facet should be available"))?;
+    assert_eq!(priority.label(), "Priority high");
+    assert_eq!(priority.count(), 3);
     Ok(())
 }
 

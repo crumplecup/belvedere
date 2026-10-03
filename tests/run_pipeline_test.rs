@@ -28,7 +28,7 @@ fn run_pipeline_uses_the_normal_amenable_artifact_path() -> Result<()> {
     assert_eq!(report.assessment_receipt().source_record_ids().len(), 2);
     assert_eq!(report.landscape_receipt().claim_count(), 4);
     assert_eq!(report.view_model_receipt().counts().claim_cards(), 4);
-    assert_eq!(report.view_model_receipt().counts().filter_facets(), 6);
+    assert_eq!(report.view_model_receipt().counts().filter_facets(), 9);
     assert_eq!(
         report
             .view_model_receipt()
