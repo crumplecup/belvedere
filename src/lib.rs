@@ -59,5 +59,8 @@ pub use exchanges::{
     IngestionError, LandscapeDiffing, LandscapeModeling, RegistryDumpIngestion, UiIrError,
     WrongArtifactKindError,
 };
-pub use run::{BelvedereRunInput, BelvedereRunReport, run_belvedere_pipeline};
+pub use run::{
+    BelvedereLandscapeDiffRunInput, BelvedereLandscapeDiffRunReport, BelvedereRunInput,
+    BelvedereRunReport, run_belvedere_landscape_diff, run_belvedere_pipeline,
+};
 pub use telemetry::init_tracing;

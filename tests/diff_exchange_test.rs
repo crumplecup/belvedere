@@ -1,7 +1,10 @@
+use std::{fs, process};
+
 use belvedere::{
-    ArtifactKind, AssessmentStreamIngestion, BelvederePipelineStage, BelvedereStageCertificate,
-    LandscapeDiffChangeKind, LandscapeDiffInput, LandscapeDiffing, LandscapeInput,
-    LandscapeModeling, RawAmenableArtifact, RegistryDumpIngestion,
+    ArtifactKind, AssessmentStreamIngestion, BelvedereLandscapeDiffRunInput,
+    BelvederePipelineStage, BelvedereRunInput, BelvedereStageCertificate, LandscapeDiffChangeKind,
+    LandscapeDiffInput, LandscapeDiffing, LandscapeInput, LandscapeModeling, RawAmenableArtifact,
+    RegistryDumpIngestion, run_belvedere_landscape_diff,
 };
 use miette::{IntoDiagnostic, Result, WrapErr, miette};
 
@@ -86,6 +89,65 @@ fn landscape_diff_surfaces_snapshot_changes_for_auditors() -> Result<()> {
             == "belvedere.diff.Added.gap:belvedere::ingestion::unsupported_fields_are_accounted_for:MissingProof"
             && item.summary().contains("added gap MissingProof")
     }));
+    Ok(())
+}
+
+#[test]
+fn landscape_diff_runner_uses_the_normal_artifact_path() -> Result<()> {
+    belvedere::init_tracing();
+
+    let previous_assessments_path = std::env::temp_dir().join(format!(
+        "belvedere-empty-assessments-{}.jsonl",
+        process::id()
+    ));
+    fs::write(&previous_assessments_path, [])
+        .into_diagnostic()
+        .wrap_err("temporary empty assessment artifact should be writable")?;
+
+    let previous_input = BelvedereRunInput::new(
+        "tests/fixtures/registry_dump.json",
+        previous_assessments_path.clone(),
+    );
+    let current_input = BelvedereRunInput::new(
+        "tests/fixtures/registry_dump.json",
+        "tests/fixtures/proof_assessments.jsonl",
+    );
+    let report = run_belvedere_landscape_diff(BelvedereLandscapeDiffRunInput::new(
+        previous_input,
+        current_input,
+    ))
+    .into_diagnostic()
+    .wrap_err("normal artifact paths should produce a certified landscape diff")?;
+
+    assert_eq!(
+        report
+            .previous_assessment_receipt()
+            .source_record_ids()
+            .len(),
+        0
+    );
+    assert_eq!(
+        report
+            .current_assessment_receipt()
+            .source_record_ids()
+            .len(),
+        2
+    );
+    assert_eq!(report.previous_landscape_receipt().claim_count(), 3);
+    assert_eq!(report.current_landscape_receipt().claim_count(), 4);
+    assert_eq!(report.diff_receipt().counts().total_items(), 6);
+    assert_eq!(
+        report.diff_certificate().stage(),
+        BelvederePipelineStage::LandscapeDiff
+    );
+    assert_eq!(
+        report.diff_certificate().counts().get("total_items"),
+        Some(&report.diff().items().len())
+    );
+
+    fs::remove_file(previous_assessments_path)
+        .into_diagnostic()
+        .wrap_err("temporary empty assessment artifact should be removable")?;
     Ok(())
 }
 

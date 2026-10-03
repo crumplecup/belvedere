@@ -1,22 +1,26 @@
 //! End-to-end Belvedere pipeline runner.
 
-use std::path::PathBuf;
+use std::path::{Path, PathBuf};
 
 use derive_builder::Builder;
 use derive_getters::Getters;
+use derive_new::new;
 use tracing::instrument;
 
 use crate::{
     certify::{
-        BelvedereRunCertificate, BelvedereRunInvocation, IngestionReceipt, LandscapeReceipt,
-        UiIrReceipt, ViewModelReceipt,
+        BelvedereRunCertificate, BelvedereRunInvocation, BelvedereStageCertificate,
+        IngestionReceipt, LandscapeDiffReceipt, LandscapeReceipt, UiIrReceipt, ViewModelReceipt,
     },
     collect::read_raw_artifact,
-    contracts::{ArtifactKind, LandscapeInput, UiIrInput, UiIrProjection, ViewModelInput},
+    contracts::{
+        ArtifactKind, LandscapeDiff, LandscapeDiffInput, LandscapeGraph, LandscapeInput, UiIrInput,
+        UiIrProjection, ViewModelInput,
+    },
     error::{BelvedereConstructionError, BelvedereError},
     exchanges::{
         AssessmentStreamIngestion, AuditorNavigationProjection, ElicitUiProjection,
-        LandscapeModeling, RegistryDumpIngestion,
+        LandscapeDiffing, LandscapeModeling, RegistryDumpIngestion,
     },
 };
 
@@ -56,6 +60,13 @@ impl BelvedereRunInput {
     }
 }
 
+/// Input for comparing two Belvedere landscape snapshots.
+#[derive(Debug, Clone, PartialEq, Eq, Getters, new)]
+pub struct BelvedereLandscapeDiffRunInput {
+    previous: BelvedereRunInput,
+    current: BelvedereRunInput,
+}
+
 /// Evidence emitted by a complete Belvedere pipeline run.
 #[derive(Debug, Clone, Getters, Builder)]
 #[builder(vis = "pub(crate)", setter(into))]
@@ -67,6 +78,29 @@ pub struct BelvedereRunReport {
     ui_ir_receipt: UiIrReceipt,
     certificate: BelvedereRunCertificate,
     projection: UiIrProjection,
+}
+
+/// Evidence emitted by a landscape diff run over two artifact sets.
+#[derive(Debug, Clone, Getters, Builder)]
+#[builder(vis = "pub(crate)", setter(into))]
+pub struct BelvedereLandscapeDiffRunReport {
+    previous_registry_receipt: IngestionReceipt,
+    previous_assessment_receipt: IngestionReceipt,
+    previous_landscape_receipt: LandscapeReceipt,
+    current_registry_receipt: IngestionReceipt,
+    current_assessment_receipt: IngestionReceipt,
+    current_landscape_receipt: LandscapeReceipt,
+    diff_receipt: LandscapeDiffReceipt,
+    diff_certificate: BelvedereStageCertificate,
+    diff: LandscapeDiff,
+}
+
+#[derive(Debug)]
+struct LandscapeRunSnapshot {
+    landscape: LandscapeGraph,
+    registry_receipt: IngestionReceipt,
+    assessment_receipt: IngestionReceipt,
+    landscape_receipt: LandscapeReceipt,
 }
 
 /// Run the normal Belvedere pipeline over Amenable artifact files.
@@ -110,4 +144,67 @@ pub fn run_belvedere_pipeline(
         .projection(projection)
         .build()
         .map_err(|error| BelvedereConstructionError::new("BelvedereRunReport", error).into())
+}
+
+/// Run a certified landscape diff over two ordinary Amenable artifact sets.
+///
+/// # Errors
+///
+/// Returns an error if artifact collection, ingestion, landscape modeling, the
+/// diff exchange, or report construction fails.
+#[instrument(level = "info", skip(input))]
+pub fn run_belvedere_landscape_diff(
+    input: BelvedereLandscapeDiffRunInput,
+) -> Result<BelvedereLandscapeDiffRunReport, BelvedereError> {
+    let previous = build_landscape_snapshot(
+        input.previous().registry_path(),
+        input.previous().assessments_path(),
+    )?;
+    let current = build_landscape_snapshot(
+        input.current().registry_path(),
+        input.current().assessments_path(),
+    )?;
+
+    let (diff, diff_receipt) = LandscapeDiffing.diff(LandscapeDiffInput::new(
+        previous.landscape,
+        current.landscape,
+    ))?;
+    let diff_certificate = BelvedereStageCertificate::landscape_diff(&diff_receipt);
+
+    BelvedereLandscapeDiffRunReportBuilder::default()
+        .previous_registry_receipt(previous.registry_receipt)
+        .previous_assessment_receipt(previous.assessment_receipt)
+        .previous_landscape_receipt(previous.landscape_receipt)
+        .current_registry_receipt(current.registry_receipt)
+        .current_assessment_receipt(current.assessment_receipt)
+        .current_landscape_receipt(current.landscape_receipt)
+        .diff_receipt(diff_receipt)
+        .diff_certificate(diff_certificate)
+        .diff(diff)
+        .build()
+        .map_err(|error| {
+            BelvedereConstructionError::new("BelvedereLandscapeDiffRunReport", error).into()
+        })
+}
+
+#[instrument(level = "debug", skip(registry_path, assessments_path))]
+fn build_landscape_snapshot(
+    registry_path: &Path,
+    assessments_path: &Path,
+) -> Result<LandscapeRunSnapshot, BelvedereError> {
+    let registry_artifact = read_raw_artifact(registry_path, ArtifactKind::RegistryDump)?;
+    let assessment_artifact = read_raw_artifact(assessments_path, ArtifactKind::ProofAssessments)?;
+
+    let (registry, registry_receipt) = RegistryDumpIngestion.ingest(registry_artifact)?;
+    let (assessments, assessment_receipt) =
+        AssessmentStreamIngestion.ingest(assessment_artifact)?;
+    let (landscape, landscape_receipt) =
+        LandscapeModeling.model(LandscapeInput::new(registry, assessments))?;
+
+    Ok(LandscapeRunSnapshot {
+        landscape,
+        registry_receipt,
+        assessment_receipt,
+        landscape_receipt,
+    })
 }
