@@ -1,7 +1,7 @@
 use belvedere::{
-    ArtifactKind, AssessmentStreamIngestion, LandscapeDiffChangeKind, LandscapeDiffInput,
-    LandscapeDiffing, LandscapeInput, LandscapeModeling, RawAmenableArtifact,
-    RegistryDumpIngestion,
+    ArtifactKind, AssessmentStreamIngestion, BelvederePipelineStage, BelvedereStageCertificate,
+    LandscapeDiffChangeKind, LandscapeDiffInput, LandscapeDiffing, LandscapeInput,
+    LandscapeModeling, RawAmenableArtifact, RegistryDumpIngestion,
 };
 use miette::{IntoDiagnostic, Result, WrapErr, miette};
 
@@ -20,6 +20,20 @@ fn landscape_diff_surfaces_snapshot_changes_for_auditors() -> Result<()> {
     assert_eq!(receipt.counts().removed_items(), 1);
     assert_eq!(receipt.counts().changed_items(), 1);
     assert_eq!(receipt.counts().total_items(), diff.items().len());
+
+    let certificate = BelvedereStageCertificate::landscape_diff(&receipt);
+    assert_eq!(certificate.stage(), BelvederePipelineStage::LandscapeDiff);
+    assert_eq!(certificate.contract(), "belvedere.diff.landscape");
+    assert_eq!(
+        certificate.counts().get("total_items"),
+        Some(&diff.items().len())
+    );
+    assert!(
+        certificate
+            .invariant_checks()
+            .iter()
+            .all(|check| check.passed())
+    );
 
     let assessment = diff
         .items()

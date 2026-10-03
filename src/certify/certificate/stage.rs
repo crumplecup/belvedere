@@ -9,12 +9,13 @@ use tracing::instrument;
 
 use crate::{
     certify::{
-        BelvedereInvariantCheck, IngestionReceipt, LandscapeReceipt, UiIrReceipt, ViewModelReceipt,
-        stage_invariant_checks,
+        BelvedereInvariantCheck, IngestionReceipt, LandscapeDiffReceipt, LandscapeReceipt,
+        UiIrReceipt, ViewModelReceipt, stage_invariant_checks,
     },
     contracts::{
         AssessmentStreamIngestionContract, AuditorNavigationContract, BelvedereContract,
-        ElicitUiProjectionContract, LandscapeModelingContract, RegistryDumpIngestionContract,
+        ElicitUiProjectionContract, LandscapeDiffContract, LandscapeModelingContract,
+        RegistryDumpIngestionContract,
     },
 };
 
@@ -33,6 +34,8 @@ pub enum BelvederePipelineStage {
     AssessmentIngestion,
     /// Landscape graph construction.
     LandscapeModeling,
+    /// Landscape snapshot comparison.
+    LandscapeDiff,
     /// Auditor navigation view-model construction.
     AuditorNavigation,
     /// `elicit_ui` IR projection.
@@ -47,6 +50,7 @@ impl BelvederePipelineStage {
             Self::RegistryIngestion => "registry_ingestion",
             Self::AssessmentIngestion => "assessment_ingestion",
             Self::LandscapeModeling => "landscape_modeling",
+            Self::LandscapeDiff => "landscape_diff",
             Self::AuditorNavigation => "auditor_navigation",
             Self::UiIrProjection => "ui_ir_projection",
         }
@@ -132,6 +136,29 @@ impl BelvedereStageCertificate {
             ensures: contract_guarantees::<LandscapeModelingContract>(),
             input_ids: receipt.source_record_ids().clone(),
             output_ids: vec!["landscape_graph".to_owned()],
+            counts,
+            warning_count: receipt.warnings().len(),
+        })
+    }
+
+    /// Certificate the landscape snapshot diff stage.
+    #[instrument(level = "debug", skip(receipt))]
+    #[must_use]
+    pub fn landscape_diff(receipt: &LandscapeDiffReceipt) -> Self {
+        let counts = BTreeMap::from([
+            ("added_items".to_owned(), receipt.counts().added_items()),
+            ("changed_items".to_owned(), receipt.counts().changed_items()),
+            ("removed_items".to_owned(), receipt.counts().removed_items()),
+            ("total_items".to_owned(), receipt.counts().total_items()),
+            ("warnings".to_owned(), receipt.warnings().len()),
+        ]);
+        Self::new(StageCertificateEvidence {
+            stage: BelvederePipelineStage::LandscapeDiff,
+            contract: receipt.contract().to_owned(),
+            requires: contract_requirements::<LandscapeDiffContract>(),
+            ensures: contract_guarantees::<LandscapeDiffContract>(),
+            input_ids: receipt.source_record_ids().clone(),
+            output_ids: vec!["landscape_diff".to_owned()],
             counts,
             warning_count: receipt.warnings().len(),
         })
