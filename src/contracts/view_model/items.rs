@@ -50,6 +50,8 @@ impl AuditorFilterFacet {
 #[builder(vis = "pub(crate)", setter(into))]
 pub struct SourceNavigationItem {
     source_record_id: String,
+    source_kind: String,
+    target: String,
     label: String,
     #[getter(skip)]
     trace: TraceRef,

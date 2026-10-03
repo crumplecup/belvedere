@@ -123,11 +123,30 @@ fn view_model_projection_builds_source_navigation_items() -> Result<()> {
         proof_record.label(),
         "Proof record belvedere::ingestion::DecodedRegistrySnapshot@kani"
     );
+    assert_eq!(proof_record.source_kind(), "proof_record");
+    assert_eq!(
+        proof_record.target(),
+        "belvedere::ingestion::DecodedRegistrySnapshot@kani"
+    );
     assert_eq!(proof_record.trace().source_record_ids().len(), 1);
     assert!(
         proof_record.trace().source_record_ids().contains(
             &"proof_record:belvedere::ingestion::DecodedRegistrySnapshot@kani".to_owned()
         )
+    );
+
+    let kani_proof = model
+        .source_navigation()
+        .iter()
+        .find(|item| {
+            item.source_record_id()
+                == "kani_proof:belvedere::ingestion::record_identity_is_preserved"
+        })
+        .ok_or_else(|| miette!("Kani proof source record should be navigable"))?;
+    assert_eq!(kani_proof.source_kind(), "kani_proof");
+    assert_eq!(
+        kani_proof.target(),
+        "belvedere::ingestion::record_identity_is_preserved"
     );
     Ok(())
 }

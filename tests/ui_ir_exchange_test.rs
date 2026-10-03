@@ -206,7 +206,17 @@ fn ui_ir_projection_preserves_trace_widgets_for_auditor_deep_dives() -> Result<(
                 .starts_with("Proof record belvedere::ingestion")
         })
         .ok_or_else(|| miette!("source navigation should have traceable widgets"))?;
+    assert!(source_widget.label().contains("opens proof_record target"));
     assert_eq!(source_widget.source_record_ids().len(), 1);
+    let proof_source_widget = projection
+        .trace_widgets()
+        .iter()
+        .find(|widget| {
+            widget.label()
+                == "Kani proof belvedere::ingestion::record_identity_is_preserved opens kani_proof target belvedere::ingestion::record_identity_is_preserved"
+        })
+        .ok_or_else(|| miette!("Kani proof source navigation should be projected"))?;
+    assert_eq!(proof_source_widget.source_record_ids().len(), 1);
     let preserved_trace_refs = projection
         .trace_widgets()
         .iter()

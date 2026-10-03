@@ -171,7 +171,7 @@ impl BelvedereContract for AuditorNavigationContract {
             "witness surface entries preserve support kind and support counts",
             "provenance root entries preserve explicit root identities",
             "gap entries preserve conservative gap kinds, severity, action, and trace IDs",
-            "source navigation entries preserve ingested source record identities",
+            "source navigation entries preserve ingested source record identities, source kinds, and navigation targets",
         ]
     }
 }

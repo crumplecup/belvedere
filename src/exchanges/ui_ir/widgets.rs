@@ -278,7 +278,12 @@ pub(super) fn source_navigation_widget(
     labeled_widget(
         backend,
         "link",
-        item.label().to_owned(),
+        format!(
+            "{} opens {} target {}",
+            item.label(),
+            item.source_kind(),
+            item.target()
+        ),
         item.trace().clone(),
         trace_widgets,
     )
