@@ -14,6 +14,7 @@ pub struct ClaimExplorerItem {
     root: bool,
     basis_ids: Vec<String>,
     verifiers: Vec<String>,
+    filter_ids: Vec<String>,
     #[getter(skip)]
     contract_count: usize,
     #[getter(skip)]
@@ -33,6 +34,7 @@ impl ClaimExplorerItem {
         root: bool,
         basis_ids: Vec<String>,
         verifiers: Vec<String>,
+        filter_ids: Vec<String>,
         counts: ClaimExplorerCounts,
         trace: TraceRef,
     ) -> Self {
@@ -41,6 +43,7 @@ impl ClaimExplorerItem {
             root,
             basis_ids,
             verifiers,
+            filter_ids,
             contract_count: counts.contract_count(),
             assessment_count: counts.assessment_count(),
             gap_count: counts.gap_count(),

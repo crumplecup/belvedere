@@ -93,6 +93,16 @@ fn ui_ir_projection_preserves_trace_widgets_for_auditor_deep_dives() -> Result<(
     assert!(decoded_claim.label().contains("0 assessments"));
     assert!(decoded_claim.label().contains("2 gaps"));
     assert!(
+        decoded_claim
+            .label()
+            .contains("belvedere.filter.verifier:kani")
+    );
+    assert!(
+        decoded_claim
+            .label()
+            .contains("belvedere.filter.priority:high")
+    );
+    assert!(
         decoded_claim.source_record_ids().contains(
             &"proof_record:belvedere::ingestion::DecodedRegistrySnapshot@kani".to_owned()
         )

@@ -6,28 +6,32 @@ use tracing::instrument;
 
 use crate::{
     contracts::{
-        ClaimExplorerCounts, ClaimExplorerItem, GapItem, GapSeverity, LandscapeClaim,
-        ProofChainItem, ProofChainItemBuilder,
+        ClaimExplorerCounts, ClaimExplorerItem, GapItem, GapSeverity, LandscapeAssessment,
+        LandscapeClaim, ProofChainItem, ProofChainItemBuilder,
     },
     error::BelvedereConstructionError,
 };
 
 use super::trace;
 
-#[instrument(level = "debug", skip(claims, gaps, source_record_ids))]
+#[instrument(level = "debug", skip(claims, assessments, gaps))]
 pub(super) fn project_claim_explorer<'a>(
     claims: impl Iterator<Item = &'a LandscapeClaim>,
+    assessments: &[LandscapeAssessment],
     gaps: &[GapItem],
     source_record_ids: &[String],
 ) -> Vec<ClaimExplorerItem> {
+    let assessments_by_id = assessments_by_id(assessments);
     claims
         .map(|claim| {
             let claim_gap_count = claim_gap_count(claim.id(), gaps);
+            let filter_ids = claim_filter_ids(claim, &assessments_by_id, gaps);
             ClaimExplorerItem::new(
                 claim.id(),
                 claim.is_root(),
                 claim.bases().iter().cloned().collect(),
                 claim.proofs().iter().cloned().collect(),
+                filter_ids,
                 ClaimExplorerCounts::new(
                     claim.contracts().len(),
                     claim.assessment_ids().len(),
@@ -37,6 +41,61 @@ pub(super) fn project_claim_explorer<'a>(
             )
         })
         .collect()
+}
+
+#[instrument(level = "debug", skip(assessments))]
+fn assessments_by_id(assessments: &[LandscapeAssessment]) -> BTreeMap<&str, &LandscapeAssessment> {
+    assessments
+        .iter()
+        .map(|assessment| (assessment.id().as_str(), assessment))
+        .collect()
+}
+
+#[instrument(level = "debug", skip(claim, assessments_by_id, gaps))]
+fn claim_filter_ids(
+    claim: &LandscapeClaim,
+    assessments_by_id: &BTreeMap<&str, &LandscapeAssessment>,
+    gaps: &[GapItem],
+) -> Vec<String> {
+    let mut ids = BTreeSet::new();
+    insert_filter_id(&mut ids, "claim_family", &claim_family(claim.id()));
+    for verifier in claim.proofs() {
+        insert_filter_id(&mut ids, "verifier", verifier);
+    }
+    for witness in claim.witness_surfaces() {
+        insert_filter_id(&mut ids, "support_kind", witness.support_kind());
+    }
+    for proof in claim.kani_proofs() {
+        insert_filter_id(&mut ids, "package", proof.package());
+    }
+    for assessment_id in claim.assessment_ids() {
+        if let Some(assessment) = assessments_by_id.get(assessment_id.as_str()) {
+            insert_filter_id(
+                &mut ids,
+                "recommendation",
+                &format!("{:?}", assessment.recommendation()),
+            );
+        }
+    }
+    for gap in gaps.iter().filter(|gap| gap.claim_id() == claim.id()) {
+        insert_filter_id(&mut ids, "gap_kind", &format!("{:?}", gap.kind()));
+        if gap.high_priority() {
+            insert_filter_id(&mut ids, "priority", "high");
+        }
+    }
+    ids.into_iter().collect()
+}
+
+#[instrument(level = "trace", skip(ids))]
+fn insert_filter_id(ids: &mut BTreeSet<String>, group: &str, value: &str) {
+    ids.insert(format!("belvedere.filter.{group}:{value}"));
+}
+
+#[instrument(level = "trace", skip(claim_id))]
+fn claim_family(claim_id: &str) -> String {
+    claim_id
+        .rsplit_once("::")
+        .map_or_else(|| claim_id.to_owned(), |(family, _claim)| family.to_owned())
 }
 
 #[instrument(level = "debug", skip(claims, gaps, source_record_ids))]

@@ -79,8 +79,12 @@ impl BelvedereExchange<AuditorNavigationContract> for AuditorNavigationProjectio
         let backend_coverage =
             project_backend_coverage(landscape.claims().values(), &source_record_ids)?;
 
-        let claim_explorer =
-            project_claim_explorer(landscape.claims().values(), &gaps, &source_record_ids);
+        let claim_explorer = project_claim_explorer(
+            landscape.claims().values(),
+            landscape.assessments(),
+            &gaps,
+            &source_record_ids,
+        );
         let proof_chains = project_proof_chains(landscape.claims(), &gaps, &source_record_ids)?;
         let assessment_queue =
             project_assessment_queue(landscape.assessments(), &source_record_ids)?;

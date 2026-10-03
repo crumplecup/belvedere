@@ -43,6 +43,52 @@ fn view_model_projection_builds_auditor_navigation_evidence() -> Result<()> {
             &"proof_record:belvedere::ingestion::DecodedRegistrySnapshot@kani".to_owned()
         )
     );
+    assert!(
+        decoded_item
+            .filter_ids()
+            .contains(&"belvedere.filter.claim_family:belvedere::ingestion".to_owned())
+    );
+    assert!(
+        decoded_item
+            .filter_ids()
+            .contains(&"belvedere.filter.verifier:kani".to_owned())
+    );
+    assert!(
+        decoded_item
+            .filter_ids()
+            .contains(&"belvedere.filter.support_kind:checked_with_trusted".to_owned())
+    );
+    assert!(
+        decoded_item
+            .filter_ids()
+            .contains(&"belvedere.filter.gap_kind:MissingAssessment".to_owned())
+    );
+    assert!(
+        decoded_item
+            .filter_ids()
+            .contains(&"belvedere.filter.gap_kind:TrustedOrOpaqueWitnessSupport".to_owned())
+    );
+    assert!(
+        decoded_item
+            .filter_ids()
+            .contains(&"belvedere.filter.priority:high".to_owned())
+    );
+
+    let proof_item = model
+        .claim_explorer()
+        .iter()
+        .find(|item| item.claim_id() == "belvedere::ingestion::record_identity_is_preserved")
+        .ok_or_else(|| miette!("Kani proof claim should be visible in claim explorer"))?;
+    assert!(
+        proof_item
+            .filter_ids()
+            .contains(&"belvedere.filter.package:belvedere".to_owned())
+    );
+    assert!(
+        proof_item
+            .filter_ids()
+            .contains(&"belvedere.filter.recommendation:Strengthen".to_owned())
+    );
 
     let decoded_chain = model
         .proof_chains()

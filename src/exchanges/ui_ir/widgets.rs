@@ -60,11 +60,12 @@ pub(super) fn claim_widget(
     trace_widgets: &mut Vec<TraceWidgetRef>,
 ) -> Result<WidgetId, UiIrError> {
     let role = claim_role_label(item);
+    let filters = list_label(item.filter_ids(), "no filters");
     labeled_widget(
         backend,
         "button",
         format!(
-            "Claim {} is a {role}; {}, {}, {}, {}, {}",
+            "Claim {} is a {role}; {}, {}, {}, {}, {}; filters {filters}",
             item.claim_id(),
             count_label(item.basis_ids().len(), "direct basis", "direct bases"),
             count_label(item.verifiers().len(), "verifier proof", "verifier proofs"),
