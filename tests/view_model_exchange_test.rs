@@ -21,7 +21,7 @@ fn view_model_projection_builds_auditor_navigation_evidence() -> Result<()> {
     assert_eq!(model.overview().high_priority_gap_count(), 3);
 
     assert_eq!(receipt.counts().claim_cards(), 4);
-    assert_eq!(receipt.counts().filter_facets(), 9);
+    assert_eq!(receipt.counts().filter_facets(), 10);
     assert_eq!(receipt.counts().backend_coverage_items(), 12);
     assert_eq!(receipt.counts().proof_chain_items(), 4);
     assert_eq!(receipt.counts().assessment_items(), 2);
@@ -155,6 +155,15 @@ fn view_model_projection_builds_auditor_filter_facets() -> Result<()> {
     assert_eq!(verifier.value(), "kani");
     assert_eq!(verifier.count(), 2);
     assert_eq!(verifier.trace().claim_id(), verifier.facet_id());
+
+    let claim_family = model
+        .filter_facets()
+        .iter()
+        .find(|facet| facet.facet_id() == "belvedere.filter.claim_family:belvedere::ingestion")
+        .ok_or_else(|| miette!("claim-family facet should be available"))?;
+    assert_eq!(claim_family.group(), "claim_family");
+    assert_eq!(claim_family.label(), "Claim family belvedere::ingestion");
+    assert_eq!(claim_family.count(), 4);
 
     let strengthen = model
         .filter_facets()

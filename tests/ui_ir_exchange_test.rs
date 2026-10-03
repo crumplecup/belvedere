@@ -116,6 +116,11 @@ fn ui_ir_projection_preserves_trace_widgets_for_auditor_deep_dives() -> Result<(
     assert_eq!(filter_widget.claim_id(), "belvedere.filter.verifier:kani");
     assert_filter_widget(
         &projection,
+        "Filter Claim family belvedere::ingestion selects 4 items",
+        "belvedere.filter.claim_family:belvedere::ingestion",
+    )?;
+    assert_filter_widget(
+        &projection,
         "Filter Support kind checked_with_trusted selects 1 items",
         "belvedere.filter.support_kind:checked_with_trusted",
     )?;

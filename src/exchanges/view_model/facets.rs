@@ -20,10 +20,13 @@ pub(super) fn project_filter_facets<'a>(
     gaps: &[GapItem],
     source_record_ids: &[String],
 ) -> Result<Vec<AuditorFilterFacet>, BelvedereConstructionError> {
+    let mut claim_family_counts = BTreeMap::new();
     let mut verifier_counts = BTreeMap::new();
     let mut support_kind_counts = BTreeMap::new();
     let mut package_counts = BTreeMap::new();
     for claim in claims {
+        let family = claim_family(claim.id());
+        increment_count(&mut claim_family_counts, &family);
         for verifier in claim.proofs() {
             increment_count(&mut verifier_counts, verifier);
         }
@@ -50,6 +53,13 @@ pub(super) fn project_filter_facets<'a>(
     let high_priority_count = gaps.iter().filter(|gap| gap.high_priority()).count();
 
     let mut facets = Vec::new();
+    push_facets(
+        "claim_family",
+        "Claim family",
+        claim_family_counts,
+        source_record_ids,
+        &mut facets,
+    )?;
     push_facets(
         "verifier",
         "Verifier",
@@ -88,6 +98,13 @@ pub(super) fn project_filter_facets<'a>(
     push_priority_facet(high_priority_count, source_record_ids, &mut facets)?;
 
     Ok(facets)
+}
+
+#[instrument(level = "trace", skip(claim_id))]
+fn claim_family(claim_id: &str) -> String {
+    claim_id
+        .rsplit_once("::")
+        .map_or_else(|| claim_id.to_owned(), |(family, _claim)| family.to_owned())
 }
 
 #[instrument(level = "trace", skip(counts))]
