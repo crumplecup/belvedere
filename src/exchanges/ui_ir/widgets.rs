@@ -243,6 +243,8 @@ fn assessment_recency_label(item: &AssessmentQueueItem) -> String {
             "current, supersedes {} older assessments",
             item.superseded_count()
         )
+    } else if let Some(current_id) = item.superseded_by() {
+        format!("superseded by {current_id}")
     } else {
         "superseded".to_owned()
     }

@@ -34,6 +34,7 @@ pub(super) fn project_assessment_queue(
                         .copied()
                         .unwrap_or_default(),
                 )
+                .superseded_by(assessment.superseded_by().map(ToOwned::to_owned))
                 .recommendation(assessment.recommendation())
                 .resolution_path(assessment.resolution_path())
                 .weak_dimensions(weak_dimensions(assessment.rubric()))

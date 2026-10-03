@@ -2,6 +2,7 @@
 
 use derive_builder::Builder;
 use derive_getters::Getters;
+use tracing::instrument;
 
 use crate::contracts::{Recommendation, ResolutionPath, view_model::TraceRef};
 
@@ -15,6 +16,8 @@ pub struct AssessmentQueueItem {
     current: bool,
     #[getter(skip)]
     superseded_count: usize,
+    #[getter(skip)]
+    superseded_by: Option<String>,
     #[getter(skip)]
     recommendation: Recommendation,
     #[getter(skip)]
@@ -35,6 +38,13 @@ impl AssessmentQueueItem {
     #[must_use]
     pub const fn superseded_count(&self) -> usize {
         self.superseded_count
+    }
+
+    /// Assessment ID that supersedes this item, if this item is no longer current.
+    #[must_use]
+    #[instrument(level = "trace", skip(self))]
+    pub fn superseded_by(&self) -> Option<&str> {
+        self.superseded_by.as_deref()
     }
 
     /// Recommendation.

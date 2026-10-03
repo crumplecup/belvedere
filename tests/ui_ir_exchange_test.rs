@@ -301,7 +301,7 @@ fn ui_ir_projection_labels_assessment_recency() -> Result<()> {
     assert!(projection.trace_widgets().iter().any(|widget| {
         widget
             .label()
-            .starts_with("Assessment assess-old (superseded)")
+            .starts_with("Assessment assess-old (superseded by assess-current)")
             && widget
                 .label()
                 .contains("resolution: strengthen current proof")

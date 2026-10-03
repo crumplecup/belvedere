@@ -446,6 +446,7 @@ fn view_model_projection_exposes_assessment_recency() -> Result<()> {
         .ok_or_else(|| miette!("current assessment should be queued"))?;
     assert!(current.current());
     assert_eq!(current.superseded_count(), 1);
+    assert_eq!(current.superseded_by(), None);
 
     let older = model
         .assessment_queue()
@@ -454,6 +455,7 @@ fn view_model_projection_exposes_assessment_recency() -> Result<()> {
         .ok_or_else(|| miette!("older assessment should be queued"))?;
     assert!(!older.current());
     assert_eq!(older.superseded_count(), 0);
+    assert_eq!(older.superseded_by(), Some("assess-current"));
     Ok(())
 }
 
