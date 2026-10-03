@@ -60,6 +60,18 @@ fn view_model_projection_builds_auditor_navigation_evidence() -> Result<()> {
         receipt.lane_counts().get("gap_lane_witness_review"),
         Some(&1)
     );
+    assert_eq!(
+        receipt
+            .source_artifact_counts()
+            .get("source_artifact_registry_dump"),
+        Some(&5)
+    );
+    assert_eq!(
+        receipt
+            .source_artifact_counts()
+            .get("source_artifact_proof_assessments"),
+        Some(&2)
+    );
 
     let decoded_item = model
         .claim_explorer()

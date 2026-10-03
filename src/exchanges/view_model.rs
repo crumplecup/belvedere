@@ -10,7 +10,7 @@ use crate::{
         AssessmentQueueItem, AssessmentRecencySummary, AssessmentWorkItem,
         AuditorNavigationContract, AuditorNavigationModel, AuditorNavigationModelBuilder,
         BelvedereContract, GapItem, LandscapeAssessment, OverviewView, ProvenanceRootItem,
-        TraceRef, ViewModelInput,
+        SourceNavigationItem, TraceRef, ViewModelInput,
     },
     error::{BelvedereConstructionError, BelvedereError},
     exchanges::BelvedereExchange,
@@ -117,6 +117,7 @@ impl BelvedereExchange<AuditorNavigationContract> for AuditorNavigationProjectio
 
         let source_navigation = project_source_navigation(&source_record_ids)?;
         let receipt_lane_counts = lane_counts(&assessment_queue, &assessment_work, &gaps);
+        let receipt_source_artifact_counts = source_artifact_counts(&source_navigation);
 
         let counts = ViewModelReceiptCountsBuilder::default()
             .claim_cards(landscape.claims().len())
@@ -151,6 +152,7 @@ impl BelvedereExchange<AuditorNavigationContract> for AuditorNavigationProjectio
             .contract(AuditorNavigationContract::NAME)
             .counts(counts)
             .lane_counts(receipt_lane_counts)
+            .source_artifact_counts(receipt_source_artifact_counts)
             .source_record_ids(source_record_ids)
             .warnings(Vec::new())
             .build()
@@ -196,6 +198,17 @@ fn lane_counts(
 #[instrument(level = "trace", skip(counts))]
 fn increment_lane_count(counts: &mut BTreeMap<String, usize>, prefix: &str, lane: &str) {
     *counts.entry(format!("{prefix}_{lane}")).or_default() += 1;
+}
+
+#[instrument(level = "debug", skip(source_navigation))]
+fn source_artifact_counts(source_navigation: &[SourceNavigationItem]) -> BTreeMap<String, usize> {
+    let mut counts = BTreeMap::new();
+    for item in source_navigation {
+        *counts
+            .entry(format!("source_artifact_{}", item.artifact_kind().as_str()))
+            .or_default() += 1;
+    }
+    counts
 }
 
 #[instrument(level = "debug")]
