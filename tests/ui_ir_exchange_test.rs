@@ -194,15 +194,27 @@ fn ui_ir_projection_preserves_trace_widgets_for_auditor_deep_dives() -> Result<(
         .iter()
         .find(|widget| {
             widget.label().starts_with(
-                "Assessment work assess proof coverage for belvedere::ingestion::DecodedRegistrySnapshot",
+                "Assessment work assess proof coverage lane assessment for belvedere::ingestion::DecodedRegistrySnapshot",
             )
         })
         .ok_or_else(|| miette!("assessment work should have traceable widgets"))?;
+    assert!(
+        assessment_work_widget
+            .label()
+            .contains("resolution: collect proof assessment")
+    );
     assert!(
         assessment_work_widget.source_record_ids().contains(
             &"proof_record:belvedere::ingestion::DecodedRegistrySnapshot@kani".to_owned()
         )
     );
+    assert!(projection.trace_widgets().iter().any(|widget| {
+        widget.label().starts_with(
+            "Assessment work strengthen proof lane strengthening for belvedere::ingestion::record_identity_is_preserved",
+        ) && widget
+            .label()
+            .contains("resolution: strengthen current proof")
+    }));
     let root_widget = projection
         .trace_widgets()
         .iter()

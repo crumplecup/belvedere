@@ -184,9 +184,11 @@ pub(super) fn assessment_work_widget(
         backend,
         "button",
         format!(
-            "Assessment work {} for {} ({priority}): {}",
+            "Assessment work {} lane {} for {} ({priority}); resolution: {}; reason: {}",
             item.action(),
+            item.queue_lane(),
             item.claim_id(),
+            item.resolution_label(),
             item.reason()
         ),
         item.trace().clone(),

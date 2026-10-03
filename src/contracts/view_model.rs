@@ -167,7 +167,7 @@ impl BelvedereContract for AuditorNavigationContract {
             "claim explorer entries retain bases, verifier coverage, contracts, assessments, gaps, and trace IDs",
             "proof-chain entries retain direct bases, resolved roots, verifier coverage, review state, next action, gaps, and trace IDs",
             "assessment queue entries preserve recommendation, resolution, and recency vocabulary",
-            "assessment work entries expose missing reviews and current reviewer actions with trace IDs",
+            "assessment work entries expose queue lanes, missing reviews, current reviewer actions, resolution labels, and trace IDs",
             "witness surface entries preserve support kind and support counts",
             "provenance root entries preserve explicit root identities, root kinds, coverage counts, assessment counts, and gap counts",
             "gap entries preserve conservative gap kinds, severity, action, and trace IDs",

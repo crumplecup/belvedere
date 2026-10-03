@@ -8,7 +8,7 @@ use crate::{
     contracts::{
         AssessmentQueueItem, AssessmentQueueItemBuilder, AssessmentWorkItem,
         AssessmentWorkItemBuilder, GapItem, LandscapeAssessment, LandscapeGapKind, Recommendation,
-        Rubric,
+        ResolutionPath, Rubric,
     },
     error::BelvedereConstructionError,
 };
@@ -56,7 +56,9 @@ pub(super) fn project_assessment_work(
             items.push(
                 AssessmentWorkItemBuilder::default()
                     .claim_id(gap.claim_id())
+                    .queue_lane(gap_queue_lane(gap.kind()))
                     .action("assess proof coverage")
+                    .resolution_label("collect proof assessment")
                     .reason(gap.detail())
                     .high_priority(gap.high_priority())
                     .trace(gap.trace().clone())
@@ -85,7 +87,9 @@ pub(super) fn project_assessment_work(
         items.push(
             AssessmentWorkItemBuilder::default()
                 .claim_id(assessment.proof_id())
+                .queue_lane(assessment_queue_lane(assessment.recommendation()))
                 .action(action)
+                .resolution_label(resolution_label(assessment.resolution_path()))
                 .reason(format!(
                     "current assessment {} recommends {:?}",
                     assessment.id(),
@@ -99,6 +103,39 @@ pub(super) fn project_assessment_work(
     }
 
     Ok(items)
+}
+
+#[instrument(level = "trace", skip(kind))]
+fn gap_queue_lane(kind: LandscapeGapKind) -> &'static str {
+    match kind {
+        LandscapeGapKind::MissingAssessment => "assessment",
+        LandscapeGapKind::MissingProof => "proof_coverage",
+        LandscapeGapKind::ReplacementRecommended => "replacement",
+        LandscapeGapKind::RetirementRecommended => "retirement",
+        LandscapeGapKind::TrustedOrOpaqueWitnessSupport => "witness_review",
+    }
+}
+
+#[instrument(level = "trace", skip(recommendation))]
+fn assessment_queue_lane(recommendation: Recommendation) -> &'static str {
+    match recommendation {
+        Recommendation::Accept => "accepted",
+        Recommendation::Strengthen => "strengthening",
+        Recommendation::Replace => "replacement",
+        Recommendation::Retire => "retirement",
+    }
+}
+
+#[instrument(level = "trace", skip(path))]
+fn resolution_label(path: Option<ResolutionPath>) -> &'static str {
+    match path {
+        Some(ResolutionPath::KeepCurrentProof) => "keep current proof",
+        Some(ResolutionPath::StrengthenCurrentProof) => "strengthen current proof",
+        Some(ResolutionPath::ReplaceWithProofSpecificModel) => "replace with proof-specific model",
+        Some(ResolutionPath::ReplaceWithAccommodationModel) => "replace with accommodation model",
+        Some(ResolutionPath::RetireClaim) => "retire claim",
+        None => "no resolution path",
+    }
 }
 
 #[instrument(level = "debug", skip(assessments))]

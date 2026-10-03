@@ -272,6 +272,11 @@ fn view_model_projection_preserves_review_queues_and_traceability() -> Result<()
         missing_assessment.reason(),
         "claim has proof coverage but no assessment"
     );
+    assert_eq!(missing_assessment.queue_lane(), "assessment");
+    assert_eq!(
+        missing_assessment.resolution_label(),
+        "collect proof assessment"
+    );
     assert!(
         missing_assessment.trace().source_record_ids().contains(
             &"proof_record:belvedere::ingestion::DecodedRegistrySnapshot@kani".to_owned()
@@ -286,6 +291,8 @@ fn view_model_projection_preserves_review_queues_and_traceability() -> Result<()
                 && item.action() == "strengthen proof"
         })
         .ok_or_else(|| miette!("strengthening work should be queued"))?;
+    assert_eq!(strengthen.queue_lane(), "strengthening");
+    assert_eq!(strengthen.resolution_label(), "strengthen current proof");
     assert!(strengthen.reason().contains("assess-belvedere-ingestion-1"));
 
     let witness = &model.witness_surface()[0];

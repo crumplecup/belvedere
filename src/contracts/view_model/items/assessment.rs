@@ -61,7 +61,9 @@ impl AssessmentQueueItem {
 #[builder(vis = "pub(crate)", setter(into))]
 pub struct AssessmentWorkItem {
     claim_id: String,
+    queue_lane: String,
     action: String,
+    resolution_label: String,
     reason: String,
     #[getter(skip)]
     high_priority: bool,
