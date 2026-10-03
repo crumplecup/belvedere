@@ -80,7 +80,7 @@ impl BelvedereContract for ElicitUiProjectionContract {
             "proof-chain widgets preserve chain topology and backend completeness labels",
             "claim, assessment, witness, provenance, and gap widgets retain source trace references",
             "assessment widgets preserve review recency status in auditor-visible labels",
-            "source record navigation widgets retain ingested source record IDs",
+            "source record navigation widgets retain ingested source record IDs and artifact families",
             "IrSourced is asserted at the projection boundary and WcagVerified is proven from the emitted tree",
             "the projection records which elicit_ui props were lifted into Amenable standards",
         ]

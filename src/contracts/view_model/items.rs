@@ -4,7 +4,7 @@ use derive_builder::Builder;
 use derive_getters::Getters;
 use derive_new::new;
 
-use crate::contracts::view_model::TraceRef;
+use crate::contracts::{ArtifactKind, view_model::TraceRef};
 
 mod assessment;
 mod claim;
@@ -53,6 +53,8 @@ impl AuditorFilterFacet {
 #[builder(vis = "pub(crate)", setter(into))]
 pub struct SourceNavigationItem {
     source_record_id: String,
+    #[getter(skip)]
+    artifact_kind: ArtifactKind,
     source_kind: String,
     target: String,
     label: String,
@@ -61,6 +63,12 @@ pub struct SourceNavigationItem {
 }
 
 impl SourceNavigationItem {
+    /// Ingested artifact family that produced this source record.
+    #[must_use]
+    pub const fn artifact_kind(&self) -> ArtifactKind {
+        self.artifact_kind
+    }
+
     /// Trace reference.
     #[must_use]
     pub const fn trace(&self) -> &TraceRef {

@@ -4,7 +4,7 @@ use derive_new::new;
 use tracing::instrument;
 
 use crate::{
-    contracts::{SourceNavigationItem, SourceNavigationItemBuilder, TraceRef},
+    contracts::{ArtifactKind, SourceNavigationItem, SourceNavigationItemBuilder, TraceRef},
     error::BelvedereConstructionError,
 };
 
@@ -18,6 +18,7 @@ pub(super) fn project_source_navigation(
             let source = source_record(source_record_id);
             SourceNavigationItemBuilder::default()
                 .source_record_id(source_record_id)
+                .artifact_kind(source.artifact_kind)
                 .source_kind(source.kind)
                 .target(source.target)
                 .label(source.label)
@@ -34,19 +35,50 @@ pub(super) fn project_source_navigation(
 #[instrument(level = "trace", skip(source_record_id))]
 fn source_record(source_record_id: &str) -> SourceRecordNavigation {
     if let Some(rest) = source_record_id.strip_prefix("evidence_link:") {
-        SourceRecordNavigation::new("evidence_link", rest, format!("Evidence link {rest}"))
+        SourceRecordNavigation::new(
+            ArtifactKind::RegistryDump,
+            "evidence_link",
+            rest,
+            format!("Evidence link {rest}"),
+        )
     } else if let Some(rest) = source_record_id.strip_prefix("proof_record:") {
-        SourceRecordNavigation::new("proof_record", rest, format!("Proof record {rest}"))
+        SourceRecordNavigation::new(
+            ArtifactKind::RegistryDump,
+            "proof_record",
+            rest,
+            format!("Proof record {rest}"),
+        )
     } else if let Some(rest) = source_record_id.strip_prefix("contract_record:") {
-        SourceRecordNavigation::new("contract_record", rest, format!("Contract record {rest}"))
+        SourceRecordNavigation::new(
+            ArtifactKind::RegistryDump,
+            "contract_record",
+            rest,
+            format!("Contract record {rest}"),
+        )
     } else if let Some(rest) = source_record_id.strip_prefix("witness_export:") {
-        SourceRecordNavigation::new("witness_export", rest, format!("Witness export {rest}"))
+        SourceRecordNavigation::new(
+            ArtifactKind::RegistryDump,
+            "witness_export",
+            rest,
+            format!("Witness export {rest}"),
+        )
     } else if let Some(rest) = source_record_id.strip_prefix("kani_proof:") {
-        SourceRecordNavigation::new("kani_proof", rest, format!("Kani proof {rest}"))
+        SourceRecordNavigation::new(
+            ArtifactKind::RegistryDump,
+            "kani_proof",
+            rest,
+            format!("Kani proof {rest}"),
+        )
     } else if let Some(rest) = source_record_id.strip_prefix("assessment:") {
-        SourceRecordNavigation::new("assessment", rest, format!("Assessment {rest}"))
+        SourceRecordNavigation::new(
+            ArtifactKind::ProofAssessments,
+            "assessment",
+            rest,
+            format!("Assessment {rest}"),
+        )
     } else {
         SourceRecordNavigation::new(
+            ArtifactKind::RegistryDump,
             "source_record",
             source_record_id,
             format!("Source record {source_record_id}"),
@@ -56,6 +88,7 @@ fn source_record(source_record_id: &str) -> SourceRecordNavigation {
 
 #[derive(Debug, Clone, PartialEq, Eq, new)]
 struct SourceRecordNavigation {
+    artifact_kind: ArtifactKind,
     #[new(into)]
     kind: String,
     #[new(into)]

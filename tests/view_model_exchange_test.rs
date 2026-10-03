@@ -196,6 +196,7 @@ fn view_model_projection_builds_source_navigation_items() -> Result<()> {
         proof_record.label(),
         "Proof record belvedere::ingestion::DecodedRegistrySnapshot@kani"
     );
+    assert_eq!(proof_record.artifact_kind(), ArtifactKind::RegistryDump);
     assert_eq!(proof_record.source_kind(), "proof_record");
     assert_eq!(
         proof_record.target(),
@@ -207,6 +208,17 @@ fn view_model_projection_builds_source_navigation_items() -> Result<()> {
             &"proof_record:belvedere::ingestion::DecodedRegistrySnapshot@kani".to_owned()
         )
     );
+
+    let assessment_source = model
+        .source_navigation()
+        .iter()
+        .find(|item| item.source_record_id() == "assessment:assess-belvedere-ingestion-1")
+        .ok_or_else(|| miette!("assessment source record should be navigable"))?;
+    assert_eq!(
+        assessment_source.artifact_kind(),
+        ArtifactKind::ProofAssessments
+    );
+    assert_eq!(assessment_source.source_kind(), "assessment");
 
     let kani_proof = model
         .source_navigation()

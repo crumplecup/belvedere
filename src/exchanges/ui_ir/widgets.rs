@@ -328,8 +328,9 @@ pub(super) fn source_navigation_widget(
         backend,
         "link",
         format!(
-            "{} opens {} target {}",
+            "{} opens {} {} target {}",
             item.label(),
+            item.artifact_kind(),
             item.source_kind(),
             item.target()
         ),
