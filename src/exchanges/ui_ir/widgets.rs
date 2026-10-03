@@ -102,12 +102,13 @@ pub(super) fn proof_chain_widget(
     let roots = list_label(item.root_ids(), "no modeled roots");
     let bases = list_label(item.basis_ids(), "no direct bases");
     let verifiers = list_label(item.verifiers(), "no verifier proofs");
+    let backend_coverage = chain_backend_coverage_label(item);
     let topology = item.topology();
     labeled_widget(
         backend,
         "button",
         format!(
-            "Proof chain {} is {}; next action: {}; reaches roots {roots} through direct bases {bases}; verifier proofs {verifiers}; topology {}, {}, {}, {}; subject {}",
+            "Proof chain {} is {}; next action: {}; reaches roots {roots} through direct bases {bases}; verifier proofs {verifiers}; chain backend coverage {backend_coverage}; topology {}, {}, {}, {}; subject {}",
             item.claim_id(),
             item.review_state(),
             item.next_action(),
@@ -128,6 +129,27 @@ pub(super) fn proof_chain_widget(
         item.trace().clone(),
         trace_widgets,
     )
+}
+
+#[instrument(level = "trace", skip(item))]
+fn chain_backend_coverage_label(item: &ProofChainItem) -> String {
+    item.backend_coverage()
+        .iter()
+        .map(|coverage| {
+            let state = if coverage.complete() {
+                "complete"
+            } else {
+                "incomplete"
+            };
+            format!(
+                "{} {state} ({} covered, {} missing)",
+                coverage.verifier(),
+                coverage.covered_claim_count(),
+                coverage.missing_claim_count()
+            )
+        })
+        .collect::<Vec<_>>()
+        .join("; ")
 }
 
 #[instrument(level = "trace", skip(values))]

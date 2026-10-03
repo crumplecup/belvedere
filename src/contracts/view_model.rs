@@ -14,13 +14,14 @@ mod trace;
 
 pub use items::{
     AssessmentQueueItem, AssessmentWorkItem, AuditorFilterFacet, BackendCoverageItem,
-    ClaimExplorerCounts, ClaimExplorerItem, GapItem, GapSeverity, ProofChainItem,
-    ProofChainTopology, ProvenanceRootItem, SourceNavigationItem, WitnessSurfaceItem,
+    ClaimExplorerCounts, ClaimExplorerItem, GapItem, GapSeverity, ProofChainBackendCoverage,
+    ProofChainItem, ProofChainTopology, ProvenanceRootItem, SourceNavigationItem,
+    WitnessSurfaceItem,
 };
 pub(crate) use items::{
     AssessmentQueueItemBuilder, AssessmentWorkItemBuilder, AuditorFilterFacetBuilder,
-    BackendCoverageItemBuilder, GapItemBuilder, ProofChainItemBuilder, SourceNavigationItemBuilder,
-    WitnessSurfaceItemBuilder,
+    BackendCoverageItemBuilder, GapItemBuilder, ProofChainBackendCoverageBuilder,
+    ProofChainItemBuilder, SourceNavigationItemBuilder, WitnessSurfaceItemBuilder,
 };
 pub use trace::TraceRef;
 
@@ -165,7 +166,7 @@ impl BelvedereContract for AuditorNavigationContract {
             "filter facets expose deterministic claim-family, verifier, recommendation, support, package, gap, and priority axes with trace IDs",
             "backend coverage entries expose Kani, Creusot, and Verus status per claim",
             "claim explorer entries retain bases, verifier coverage, filter memberships, contracts, assessments, gaps, and trace IDs",
-            "proof-chain entries retain direct bases, resolved roots, verifier coverage, topology metrics, review state, next action, gaps, and trace IDs",
+            "proof-chain entries retain direct bases, resolved roots, subject verifier coverage, chain backend completeness, topology metrics, review state, next action, gaps, and trace IDs",
             "assessment queue entries preserve recommendation, resolution, and recency vocabulary",
             "assessment work entries expose queue lanes, missing reviews, current reviewer actions, resolution labels, and trace IDs",
             "witness surface entries preserve support kind and support counts",

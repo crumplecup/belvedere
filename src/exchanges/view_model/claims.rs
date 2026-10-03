@@ -7,12 +7,13 @@ use tracing::instrument;
 use crate::{
     contracts::{
         ClaimExplorerCounts, ClaimExplorerItem, GapItem, GapSeverity, LandscapeAssessment,
-        LandscapeClaim, ProofChainItem, ProofChainItemBuilder, ProofChainTopology,
+        LandscapeClaim, ProofChainBackendCoverage, ProofChainBackendCoverageBuilder,
+        ProofChainItem, ProofChainItemBuilder, ProofChainTopology,
     },
     error::BelvedereConstructionError,
 };
 
-use super::trace;
+use super::{coverage::TARGET_VERIFIERS, trace};
 
 #[instrument(level = "debug", skip(claims, assessments, gaps))]
 pub(super) fn project_claim_explorer<'a>(
@@ -107,6 +108,8 @@ pub(super) fn project_proof_chains(
     claims
         .values()
         .map(|claim| {
+            let traversal = chain_traversal(claim.id(), claims);
+            let backend_coverage = chain_backend_coverage(&traversal, claims)?;
             let review_state = chain_review_state(claim.id(), gaps);
             let next_action = chain_next_action(claim.id(), gaps);
             ProofChainItemBuilder::default()
@@ -114,7 +117,8 @@ pub(super) fn project_proof_chains(
                 .basis_ids(claim.bases().iter().cloned().collect::<Vec<_>>())
                 .root_ids(chain_roots(claim.id(), claims))
                 .verifiers(claim.proofs().iter().cloned().collect::<Vec<_>>())
-                .topology(chain_topology(claim.id(), claims, gaps))
+                .backend_coverage(backend_coverage)
+                .topology(chain_topology(&traversal, claims, gaps))
                 .review_state(review_state)
                 .next_action(next_action)
                 .gap_count(claim_gap_count(claim.id(), gaps))
@@ -197,27 +201,67 @@ fn collect_chain_roots(
     visiting.remove(claim_id);
 }
 
-#[instrument(level = "debug", skip(claims, gaps))]
-fn chain_topology(
-    claim_id: &str,
-    claims: &BTreeMap<String, LandscapeClaim>,
-    gaps: &[GapItem],
-) -> ProofChainTopology {
+#[derive(Debug, Clone, PartialEq, Eq)]
+struct ChainTraversal {
+    reached: BTreeSet<String>,
+    max_depth: usize,
+}
+
+#[instrument(level = "debug", skip(claims))]
+fn chain_traversal(claim_id: &str, claims: &BTreeMap<String, LandscapeClaim>) -> ChainTraversal {
     let mut reached = BTreeSet::new();
     let mut visiting = BTreeSet::new();
     let max_depth = collect_chain_depth(claim_id, claims, &mut visiting, &mut reached);
-    let branching_claim_count = reached
+    ChainTraversal { reached, max_depth }
+}
+
+#[instrument(level = "debug", skip(traversal, claims))]
+fn chain_backend_coverage(
+    traversal: &ChainTraversal,
+    claims: &BTreeMap<String, LandscapeClaim>,
+) -> Result<Vec<ProofChainBackendCoverage>, BelvedereConstructionError> {
+    TARGET_VERIFIERS
+        .iter()
+        .map(|verifier| {
+            let covered_claim_count = traversal
+                .reached
+                .iter()
+                .filter_map(|claim_id| claims.get(claim_id))
+                .filter(|claim| claim.proofs().contains(*verifier))
+                .count();
+            let missing_claim_count = traversal.reached.len().saturating_sub(covered_claim_count);
+            ProofChainBackendCoverageBuilder::default()
+                .verifier(*verifier)
+                .complete(missing_claim_count == 0)
+                .covered_claim_count(covered_claim_count)
+                .missing_claim_count(missing_claim_count)
+                .build()
+                .map_err(|error| {
+                    BelvedereConstructionError::new("ProofChainBackendCoverage", error)
+                })
+        })
+        .collect()
+}
+
+#[instrument(level = "debug", skip(traversal, claims, gaps))]
+fn chain_topology(
+    traversal: &ChainTraversal,
+    claims: &BTreeMap<String, LandscapeClaim>,
+    gaps: &[GapItem],
+) -> ProofChainTopology {
+    let branching_claim_count = traversal
+        .reached
         .iter()
         .filter_map(|reached_id| claims.get(reached_id))
         .filter(|claim| direct_basis_count(claim) > 1)
         .count();
     let chain_gap_count = gaps
         .iter()
-        .filter(|gap| reached.contains(gap.claim_id()))
+        .filter(|gap| traversal.reached.contains(gap.claim_id()))
         .count();
     ProofChainTopology::new(
-        reached.len(),
-        max_depth,
+        traversal.reached.len(),
+        traversal.max_depth,
         branching_claim_count,
         chain_gap_count,
     )

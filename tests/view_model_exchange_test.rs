@@ -109,6 +109,22 @@ fn view_model_projection_builds_auditor_navigation_evidence() -> Result<()> {
     assert_eq!(decoded_chain.topology().max_depth(), 1);
     assert_eq!(decoded_chain.topology().branching_claim_count(), 0);
     assert_eq!(decoded_chain.topology().chain_gap_count(), 3);
+    let kani_chain_coverage = decoded_chain
+        .backend_coverage()
+        .iter()
+        .find(|coverage| coverage.verifier() == "kani")
+        .ok_or_else(|| miette!("proof chain should expose Kani chain coverage"))?;
+    assert!(!kani_chain_coverage.complete());
+    assert_eq!(kani_chain_coverage.covered_claim_count(), 1);
+    assert_eq!(kani_chain_coverage.missing_claim_count(), 1);
+    let creusot_chain_coverage = decoded_chain
+        .backend_coverage()
+        .iter()
+        .find(|coverage| coverage.verifier() == "creusot")
+        .ok_or_else(|| miette!("proof chain should expose Creusot chain coverage"))?;
+    assert!(!creusot_chain_coverage.complete());
+    assert_eq!(creusot_chain_coverage.covered_claim_count(), 0);
+    assert_eq!(creusot_chain_coverage.missing_claim_count(), 2);
     assert_eq!(decoded_chain.gap_count(), decoded_item.gap_count());
     Ok(())
 }

@@ -183,6 +183,16 @@ fn ui_ir_projection_preserves_trace_widgets_for_auditor_deep_dives() -> Result<(
             .contains("direct bases belvedere::ingestion::RawAmenableArtifact")
     );
     assert!(chain_widget.label().contains("verifier proofs kani"));
+    assert!(
+        chain_widget
+            .label()
+            .contains("chain backend coverage kani incomplete (1 covered, 1 missing)")
+    );
+    assert!(
+        chain_widget
+            .label()
+            .contains("creusot incomplete (0 covered, 2 missing)")
+    );
     assert!(chain_widget.label().contains("2 linked claims"));
     assert!(chain_widget.label().contains("1 level deep"));
     assert!(chain_widget.label().contains("0 branching claims"));

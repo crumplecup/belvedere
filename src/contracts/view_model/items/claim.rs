@@ -128,6 +128,7 @@ pub struct ProofChainItem {
     basis_ids: Vec<String>,
     root_ids: Vec<String>,
     verifiers: Vec<String>,
+    backend_coverage: Vec<ProofChainBackendCoverage>,
     #[getter(skip)]
     topology: ProofChainTopology,
     review_state: String,
@@ -155,6 +156,39 @@ impl ProofChainItem {
     #[must_use]
     pub const fn trace(&self) -> &TraceRef {
         &self.trace
+    }
+}
+
+/// Per-backend completeness evidence for a transitive proof chain.
+#[derive(Debug, Clone, PartialEq, Eq, Getters, Builder)]
+#[builder(vis = "pub(crate)", setter(into))]
+pub struct ProofChainBackendCoverage {
+    verifier: String,
+    #[getter(skip)]
+    complete: bool,
+    #[getter(skip)]
+    covered_claim_count: usize,
+    #[getter(skip)]
+    missing_claim_count: usize,
+}
+
+impl ProofChainBackendCoverage {
+    /// Whether every claim in the chain has proof coverage for this backend.
+    #[must_use]
+    pub const fn complete(&self) -> bool {
+        self.complete
+    }
+
+    /// Number of claims in the chain covered by this backend.
+    #[must_use]
+    pub const fn covered_claim_count(&self) -> usize {
+        self.covered_claim_count
+    }
+
+    /// Number of claims in the chain missing this backend.
+    #[must_use]
+    pub const fn missing_claim_count(&self) -> usize {
+        self.missing_claim_count
     }
 }
 

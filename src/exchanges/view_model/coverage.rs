@@ -9,7 +9,7 @@ use crate::{
 
 use super::trace;
 
-const TARGET_VERIFIERS: [&str; 3] = ["kani", "creusot", "verus"];
+pub(super) const TARGET_VERIFIERS: [&str; 3] = ["kani", "creusot", "verus"];
 
 #[instrument(level = "debug", skip(claims, source_record_ids))]
 pub(super) fn project_backend_coverage<'a>(
