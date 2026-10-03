@@ -78,7 +78,7 @@ pub struct OverviewView {
     claim_count: usize,
     root_count: usize,
     proof_coverage_count: usize,
-    assessment_count: usize,
+    assessment_recency: AssessmentRecencySummary,
     gap_count: usize,
     high_priority_gap_count: usize,
 }
@@ -90,7 +90,7 @@ impl OverviewView {
         claim_count: usize,
         root_count: usize,
         proof_coverage_count: usize,
-        assessment_count: usize,
+        assessment_recency: AssessmentRecencySummary,
         gap_count: usize,
         high_priority_gap_count: usize,
     ) -> Self {
@@ -98,7 +98,7 @@ impl OverviewView {
             claim_count,
             root_count,
             proof_coverage_count,
-            assessment_count,
+            assessment_recency,
             gap_count,
             high_priority_gap_count,
         }
@@ -125,7 +125,19 @@ impl OverviewView {
     /// Number of assessments.
     #[must_use]
     pub const fn assessment_count(&self) -> usize {
-        self.assessment_count
+        self.assessment_recency.total()
+    }
+
+    /// Number of assessments that are current for their proof.
+    #[must_use]
+    pub const fn current_assessment_count(&self) -> usize {
+        self.assessment_recency.current_count()
+    }
+
+    /// Number of assessments that have been superseded by newer reviews.
+    #[must_use]
+    pub const fn superseded_assessment_count(&self) -> usize {
+        self.assessment_recency.superseded_count()
     }
 
     /// Number of gaps.
@@ -138,6 +150,42 @@ impl OverviewView {
     #[must_use]
     pub const fn high_priority_gap_count(&self) -> usize {
         self.high_priority_gap_count
+    }
+}
+
+/// Assessment recency totals surfaced in the overview.
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub struct AssessmentRecencySummary {
+    current_count: usize,
+    superseded_count: usize,
+}
+
+impl AssessmentRecencySummary {
+    /// Create assessment recency totals.
+    #[must_use]
+    pub const fn new(current_count: usize, superseded_count: usize) -> Self {
+        Self {
+            current_count,
+            superseded_count,
+        }
+    }
+
+    /// Number of current assessments.
+    #[must_use]
+    pub const fn current_count(self) -> usize {
+        self.current_count
+    }
+
+    /// Number of superseded assessments.
+    #[must_use]
+    pub const fn superseded_count(self) -> usize {
+        self.superseded_count
+    }
+
+    /// Total number of assessments.
+    #[must_use]
+    pub const fn total(self) -> usize {
+        self.current_count + self.superseded_count
     }
 }
 

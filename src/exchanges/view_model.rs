@@ -5,8 +5,9 @@ use tracing::instrument;
 use crate::{
     certify::{ViewModelReceipt, ViewModelReceiptBuilder, ViewModelReceiptCountsBuilder},
     contracts::{
-        AuditorNavigationContract, AuditorNavigationModel, AuditorNavigationModelBuilder,
-        BelvedereContract, OverviewView, ProvenanceRootItem, TraceRef, ViewModelInput,
+        AssessmentRecencySummary, AuditorNavigationContract, AuditorNavigationModel,
+        AuditorNavigationModelBuilder, BelvedereContract, LandscapeAssessment, OverviewView,
+        ProvenanceRootItem, TraceRef, ViewModelInput,
     },
     error::{BelvedereConstructionError, BelvedereError},
     exchanges::BelvedereExchange,
@@ -71,7 +72,7 @@ impl BelvedereExchange<AuditorNavigationContract> for AuditorNavigationProjectio
             landscape.claims().len(),
             landscape.root_claim_ids().len(),
             landscape.proof_count(),
-            landscape.assessments().len(),
+            assessment_recency_summary(landscape.assessments()),
             gaps.len(),
             high_priority_gap_count,
         );
@@ -152,6 +153,20 @@ impl BelvedereExchange<AuditorNavigationContract> for AuditorNavigationProjectio
 
         Ok((model, receipt))
     }
+}
+
+#[instrument(level = "debug", skip(assessments))]
+fn assessment_recency_summary(assessments: &[LandscapeAssessment]) -> AssessmentRecencySummary {
+    AssessmentRecencySummary::new(
+        assessments
+            .iter()
+            .filter(|assessment| assessment.current())
+            .count(),
+        assessments
+            .iter()
+            .filter(|assessment| !assessment.current())
+            .count(),
+    )
 }
 
 #[instrument(level = "debug")]

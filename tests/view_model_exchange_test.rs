@@ -18,6 +18,8 @@ fn view_model_projection_builds_auditor_navigation_evidence() -> Result<()> {
     assert_eq!(model.overview().root_count(), 3);
     assert_eq!(model.overview().proof_coverage_count(), 2);
     assert_eq!(model.overview().assessment_count(), 2);
+    assert_eq!(model.overview().current_assessment_count(), 2);
+    assert_eq!(model.overview().superseded_assessment_count(), 0);
     assert_eq!(model.overview().high_priority_gap_count(), 3);
 
     assert_eq!(receipt.counts().claim_cards(), 4);
@@ -444,6 +446,8 @@ fn view_model_projection_exposes_assessment_recency() -> Result<()> {
         .iter()
         .find(|item| item.assessment_id() == "assess-current")
         .ok_or_else(|| miette!("current assessment should be queued"))?;
+    assert_eq!(model.overview().current_assessment_count(), 1);
+    assert_eq!(model.overview().superseded_assessment_count(), 1);
     assert!(current.current());
     assert_eq!(current.superseded_count(), 1);
     assert_eq!(current.superseded_by(), None);

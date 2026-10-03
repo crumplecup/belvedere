@@ -61,6 +61,10 @@ fn ui_ir_projection_mints_elicit_ui_standards_and_tree_proofs() -> Result<()> {
             .any(|standard| standard.ends_with("ElicitUiIrSourcedStandard"))
     );
     assert!(receipt.counts().node_count() >= projection.trace_widgets().len());
+    assert!(projection.trace_widgets().iter().any(|widget| {
+        widget.label()
+            == "Overview: 4 claims, 2 proofs, 2 assessments (2 current, 0 superseded), 4 gaps, 3 high-priority gaps"
+    }));
 
     let _ir_sourced = projection.proofs().ir_sourced();
     let _wcag_verified = projection.proofs().wcag_verified();

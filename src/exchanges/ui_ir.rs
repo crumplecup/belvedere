@@ -61,10 +61,14 @@ impl BelvedereExchange<ElicitUiProjectionContract> for ElicitUiProjection {
             &backend,
             "region",
             format!(
-                "Overview: {} claims, {} proofs, {} gaps",
+                "Overview: {} claims, {} proofs, {} assessments ({} current, {} superseded), {} gaps, {} high-priority gaps",
                 model.overview().claim_count(),
                 model.overview().proof_coverage_count(),
-                model.overview().gap_count()
+                model.overview().assessment_count(),
+                model.overview().current_assessment_count(),
+                model.overview().superseded_assessment_count(),
+                model.overview().gap_count(),
+                model.overview().high_priority_gap_count()
             ),
             TraceRef::new("belvedere::overview", model.source_record_ids().to_vec()),
             &mut trace_widgets,
