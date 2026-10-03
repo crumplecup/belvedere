@@ -210,7 +210,7 @@ impl BelvedereStageCertificate {
     #[instrument(level = "debug", skip(receipt))]
     #[must_use]
     pub fn ui_ir_projection(receipt: &UiIrReceipt) -> Self {
-        let counts = BTreeMap::from([
+        let mut counts = BTreeMap::from([
             (
                 "minted_standards".to_owned(),
                 receipt.minted_standards().len(),
@@ -220,6 +220,7 @@ impl BelvedereStageCertificate {
             ("widgets".to_owned(), receipt.counts().widget_count()),
             ("tree_nodes".to_owned(), receipt.counts().node_count()),
         ]);
+        counts.extend(receipt.role_counts().clone());
         let mut output_ids = receipt.minted_standards().clone();
         output_ids.extend(receipt.section_ids().iter().cloned());
         Self::new(StageCertificateEvidence {

@@ -61,8 +61,14 @@ fn ui_ir_projection_mints_elicit_ui_standards_and_tree_proofs() -> Result<()> {
             .any(|standard| standard.ends_with("ElicitUiIrSourcedStandard"))
     );
     assert!(receipt.counts().node_count() >= projection.trace_widgets().len());
+    assert_eq!(receipt.role_counts().get("role_button"), Some(&17));
+    assert_eq!(receipt.role_counts().get("role_checkbox"), Some(&10));
+    assert_eq!(receipt.role_counts().get("role_link"), Some(&10));
+    assert_eq!(receipt.role_counts().get("role_region"), Some(&1));
+    assert_eq!(receipt.role_counts().get("role_status"), Some(&12));
     assert!(projection.trace_widgets().iter().any(|widget| {
-        widget.label()
+        widget.role() == "region"
+            && widget.label()
             == "Overview: 4 claims, 2 proofs, 2 assessments (2 current, 0 superseded), 4 gaps, 3 high-priority gaps"
     }));
 

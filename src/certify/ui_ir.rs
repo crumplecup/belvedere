@@ -1,5 +1,7 @@
 //! Receipts for UI IR projection exchanges.
 
+use std::collections::BTreeMap;
+
 use derive_builder::Builder;
 use derive_getters::Getters;
 
@@ -12,6 +14,7 @@ pub struct UiIrReceipt {
     counts: UiIrReceiptCounts,
     source_record_ids: Vec<String>,
     section_ids: Vec<String>,
+    role_counts: BTreeMap<String, usize>,
     minted_standards: Vec<String>,
 }
 

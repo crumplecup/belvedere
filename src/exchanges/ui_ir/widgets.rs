@@ -371,6 +371,7 @@ pub(super) fn labeled_widget(
         .map_err(UiIrError::elicit_ui)?;
     let trace_widget = TraceWidgetRefBuilder::default()
         .widget_id(element.id.0)
+        .role(role)
         .label(label)
         .claim_id(trace.claim_id())
         .source_record_ids(trace.source_record_ids().to_vec())

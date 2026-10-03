@@ -1,5 +1,7 @@
 //! `elicit_ui` projection exchange implementations.
 
+use std::collections::BTreeMap;
+
 use elicit_ui::{AccessKitUiBackend, Viewport};
 use elicitation::Established;
 use tracing::instrument;
@@ -9,7 +11,7 @@ use crate::{
     contracts::{
         BelvedereContract, ElicitUiIrSourcedStandard, ElicitUiProjectionContract,
         ElicitUiRenderCompleteStandard, ElicitUiRolePreservedStandard,
-        ElicitUiWcagVerifiedStandard, TraceRef, UI_IR_SECTION_ASSESSMENT_QUEUE,
+        ElicitUiWcagVerifiedStandard, TraceRef, TraceWidgetRef, UI_IR_SECTION_ASSESSMENT_QUEUE,
         UI_IR_SECTION_BACKEND_COVERAGE, UI_IR_SECTION_CLAIM_EXPLORER, UI_IR_SECTION_FILTERS,
         UI_IR_SECTION_GAP_QUEUE, UI_IR_SECTION_OVERVIEW, UI_IR_SECTION_PROOF_CHAINS,
         UI_IR_SECTION_PROVENANCE_ROOTS, UI_IR_SECTION_SOURCE_NAVIGATION,
@@ -221,6 +223,7 @@ impl BelvedereExchange<ElicitUiProjectionContract> for ElicitUiProjection {
                     .map(|section| section.id().to_owned())
                     .collect::<Vec<_>>(),
             )
+            .role_counts(role_counts(&trace_widgets))
             .minted_standards(
                 minted_standards
                     .iter()
@@ -250,4 +253,13 @@ fn minted_standards() -> Vec<UiStandardMint> {
         UiStandardMint::from_standard::<ElicitUiRenderCompleteStandard>(),
         UiStandardMint::from_standard::<ElicitUiRolePreservedStandard>(),
     ]
+}
+
+#[instrument(level = "debug", skip(trace_widgets))]
+fn role_counts(trace_widgets: &[TraceWidgetRef]) -> BTreeMap<String, usize> {
+    let mut counts = BTreeMap::new();
+    for widget in trace_widgets {
+        *counts.entry(format!("role_{}", widget.role())).or_default() += 1;
+    }
+    counts
 }

@@ -87,6 +87,7 @@ impl UiIrSection {
 pub struct TraceWidgetRef {
     #[getter(skip)]
     widget_id: u64,
+    role: String,
     label: String,
     claim_id: String,
     source_record_ids: Vec<String>,
