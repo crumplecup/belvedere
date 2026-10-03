@@ -395,6 +395,7 @@ fn view_model_projection_preserves_review_queues_and_traceability() -> Result<()
         })
         .ok_or_else(|| miette!("missing-assessment gap should be visible"))?;
     assert_eq!(missing_assessment_gap.severity(), GapSeverity::Review);
+    assert_eq!(missing_assessment_gap.queue_lane(), "assessment");
     assert_eq!(missing_assessment_gap.action(), "assess proof coverage");
     assert!(!missing_assessment_gap.high_priority());
 
@@ -404,6 +405,7 @@ fn view_model_projection_preserves_review_queues_and_traceability() -> Result<()
         .find(|gap| gap.kind() == LandscapeGapKind::MissingProof)
         .ok_or_else(|| miette!("missing-proof gap should be visible"))?;
     assert_eq!(missing_proof_gap.severity(), GapSeverity::Blocking);
+    assert_eq!(missing_proof_gap.queue_lane(), "proof_coverage");
     assert_eq!(
         missing_proof_gap.action(),
         "establish modeled proof coverage"
@@ -416,6 +418,7 @@ fn view_model_projection_preserves_review_queues_and_traceability() -> Result<()
         .find(|gap| gap.kind() == LandscapeGapKind::TrustedOrOpaqueWitnessSupport)
         .ok_or_else(|| miette!("trusted witness gap should be visible"))?;
     assert_eq!(witness_gap.severity(), GapSeverity::Elevated);
+    assert_eq!(witness_gap.queue_lane(), "witness_review");
     assert_eq!(
         witness_gap.action(),
         "review trusted or opaque witness support"

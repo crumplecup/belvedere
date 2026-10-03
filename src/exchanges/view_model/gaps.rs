@@ -21,6 +21,7 @@ pub(super) fn project_gaps(
                 .claim_id(gap.claim_id())
                 .kind(gap.kind())
                 .severity(severity)
+                .queue_lane(gap_queue_lane(gap.kind()))
                 .action(gap_action(gap.kind()))
                 .detail(gap.detail())
                 .high_priority(severity.high_priority())
@@ -39,6 +40,17 @@ fn gap_severity(kind: LandscapeGapKind) -> GapSeverity {
         | LandscapeGapKind::RetirementRecommended => GapSeverity::Blocking,
         LandscapeGapKind::TrustedOrOpaqueWitnessSupport => GapSeverity::Elevated,
         LandscapeGapKind::MissingAssessment => GapSeverity::Review,
+    }
+}
+
+#[instrument(level = "debug", skip(kind))]
+pub(super) fn gap_queue_lane(kind: LandscapeGapKind) -> &'static str {
+    match kind {
+        LandscapeGapKind::MissingAssessment => "assessment",
+        LandscapeGapKind::MissingProof => "proof_coverage",
+        LandscapeGapKind::ReplacementRecommended => "replacement",
+        LandscapeGapKind::RetirementRecommended => "retirement",
+        LandscapeGapKind::TrustedOrOpaqueWitnessSupport => "witness_review",
     }
 }
 

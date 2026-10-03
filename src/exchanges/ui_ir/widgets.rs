@@ -307,9 +307,10 @@ pub(super) fn gap_widget(
         backend,
         "button",
         format!(
-            "Gap {:?} for {} is {} priority; next action: {}; detail: {}",
+            "Gap {:?} for {} in {} lane is {} priority; next action: {}; detail: {}",
             item.kind(),
             item.claim_id(),
+            item.queue_lane(),
             item.severity().label(),
             item.action(),
             item.detail()

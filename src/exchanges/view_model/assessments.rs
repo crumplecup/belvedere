@@ -13,7 +13,7 @@ use crate::{
     error::BelvedereConstructionError,
 };
 
-use super::trace;
+use super::{gaps::gap_queue_lane, trace};
 
 #[instrument(level = "debug", skip(assessments, source_record_ids))]
 pub(super) fn project_assessment_queue(
@@ -105,17 +105,6 @@ pub(super) fn project_assessment_work(
     }
 
     Ok(items)
-}
-
-#[instrument(level = "trace", skip(kind))]
-fn gap_queue_lane(kind: LandscapeGapKind) -> &'static str {
-    match kind {
-        LandscapeGapKind::MissingAssessment => "assessment",
-        LandscapeGapKind::MissingProof => "proof_coverage",
-        LandscapeGapKind::ReplacementRecommended => "replacement",
-        LandscapeGapKind::RetirementRecommended => "retirement",
-        LandscapeGapKind::TrustedOrOpaqueWitnessSupport => "witness_review",
-    }
 }
 
 #[instrument(level = "trace", skip(recommendation))]

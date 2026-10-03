@@ -43,6 +43,7 @@ pub struct GapItem {
     kind: LandscapeGapKind,
     #[getter(skip)]
     severity: GapSeverity,
+    queue_lane: String,
     action: String,
     detail: String,
     #[getter(skip)]
