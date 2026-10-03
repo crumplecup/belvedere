@@ -183,6 +183,10 @@ fn ui_ir_projection_preserves_trace_widgets_for_auditor_deep_dives() -> Result<(
             .contains("direct bases belvedere::ingestion::RawAmenableArtifact")
     );
     assert!(chain_widget.label().contains("verifier proofs kani"));
+    assert!(chain_widget.label().contains("2 linked claims"));
+    assert!(chain_widget.label().contains("1 level deep"));
+    assert!(chain_widget.label().contains("0 branching claims"));
+    assert!(chain_widget.label().contains("3 chain gaps"));
     assert!(chain_widget.label().contains("2 gaps"));
     assert!(!chain_widget.source_record_ids().is_empty());
     let witness_widget = projection

@@ -13,7 +13,7 @@ mod gap;
 pub use assessment::{AssessmentQueueItem, AssessmentWorkItem};
 pub(crate) use assessment::{AssessmentQueueItemBuilder, AssessmentWorkItemBuilder};
 pub(crate) use claim::ProofChainItemBuilder;
-pub use claim::{ClaimExplorerCounts, ClaimExplorerItem, ProofChainItem};
+pub use claim::{ClaimExplorerCounts, ClaimExplorerItem, ProofChainItem, ProofChainTopology};
 pub(crate) use gap::GapItemBuilder;
 pub use gap::{GapItem, GapSeverity};
 

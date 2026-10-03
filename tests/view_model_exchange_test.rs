@@ -105,6 +105,10 @@ fn view_model_projection_builds_auditor_navigation_evidence() -> Result<()> {
         decoded_chain.next_action(),
         "review trusted or opaque witness support"
     );
+    assert_eq!(decoded_chain.topology().transitive_claim_count(), 2);
+    assert_eq!(decoded_chain.topology().max_depth(), 1);
+    assert_eq!(decoded_chain.topology().branching_claim_count(), 0);
+    assert_eq!(decoded_chain.topology().chain_gap_count(), 3);
     assert_eq!(decoded_chain.gap_count(), decoded_item.gap_count());
     Ok(())
 }

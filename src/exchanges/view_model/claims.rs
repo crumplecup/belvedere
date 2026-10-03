@@ -7,7 +7,7 @@ use tracing::instrument;
 use crate::{
     contracts::{
         ClaimExplorerCounts, ClaimExplorerItem, GapItem, GapSeverity, LandscapeAssessment,
-        LandscapeClaim, ProofChainItem, ProofChainItemBuilder,
+        LandscapeClaim, ProofChainItem, ProofChainItemBuilder, ProofChainTopology,
     },
     error::BelvedereConstructionError,
 };
@@ -114,6 +114,7 @@ pub(super) fn project_proof_chains(
                 .basis_ids(claim.bases().iter().cloned().collect::<Vec<_>>())
                 .root_ids(chain_roots(claim.id(), claims))
                 .verifiers(claim.proofs().iter().cloned().collect::<Vec<_>>())
+                .topology(chain_topology(claim.id(), claims, gaps))
                 .review_state(review_state)
                 .next_action(next_action)
                 .gap_count(claim_gap_count(claim.id(), gaps))
@@ -194,4 +195,67 @@ fn collect_chain_roots(
         collect_chain_roots(basis, claims, visiting, roots);
     }
     visiting.remove(claim_id);
+}
+
+#[instrument(level = "debug", skip(claims, gaps))]
+fn chain_topology(
+    claim_id: &str,
+    claims: &BTreeMap<String, LandscapeClaim>,
+    gaps: &[GapItem],
+) -> ProofChainTopology {
+    let mut reached = BTreeSet::new();
+    let mut visiting = BTreeSet::new();
+    let max_depth = collect_chain_depth(claim_id, claims, &mut visiting, &mut reached);
+    let branching_claim_count = reached
+        .iter()
+        .filter_map(|reached_id| claims.get(reached_id))
+        .filter(|claim| direct_basis_count(claim) > 1)
+        .count();
+    let chain_gap_count = gaps
+        .iter()
+        .filter(|gap| reached.contains(gap.claim_id()))
+        .count();
+    ProofChainTopology::new(
+        reached.len(),
+        max_depth,
+        branching_claim_count,
+        chain_gap_count,
+    )
+}
+
+#[instrument(level = "trace", skip(claims, visiting, reached))]
+fn collect_chain_depth(
+    claim_id: &str,
+    claims: &BTreeMap<String, LandscapeClaim>,
+    visiting: &mut BTreeSet<String>,
+    reached: &mut BTreeSet<String>,
+) -> usize {
+    reached.insert(claim_id.to_owned());
+    if !visiting.insert(claim_id.to_owned()) {
+        return 0;
+    }
+
+    let Some(claim) = claims.get(claim_id) else {
+        visiting.remove(claim_id);
+        return 0;
+    };
+
+    let max_depth = claim
+        .bases()
+        .iter()
+        .filter(|basis| basis.as_str() != claim.id())
+        .map(|basis| 1 + collect_chain_depth(basis, claims, visiting, reached))
+        .max()
+        .unwrap_or(0);
+    visiting.remove(claim_id);
+    max_depth
+}
+
+#[instrument(level = "trace", skip(claim))]
+fn direct_basis_count(claim: &LandscapeClaim) -> usize {
+    claim
+        .bases()
+        .iter()
+        .filter(|basis| basis.as_str() != claim.id())
+        .count()
 }

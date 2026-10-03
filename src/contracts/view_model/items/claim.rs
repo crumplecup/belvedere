@@ -128,6 +128,8 @@ pub struct ProofChainItem {
     basis_ids: Vec<String>,
     root_ids: Vec<String>,
     verifiers: Vec<String>,
+    #[getter(skip)]
+    topology: ProofChainTopology,
     review_state: String,
     next_action: String,
     #[getter(skip)]
@@ -137,6 +139,12 @@ pub struct ProofChainItem {
 }
 
 impl ProofChainItem {
+    /// Proof-chain topology evidence.
+    #[must_use]
+    pub const fn topology(&self) -> &ProofChainTopology {
+        &self.topology
+    }
+
     /// Number of gaps currently attached to the chain subject.
     #[must_use]
     pub const fn gap_count(&self) -> usize {
@@ -147,5 +155,56 @@ impl ProofChainItem {
     #[must_use]
     pub const fn trace(&self) -> &TraceRef {
         &self.trace
+    }
+}
+
+/// Topology summary for a claim's transitive proof chain.
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub struct ProofChainTopology {
+    transitive_claim_count: usize,
+    max_depth: usize,
+    branching_claim_count: usize,
+    chain_gap_count: usize,
+}
+
+impl ProofChainTopology {
+    /// Create proof-chain topology evidence.
+    #[must_use]
+    pub const fn new(
+        transitive_claim_count: usize,
+        max_depth: usize,
+        branching_claim_count: usize,
+        chain_gap_count: usize,
+    ) -> Self {
+        Self {
+            transitive_claim_count,
+            max_depth,
+            branching_claim_count,
+            chain_gap_count,
+        }
+    }
+
+    /// Number of distinct claims reached by following bases, including the subject.
+    #[must_use]
+    pub const fn transitive_claim_count(self) -> usize {
+        self.transitive_claim_count
+    }
+
+    /// Longest basis distance from subject to terminal root.
+    #[must_use]
+    pub const fn max_depth(self) -> usize {
+        self.max_depth
+    }
+
+    /// Number of reached claims with more than one modeled direct basis.
+    #[must_use]
+    pub const fn branching_claim_count(self) -> usize {
+        self.branching_claim_count
+    }
+
+    /// Number of gaps attached anywhere in the reached chain.
+    #[must_use]
+    pub const fn chain_gap_count(self) -> usize {
+        self.chain_gap_count
     }
 }

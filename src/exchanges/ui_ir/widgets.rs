@@ -102,14 +102,27 @@ pub(super) fn proof_chain_widget(
     let roots = list_label(item.root_ids(), "no modeled roots");
     let bases = list_label(item.basis_ids(), "no direct bases");
     let verifiers = list_label(item.verifiers(), "no verifier proofs");
+    let topology = item.topology();
     labeled_widget(
         backend,
         "button",
         format!(
-            "Proof chain {} is {}; next action: {}; reaches roots {roots} through direct bases {bases}; verifier proofs {verifiers}; {}",
+            "Proof chain {} is {}; next action: {}; reaches roots {roots} through direct bases {bases}; verifier proofs {verifiers}; topology {}, {}, {}, {}; subject {}",
             item.claim_id(),
             item.review_state(),
             item.next_action(),
+            count_label(
+                topology.transitive_claim_count(),
+                "linked claim",
+                "linked claims"
+            ),
+            count_label(topology.max_depth(), "level deep", "levels deep"),
+            count_label(
+                topology.branching_claim_count(),
+                "branching claim",
+                "branching claims"
+            ),
+            count_label(topology.chain_gap_count(), "chain gap", "chain gaps"),
             count_label(item.gap_count(), "gap", "gaps")
         ),
         item.trace().clone(),
