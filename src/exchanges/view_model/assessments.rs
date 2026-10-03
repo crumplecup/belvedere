@@ -36,6 +36,7 @@ pub(super) fn project_assessment_queue(
                 )
                 .superseded_by(assessment.superseded_by().map(ToOwned::to_owned))
                 .recommendation(assessment.recommendation())
+                .queue_lane(assessment_queue_lane(assessment.recommendation()))
                 .resolution_path(assessment.resolution_path())
                 .weak_dimensions(weak_dimensions(assessment.rubric()))
                 .trace(trace(assessment.proof_id(), source_record_ids))

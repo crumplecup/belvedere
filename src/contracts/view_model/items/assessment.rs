@@ -20,6 +20,7 @@ pub struct AssessmentQueueItem {
     superseded_by: Option<String>,
     #[getter(skip)]
     recommendation: Recommendation,
+    queue_lane: String,
     #[getter(skip)]
     resolution_path: Option<ResolutionPath>,
     weak_dimensions: Vec<String>,

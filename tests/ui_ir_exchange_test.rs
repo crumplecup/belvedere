@@ -307,6 +307,7 @@ fn ui_ir_projection_labels_assessment_recency() -> Result<()> {
         widget
             .label()
             .starts_with("Assessment assess-current (current, supersedes 1 older assessment)")
+            && widget.label().contains("lane accepted")
             && widget.label().contains("resolution: keep current proof")
             && widget.label().contains("no weak dimensions")
     }));
@@ -314,6 +315,7 @@ fn ui_ir_projection_labels_assessment_recency() -> Result<()> {
         widget
             .label()
             .starts_with("Assessment assess-old (superseded by assess-current)")
+            && widget.label().contains("lane strengthening")
             && widget
                 .label()
                 .contains("resolution: strengthen current proof")

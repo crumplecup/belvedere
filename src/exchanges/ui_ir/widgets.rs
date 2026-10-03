@@ -174,8 +174,9 @@ pub(super) fn assessment_widget(
         backend,
         "button",
         format!(
-            "Assessment {} ({recency}) recommends {:?} for {}; resolution: {resolution}; {weaknesses}",
+            "Assessment {} ({recency}) lane {} recommends {:?} for {}; resolution: {resolution}; {weaknesses}",
             item.assessment_id(),
+            item.queue_lane(),
             item.recommendation(),
             item.proof_id()
         ),
