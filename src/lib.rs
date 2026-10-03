@@ -21,8 +21,8 @@ pub use certify::{
     BELVEDERE_STAGE_CERTIFICATE_SCHEMA_ID, BELVEDERE_STAGE_CERTIFICATE_SCHEMA_VERSION,
     BelvedereInvariantCheck, BelvedereInvocationSurface, BelvederePipelineStage,
     BelvedereRunCertificate, BelvedereRunInvocation, BelvedereStageCertificate, IngestionReceipt,
-    LandscapeReceipt, LandscapeReceiptCounts, UiIrReceipt, UiIrReceiptCounts, ViewModelReceipt,
-    ViewModelReceiptCounts,
+    LandscapeDiffReceipt, LandscapeDiffReceiptCounts, LandscapeReceipt, LandscapeReceiptCounts,
+    UiIrReceipt, UiIrReceiptCounts, ViewModelReceipt, ViewModelReceiptCounts,
 };
 pub use cli::{
     BelvedereCli, BelvedereCliOutput, BelvedereCliOutputError, BelvedereCliUsageError, run_cli,
@@ -40,22 +40,24 @@ pub use contracts::{
     DecodedAssessmentStream, DecodedRegistrySnapshot, ElicitUiIrSourcedStandard,
     ElicitUiProjectionContract, ElicitUiRenderCompleteStandard, ElicitUiRolePreservedStandard,
     ElicitUiWcagVerifiedStandard, EvidenceLinkRecord, GapItem, GapSeverity, KaniProofRecord,
-    KaniProofSummary, LandscapeAssessment, LandscapeClaim, LandscapeContractFragment, LandscapeGap,
-    LandscapeGapKind, LandscapeGraph, LandscapeInput, LandscapeModelingContract,
-    MintedElicitUiStandard, OverviewView, ProofRecordRecord, ProvenanceRootItem,
-    RawAmenableArtifact, Recommendation, RegistryDumpIngestionContract, ResolutionPath, Rubric,
-    SourceNavigationItem, TraceRef, TraceWidgetRef, UI_IR_SECTION_ASSESSMENT_QUEUE,
-    UI_IR_SECTION_BACKEND_COVERAGE, UI_IR_SECTION_CLAIM_EXPLORER, UI_IR_SECTION_FILTERS,
-    UI_IR_SECTION_GAP_QUEUE, UI_IR_SECTION_OVERVIEW, UI_IR_SECTION_PROOF_CHAINS,
-    UI_IR_SECTION_PROVENANCE_ROOTS, UI_IR_SECTION_SOURCE_NAVIGATION, UI_IR_SECTION_WITNESS_SURFACE,
-    UiIrInput, UiIrProjection, UiIrProofBundle, UiIrSection, UiStandardMint, UnsupportedField,
-    ViewModelInput, WitnessExportRecord, WitnessSurfaceItem, WitnessSurfaceSummary,
-    elicit_ui_provenance,
+    KaniProofSummary, LandscapeAssessment, LandscapeClaim, LandscapeContractFragment,
+    LandscapeDiff, LandscapeDiffChangeKind, LandscapeDiffContract, LandscapeDiffInput,
+    LandscapeDiffItem, LandscapeGap, LandscapeGapKind, LandscapeGraph, LandscapeInput,
+    LandscapeModelingContract, MintedElicitUiStandard, OverviewView, ProofRecordRecord,
+    ProvenanceRootItem, RawAmenableArtifact, Recommendation, RegistryDumpIngestionContract,
+    ResolutionPath, Rubric, SourceNavigationItem, TraceRef, TraceWidgetRef,
+    UI_IR_SECTION_ASSESSMENT_QUEUE, UI_IR_SECTION_BACKEND_COVERAGE, UI_IR_SECTION_CLAIM_EXPLORER,
+    UI_IR_SECTION_FILTERS, UI_IR_SECTION_GAP_QUEUE, UI_IR_SECTION_OVERVIEW,
+    UI_IR_SECTION_PROOF_CHAINS, UI_IR_SECTION_PROVENANCE_ROOTS, UI_IR_SECTION_SOURCE_NAVIGATION,
+    UI_IR_SECTION_WITNESS_SURFACE, UiIrInput, UiIrProjection, UiIrProofBundle, UiIrSection,
+    UiStandardMint, UnsupportedField, ViewModelInput, WitnessExportRecord, WitnessSurfaceItem,
+    WitnessSurfaceSummary, elicit_ui_provenance,
 };
 pub use error::{BelvedereConstructionError, BelvedereError};
 pub use exchanges::{
     AssessmentStreamIngestion, AuditorNavigationProjection, BelvedereExchange, ElicitUiProjection,
-    IngestionError, LandscapeModeling, RegistryDumpIngestion, UiIrError, WrongArtifactKindError,
+    IngestionError, LandscapeDiffing, LandscapeModeling, RegistryDumpIngestion, UiIrError,
+    WrongArtifactKindError,
 };
 pub use run::{BelvedereRunInput, BelvedereRunReport, run_belvedere_pipeline};
 pub use telemetry::init_tracing;

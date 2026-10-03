@@ -2,12 +2,17 @@
 
 mod contract;
 
+mod diff;
 mod ingestion;
 mod landscape;
 mod ui_ir;
 mod view_model;
 
 pub use contract::BelvedereContract;
+pub use diff::{
+    LandscapeDiff, LandscapeDiffChangeKind, LandscapeDiffContract, LandscapeDiffInput,
+    LandscapeDiffItem,
+};
 pub use ingestion::{
     AcceptedAmenableArtifactFormat, ArtifactKind, AssessmentRecord,
     AssessmentStreamIngestionContract, ContractRecordRecord, DecodedAssessmentStream,
