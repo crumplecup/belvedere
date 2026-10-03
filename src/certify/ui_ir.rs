@@ -15,6 +15,7 @@ pub struct UiIrReceipt {
     source_record_ids: Vec<String>,
     section_ids: Vec<String>,
     role_counts: BTreeMap<String, usize>,
+    section_widget_counts: BTreeMap<String, usize>,
     minted_standards: Vec<String>,
 }
 

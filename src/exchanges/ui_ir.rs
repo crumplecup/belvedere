@@ -16,7 +16,7 @@ use crate::{
         UI_IR_SECTION_GAP_QUEUE, UI_IR_SECTION_OVERVIEW, UI_IR_SECTION_PROOF_CHAINS,
         UI_IR_SECTION_PROVENANCE_ROOTS, UI_IR_SECTION_SOURCE_NAVIGATION,
         UI_IR_SECTION_WITNESS_SURFACE, UiIrInput, UiIrProjection, UiIrProjectionBuilder,
-        UiIrProofBundle, UiStandardMint,
+        UiIrProofBundle, UiIrSection, UiStandardMint,
     },
     exchanges::BelvedereExchange,
 };
@@ -224,6 +224,7 @@ impl BelvedereExchange<ElicitUiProjectionContract> for ElicitUiProjection {
                     .collect::<Vec<_>>(),
             )
             .role_counts(role_counts(&trace_widgets))
+            .section_widget_counts(section_widget_counts(&sections))
             .minted_standards(
                 minted_standards
                     .iter()
@@ -262,4 +263,12 @@ fn role_counts(trace_widgets: &[TraceWidgetRef]) -> BTreeMap<String, usize> {
         *counts.entry(format!("role_{}", widget.role())).or_default() += 1;
     }
     counts
+}
+
+#[instrument(level = "debug", skip(sections))]
+fn section_widget_counts(sections: &[UiIrSection]) -> BTreeMap<String, usize> {
+    sections
+        .iter()
+        .map(|section| (section.id().to_owned(), section.widget_count()))
+        .collect()
 }

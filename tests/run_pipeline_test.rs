@@ -97,6 +97,15 @@ fn run_pipeline_uses_the_normal_amenable_artifact_path() -> Result<()> {
             .certificate()
             .stage_certificates()
             .iter()
+            .any(
+                |certificate| certificate.counts().get(UI_IR_SECTION_SOURCE_NAVIGATION) == Some(&7)
+            )
+    );
+    assert!(
+        report
+            .certificate()
+            .stage_certificates()
+            .iter()
             .any(|certificate| certificate
                 .output_ids()
                 .contains(&UI_IR_SECTION_FILTERS.to_owned()))

@@ -418,11 +418,12 @@ pub(super) fn section(
     name: &'static str,
     content: Vec<WidgetId>,
 ) -> Result<UiIrSection, UiIrError> {
+    let widget_count = content.len();
     let container = backend
         .container_panel(name, content)
         .map_err(UiIrError::elicit_ui)?;
     backend
         .add_child(ROOT_CONTAINER, WidgetId(container.0))
         .map_err(UiIrError::elicit_ui)?;
-    Ok(UiIrSection::new(id, name, container.0))
+    Ok(UiIrSection::new(id, name, container.0, widget_count))
 }

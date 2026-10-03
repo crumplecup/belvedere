@@ -71,6 +71,8 @@ pub struct UiIrSection {
     name: String,
     #[getter(skip)]
     root_widget_id: u64,
+    #[getter(skip)]
+    widget_count: usize,
 }
 
 impl UiIrSection {
@@ -78,6 +80,12 @@ impl UiIrSection {
     #[must_use]
     pub const fn root_widget_id(&self) -> u64 {
         self.root_widget_id
+    }
+
+    /// Number of traceable widgets contributed by this section.
+    #[must_use]
+    pub const fn widget_count(&self) -> usize {
+        self.widget_count
     }
 }
 

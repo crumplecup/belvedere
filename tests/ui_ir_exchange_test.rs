@@ -66,6 +66,18 @@ fn ui_ir_projection_mints_elicit_ui_standards_and_tree_proofs() -> Result<()> {
     assert_eq!(receipt.role_counts().get("role_link"), Some(&10));
     assert_eq!(receipt.role_counts().get("role_region"), Some(&1));
     assert_eq!(receipt.role_counts().get("role_status"), Some(&12));
+    assert_eq!(
+        receipt
+            .section_widget_counts()
+            .get(UI_IR_SECTION_CLAIM_EXPLORER),
+        Some(&4)
+    );
+    assert_eq!(
+        receipt
+            .section_widget_counts()
+            .get(UI_IR_SECTION_SOURCE_NAVIGATION),
+        Some(&7)
+    );
     assert!(projection.trace_widgets().iter().any(|widget| {
         widget.role() == "region"
             && widget.label()

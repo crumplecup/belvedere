@@ -221,6 +221,7 @@ impl BelvedereStageCertificate {
             ("tree_nodes".to_owned(), receipt.counts().node_count()),
         ]);
         counts.extend(receipt.role_counts().clone());
+        counts.extend(receipt.section_widget_counts().clone());
         let mut output_ids = receipt.minted_standards().clone();
         output_ids.extend(receipt.section_ids().iter().cloned());
         Self::new(StageCertificateEvidence {
