@@ -78,6 +78,7 @@ name = "amenable_derive"
 version = "0.1.0"
 dependencies = [
  "derive-getters",
+ "derive-new",
  "proc-macro2",
  "quote",
  "syn 3.0.6",
