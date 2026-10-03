@@ -106,6 +106,13 @@ fn run_pipeline_uses_the_normal_amenable_artifact_path() -> Result<()> {
             .certificate()
             .stage_certificates()
             .iter()
+            .any(|certificate| certificate.counts().get("proof_chain_max_depth") == Some(&1))
+    );
+    assert!(
+        report
+            .certificate()
+            .stage_certificates()
+            .iter()
             .any(|certificate| certificate.counts().get("role_button") == Some(&17))
     );
     assert!(

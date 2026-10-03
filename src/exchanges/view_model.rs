@@ -9,8 +9,8 @@ use crate::{
     contracts::{
         AssessmentQueueItem, AssessmentRecencySummary, AssessmentWorkItem, AuditorFilterFacet,
         AuditorNavigationContract, AuditorNavigationModel, AuditorNavigationModelBuilder,
-        BelvedereContract, GapItem, LandscapeAssessment, OverviewView, ProvenanceRootItem,
-        SourceNavigationItem, TraceRef, ViewModelInput,
+        BelvedereContract, GapItem, LandscapeAssessment, OverviewView, ProofChainItem,
+        ProvenanceRootItem, SourceNavigationItem, TraceRef, ViewModelInput,
     },
     error::{BelvedereConstructionError, BelvedereError},
     exchanges::BelvedereExchange,
@@ -119,6 +119,7 @@ impl BelvedereExchange<AuditorNavigationContract> for AuditorNavigationProjectio
         let receipt_lane_counts = lane_counts(&assessment_queue, &assessment_work, &gaps);
         let receipt_facet_group_counts = facet_group_counts(&filter_facets);
         let receipt_source_artifact_counts = source_artifact_counts(&source_navigation);
+        let receipt_proof_chain_topology_counts = proof_chain_topology_counts(&proof_chains);
 
         let counts = ViewModelReceiptCountsBuilder::default()
             .claim_cards(landscape.claims().len())
@@ -155,6 +156,7 @@ impl BelvedereExchange<AuditorNavigationContract> for AuditorNavigationProjectio
             .lane_counts(receipt_lane_counts)
             .facet_group_counts(receipt_facet_group_counts)
             .source_artifact_counts(receipt_source_artifact_counts)
+            .proof_chain_topology_counts(receipt_proof_chain_topology_counts)
             .source_record_ids(source_record_ids)
             .warnings(Vec::new())
             .build()
@@ -222,6 +224,30 @@ fn source_artifact_counts(source_navigation: &[SourceNavigationItem]) -> BTreeMa
             .or_default() += 1;
     }
     counts
+}
+
+#[instrument(level = "debug", skip(proof_chains))]
+fn proof_chain_topology_counts(proof_chains: &[ProofChainItem]) -> BTreeMap<String, usize> {
+    let mut total_transitive_claims = 0;
+    let mut max_depth = 0;
+    let mut branching_claims = 0;
+    let mut chain_gaps = 0;
+    for item in proof_chains {
+        let topology = item.topology();
+        total_transitive_claims += topology.transitive_claim_count();
+        max_depth = max_depth.max(topology.max_depth());
+        branching_claims += topology.branching_claim_count();
+        chain_gaps += topology.chain_gap_count();
+    }
+    BTreeMap::from([
+        (
+            "proof_chain_total_transitive_claims".to_owned(),
+            total_transitive_claims,
+        ),
+        ("proof_chain_max_depth".to_owned(), max_depth),
+        ("proof_chain_branching_claims".to_owned(), branching_claims),
+        ("proof_chain_chain_gaps".to_owned(), chain_gaps),
+    ])
 }
 
 #[instrument(level = "debug")]

@@ -72,6 +72,40 @@ fn view_model_projection_builds_auditor_navigation_evidence() -> Result<()> {
             .get("source_artifact_proof_assessments"),
         Some(&2)
     );
+    let total_transitive_claims: usize = model
+        .proof_chains()
+        .iter()
+        .map(|item| item.topology().transitive_claim_count())
+        .sum();
+    let max_depth = model
+        .proof_chains()
+        .iter()
+        .map(|item| item.topology().max_depth())
+        .max()
+        .unwrap_or_default();
+    let chain_gaps: usize = model
+        .proof_chains()
+        .iter()
+        .map(|item| item.topology().chain_gap_count())
+        .sum();
+    assert_eq!(
+        receipt
+            .proof_chain_topology_counts()
+            .get("proof_chain_total_transitive_claims"),
+        Some(&total_transitive_claims)
+    );
+    assert_eq!(
+        receipt
+            .proof_chain_topology_counts()
+            .get("proof_chain_max_depth"),
+        Some(&max_depth)
+    );
+    assert_eq!(
+        receipt
+            .proof_chain_topology_counts()
+            .get("proof_chain_chain_gaps"),
+        Some(&chain_gaps)
+    );
 
     let decoded_item = model
         .claim_explorer()
