@@ -262,6 +262,19 @@ fn run_certificate_is_reproducible_portable_evidence() -> Result<()> {
         first.certificate().stage_certificate_ids(),
         second.certificate().stage_certificate_ids()
     );
+    assert_eq!(
+        first.certificate().stage_certificate_digests(),
+        second.certificate().stage_certificate_digests()
+    );
+    assert_eq!(first.certificate().stage_certificate_digests().len(), 5);
+    assert!(
+        first
+            .certificate()
+            .stage_certificates()
+            .iter()
+            .zip(first.certificate().stage_certificate_digests())
+            .all(|(certificate, digest)| certificate.digest() == digest)
+    );
 
     let encoded = serde_json::to_string(first.certificate())
         .into_diagnostic()
@@ -346,6 +359,12 @@ fn cli_can_emit_the_run_certificate_as_json() -> Result<()> {
     );
     assert_eq!(
         certificate["stage_certificates"].as_array().map(Vec::len),
+        Some(5)
+    );
+    assert_eq!(
+        certificate["stage_certificate_digests"]
+            .as_array()
+            .map(Vec::len),
         Some(5)
     );
     assert_eq!(
@@ -439,6 +458,12 @@ fn cli_can_persist_the_run_certificate_as_json() -> Result<()> {
     );
     assert_eq!(
         certificate["stage_certificates"].as_array().map(Vec::len),
+        Some(5)
+    );
+    assert_eq!(
+        certificate["stage_certificate_digests"]
+            .as_array()
+            .map(Vec::len),
         Some(5)
     );
     assert!(

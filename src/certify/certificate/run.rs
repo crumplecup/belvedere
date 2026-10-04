@@ -79,6 +79,7 @@ pub struct BelvedereRunCertificate {
     input_artifact_ids: Vec<String>,
     stage_certificates: Vec<BelvedereStageCertificate>,
     stage_certificate_ids: Vec<String>,
+    stage_certificate_digests: Vec<String>,
     digest: String,
 }
 
@@ -148,12 +149,17 @@ impl BelvedereRunCertificate {
             .iter()
             .map(|certificate| certificate.id().to_owned())
             .collect::<Vec<_>>();
+        let stage_certificate_digests = stage_certificates
+            .iter()
+            .map(|certificate| certificate.digest().to_owned())
+            .collect::<Vec<_>>();
         let belvedere_version = env!("CARGO_PKG_VERSION").to_owned();
         let digest = run_digest(
             &belvedere_version,
             &invocation,
             &input_artifact_ids,
             &stage_certificate_ids,
+            &stage_certificate_digests,
         );
         let id = format!("belvedere.run:{digest}");
         Self {
@@ -165,6 +171,7 @@ impl BelvedereRunCertificate {
             input_artifact_ids,
             stage_certificates,
             stage_certificate_ids,
+            stage_certificate_digests,
             digest,
         }
     }
@@ -186,6 +193,7 @@ fn run_digest(
     invocation: &BelvedereRunInvocation,
     input_artifact_ids: &[String],
     stage_certificate_ids: &[String],
+    stage_certificate_digests: &[String],
 ) -> String {
     let mut hasher = Sha256::new();
     update_field(&mut hasher, BELVEDERE_RUN_CERTIFICATE_SCHEMA_ID);
@@ -198,5 +206,6 @@ fn run_digest(
     update_fields(&mut hasher, invocation.arguments());
     update_fields(&mut hasher, input_artifact_ids);
     update_fields(&mut hasher, stage_certificate_ids);
+    update_fields(&mut hasher, stage_certificate_digests);
     hex_digest(hasher)
 }
