@@ -124,6 +124,24 @@ fn view_model_projection_builds_auditor_navigation_evidence() -> Result<()> {
             .get("provenance_root_kind_unmodeled_root"),
         Some(&1)
     );
+    assert_eq!(
+        receipt
+            .trace_source_counts()
+            .get("view_model_traceable_items"),
+        Some(&49)
+    );
+    assert_eq!(
+        receipt
+            .trace_source_counts()
+            .get("view_model_trace_items_with_sources"),
+        Some(&49)
+    );
+    assert_eq!(
+        receipt
+            .trace_source_counts()
+            .get("view_model_trace_unique_source_records"),
+        Some(&7)
+    );
 
     let decoded_item = model
         .claim_explorer()

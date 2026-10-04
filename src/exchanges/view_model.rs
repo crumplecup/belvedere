@@ -1,6 +1,6 @@
 //! Auditor navigation view-model exchange implementations.
 
-use std::collections::BTreeMap;
+use std::collections::{BTreeMap, BTreeSet};
 
 use tracing::instrument;
 
@@ -121,6 +121,20 @@ impl BelvedereExchange<AuditorNavigationContract> for AuditorNavigationProjectio
         let receipt_source_artifact_counts = source_artifact_counts(&source_navigation);
         let receipt_proof_chain_topology_counts = proof_chain_topology_counts(&proof_chains);
         let receipt_provenance_root_kind_counts = provenance_root_kind_counts(&provenance_roots);
+        let receipt_trace_source_counts = trace_source_counts(
+            filter_facets
+                .iter()
+                .map(|item| item.trace())
+                .chain(backend_coverage.iter().map(|item| item.trace()))
+                .chain(claim_explorer.iter().map(|item| item.trace()))
+                .chain(proof_chains.iter().map(|item| item.trace()))
+                .chain(assessment_queue.iter().map(|item| item.trace()))
+                .chain(assessment_work.iter().map(|item| item.trace()))
+                .chain(witness_surface.iter().map(|item| item.trace()))
+                .chain(provenance_roots.iter().map(|item| item.trace()))
+                .chain(gaps.iter().map(|item| item.trace()))
+                .chain(source_navigation.iter().map(|item| item.trace())),
+        );
 
         let counts = ViewModelReceiptCountsBuilder::default()
             .claim_cards(landscape.claims().len())
@@ -159,6 +173,7 @@ impl BelvedereExchange<AuditorNavigationContract> for AuditorNavigationProjectio
             .source_artifact_counts(receipt_source_artifact_counts)
             .proof_chain_topology_counts(receipt_proof_chain_topology_counts)
             .provenance_root_kind_counts(receipt_provenance_root_kind_counts)
+            .trace_source_counts(receipt_trace_source_counts)
             .source_record_ids(source_record_ids)
             .warnings(Vec::new())
             .build()
@@ -226,6 +241,36 @@ fn source_artifact_counts(source_navigation: &[SourceNavigationItem]) -> BTreeMa
             .or_default() += 1;
     }
     counts
+}
+
+#[instrument(level = "debug", skip(traces))]
+fn trace_source_counts<'trace>(
+    traces: impl IntoIterator<Item = &'trace TraceRef>,
+) -> BTreeMap<String, usize> {
+    let mut traceable_items = 0;
+    let mut items_with_sources = 0;
+    let mut source_links = 0;
+    let mut unique_source_records = BTreeSet::new();
+    for trace in traces {
+        traceable_items += 1;
+        if !trace.source_record_ids().is_empty() {
+            items_with_sources += 1;
+        }
+        source_links += trace.source_record_ids().len();
+        unique_source_records.extend(trace.source_record_ids().iter().cloned());
+    }
+    BTreeMap::from([
+        ("view_model_traceable_items".to_owned(), traceable_items),
+        (
+            "view_model_trace_items_with_sources".to_owned(),
+            items_with_sources,
+        ),
+        ("view_model_trace_source_links".to_owned(), source_links),
+        (
+            "view_model_trace_unique_source_records".to_owned(),
+            unique_source_records.len(),
+        ),
+    ])
 }
 
 #[instrument(level = "debug", skip(provenance_roots))]

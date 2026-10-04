@@ -201,6 +201,7 @@ impl BelvedereStageCertificate {
         counts.extend(receipt.source_artifact_counts().clone());
         counts.extend(receipt.proof_chain_topology_counts().clone());
         counts.extend(receipt.provenance_root_kind_counts().clone());
+        counts.extend(receipt.trace_source_counts().clone());
         Self::new(StageCertificateEvidence {
             stage: BelvederePipelineStage::AuditorNavigation,
             contract: receipt.contract().to_owned(),
