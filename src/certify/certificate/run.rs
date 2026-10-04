@@ -1,5 +1,7 @@
 //! Run certificate construction.
 
+use std::collections::BTreeMap;
+
 use derive_getters::Getters;
 use serde::Serialize;
 use sha2::{Digest as _, Sha256};
@@ -75,6 +77,7 @@ pub struct BelvedereRunCertificate {
     schema_version: u16,
     id: String,
     belvedere_version: String,
+    component_versions: BTreeMap<String, String>,
     invocation: BelvedereRunInvocation,
     input_artifact_ids: Vec<String>,
     input_artifact_digests: Vec<String>,
@@ -159,8 +162,10 @@ impl BelvedereRunCertificate {
             .map(|certificate| certificate.digest().to_owned())
             .collect::<Vec<_>>();
         let belvedere_version = env!("CARGO_PKG_VERSION").to_owned();
+        let component_versions = component_versions(&belvedere_version);
         let digest = run_digest(
             &belvedere_version,
+            &component_versions,
             &invocation,
             &input_artifact_ids,
             &input_artifact_digests,
@@ -173,6 +178,7 @@ impl BelvedereRunCertificate {
             schema_version: BELVEDERE_RUN_CERTIFICATE_SCHEMA_VERSION,
             id,
             belvedere_version,
+            component_versions,
             invocation,
             input_artifact_ids,
             input_artifact_digests,
@@ -194,9 +200,10 @@ fn artifact_id(receipt: &IngestionReceipt) -> String {
     )
 }
 
-#[instrument(level = "info", skip(invocation))]
+#[instrument(level = "info", skip(component_versions, invocation))]
 fn run_digest(
     belvedere_version: &str,
+    component_versions: &BTreeMap<String, String>,
     invocation: &BelvedereRunInvocation,
     input_artifact_ids: &[String],
     input_artifact_digests: &[String],
@@ -210,6 +217,10 @@ fn run_digest(
         &BELVEDERE_RUN_CERTIFICATE_SCHEMA_VERSION.to_string(),
     );
     update_field(&mut hasher, belvedere_version);
+    for (component, version) in component_versions {
+        update_field(&mut hasher, component);
+        update_field(&mut hasher, version);
+    }
     update_field(&mut hasher, invocation.surface().as_str());
     update_fields(&mut hasher, invocation.arguments());
     update_fields(&mut hasher, input_artifact_ids);
@@ -217,4 +228,38 @@ fn run_digest(
     update_fields(&mut hasher, stage_certificate_ids);
     update_fields(&mut hasher, stage_certificate_digests);
     hex_digest(hasher)
+}
+
+#[instrument(level = "debug", skip(belvedere_version))]
+fn component_versions(belvedere_version: &str) -> BTreeMap<String, String> {
+    BTreeMap::from([
+        ("amenable".to_owned(), locked_package_version("amenable")),
+        ("belvedere".to_owned(), belvedere_version.to_owned()),
+        ("elicit_ui".to_owned(), locked_package_version("elicit_ui")),
+        (
+            "elicitation".to_owned(),
+            locked_package_version("elicitation"),
+        ),
+    ])
+}
+
+#[instrument(level = "trace", skip(package_name))]
+fn locked_package_version(package_name: &str) -> String {
+    let mut package_matches = false;
+    for line in include_str!("../../../Cargo.lock").lines() {
+        if let Some(name) = lock_value(line, "name") {
+            package_matches = name == package_name;
+            continue;
+        }
+        if package_matches && let Some(version) = lock_value(line, "version") {
+            return version.to_owned();
+        }
+    }
+    "unknown".to_owned()
+}
+
+#[instrument(level = "trace", skip(line))]
+fn lock_value<'line>(line: &'line str, key: &str) -> Option<&'line str> {
+    let prefix = format!("{key} = \"");
+    line.strip_prefix(&prefix)?.strip_suffix('"')
 }

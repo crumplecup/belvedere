@@ -259,6 +259,38 @@ fn run_certificate_is_reproducible_portable_evidence() -> Result<()> {
         BelvedereInvocationSurface::Library
     );
     assert_eq!(
+        first
+            .certificate()
+            .component_versions()
+            .get("belvedere")
+            .map(String::as_str),
+        Some(env!("CARGO_PKG_VERSION"))
+    );
+    assert_eq!(
+        first
+            .certificate()
+            .component_versions()
+            .get("amenable")
+            .map(String::as_str),
+        Some("0.1.0")
+    );
+    assert_eq!(
+        first
+            .certificate()
+            .component_versions()
+            .get("elicitation")
+            .map(String::as_str),
+        Some("0.11.1")
+    );
+    assert_eq!(
+        first
+            .certificate()
+            .component_versions()
+            .get("elicit_ui")
+            .map(String::as_str),
+        Some("0.11.1")
+    );
+    assert_eq!(
         first.certificate().stage_certificate_ids(),
         second.certificate().stage_certificate_ids()
     );
@@ -384,6 +416,18 @@ fn cli_can_emit_the_run_certificate_as_json() -> Result<()> {
         Some(2)
     );
     assert_eq!(
+        certificate["component_versions"]["belvedere"].as_str(),
+        Some(env!("CARGO_PKG_VERSION"))
+    );
+    assert_eq!(
+        certificate["component_versions"]["amenable"].as_str(),
+        Some("0.1.0")
+    );
+    assert_eq!(
+        certificate["component_versions"]["elicitation"].as_str(),
+        Some("0.11.1")
+    );
+    assert_eq!(
         certificate["input_artifact_digests"]
             .as_array()
             .map(Vec::len),
@@ -489,6 +533,10 @@ fn cli_can_persist_the_run_certificate_as_json() -> Result<()> {
             .as_array()
             .map(Vec::len),
         Some(2)
+    );
+    assert_eq!(
+        certificate["component_versions"]["elicit_ui"].as_str(),
+        Some("0.11.1")
     );
     assert!(
         certificate["stage_certificates"]
