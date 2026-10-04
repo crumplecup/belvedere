@@ -9,19 +9,16 @@ use tracing::instrument;
 
 use crate::{
     certify::{
+        BELVEDERE_STAGE_CERTIFICATE_SCHEMA_ID, BELVEDERE_STAGE_CERTIFICATE_SCHEMA_VERSION,
         BelvedereInvariantCheck, IngestionReceipt, LandscapeDiffReceipt, LandscapeReceipt,
-        UiIrReceipt, ViewModelReceipt, stage_invariant_checks,
+        UiIrReceipt, ViewModelReceipt, hex_digest, stage_invariant_checks, update_field,
+        update_fields,
     },
     contracts::{
         AssessmentStreamIngestionContract, AuditorNavigationContract, BelvedereContract,
         ElicitUiProjectionContract, LandscapeDiffContract, LandscapeModelingContract,
         RegistryDumpIngestionContract,
     },
-};
-
-use super::{
-    BELVEDERE_STAGE_CERTIFICATE_SCHEMA_ID, BELVEDERE_STAGE_CERTIFICATE_SCHEMA_VERSION, hex_digest,
-    update_field, update_fields,
 };
 
 /// Named stage in a complete Belvedere pipeline run.

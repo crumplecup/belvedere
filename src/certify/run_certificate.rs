@@ -7,11 +7,11 @@ use serde::Serialize;
 use sha2::{Digest as _, Sha256};
 use tracing::instrument;
 
-use crate::certify::{IngestionReceipt, LandscapeReceipt, UiIrReceipt, ViewModelReceipt};
-
-use super::{
+use crate::certify::{
     BELVEDERE_RUN_CERTIFICATE_SCHEMA_ID, BELVEDERE_RUN_CERTIFICATE_SCHEMA_VERSION,
-    BelvedereStageCertificate, hex_digest, update_field, update_fields,
+    BelvedereInvariantCheck, BelvedereStageCertificate, IngestionReceipt, LandscapeReceipt,
+    RunInputArtifactEvidence, RunInvariantEvidence, RunStageCertificateEvidence, UiIrReceipt,
+    ViewModelReceipt, hex_digest, run_invariant_checks, update_field, update_fields,
 };
 
 /// Public invocation surface that produced a Belvedere run.
@@ -84,6 +84,7 @@ pub struct BelvedereRunCertificate {
     stage_certificates: Vec<BelvedereStageCertificate>,
     stage_certificate_ids: Vec<String>,
     stage_certificate_digests: Vec<String>,
+    invariant_checks: Vec<BelvedereInvariantCheck>,
     digest: String,
 }
 
@@ -184,17 +185,33 @@ impl BelvedereRunCertificate {
             .iter()
             .map(|certificate| certificate.digest().to_owned())
             .collect::<Vec<_>>();
+        let stage_certificate_digest_matches = stage_certificates
+            .iter()
+            .zip(&stage_certificate_digests)
+            .all(|(certificate, digest)| certificate.digest() == digest);
         let belvedere_version = env!("CARGO_PKG_VERSION").to_owned();
         let component_versions = component_versions(&belvedere_version);
-        let digest = run_digest(
-            &belvedere_version,
+        let invariant_checks = run_invariant_checks(RunInvariantEvidence::new(
             &component_versions,
-            &invocation,
-            &input_artifact_ids,
-            &input_artifact_digests,
-            &stage_certificate_ids,
-            &stage_certificate_digests,
-        );
+            invocation.surface().as_str(),
+            invocation.arguments(),
+            RunInputArtifactEvidence::new(&input_artifact_ids, &input_artifact_digests),
+            RunStageCertificateEvidence::new(
+                &stage_certificate_ids,
+                &stage_certificate_digests,
+                stage_certificate_digest_matches,
+            ),
+        ));
+        let digest = run_digest(RunDigestEvidence {
+            belvedere_version: &belvedere_version,
+            component_versions: &component_versions,
+            invocation: &invocation,
+            input_artifact_ids: &input_artifact_ids,
+            input_artifact_digests: &input_artifact_digests,
+            stage_certificate_ids: &stage_certificate_ids,
+            stage_certificate_digests: &stage_certificate_digests,
+            invariant_checks: &invariant_checks,
+        });
         let id = format!("belvedere.run:{digest}");
         Self {
             schema_id: BELVEDERE_RUN_CERTIFICATE_SCHEMA_ID.to_owned(),
@@ -208,9 +225,22 @@ impl BelvedereRunCertificate {
             stage_certificates,
             stage_certificate_ids,
             stage_certificate_digests,
+            invariant_checks,
             digest,
         }
     }
+}
+
+#[derive(Debug, Clone, Copy)]
+struct RunDigestEvidence<'evidence> {
+    belvedere_version: &'evidence str,
+    component_versions: &'evidence BTreeMap<String, String>,
+    invocation: &'evidence BelvedereRunInvocation,
+    input_artifact_ids: &'evidence [String],
+    input_artifact_digests: &'evidence [String],
+    stage_certificate_ids: &'evidence [String],
+    stage_certificate_digests: &'evidence [String],
+    invariant_checks: &'evidence [BelvedereInvariantCheck],
 }
 
 #[instrument(level = "trace", skip(receipt))]
@@ -223,33 +253,30 @@ fn artifact_id(receipt: &IngestionReceipt) -> String {
     )
 }
 
-#[instrument(level = "info", skip(component_versions, invocation))]
-fn run_digest(
-    belvedere_version: &str,
-    component_versions: &BTreeMap<String, String>,
-    invocation: &BelvedereRunInvocation,
-    input_artifact_ids: &[String],
-    input_artifact_digests: &[String],
-    stage_certificate_ids: &[String],
-    stage_certificate_digests: &[String],
-) -> String {
+#[instrument(level = "info", skip(evidence))]
+fn run_digest(evidence: RunDigestEvidence<'_>) -> String {
     let mut hasher = Sha256::new();
     update_field(&mut hasher, BELVEDERE_RUN_CERTIFICATE_SCHEMA_ID);
     update_field(
         &mut hasher,
         &BELVEDERE_RUN_CERTIFICATE_SCHEMA_VERSION.to_string(),
     );
-    update_field(&mut hasher, belvedere_version);
-    for (component, version) in component_versions {
+    update_field(&mut hasher, evidence.belvedere_version);
+    for (component, version) in evidence.component_versions {
         update_field(&mut hasher, component);
         update_field(&mut hasher, version);
     }
-    update_field(&mut hasher, invocation.surface().as_str());
-    update_fields(&mut hasher, invocation.arguments());
-    update_fields(&mut hasher, input_artifact_ids);
-    update_fields(&mut hasher, input_artifact_digests);
-    update_fields(&mut hasher, stage_certificate_ids);
-    update_fields(&mut hasher, stage_certificate_digests);
+    update_field(&mut hasher, evidence.invocation.surface().as_str());
+    update_fields(&mut hasher, evidence.invocation.arguments());
+    update_fields(&mut hasher, evidence.input_artifact_ids);
+    update_fields(&mut hasher, evidence.input_artifact_digests);
+    update_fields(&mut hasher, evidence.stage_certificate_ids);
+    update_fields(&mut hasher, evidence.stage_certificate_digests);
+    for check in evidence.invariant_checks {
+        update_field(&mut hasher, check.name());
+        update_field(&mut hasher, &check.passed().to_string());
+        update_field(&mut hasher, check.detail());
+    }
     hex_digest(hasher)
 }
 
@@ -269,7 +296,7 @@ fn component_versions(belvedere_version: &str) -> BTreeMap<String, String> {
 #[instrument(level = "trace", skip(package_name))]
 fn locked_package_version(package_name: &str) -> String {
     let mut package_matches = false;
-    for line in include_str!("../../../Cargo.lock").lines() {
+    for line in include_str!("../../Cargo.lock").lines() {
         if let Some(name) = lock_value(line, "name") {
             package_matches = name == package_name;
             continue;

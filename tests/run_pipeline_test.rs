@@ -82,6 +82,20 @@ fn run_pipeline_uses_the_normal_amenable_artifact_path() -> Result<()> {
     assert!(
         report
             .certificate()
+            .invariant_checks()
+            .iter()
+            .all(|check| check.passed())
+    );
+    assert!(
+        report
+            .certificate()
+            .invariant_checks()
+            .iter()
+            .any(|check| check.name() == "run_stage_certificate_digests_match")
+    );
+    assert!(
+        report
+            .certificate()
             .stage_certificates()
             .iter()
             .any(|certificate| certificate
@@ -435,6 +449,7 @@ fn run_certificate_is_reproducible_portable_evidence() -> Result<()> {
     assert!(encoded.contains("source record identities remain available for traceability"));
     assert!(encoded.contains("the emitted tree is an elicit_ui VerifiedTree"));
     assert!(encoded.contains("contract_obligations_named"));
+    assert!(encoded.contains("run_stage_certificate_digests_match"));
     assert!(encoded.contains("warning_count_consistent"));
     Ok(())
 }
@@ -565,6 +580,13 @@ fn cli_can_emit_the_run_certificate_as_json() -> Result<()> {
                 })
             )
     );
+    assert!(
+        certificate["invariant_checks"]
+            .as_array()
+            .is_some_and(|checks| checks
+                .iter()
+                .all(|check| check["passed"].as_bool() == Some(true)))
+    );
     assert_eq!(certificate["invocation"]["surface"].as_str(), Some("cli"));
     assert_eq!(
         certificate["invocation"]["arguments"]
@@ -655,6 +677,11 @@ fn cli_can_persist_the_run_certificate_as_json() -> Result<()> {
                         .is_some_and(|checks| !checks.is_empty())
                 })
             )
+    );
+    assert!(
+        certificate["invariant_checks"]
+            .as_array()
+            .is_some_and(|checks| !checks.is_empty())
     );
 
     fs::remove_file(&certificate_path)
