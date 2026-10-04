@@ -129,6 +129,19 @@ impl BelvedereExchange<AuditorNavigationContract> for AuditorNavigationProjectio
         let receipt_provenance_root_kind_counts = provenance_root_kind_counts(&provenance_roots);
         let receipt_review_workflow_counts =
             review_workflow_counts(&proof_chains, &review_workflow, &assessment_work, &gaps);
+        let receipt_trace_kind_counts = trace_kind_counts(&[
+            ("filter_facet", filter_facets.len()),
+            ("backend_coverage_item", backend_coverage.len()),
+            ("claim_card", claim_explorer.len()),
+            ("proof_chain_item", proof_chains.len()),
+            ("review_workflow_item", review_workflow.len()),
+            ("assessment_queue_item", assessment_queue.len()),
+            ("assessment_work_item", assessment_work.len()),
+            ("witness_item", witness_surface.len()),
+            ("provenance_root_item", provenance_roots.len()),
+            ("gap_item", gaps.len()),
+            ("source_navigation_item", source_navigation.len()),
+        ]);
         let receipt_trace_source_counts = trace_source_counts(
             filter_facets
                 .iter()
@@ -186,6 +199,7 @@ impl BelvedereExchange<AuditorNavigationContract> for AuditorNavigationProjectio
             .proof_chain_topology_counts(receipt_proof_chain_topology_counts)
             .provenance_root_kind_counts(receipt_provenance_root_kind_counts)
             .review_workflow_counts(receipt_review_workflow_counts)
+            .trace_kind_counts(receipt_trace_kind_counts)
             .trace_source_counts(receipt_trace_source_counts)
             .source_record_ids(source_record_ids)
             .warnings(Vec::new())
@@ -263,6 +277,15 @@ fn source_kind_counts(source_navigation: &[SourceNavigationItem]) -> BTreeMap<St
         *counts
             .entry(format!("source_kind_{}", item.source_kind()))
             .or_default() += 1;
+    }
+    counts
+}
+
+#[instrument(level = "debug", skip(families))]
+fn trace_kind_counts(families: &[(&str, usize)]) -> BTreeMap<String, usize> {
+    let mut counts = BTreeMap::new();
+    for (kind, count) in families {
+        counts.insert(format!("view_model_trace_kind_{kind}"), *count);
     }
     counts
 }

@@ -223,6 +223,72 @@ fn view_model_projection_builds_auditor_navigation_evidence() -> Result<()> {
     );
     assert_eq!(
         receipt
+            .trace_kind_counts()
+            .get("view_model_trace_kind_filter_facet"),
+        Some(&10)
+    );
+    assert_eq!(
+        receipt
+            .trace_kind_counts()
+            .get("view_model_trace_kind_backend_coverage_item"),
+        Some(&12)
+    );
+    assert_eq!(
+        receipt
+            .trace_kind_counts()
+            .get("view_model_trace_kind_claim_card"),
+        Some(&4)
+    );
+    assert_eq!(
+        receipt
+            .trace_kind_counts()
+            .get("view_model_trace_kind_proof_chain_item"),
+        Some(&4)
+    );
+    assert_eq!(
+        receipt
+            .trace_kind_counts()
+            .get("view_model_trace_kind_review_workflow_item"),
+        Some(&4)
+    );
+    assert_eq!(
+        receipt
+            .trace_kind_counts()
+            .get("view_model_trace_kind_assessment_queue_item"),
+        Some(&2)
+    );
+    assert_eq!(
+        receipt
+            .trace_kind_counts()
+            .get("view_model_trace_kind_assessment_work_item"),
+        Some(&2)
+    );
+    assert_eq!(
+        receipt
+            .trace_kind_counts()
+            .get("view_model_trace_kind_witness_item"),
+        Some(&1)
+    );
+    assert_eq!(
+        receipt
+            .trace_kind_counts()
+            .get("view_model_trace_kind_provenance_root_item"),
+        Some(&3)
+    );
+    assert_eq!(
+        receipt
+            .trace_kind_counts()
+            .get("view_model_trace_kind_gap_item"),
+        Some(&4)
+    );
+    assert_eq!(
+        receipt
+            .trace_kind_counts()
+            .get("view_model_trace_kind_source_navigation_item"),
+        Some(&7)
+    );
+    assert_eq!(
+        receipt
             .trace_source_counts()
             .get("view_model_traceable_items"),
         Some(&53)

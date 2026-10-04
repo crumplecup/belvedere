@@ -205,6 +205,7 @@ impl BelvedereStageCertificate {
         counts.extend(receipt.proof_chain_topology_counts().clone());
         counts.extend(receipt.provenance_root_kind_counts().clone());
         counts.extend(receipt.review_workflow_counts().clone());
+        counts.extend(receipt.trace_kind_counts().clone());
         counts.extend(receipt.trace_source_counts().clone());
         Self::new(StageCertificateEvidence {
             stage: BelvederePipelineStage::AuditorNavigation,
