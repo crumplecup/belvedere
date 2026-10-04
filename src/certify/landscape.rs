@@ -4,9 +4,10 @@ use std::collections::BTreeMap;
 
 use derive_builder::Builder;
 use derive_getters::Getters;
+use serde::Serialize;
 
 /// Audit receipt emitted by a landscape modeling exchange.
-#[derive(Debug, Clone, PartialEq, Eq, Getters, Builder)]
+#[derive(Debug, Clone, PartialEq, Eq, Getters, Builder, Serialize)]
 #[builder(vis = "pub(crate)", setter(into))]
 pub struct LandscapeReceipt {
     contract: String,
@@ -64,7 +65,7 @@ impl LandscapeReceipt {
 }
 
 /// Counts emitted by a landscape modeling receipt.
-#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize)]
 pub struct LandscapeReceiptCounts {
     claim_count: usize,
     edge_count: usize,

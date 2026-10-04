@@ -70,6 +70,16 @@ impl BelvedereCli {
                     output = BelvedereCliOutput::RunCertificateFile(PathBuf::from(path));
                     index += 1;
                 }
+                "--landscape-receipt-json" => {
+                    output = BelvedereCliOutput::RunLandscapeReceiptJson;
+                }
+                "--landscape-receipt-file" => {
+                    let Some(path) = arguments.get(index + 1) else {
+                        return Err(BelvedereCliUsageError::new().into());
+                    };
+                    output = BelvedereCliOutput::RunLandscapeReceiptFile(PathBuf::from(path));
+                    index += 1;
+                }
                 "--view-model-receipt-json" => {
                     output = BelvedereCliOutput::RunViewModelReceiptJson;
                 }
@@ -147,6 +157,17 @@ impl BelvedereCli {
                     index += 1;
                 }
                 "--diff-json" => output = BelvedereCliOutput::LandscapeDiffJson,
+                "--landscape-receipt-json" => {
+                    output = BelvedereCliOutput::LandscapeDiffLandscapeReceiptJson;
+                }
+                "--landscape-receipt-file" => {
+                    let Some(path) = arguments.get(index + 1) else {
+                        return Err(BelvedereCliUsageError::new().into());
+                    };
+                    output =
+                        BelvedereCliOutput::LandscapeDiffLandscapeReceiptFile(PathBuf::from(path));
+                    index += 1;
+                }
                 "--view-model-receipt-json" => {
                     output = BelvedereCliOutput::LandscapeDiffViewModelReceiptJson;
                 }

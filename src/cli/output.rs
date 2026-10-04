@@ -11,8 +11,8 @@ use super::{BelvedereCliOutputError, BelvedereCliReport, BelvedereCliUsageError}
 
 /// Stable CLI help text.
 pub const BELVEDERE_CLI_HELP: &str = "\
-usage: belvedere [--help] [--certificate-json | --certificate-file <path> | --view-model-receipt-json | --view-model-receipt-file <path> | --ui-ir-receipt-json | --ui-ir-receipt-file <path>] <registry-dump.json> <proof-assessments.jsonl>
-       belvedere diff [--certificate-json | --certificate-file <path> | --run-certificate-json | --run-certificate-file <path> | --diff-json | --view-model-receipt-json | --view-model-receipt-file <path> | --ui-ir-receipt-json | --ui-ir-receipt-file <path>] <previous-registry-dump.json> <previous-proof-assessments.jsonl> <current-registry-dump.json> <current-proof-assessments.jsonl>
+usage: belvedere [--help] [--certificate-json | --certificate-file <path> | --landscape-receipt-json | --landscape-receipt-file <path> | --view-model-receipt-json | --view-model-receipt-file <path> | --ui-ir-receipt-json | --ui-ir-receipt-file <path>] <registry-dump.json> <proof-assessments.jsonl>
+       belvedere diff [--certificate-json | --certificate-file <path> | --run-certificate-json | --run-certificate-file <path> | --diff-json | --landscape-receipt-json | --landscape-receipt-file <path> | --view-model-receipt-json | --view-model-receipt-file <path> | --ui-ir-receipt-json | --ui-ir-receipt-file <path>] <previous-registry-dump.json> <previous-proof-assessments.jsonl> <current-registry-dump.json> <current-proof-assessments.jsonl>
 
 Options:
   -h, --help                       Show this help text.
@@ -21,6 +21,8 @@ Options:
       --run-certificate-json       Write the full diff run certificate as JSON to stdout.
       --run-certificate-file       Write the full diff run certificate as JSON to a file.
       --diff-json                  Write the landscape diff as JSON to stdout.
+      --landscape-receipt-json     Write the landscape receipt as JSON to stdout.
+      --landscape-receipt-file     Write the landscape receipt as JSON to a file.
       --view-model-receipt-json    Write the view-model receipt as JSON to stdout.
       --view-model-receipt-file    Write the view-model receipt as JSON to a file.
       --ui-ir-receipt-json         Write the UI IR receipt as JSON to stdout.
@@ -38,6 +40,10 @@ pub enum BelvedereCliOutput {
     RunCertificateJson,
     /// Write the complete run certificate as JSON to an artifact file.
     RunCertificateFile(PathBuf),
+    /// Write the normal run landscape receipt as JSON.
+    RunLandscapeReceiptJson,
+    /// Write the normal run landscape receipt as JSON to an artifact file.
+    RunLandscapeReceiptFile(PathBuf),
     /// Write the normal run view-model receipt as JSON.
     RunViewModelReceiptJson,
     /// Write the normal run view-model receipt as JSON to an artifact file.
@@ -56,6 +62,10 @@ pub enum BelvedereCliOutput {
     LandscapeDiffRunCertificateJson,
     /// Write the complete landscape diff run certificate as JSON to an artifact file.
     LandscapeDiffRunCertificateFile(PathBuf),
+    /// Write the current-snapshot landscape receipt from a diff run as JSON.
+    LandscapeDiffLandscapeReceiptJson,
+    /// Write the current-snapshot landscape receipt from a diff run as JSON to an artifact file.
+    LandscapeDiffLandscapeReceiptFile(PathBuf),
     /// Write the current-snapshot view-model receipt from a diff run as JSON.
     LandscapeDiffViewModelReceiptJson,
     /// Write the current-snapshot view-model receipt from a diff run as JSON to an artifact file.
@@ -81,6 +91,13 @@ pub(super) fn write_cli_output(
         (BelvedereCliOutput::RunCertificateFile(path), BelvedereCliReport::Run(run)) => {
             let file = File::create(path).map_err(BelvedereCliOutputError::write)?;
             write_json(run.certificate(), file)
+        }
+        (BelvedereCliOutput::RunLandscapeReceiptJson, BelvedereCliReport::Run(run)) => {
+            write_json(run.landscape_receipt(), writer)
+        }
+        (BelvedereCliOutput::RunLandscapeReceiptFile(path), BelvedereCliReport::Run(run)) => {
+            let file = File::create(path).map_err(BelvedereCliOutputError::write)?;
+            write_json(run.landscape_receipt(), file)
         }
         (BelvedereCliOutput::RunViewModelReceiptJson, BelvedereCliReport::Run(run)) => {
             write_json(run.view_model_receipt(), writer)
@@ -117,6 +134,17 @@ pub(super) fn write_cli_output(
         ) => {
             let file = File::create(path).map_err(BelvedereCliOutputError::write)?;
             write_json(diff.certificate(), file)
+        }
+        (
+            BelvedereCliOutput::LandscapeDiffLandscapeReceiptJson,
+            BelvedereCliReport::LandscapeDiff(diff),
+        ) => write_json(diff.current_landscape_receipt(), writer),
+        (
+            BelvedereCliOutput::LandscapeDiffLandscapeReceiptFile(path),
+            BelvedereCliReport::LandscapeDiff(diff),
+        ) => {
+            let file = File::create(path).map_err(BelvedereCliOutputError::write)?;
+            write_json(diff.current_landscape_receipt(), file)
         }
         (
             BelvedereCliOutput::LandscapeDiffViewModelReceiptJson,
