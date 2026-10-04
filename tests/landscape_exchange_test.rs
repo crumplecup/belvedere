@@ -20,6 +20,12 @@ fn landscape_modeling_maps_decoded_records_into_a_review_graph() -> Result<()> {
     assert_eq!(receipt.root_count(), 3);
     assert_eq!(
         receipt
+            .assessment_recency_counts()
+            .get("assessment_recency_current"),
+        Some(&2)
+    );
+    assert_eq!(
+        receipt
             .gap_kind_counts()
             .get("landscape_gap_kind_MissingProof"),
         Some(&2)
@@ -108,12 +114,24 @@ fn landscape_modeling_surfaces_conservative_gaps() -> Result<()> {
 fn landscape_modeling_marks_superseded_assessments() -> Result<()> {
     belvedere::init_tracing();
 
-    let (landscape, _receipt) = LandscapeModeling
+    let (landscape, receipt) = LandscapeModeling
         .model(fixture_input_with_assessments(
             STALE_ASSESSMENTS.as_bytes().to_vec(),
         )?)
         .into_diagnostic()
         .wrap_err("landscape modeling should distinguish assessment recency")?;
+    assert_eq!(
+        receipt
+            .assessment_recency_counts()
+            .get("assessment_recency_current"),
+        Some(&1)
+    );
+    assert_eq!(
+        receipt
+            .assessment_recency_counts()
+            .get("assessment_recency_superseded"),
+        Some(&1)
+    );
 
     let older = landscape
         .assessments()

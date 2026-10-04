@@ -100,6 +100,13 @@ fn run_pipeline_uses_the_normal_amenable_artifact_path() -> Result<()> {
             .certificate()
             .stage_certificates()
             .iter()
+            .any(|certificate| certificate.counts().get("assessment_recency_current") == Some(&2))
+    );
+    assert!(
+        report
+            .certificate()
+            .stage_certificates()
+            .iter()
             .any(
                 |certificate| certificate.counts().get("source_artifact_registry_dump") == Some(&5)
             )
