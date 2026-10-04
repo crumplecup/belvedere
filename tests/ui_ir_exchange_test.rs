@@ -148,6 +148,48 @@ fn ui_ir_projection_mints_elicit_ui_standards_and_tree_proofs() -> Result<()> {
             .get("ui_ir_section_widgets_total"),
         Some(&projection.trace_widgets().len())
     );
+    assert_eq!(
+        receipt
+            .section_trace_counts()
+            .get("ui_ir_sections_with_source_widgets"),
+        Some(&10)
+    );
+    assert_eq!(
+        receipt
+            .section_trace_counts()
+            .get("ui_ir_sections_without_source_widgets"),
+        Some(&0)
+    );
+    assert_eq!(
+        receipt
+            .section_trace_counts()
+            .get("ui_ir_section_trace_widgets:belvedere.ui.section.overview"),
+        Some(&1)
+    );
+    assert_eq!(
+        receipt
+            .section_trace_counts()
+            .get("ui_ir_section_trace_source_links:belvedere.ui.section.overview"),
+        Some(&7)
+    );
+    assert_eq!(
+        receipt
+            .section_trace_counts()
+            .get("ui_ir_section_trace_widgets:belvedere.ui.section.source_navigation"),
+        Some(&7)
+    );
+    assert_eq!(
+        receipt
+            .section_trace_counts()
+            .get("ui_ir_section_trace_source_links:belvedere.ui.section.source_navigation"),
+        Some(&7)
+    );
+    assert_eq!(
+        receipt
+            .section_trace_counts()
+            .get("ui_ir_section_unassigned_trace_widgets"),
+        Some(&0)
+    );
     let trace_widgets_with_sources = projection
         .trace_widgets()
         .iter()
@@ -168,6 +210,12 @@ fn ui_ir_projection_mints_elicit_ui_standards_and_tree_proofs() -> Result<()> {
     assert_eq!(
         receipt.trace_source_counts().get("trace_source_links"),
         Some(&receipt.counts().trace_ref_count())
+    );
+    assert_eq!(
+        receipt
+            .section_trace_counts()
+            .get("ui_ir_section_trace_source_links_total"),
+        receipt.trace_source_counts().get("trace_source_links")
     );
     assert!(projection.trace_widgets().iter().any(|widget| {
         widget.role() == "region"

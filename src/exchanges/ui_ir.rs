@@ -332,6 +332,7 @@ fn build_receipt(
         .role_counts(role_counts(trace_widgets))
         .section_widget_counts(section_widget_counts(sections))
         .section_population_counts(section_population_counts(sections))
+        .section_trace_counts(section_trace_counts(sections, trace_widgets))
         .trace_source_counts(trace_source_counts(trace_widgets))
         .minted_prop_counts(minted_prop_counts(minted_standards))
         .proof_token_counts(proof_token_counts())
@@ -410,6 +411,63 @@ fn section_population_counts(sections: &[UiIrSection]) -> BTreeMap<String, usize
             sections.iter().map(UiIrSection::widget_count).sum(),
         ),
     ])
+}
+
+#[instrument(level = "debug", skip(sections, trace_widgets))]
+fn section_trace_counts(
+    sections: &[UiIrSection],
+    trace_widgets: &[TraceWidgetRef],
+) -> BTreeMap<String, usize> {
+    let mut counts = BTreeMap::new();
+    let mut offset = 0;
+    let mut sections_with_source_widgets = 0;
+    let mut source_links_total = 0;
+
+    for section in sections {
+        let section_widgets = trace_widgets
+            .iter()
+            .skip(offset)
+            .take(section.widget_count());
+        let mut source_widgets = 0;
+        let mut source_links = 0;
+        for widget in section_widgets {
+            if !widget.source_record_ids().is_empty() {
+                source_widgets += 1;
+            }
+            source_links += widget.source_record_ids().len();
+        }
+        if source_widgets > 0 {
+            sections_with_source_widgets += 1;
+        }
+        source_links_total += source_links;
+        counts.insert(
+            format!("ui_ir_section_trace_widgets:{}", section.id()),
+            source_widgets,
+        );
+        counts.insert(
+            format!("ui_ir_section_trace_source_links:{}", section.id()),
+            source_links,
+        );
+        offset += section.widget_count();
+    }
+
+    counts.insert(
+        "ui_ir_sections_with_source_widgets".to_owned(),
+        sections_with_source_widgets,
+    );
+    counts.insert(
+        "ui_ir_sections_without_source_widgets".to_owned(),
+        sections.len() - sections_with_source_widgets,
+    );
+    counts.insert(
+        "ui_ir_section_trace_source_links_total".to_owned(),
+        source_links_total,
+    );
+    counts.insert(
+        "ui_ir_section_unassigned_trace_widgets".to_owned(),
+        trace_widgets.len().saturating_sub(offset),
+    );
+    counts
 }
 
 #[instrument(level = "debug", skip(trace_widgets))]

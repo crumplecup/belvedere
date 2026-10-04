@@ -269,6 +269,25 @@ fn run_pipeline_uses_the_normal_amenable_artifact_path() -> Result<()> {
         ui_stage.counts().get("ui_ir_section_widgets_total"),
         Some(&report.projection().trace_widgets().len())
     );
+    assert_eq!(
+        ui_stage.counts().get("ui_ir_sections_with_source_widgets"),
+        Some(&10)
+    );
+    assert_eq!(
+        ui_stage
+            .counts()
+            .get("ui_ir_section_trace_source_links_total"),
+        report
+            .ui_ir_receipt()
+            .trace_source_counts()
+            .get("trace_source_links")
+    );
+    assert_eq!(
+        ui_stage
+            .counts()
+            .get("ui_ir_section_trace_widgets:belvedere.ui.section.source_navigation"),
+        Some(&7)
+    );
     assert!(
         report
             .ui_ir_receipt()
