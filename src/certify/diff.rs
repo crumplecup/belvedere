@@ -1,5 +1,7 @@
 //! Receipts for landscape diff exchanges.
 
+use std::collections::BTreeMap;
+
 use derive_builder::Builder;
 use derive_getters::Getters;
 
@@ -10,6 +12,7 @@ pub struct LandscapeDiffReceipt {
     contract: String,
     #[getter(skip)]
     counts: LandscapeDiffReceiptCounts,
+    subject_kind_counts: BTreeMap<String, usize>,
     source_record_ids: Vec<String>,
     warnings: Vec<String>,
 }

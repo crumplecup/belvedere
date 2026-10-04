@@ -23,6 +23,18 @@ fn landscape_diff_surfaces_snapshot_changes_for_auditors() -> Result<()> {
     assert_eq!(receipt.counts().removed_items(), 1);
     assert_eq!(receipt.counts().changed_items(), 1);
     assert_eq!(receipt.counts().total_items(), diff.items().len());
+    assert_eq!(
+        receipt.subject_kind_counts().get("diff_subject_claim"),
+        Some(&2)
+    );
+    assert_eq!(
+        receipt.subject_kind_counts().get("diff_subject_assessment"),
+        Some(&2)
+    );
+    assert_eq!(
+        receipt.subject_kind_counts().get("diff_subject_gap"),
+        Some(&2)
+    );
 
     let certificate = BelvedereStageCertificate::landscape_diff(&receipt);
     assert_eq!(certificate.stage(), BelvederePipelineStage::LandscapeDiff);
@@ -31,6 +43,7 @@ fn landscape_diff_surfaces_snapshot_changes_for_auditors() -> Result<()> {
         certificate.counts().get("total_items"),
         Some(&diff.items().len())
     );
+    assert_eq!(certificate.counts().get("diff_subject_gap"), Some(&2));
     assert!(
         certificate
             .invariant_checks()
@@ -137,12 +150,26 @@ fn landscape_diff_runner_uses_the_normal_artifact_path() -> Result<()> {
     assert_eq!(report.current_landscape_receipt().claim_count(), 4);
     assert_eq!(report.diff_receipt().counts().total_items(), 6);
     assert_eq!(
+        report
+            .diff_receipt()
+            .subject_kind_counts()
+            .get("diff_subject_assessment"),
+        Some(&2)
+    );
+    assert_eq!(
         report.diff_certificate().stage(),
         BelvederePipelineStage::LandscapeDiff
     );
     assert_eq!(
         report.diff_certificate().counts().get("total_items"),
         Some(&report.diff().items().len())
+    );
+    assert_eq!(
+        report
+            .diff_certificate()
+            .counts()
+            .get("diff_subject_assessment"),
+        Some(&2)
     );
 
     fs::remove_file(previous_assessments_path)

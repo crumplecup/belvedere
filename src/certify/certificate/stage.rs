@@ -147,13 +147,14 @@ impl BelvedereStageCertificate {
     #[instrument(level = "debug", skip(receipt))]
     #[must_use]
     pub fn landscape_diff(receipt: &LandscapeDiffReceipt) -> Self {
-        let counts = BTreeMap::from([
+        let mut counts = BTreeMap::from([
             ("added_items".to_owned(), receipt.counts().added_items()),
             ("changed_items".to_owned(), receipt.counts().changed_items()),
             ("removed_items".to_owned(), receipt.counts().removed_items()),
             ("total_items".to_owned(), receipt.counts().total_items()),
             ("warnings".to_owned(), receipt.warnings().len()),
         ]);
+        counts.extend(receipt.subject_kind_counts().clone());
         Self::new(StageCertificateEvidence {
             stage: BelvederePipelineStage::LandscapeDiff,
             contract: receipt.contract().to_owned(),
