@@ -91,6 +91,16 @@ fn run_pipeline_uses_the_normal_amenable_artifact_path() -> Result<()> {
             .stage_certificates()
             .iter()
             .any(
+                |certificate| certificate.counts().get("landscape_gap_kind_MissingProof")
+                    == Some(&2)
+            )
+    );
+    assert!(
+        report
+            .certificate()
+            .stage_certificates()
+            .iter()
+            .any(
                 |certificate| certificate.counts().get("source_artifact_registry_dump") == Some(&5)
             )
     );

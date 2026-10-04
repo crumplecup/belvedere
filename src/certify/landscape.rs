@@ -1,5 +1,7 @@
 //! Receipts for Belvedere landscape modeling exchanges.
 
+use std::collections::BTreeMap;
+
 use derive_builder::Builder;
 use derive_getters::Getters;
 
@@ -10,6 +12,7 @@ pub struct LandscapeReceipt {
     contract: String,
     #[getter(skip)]
     counts: LandscapeReceiptCounts,
+    gap_kind_counts: BTreeMap<String, usize>,
     source_record_ids: Vec<String>,
     warnings: Vec<String>,
 }

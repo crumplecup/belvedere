@@ -118,6 +118,7 @@ impl BelvedereExchange<LandscapeModelingContract> for LandscapeModeling {
         let receipt = LandscapeReceiptBuilder::default()
             .contract(LandscapeModelingContract::NAME)
             .counts(counts)
+            .gap_kind_counts(gap_kind_counts(graph.gaps()))
             .source_record_ids(graph.source_record_ids().to_vec())
             .warnings(Vec::new())
             .build()
@@ -155,6 +156,17 @@ fn mark_assessment_recency(assessments: &mut [LandscapeAssessment]) {
             None => assessment.mark_current(),
         }
     }
+}
+
+#[instrument(level = "debug", skip(gaps))]
+fn gap_kind_counts(gaps: &[LandscapeGap]) -> BTreeMap<String, usize> {
+    let mut counts = BTreeMap::new();
+    for gap in gaps {
+        *counts
+            .entry(format!("landscape_gap_kind_{:?}", gap.kind()))
+            .or_default() += 1;
+    }
+    counts
 }
 
 #[instrument(level = "debug", skip(claims))]

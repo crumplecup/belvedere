@@ -120,7 +120,7 @@ impl BelvedereStageCertificate {
     #[instrument(level = "debug", skip(receipt))]
     #[must_use]
     pub fn landscape_modeling(receipt: &LandscapeReceipt) -> Self {
-        let counts = BTreeMap::from([
+        let mut counts = BTreeMap::from([
             ("assessments".to_owned(), receipt.assessment_count()),
             ("claims".to_owned(), receipt.claim_count()),
             ("edges".to_owned(), receipt.edge_count()),
@@ -129,6 +129,7 @@ impl BelvedereStageCertificate {
             ("roots".to_owned(), receipt.root_count()),
             ("warnings".to_owned(), receipt.warnings().len()),
         ]);
+        counts.extend(receipt.gap_kind_counts().clone());
         Self::new(StageCertificateEvidence {
             stage: BelvederePipelineStage::LandscapeModeling,
             contract: receipt.contract().to_owned(),

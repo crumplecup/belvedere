@@ -18,6 +18,24 @@ fn landscape_modeling_maps_decoded_records_into_a_review_graph() -> Result<()> {
     assert_eq!(receipt.proof_count(), 2);
     assert_eq!(receipt.assessment_count(), 2);
     assert_eq!(receipt.root_count(), 3);
+    assert_eq!(
+        receipt
+            .gap_kind_counts()
+            .get("landscape_gap_kind_MissingProof"),
+        Some(&2)
+    );
+    assert_eq!(
+        receipt
+            .gap_kind_counts()
+            .get("landscape_gap_kind_MissingAssessment"),
+        Some(&1)
+    );
+    assert_eq!(
+        receipt
+            .gap_kind_counts()
+            .get("landscape_gap_kind_TrustedOrOpaqueWitnessSupport"),
+        Some(&1)
+    );
     assert!(
         receipt
             .source_record_ids()
