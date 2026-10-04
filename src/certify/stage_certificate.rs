@@ -196,6 +196,7 @@ impl BelvedereStageCertificate {
             ),
             ("root_items".to_owned(), receipt.counts().root_items()),
             ("source_items".to_owned(), receipt.counts().source_items()),
+            ("view_model_items".to_owned(), receipt.view_item_ids().len()),
             ("warnings".to_owned(), receipt.warnings().len()),
             ("witness_items".to_owned(), receipt.counts().witness_items()),
         ]);
@@ -215,7 +216,7 @@ impl BelvedereStageCertificate {
             requires: contract_requirements::<AuditorNavigationContract>(),
             ensures: contract_guarantees::<AuditorNavigationContract>(),
             input_ids: receipt.source_record_ids().clone(),
-            output_ids: vec!["auditor_navigation_model".to_owned()],
+            output_ids: receipt.view_item_ids().clone(),
             counts,
             warning_count: receipt.warnings().len(),
         })

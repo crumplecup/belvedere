@@ -305,6 +305,34 @@ fn view_model_projection_builds_auditor_navigation_evidence() -> Result<()> {
             .get("view_model_trace_unique_source_records"),
         Some(&7)
     );
+    assert_eq!(receipt.view_item_ids().len(), 54);
+    assert!(
+        receipt
+            .view_item_ids()
+            .contains(&"view_model.overview".to_owned())
+    );
+    assert!(
+        receipt
+            .view_item_ids()
+            .contains(&"view_model.claim:belvedere::ingestion::DecodedRegistrySnapshot".to_owned())
+    );
+    assert!(
+        receipt.view_item_ids().contains(
+            &"view_model.backend_coverage:belvedere::ingestion::DecodedRegistrySnapshot:kani"
+                .to_owned()
+        )
+    );
+    assert!(
+        receipt
+            .view_item_ids()
+            .contains(&"view_model.source:assessment:assess-belvedere-ingestion-1".to_owned())
+    );
+    assert!(
+        receipt.view_item_ids().contains(
+            &"view_model.gap:belvedere::ingestion::DecodedRegistrySnapshot:missing_assessment"
+                .to_owned()
+        )
+    );
 
     let decoded_item = model
         .claim_explorer()
@@ -432,6 +460,10 @@ fn view_model_projection_builds_auditor_navigation_evidence() -> Result<()> {
         decoded_task.source_count(),
         decoded_task.trace().source_record_ids().len()
     );
+    assert!(receipt.view_item_ids().contains(&format!(
+        "view_model.review_task:{}",
+        decoded_task.task_id()
+    )));
     Ok(())
 }
 

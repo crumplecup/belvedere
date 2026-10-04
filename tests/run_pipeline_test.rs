@@ -345,6 +345,25 @@ fn run_pipeline_uses_the_normal_amenable_artifact_path() -> Result<()> {
                 .output_ids()
                 .contains(&UI_IR_SECTION_SOURCE_NAVIGATION.to_owned()))
     );
+    let auditor_stage = report
+        .certificate()
+        .stage_certificates()
+        .iter()
+        .find(|certificate| certificate.stage() == BelvederePipelineStage::AuditorNavigation)
+        .ok_or_else(|| {
+            miette::miette!("run certificate should include auditor navigation stage evidence")
+        })?;
+    assert_eq!(
+        auditor_stage.counts().get("view_model_items"),
+        Some(&report.view_model_receipt().view_item_ids().len())
+    );
+    assert!(
+        report
+            .view_model_receipt()
+            .view_item_ids()
+            .iter()
+            .all(|view_item_id| auditor_stage.output_ids().contains(view_item_id))
+    );
     let ui_stage = report
         .certificate()
         .stage_certificates()
@@ -573,6 +592,12 @@ fn assert_auditor_navigation_receipt(receipt: &Value) {
         receipt["trace_source_counts"]["view_model_trace_unique_source_records"].as_u64(),
         Some(7)
     );
+    assert_eq!(receipt["view_item_ids"].as_array().map(Vec::len), Some(54));
+    assert!(receipt["view_item_ids"].as_array().is_some_and(|ids| {
+        ids.iter().any(|id| {
+            id.as_str() == Some("view_model.claim:belvedere::ingestion::DecodedRegistrySnapshot")
+        })
+    }));
     assert_eq!(
         receipt["source_record_ids"].as_array().map(Vec::len),
         Some(7)
