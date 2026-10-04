@@ -147,8 +147,8 @@ impl BelvedereRunCertificate {
             BelvedereStageCertificate::ui_ir_projection(ui_ir_receipt),
         ];
         let input_artifact_ids = vec![
-            artifact_id(registry_receipt),
-            artifact_id(assessment_receipt),
+            artifact_id_with_role("registry", registry_receipt),
+            artifact_id_with_role("assessment", assessment_receipt),
         ];
         let input_artifact_digests = vec![
             registry_receipt.digest().to_owned(),
@@ -244,9 +244,9 @@ struct RunDigestEvidence<'evidence> {
 }
 
 #[instrument(level = "trace", skip(receipt))]
-fn artifact_id(receipt: &IngestionReceipt) -> String {
+fn artifact_id_with_role(role: &str, receipt: &IngestionReceipt) -> String {
     format!(
-        "{}:{}:{}",
+        "{role}:{}:{}:{}",
         receipt.artifact_kind(),
         receipt.path().display(),
         receipt.digest()

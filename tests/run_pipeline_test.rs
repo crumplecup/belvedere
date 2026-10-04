@@ -66,6 +66,20 @@ fn run_pipeline_uses_the_normal_amenable_artifact_path() -> Result<()> {
     );
     assert_eq!(report.certificate().stage_certificates().len(), 5);
     assert_eq!(report.certificate().input_artifact_ids().len(), 2);
+    assert!(
+        report
+            .certificate()
+            .input_artifact_ids()
+            .iter()
+            .any(|artifact_id| artifact_id.starts_with("registry:registry_dump:"))
+    );
+    assert!(
+        report
+            .certificate()
+            .input_artifact_ids()
+            .iter()
+            .any(|artifact_id| artifact_id.starts_with("assessment:proof_assessments:"))
+    );
     assert_eq!(report.certificate().stage_certificate_ids().len(), 5);
     assert!(
         report
