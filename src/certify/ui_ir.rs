@@ -18,6 +18,7 @@ pub struct UiIrReceipt {
     section_widget_counts: BTreeMap<String, usize>,
     trace_source_counts: BTreeMap<String, usize>,
     minted_prop_counts: BTreeMap<String, usize>,
+    proof_token_counts: BTreeMap<String, usize>,
     minted_standards: Vec<String>,
 }
 

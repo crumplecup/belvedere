@@ -227,6 +227,7 @@ impl BelvedereExchange<ElicitUiProjectionContract> for ElicitUiProjection {
             .section_widget_counts(section_widget_counts(&sections))
             .trace_source_counts(trace_source_counts(&trace_widgets))
             .minted_prop_counts(minted_prop_counts(&minted_standards))
+            .proof_token_counts(proof_token_counts())
             .minted_standards(
                 minted_standards
                     .iter()
@@ -256,6 +257,14 @@ fn minted_standards() -> Vec<UiStandardMint> {
         UiStandardMint::from_standard::<ElicitUiRenderCompleteStandard>(),
         UiStandardMint::from_standard::<ElicitUiRolePreservedStandard>(),
     ]
+}
+
+#[instrument(level = "debug")]
+fn proof_token_counts() -> BTreeMap<String, usize> {
+    BTreeMap::from([
+        ("ui_ir_proof_token_ir_sourced".to_owned(), 1),
+        ("ui_ir_proof_token_wcag_verified".to_owned(), 1),
+    ])
 }
 
 #[instrument(level = "debug", skip(minted_standards))]
