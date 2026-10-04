@@ -124,6 +124,7 @@ impl BelvedereExchange<AuditorNavigationContract> for AuditorNavigationProjectio
         let receipt_lane_counts = lane_counts(&assessment_queue, &assessment_work, &gaps);
         let receipt_facet_group_counts = facet_group_counts(&filter_facets);
         let receipt_source_artifact_counts = source_artifact_counts(&source_navigation);
+        let receipt_source_kind_counts = source_kind_counts(&source_navigation);
         let receipt_proof_chain_topology_counts = proof_chain_topology_counts(&proof_chains);
         let receipt_provenance_root_kind_counts = provenance_root_kind_counts(&provenance_roots);
         let receipt_review_workflow_counts =
@@ -181,6 +182,7 @@ impl BelvedereExchange<AuditorNavigationContract> for AuditorNavigationProjectio
             .lane_counts(receipt_lane_counts)
             .facet_group_counts(receipt_facet_group_counts)
             .source_artifact_counts(receipt_source_artifact_counts)
+            .source_kind_counts(receipt_source_kind_counts)
             .proof_chain_topology_counts(receipt_proof_chain_topology_counts)
             .provenance_root_kind_counts(receipt_provenance_root_kind_counts)
             .review_workflow_counts(receipt_review_workflow_counts)
@@ -249,6 +251,17 @@ fn source_artifact_counts(source_navigation: &[SourceNavigationItem]) -> BTreeMa
     for item in source_navigation {
         *counts
             .entry(format!("source_artifact_{}", item.artifact_kind().as_str()))
+            .or_default() += 1;
+    }
+    counts
+}
+
+#[instrument(level = "debug", skip(source_navigation))]
+fn source_kind_counts(source_navigation: &[SourceNavigationItem]) -> BTreeMap<String, usize> {
+    let mut counts = BTreeMap::new();
+    for item in source_navigation {
+        *counts
+            .entry(format!("source_kind_{}", item.source_kind()))
             .or_default() += 1;
     }
     counts

@@ -73,6 +73,36 @@ fn view_model_projection_builds_auditor_navigation_evidence() -> Result<()> {
             .get("source_artifact_proof_assessments"),
         Some(&2)
     );
+    assert_eq!(
+        receipt.source_kind_counts().get("source_kind_assessment"),
+        Some(&2)
+    );
+    assert_eq!(
+        receipt
+            .source_kind_counts()
+            .get("source_kind_contract_record"),
+        Some(&1)
+    );
+    assert_eq!(
+        receipt
+            .source_kind_counts()
+            .get("source_kind_evidence_link"),
+        Some(&1)
+    );
+    assert_eq!(
+        receipt.source_kind_counts().get("source_kind_kani_proof"),
+        Some(&1)
+    );
+    assert_eq!(
+        receipt.source_kind_counts().get("source_kind_proof_record"),
+        Some(&1)
+    );
+    assert_eq!(
+        receipt
+            .source_kind_counts()
+            .get("source_kind_witness_export"),
+        Some(&1)
+    );
     let total_transitive_claims: usize = model
         .proof_chains()
         .iter()

@@ -15,6 +15,7 @@ pub struct ViewModelReceipt {
     lane_counts: BTreeMap<String, usize>,
     facet_group_counts: BTreeMap<String, usize>,
     source_artifact_counts: BTreeMap<String, usize>,
+    source_kind_counts: BTreeMap<String, usize>,
     proof_chain_topology_counts: BTreeMap<String, usize>,
     provenance_root_kind_counts: BTreeMap<String, usize>,
     review_workflow_counts: BTreeMap<String, usize>,

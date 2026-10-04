@@ -152,6 +152,20 @@ fn run_pipeline_uses_the_normal_amenable_artifact_path() -> Result<()> {
             .certificate()
             .stage_certificates()
             .iter()
+            .any(|certificate| certificate.counts().get("source_kind_assessment") == Some(&2))
+    );
+    assert!(
+        report
+            .certificate()
+            .stage_certificates()
+            .iter()
+            .any(|certificate| certificate.counts().get("source_kind_kani_proof") == Some(&1))
+    );
+    assert!(
+        report
+            .certificate()
+            .stage_certificates()
+            .iter()
             .any(|certificate| certificate.counts().get("facet_group_gap_kind") == Some(&3))
     );
     assert!(

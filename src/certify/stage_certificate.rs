@@ -201,6 +201,7 @@ impl BelvedereStageCertificate {
         counts.extend(receipt.lane_counts().clone());
         counts.extend(receipt.facet_group_counts().clone());
         counts.extend(receipt.source_artifact_counts().clone());
+        counts.extend(receipt.source_kind_counts().clone());
         counts.extend(receipt.proof_chain_topology_counts().clone());
         counts.extend(receipt.provenance_root_kind_counts().clone());
         counts.extend(receipt.review_workflow_counts().clone());
