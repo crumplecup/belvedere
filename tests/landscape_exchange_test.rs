@@ -1,6 +1,7 @@
 use belvedere::{
-    ArtifactKind, AssessmentStreamIngestion, LandscapeGapKind, LandscapeInput, LandscapeModeling,
-    RawAmenableArtifact, Recommendation, RegistryDumpIngestion,
+    ArtifactKind, AssessmentStreamIngestion, BelvederePipelineStage, BelvedereStageCertificate,
+    LandscapeGapKind, LandscapeInput, LandscapeModeling, RawAmenableArtifact, Recommendation,
+    RegistryDumpIngestion,
 };
 use miette::{IntoDiagnostic, Result, WrapErr, miette};
 
@@ -46,6 +47,47 @@ fn landscape_modeling_maps_decoded_records_into_a_review_graph() -> Result<()> {
         receipt
             .source_record_ids()
             .contains(&"kani_proof:belvedere::ingestion::record_identity_is_preserved".to_owned())
+    );
+    assert_eq!(receipt.landscape_item_ids().len(), 19);
+    assert!(
+        receipt
+            .landscape_item_ids()
+            .contains(&"landscape.claim:belvedere::ingestion::DecodedRegistrySnapshot".to_owned())
+    );
+    assert!(
+        receipt
+            .landscape_item_ids()
+            .contains(&"landscape.root:belvedere::ingestion::RawAmenableArtifact".to_owned())
+    );
+    assert!(receipt.landscape_item_ids().contains(
+        &"landscape.proof:belvedere::ingestion::DecodedRegistrySnapshot:kani".to_owned()
+    ));
+    assert!(
+        receipt
+            .landscape_item_ids()
+            .contains(&"landscape.assessment:assess-belvedere-ingestion-1".to_owned())
+    );
+    assert!(
+        receipt.landscape_item_ids().contains(
+            &"landscape.gap:belvedere::ingestion::DecodedRegistrySnapshot:missing_assessment:0"
+                .to_owned()
+        )
+    );
+
+    let certificate = BelvedereStageCertificate::landscape_modeling(&receipt);
+    assert_eq!(
+        certificate.stage(),
+        BelvederePipelineStage::LandscapeModeling
+    );
+    assert_eq!(
+        certificate.counts().get("landscape_items"),
+        Some(&receipt.landscape_item_ids().len())
+    );
+    assert!(
+        receipt
+            .landscape_item_ids()
+            .iter()
+            .all(|landscape_item_id| certificate.output_ids().contains(landscape_item_id))
     );
 
     let decoded_claim = landscape

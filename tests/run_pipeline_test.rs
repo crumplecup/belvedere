@@ -345,6 +345,25 @@ fn run_pipeline_uses_the_normal_amenable_artifact_path() -> Result<()> {
                 .output_ids()
                 .contains(&UI_IR_SECTION_SOURCE_NAVIGATION.to_owned()))
     );
+    let landscape_stage = report
+        .certificate()
+        .stage_certificates()
+        .iter()
+        .find(|certificate| certificate.stage() == BelvederePipelineStage::LandscapeModeling)
+        .ok_or_else(|| {
+            miette::miette!("run certificate should include landscape modeling stage evidence")
+        })?;
+    assert_eq!(
+        landscape_stage.counts().get("landscape_items"),
+        Some(&report.landscape_receipt().landscape_item_ids().len())
+    );
+    assert!(
+        report
+            .landscape_receipt()
+            .landscape_item_ids()
+            .iter()
+            .all(|landscape_item_id| landscape_stage.output_ids().contains(landscape_item_id))
+    );
     let auditor_stage = report
         .certificate()
         .stage_certificates()
