@@ -69,6 +69,7 @@ pub(super) fn build_receipt(
         .viewport_ids(viewport_ids(viewport_verifications))
         .viewport_verification_counts(viewport_verification_counts(viewport_verifications))
         .trace_source_counts(trace_source_counts(trace_widgets))
+        .trace_source_kind_counts(trace_source_kind_counts(trace_widgets))
         .minted_prop_counts(minted_prop_counts(minted_standards))
         .proof_token_counts(proof_token_counts(viewport_verifications))
         .minted_standards(
@@ -249,4 +250,21 @@ fn trace_source_counts(trace_widgets: &[TraceWidgetRef]) -> BTreeMap<String, usi
         ),
         ("trace_source_links".to_owned(), source_links),
     ])
+}
+
+#[instrument(level = "debug", skip(trace_widgets))]
+fn trace_source_kind_counts(trace_widgets: &[TraceWidgetRef]) -> BTreeMap<String, usize> {
+    let mut counts = BTreeMap::new();
+    for source_record_id in trace_widgets
+        .iter()
+        .flat_map(|widget| widget.source_record_ids())
+    {
+        let kind = source_record_id
+            .split_once(':')
+            .map_or(source_record_id.as_str(), |(kind, _identity)| kind);
+        *counts
+            .entry(format!("trace_source_kind_{kind}"))
+            .or_default() += 1;
+    }
+    counts
 }

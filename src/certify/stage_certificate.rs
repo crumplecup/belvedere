@@ -240,6 +240,7 @@ impl BelvedereStageCertificate {
         counts.extend(receipt.section_trace_counts().clone());
         counts.extend(receipt.viewport_verification_counts().clone());
         counts.extend(receipt.trace_source_counts().clone());
+        counts.extend(receipt.trace_source_kind_counts().clone());
         counts.extend(receipt.minted_prop_counts().clone());
         counts.extend(receipt.proof_token_counts().clone());
         let mut output_ids = receipt.minted_standards().clone();

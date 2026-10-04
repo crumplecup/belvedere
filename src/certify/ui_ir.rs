@@ -24,6 +24,7 @@ pub struct UiIrReceipt {
     viewport_ids: Vec<String>,
     viewport_verification_counts: BTreeMap<String, usize>,
     trace_source_counts: BTreeMap<String, usize>,
+    trace_source_kind_counts: BTreeMap<String, usize>,
     minted_prop_counts: BTreeMap<String, usize>,
     proof_token_counts: BTreeMap<String, usize>,
     minted_standards: Vec<String>,

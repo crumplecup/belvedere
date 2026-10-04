@@ -1,3 +1,5 @@
+use std::collections::BTreeMap;
+
 use belvedere::{
     ArtifactKind, AssessmentStreamIngestion, AuditorNavigationProjection, ElicitUiProjection,
     LandscapeInput, LandscapeModeling, RawAmenableArtifact, RegistryDumpIngestion,
@@ -261,6 +263,22 @@ fn ui_ir_projection_mints_elicit_ui_standards_and_tree_proofs() -> Result<()> {
         Some(&receipt.counts().trace_ref_count())
     );
     assert_eq!(
+        receipt.trace_source_kind_counts(),
+        &trace_source_kind_counts(projection.trace_widgets())
+    );
+    assert!(
+        receipt
+            .trace_source_kind_counts()
+            .get("trace_source_kind_assessment")
+            .is_some_and(|count| *count > 0)
+    );
+    assert!(
+        receipt
+            .trace_source_kind_counts()
+            .get("trace_source_kind_proof_record")
+            .is_some_and(|count| *count > 0)
+    );
+    assert_eq!(
         receipt
             .section_trace_counts()
             .get("ui_ir_section_trace_source_links_total"),
@@ -275,6 +293,24 @@ fn ui_ir_projection_mints_elicit_ui_standards_and_tree_proofs() -> Result<()> {
     let _ir_sourced = projection.proofs().ir_sourced();
     let _wcag_verified = projection.proofs().wcag_verified();
     Ok(())
+}
+
+fn trace_source_kind_counts(
+    trace_widgets: &[belvedere::TraceWidgetRef],
+) -> BTreeMap<String, usize> {
+    let mut counts = BTreeMap::new();
+    for source_record_id in trace_widgets
+        .iter()
+        .flat_map(belvedere::TraceWidgetRef::source_record_ids)
+    {
+        let kind = source_record_id
+            .split_once(':')
+            .map_or(source_record_id.as_str(), |(kind, _identity)| kind);
+        *counts
+            .entry(format!("trace_source_kind_{kind}"))
+            .or_default() += 1;
+    }
+    counts
 }
 
 #[test]

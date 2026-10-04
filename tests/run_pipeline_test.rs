@@ -242,6 +242,21 @@ fn run_pipeline_uses_the_normal_amenable_artifact_path() -> Result<()> {
                 .get("view_model_trace_unique_source_records")
                 == Some(&7))
     );
+    let ui_ir_assessment_trace_links = *report
+        .ui_ir_receipt()
+        .trace_source_kind_counts()
+        .get("trace_source_kind_assessment")
+        .wrap_err("UI IR receipt should count assessment source trace links")?;
+    assert!(
+        report
+            .certificate()
+            .stage_certificates()
+            .iter()
+            .any(
+                |certificate| certificate.counts().get("trace_source_kind_assessment")
+                    == Some(&ui_ir_assessment_trace_links)
+            )
+    );
     assert!(
         report
             .certificate()
