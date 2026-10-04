@@ -509,6 +509,8 @@ fn cli_help_is_a_successful_public_output_contract() -> Result<()> {
     assert!(help.contains("--run-certificate-json"));
     assert!(help.contains("--run-certificate-file"));
     assert!(help.contains("--diff-json"));
+    assert!(help.contains("--ui-ir-receipt-json"));
+    assert!(help.contains("--ui-ir-receipt-file"));
     Ok(())
 }
 
@@ -623,6 +625,55 @@ fn cli_can_emit_the_run_certificate_as_json() -> Result<()> {
             .as_array()
             .map(Vec::len),
         Some(3)
+    );
+    Ok(())
+}
+
+#[test]
+fn cli_can_emit_the_ui_ir_receipt_as_json() -> Result<()> {
+    belvedere::init_tracing();
+
+    let args = [
+        "--ui-ir-receipt-json",
+        "tests/fixtures/registry_dump.json",
+        "tests/fixtures/proof_assessments.jsonl",
+    ]
+    .into_iter()
+    .map(str::to_owned)
+    .collect::<Vec<_>>();
+    let command = BelvedereCli::from_args(args.clone())
+        .into_diagnostic()
+        .wrap_err("UI IR receipt JSON flag should be part of the public CLI API")?;
+
+    assert_eq!(command.output(), BelvedereCliOutput::RunUiIrReceiptJson);
+
+    let mut output = Vec::new();
+    let status = run_cli_with_writer(args, &mut output);
+    assert_eq!(status, ExitCode::SUCCESS);
+
+    let receipt: Value = serde_json::from_slice(&output)
+        .into_diagnostic()
+        .wrap_err("CLI UI IR receipt output should be parseable JSON")?;
+    assert_eq!(
+        receipt["contract"].as_str(),
+        Some("belvedere.ui_ir.elicit_ui_projection")
+    );
+    assert_eq!(receipt["counts"]["section_count"].as_u64(), Some(11));
+    assert_eq!(receipt["section_ids"].as_array().map(Vec::len), Some(11));
+    assert_eq!(
+        receipt["section_widget_counts"][UI_IR_SECTION_REVIEW_WORKFLOW].as_u64(),
+        Some(4)
+    );
+    assert_eq!(receipt["role_counts"]["role_button"].as_u64(), Some(21));
+    assert_eq!(receipt["viewport_ids"].as_array().map(Vec::len), Some(3));
+    assert_eq!(
+        receipt["trace_source_counts"]["trace_unique_source_records"].as_u64(),
+        Some(7)
+    );
+    assert!(
+        receipt["minted_standards"]
+            .as_array()
+            .is_some_and(|standards| !standards.is_empty())
     );
     Ok(())
 }
@@ -843,13 +894,13 @@ fn cli_can_emit_the_landscape_diff_run_certificate_as_json() -> Result<()> {
     );
     assert_eq!(
         certificate["stage_certificates"].as_array().map(Vec::len),
-        Some(7)
+        Some(9)
     );
     assert_eq!(
         certificate["stage_certificate_digests"]
             .as_array()
             .map(Vec::len),
-        Some(7)
+        Some(9)
     );
     assert_eq!(
         certificate["input_artifact_ids"].as_array().map(Vec::len),
@@ -870,6 +921,17 @@ fn cli_can_emit_the_landscape_diff_run_certificate_as_json() -> Result<()> {
                         && stage_certificate["contract"].as_str()
                             == Some("belvedere.diff.landscape")
                         && stage_certificate["counts"]["total_items"].as_u64() == Some(6)
+                })
+            )
+    );
+    assert!(
+        certificate["stage_certificates"]
+            .as_array()
+            .is_some_and(
+                |stage_certificates| stage_certificates.iter().any(|stage_certificate| {
+                    stage_certificate["stage"].as_str() == Some("ui_ir_projection")
+                        && stage_certificate["counts"]["ui_ir_sections_populated"].as_u64()
+                            == Some(11)
                 })
             )
     );
@@ -943,7 +1005,7 @@ fn cli_can_persist_the_landscape_diff_run_certificate_as_json() -> Result<()> {
     );
     assert_eq!(
         certificate["stage_certificates"].as_array().map(Vec::len),
-        Some(7)
+        Some(9)
     );
     assert_eq!(
         certificate["input_artifact_digests"]
@@ -963,10 +1025,91 @@ fn cli_can_persist_the_landscape_diff_run_certificate_as_json() -> Result<()> {
                 })
             )
     );
+    assert!(
+        certificate["stage_certificates"]
+            .as_array()
+            .is_some_and(
+                |stage_certificates| stage_certificates.iter().any(|stage_certificate| {
+                    stage_certificate["stage"].as_str() == Some("auditor_navigation")
+                        && stage_certificate["counts"]["review_workflow_task_total"].as_u64()
+                            == Some(4)
+                })
+            )
+    );
 
     fs::remove_file(&certificate_path)
         .into_diagnostic()
         .wrap_err("temporary diff run certificate file should be removable")?;
+    fs::remove_file(previous_assessments_path)
+        .into_diagnostic()
+        .wrap_err("temporary empty assessment artifact should be removable")?;
+    Ok(())
+}
+
+#[test]
+fn cli_can_emit_the_landscape_diff_ui_ir_receipt_as_json() -> Result<()> {
+    belvedere::init_tracing();
+
+    let previous_assessments_path = std::env::temp_dir().join(format!(
+        "belvedere-cli-diff-ui-empty-assessments-{}.jsonl",
+        process::id()
+    ));
+    fs::write(&previous_assessments_path, [])
+        .into_diagnostic()
+        .wrap_err("temporary empty assessment artifact should be writable")?;
+
+    let args = [
+        "diff",
+        "--ui-ir-receipt-json",
+        "tests/fixtures/registry_dump.json",
+        previous_assessments_path
+            .to_str()
+            .ok_or_else(|| miette::miette!("temporary assessment path should be UTF-8"))?,
+        "tests/fixtures/registry_dump.json",
+        "tests/fixtures/proof_assessments.jsonl",
+    ]
+    .into_iter()
+    .map(str::to_owned)
+    .collect::<Vec<_>>();
+    let command = BelvedereCli::from_args(args.clone())
+        .into_diagnostic()
+        .wrap_err("diff UI IR receipt flag should be part of the public CLI API")?;
+
+    assert_eq!(
+        command.output(),
+        BelvedereCliOutput::LandscapeDiffUiIrReceiptJson
+    );
+
+    let mut output = Vec::new();
+    let status = run_cli_with_writer(args, &mut output);
+    assert_eq!(status, ExitCode::SUCCESS);
+
+    let receipt: Value = serde_json::from_slice(&output)
+        .into_diagnostic()
+        .wrap_err("CLI diff UI IR receipt output should be parseable JSON")?;
+    assert_eq!(
+        receipt["contract"].as_str(),
+        Some("belvedere.ui_ir.elicit_ui_projection")
+    );
+    assert_eq!(receipt["counts"]["section_count"].as_u64(), Some(11));
+    assert_eq!(
+        receipt["section_widget_counts"][UI_IR_SECTION_REVIEW_WORKFLOW].as_u64(),
+        Some(4)
+    );
+    assert_eq!(
+        receipt["trace_source_counts"]["trace_unique_source_records"].as_u64(),
+        Some(7)
+    );
+    assert!(
+        receipt["section_ids"]
+            .as_array()
+            .is_some_and(|section_ids| {
+                section_ids
+                    .iter()
+                    .any(|section_id| section_id.as_str() == Some(UI_IR_SECTION_REVIEW_WORKFLOW))
+            })
+    );
+
     fs::remove_file(previous_assessments_path)
         .into_diagnostic()
         .wrap_err("temporary empty assessment artifact should be removable")?;

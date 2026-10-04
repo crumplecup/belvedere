@@ -70,6 +70,14 @@ impl BelvedereCli {
                     output = BelvedereCliOutput::RunCertificateFile(PathBuf::from(path));
                     index += 1;
                 }
+                "--ui-ir-receipt-json" => output = BelvedereCliOutput::RunUiIrReceiptJson,
+                "--ui-ir-receipt-file" => {
+                    let Some(path) = arguments.get(index + 1) else {
+                        return Err(BelvedereCliUsageError::new().into());
+                    };
+                    output = BelvedereCliOutput::RunUiIrReceiptFile(PathBuf::from(path));
+                    index += 1;
+                }
                 "--diff-json" => return Err(BelvedereCliUsageError::new().into()),
                 _ if arg.starts_with("--") => return Err(BelvedereCliUsageError::new().into()),
                 _ => paths.push(arg.clone()),
@@ -129,6 +137,16 @@ impl BelvedereCli {
                     index += 1;
                 }
                 "--diff-json" => output = BelvedereCliOutput::LandscapeDiffJson,
+                "--ui-ir-receipt-json" => {
+                    output = BelvedereCliOutput::LandscapeDiffUiIrReceiptJson;
+                }
+                "--ui-ir-receipt-file" => {
+                    let Some(path) = arguments.get(index + 1) else {
+                        return Err(BelvedereCliUsageError::new().into());
+                    };
+                    output = BelvedereCliOutput::LandscapeDiffUiIrReceiptFile(PathBuf::from(path));
+                    index += 1;
+                }
                 _ if arg.starts_with("--") => return Err(BelvedereCliUsageError::new().into()),
                 _ => paths.push(arg.clone()),
             }

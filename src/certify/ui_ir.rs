@@ -4,9 +4,10 @@ use std::collections::BTreeMap;
 
 use derive_builder::Builder;
 use derive_getters::Getters;
+use serde::Serialize;
 
 /// Audit receipt emitted by an `elicit_ui` projection exchange.
-#[derive(Debug, Clone, PartialEq, Eq, Getters, Builder)]
+#[derive(Debug, Clone, PartialEq, Eq, Getters, Builder, Serialize)]
 #[builder(vis = "pub(crate)", setter(into))]
 pub struct UiIrReceipt {
     contract: String,
@@ -37,7 +38,7 @@ impl UiIrReceipt {
 }
 
 /// Counts emitted by a UI IR projection receipt.
-#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize)]
 pub struct UiIrReceiptCounts {
     section_count: usize,
     widget_count: usize,

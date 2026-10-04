@@ -238,6 +238,22 @@ fn landscape_diff_runner_uses_the_normal_artifact_path() -> Result<()> {
     assert_eq!(report.current_landscape_receipt().claim_count(), 4);
     assert_eq!(report.diff_receipt().counts().total_items(), 6);
     assert_eq!(
+        report.current_view_model_receipt().counts().claim_cards(),
+        4
+    );
+    assert_eq!(
+        report
+            .current_view_model_receipt()
+            .counts()
+            .review_workflow_items(),
+        4
+    );
+    assert_eq!(report.current_ui_ir_receipt().counts().section_count(), 11);
+    assert!(
+        report.current_projection().trace_widgets().len()
+            >= report.current_view_model_receipt().counts().claim_cards()
+    );
+    assert_eq!(
         report
             .diff_receipt()
             .subject_kind_counts()
@@ -271,8 +287,8 @@ fn landscape_diff_runner_uses_the_normal_artifact_path() -> Result<()> {
         BELVEDERE_RUN_CERTIFICATE_SCHEMA_ID
     );
     assert_eq!(report.certificate().input_artifact_ids().len(), 4);
-    assert_eq!(report.certificate().stage_certificates().len(), 7);
-    assert_eq!(report.certificate().stage_certificate_ids().len(), 7);
+    assert_eq!(report.certificate().stage_certificates().len(), 9);
+    assert_eq!(report.certificate().stage_certificate_ids().len(), 9);
     assert!(
         report
             .certificate()
@@ -293,6 +309,14 @@ fn landscape_diff_runner_uses_the_normal_artifact_path() -> Result<()> {
             .stage_certificate_ids()
             .contains(report.diff_certificate().id())
     );
+    assert!(report.certificate().stage_certificates().iter().any(
+        |certificate| certificate.stage() == BelvederePipelineStage::AuditorNavigation
+            && certificate.counts().get("review_workflow_task_total") == Some(&4)
+    ));
+    assert!(report.certificate().stage_certificates().iter().any(
+        |certificate| certificate.stage() == BelvederePipelineStage::UiIrProjection
+            && certificate.counts().get("ui_ir_sections_populated") == Some(&11)
+    ));
 
     fs::remove_file(previous_assessments_path)
         .into_diagnostic()

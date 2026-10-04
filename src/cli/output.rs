@@ -11,8 +11,8 @@ use super::{BelvedereCliOutputError, BelvedereCliReport, BelvedereCliUsageError}
 
 /// Stable CLI help text.
 pub const BELVEDERE_CLI_HELP: &str = "\
-usage: belvedere [--help] [--certificate-json | --certificate-file <path>] <registry-dump.json> <proof-assessments.jsonl>
-       belvedere diff [--certificate-json | --certificate-file <path> | --run-certificate-json | --run-certificate-file <path> | --diff-json] <previous-registry-dump.json> <previous-proof-assessments.jsonl> <current-registry-dump.json> <current-proof-assessments.jsonl>
+usage: belvedere [--help] [--certificate-json | --certificate-file <path> | --ui-ir-receipt-json | --ui-ir-receipt-file <path>] <registry-dump.json> <proof-assessments.jsonl>
+       belvedere diff [--certificate-json | --certificate-file <path> | --run-certificate-json | --run-certificate-file <path> | --diff-json | --ui-ir-receipt-json | --ui-ir-receipt-file <path>] <previous-registry-dump.json> <previous-proof-assessments.jsonl> <current-registry-dump.json> <current-proof-assessments.jsonl>
 
 Options:
   -h, --help                 Show this help text.
@@ -21,6 +21,8 @@ Options:
       --run-certificate-json Write the full diff run certificate as JSON to stdout.
       --run-certificate-file Write the full diff run certificate as JSON to a file.
       --diff-json            Write the landscape diff as JSON to stdout.
+      --ui-ir-receipt-json   Write the UI IR receipt as JSON to stdout.
+      --ui-ir-receipt-file   Write the UI IR receipt as JSON to a file.
 ";
 
 /// Public CLI output contract.
@@ -34,6 +36,10 @@ pub enum BelvedereCliOutput {
     RunCertificateJson,
     /// Write the complete run certificate as JSON to an artifact file.
     RunCertificateFile(PathBuf),
+    /// Write the normal run UI IR receipt as JSON.
+    RunUiIrReceiptJson,
+    /// Write the normal run UI IR receipt as JSON to an artifact file.
+    RunUiIrReceiptFile(PathBuf),
     /// Write the certified landscape diff as JSON.
     LandscapeDiffJson,
     /// Write the landscape diff stage certificate as JSON.
@@ -44,6 +50,10 @@ pub enum BelvedereCliOutput {
     LandscapeDiffRunCertificateJson,
     /// Write the complete landscape diff run certificate as JSON to an artifact file.
     LandscapeDiffRunCertificateFile(PathBuf),
+    /// Write the current-snapshot UI IR receipt from a diff run as JSON.
+    LandscapeDiffUiIrReceiptJson,
+    /// Write the current-snapshot UI IR receipt from a diff run as JSON to an artifact file.
+    LandscapeDiffUiIrReceiptFile(PathBuf),
 }
 
 #[instrument(level = "info", skip(output, report, writer))]
@@ -61,6 +71,13 @@ pub(super) fn write_cli_output(
         (BelvedereCliOutput::RunCertificateFile(path), BelvedereCliReport::Run(run)) => {
             let file = File::create(path).map_err(BelvedereCliOutputError::write)?;
             write_json(run.certificate(), file)
+        }
+        (BelvedereCliOutput::RunUiIrReceiptJson, BelvedereCliReport::Run(run)) => {
+            write_json(run.ui_ir_receipt(), writer)
+        }
+        (BelvedereCliOutput::RunUiIrReceiptFile(path), BelvedereCliReport::Run(run)) => {
+            let file = File::create(path).map_err(BelvedereCliOutputError::write)?;
+            write_json(run.ui_ir_receipt(), file)
         }
         (
             BelvedereCliOutput::LandscapeDiffCertificateJson,
@@ -83,6 +100,17 @@ pub(super) fn write_cli_output(
         ) => {
             let file = File::create(path).map_err(BelvedereCliOutputError::write)?;
             write_json(diff.certificate(), file)
+        }
+        (
+            BelvedereCliOutput::LandscapeDiffUiIrReceiptJson,
+            BelvedereCliReport::LandscapeDiff(diff),
+        ) => write_json(diff.current_ui_ir_receipt(), writer),
+        (
+            BelvedereCliOutput::LandscapeDiffUiIrReceiptFile(path),
+            BelvedereCliReport::LandscapeDiff(diff),
+        ) => {
+            let file = File::create(path).map_err(BelvedereCliOutputError::write)?;
+            write_json(diff.current_ui_ir_receipt(), file)
         }
         (BelvedereCliOutput::LandscapeDiffJson, BelvedereCliReport::LandscapeDiff(diff)) => {
             write_json(diff.diff(), writer)

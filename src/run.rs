@@ -90,9 +90,12 @@ pub struct BelvedereLandscapeDiffRunReport {
     current_registry_receipt: IngestionReceipt,
     current_assessment_receipt: IngestionReceipt,
     current_landscape_receipt: LandscapeReceipt,
+    current_view_model_receipt: ViewModelReceipt,
+    current_ui_ir_receipt: UiIrReceipt,
     diff_receipt: LandscapeDiffReceipt,
     certificate: BelvedereRunCertificate,
     diff_certificate: BelvedereStageCertificate,
+    current_projection: UiIrProjection,
     diff: LandscapeDiff,
 }
 
@@ -169,7 +172,15 @@ pub fn run_belvedere_landscape_diff(
     let input_artifact_ids = diff_input_artifact_ids(&previous, &current);
     let input_artifact_digests = diff_input_artifact_digests(&previous, &current);
     let previous_stage_certificates = landscape_snapshot_stage_certificates(&previous);
-    let current_stage_certificates = landscape_snapshot_stage_certificates(&current);
+    let (current_view_model, current_view_model_receipt) =
+        AuditorNavigationProjection.project(ViewModelInput::new(current.landscape.clone()))?;
+    let (current_projection, current_ui_ir_receipt) =
+        ElicitUiProjection.project(UiIrInput::new(current_view_model))?;
+    let current_stage_certificates = current_auditor_stage_certificates(
+        &current,
+        &current_view_model_receipt,
+        &current_ui_ir_receipt,
+    );
 
     let (diff, diff_receipt) = LandscapeDiffing.diff(LandscapeDiffInput::new(
         previous.landscape,
@@ -194,9 +205,12 @@ pub fn run_belvedere_landscape_diff(
         .current_registry_receipt(current.registry_receipt)
         .current_assessment_receipt(current.assessment_receipt)
         .current_landscape_receipt(current.landscape_receipt)
+        .current_view_model_receipt(current_view_model_receipt)
+        .current_ui_ir_receipt(current_ui_ir_receipt)
         .diff_receipt(diff_receipt)
         .certificate(certificate)
         .diff_certificate(diff_certificate)
+        .current_projection(current_projection)
         .diff(diff)
         .build()
         .map_err(|error| {
@@ -235,6 +249,24 @@ fn landscape_snapshot_stage_certificates(
         BelvedereStageCertificate::assessment_ingestion(&snapshot.assessment_receipt),
         BelvedereStageCertificate::landscape_modeling(&snapshot.landscape_receipt),
     ]
+}
+
+#[instrument(
+    level = "debug",
+    skip(snapshot, current_view_model_receipt, current_ui_ir_receipt)
+)]
+fn current_auditor_stage_certificates(
+    snapshot: &LandscapeRunSnapshot,
+    current_view_model_receipt: &ViewModelReceipt,
+    current_ui_ir_receipt: &UiIrReceipt,
+) -> Vec<BelvedereStageCertificate> {
+    landscape_snapshot_stage_certificates(snapshot)
+        .into_iter()
+        .chain([
+            BelvedereStageCertificate::auditor_navigation(current_view_model_receipt),
+            BelvedereStageCertificate::ui_ir_projection(current_ui_ir_receipt),
+        ])
+        .collect()
 }
 
 #[instrument(level = "debug", skip(previous, current))]
