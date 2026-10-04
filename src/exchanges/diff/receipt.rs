@@ -27,6 +27,11 @@ pub(super) fn diff_counts(items: &[LandscapeDiffItem]) -> LandscapeDiffReceiptCo
 }
 
 #[instrument(level = "debug", skip(items))]
+pub(super) fn diff_item_ids(items: &[LandscapeDiffItem]) -> Vec<String> {
+    items.iter().map(|item| item.item_id().to_owned()).collect()
+}
+
+#[instrument(level = "debug", skip(items))]
 pub(super) fn subject_kind_counts(items: &[LandscapeDiffItem]) -> BTreeMap<String, usize> {
     let mut counts = BTreeMap::new();
     for item in items {

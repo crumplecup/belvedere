@@ -168,7 +168,7 @@ impl BelvedereStageCertificate {
             requires: contract_requirements::<LandscapeDiffContract>(),
             ensures: contract_guarantees::<LandscapeDiffContract>(),
             input_ids: receipt.source_record_ids().clone(),
-            output_ids: vec!["landscape_diff".to_owned()],
+            output_ids: receipt.diff_item_ids().clone(),
             counts,
             warning_count: receipt.warnings().len(),
         })

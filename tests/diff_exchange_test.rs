@@ -63,6 +63,12 @@ fn landscape_diff_surfaces_snapshot_changes_for_auditors() -> Result<()> {
         receipt.trace_source_kind_counts(),
         &trace_source_kind_counts(diff.items())
     );
+    assert_eq!(receipt.diff_item_ids().len(), diff.items().len());
+    assert!(
+        diff.items()
+            .iter()
+            .all(|item| receipt.diff_item_ids().contains(item.item_id()))
+    );
     assert!(
         receipt
             .trace_source_kind_counts()
@@ -92,6 +98,12 @@ fn landscape_diff_surfaces_snapshot_changes_for_auditors() -> Result<()> {
     assert_eq!(
         certificate.counts().get("total_items"),
         Some(&diff.items().len())
+    );
+    assert!(
+        receipt
+            .diff_item_ids()
+            .iter()
+            .all(|diff_item_id| certificate.output_ids().contains(diff_item_id))
     );
     assert_eq!(certificate.counts().get("diff_subject_gap"), Some(&2));
     assert_eq!(
@@ -291,6 +303,22 @@ fn landscape_diff_runner_uses_the_normal_artifact_path() -> Result<()> {
     assert_eq!(
         report.diff_certificate().counts().get("total_items"),
         Some(&report.diff().items().len())
+    );
+    assert!(report.diff().items().iter().all(|item| {
+        report
+            .diff_receipt()
+            .diff_item_ids()
+            .contains(item.item_id())
+    }));
+    assert!(
+        report
+            .diff_receipt()
+            .diff_item_ids()
+            .iter()
+            .all(|diff_item_id| report
+                .diff_certificate()
+                .output_ids()
+                .contains(diff_item_id))
     );
     assert_eq!(
         report
