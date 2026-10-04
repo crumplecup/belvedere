@@ -256,6 +256,7 @@ impl BelvedereStageCertificate {
     ) -> Self {
         let mut counts = receipt.decoded_counts().clone();
         counts.extend(receipt.source_record_kind_counts().clone());
+        counts.extend(receipt.unsupported_field_record_counts().clone());
         counts.insert(
             "unsupported_fields".to_owned(),
             receipt.unsupported_fields().len(),

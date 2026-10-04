@@ -61,15 +61,33 @@ fn registry_ingestion_preserves_record_identity_and_unknown_fields() -> Result<(
             .iter()
             .any(|field| field.record() == "registry" && field.field() == "next_schema_hint")
     );
+    assert_eq!(
+        receipt
+            .unsupported_field_record_counts()
+            .get("unsupported_field_record_registry"),
+        Some(&1)
+    );
     assert!(
         receipt.unsupported_fields().iter().any(|field| {
             field.record() == "evidence_links[0]" && field.field() == "future_field"
         })
     );
+    assert_eq!(
+        receipt
+            .unsupported_field_record_counts()
+            .get("unsupported_field_record_evidence_links"),
+        Some(&1)
+    );
 
     let certificate = BelvedereStageCertificate::registry_ingestion(&receipt);
     assert_eq!(
         certificate.counts().get("source_record_kani_proof"),
+        Some(&1)
+    );
+    assert_eq!(
+        certificate
+            .counts()
+            .get("unsupported_field_record_evidence_links"),
         Some(&1)
     );
     Ok(())
@@ -126,11 +144,23 @@ fn assessment_ingestion_preserves_current_and_legacy_shapes() -> Result<()> {
     assert!(receipt.unsupported_fields().iter().any(|field| {
         field.record() == "assessment_line[1]" && field.field() == "future_assessment_field"
     }));
+    assert_eq!(
+        receipt
+            .unsupported_field_record_counts()
+            .get("unsupported_field_record_assessment_line"),
+        Some(&1)
+    );
 
     let certificate = BelvedereStageCertificate::assessment_ingestion(&receipt);
     assert_eq!(
         certificate.counts().get("source_record_assessment"),
         Some(&2)
+    );
+    assert_eq!(
+        certificate
+            .counts()
+            .get("unsupported_field_record_assessment_line"),
+        Some(&1)
     );
     Ok(())
 }

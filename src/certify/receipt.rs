@@ -22,6 +22,7 @@ pub struct IngestionReceipt {
     parser_version: String,
     decoded_counts: BTreeMap<String, usize>,
     source_record_kind_counts: BTreeMap<String, usize>,
+    unsupported_field_record_counts: BTreeMap<String, usize>,
     unsupported_fields: Vec<UnsupportedField>,
     warnings: Vec<String>,
     source_record_ids: Vec<String>,
@@ -44,6 +45,7 @@ impl IngestionReceipt {
         source_record_ids: Vec<String>,
     ) -> Self {
         let source_record_kind_counts = source_record_kind_counts(&source_record_ids);
+        let unsupported_field_record_counts = unsupported_field_record_counts(&unsupported_fields);
         Self {
             contract: contract.to_owned(),
             path: artifact.path().clone(),
@@ -53,6 +55,7 @@ impl IngestionReceipt {
             parser_version: env!("CARGO_PKG_VERSION").to_owned(),
             decoded_counts,
             source_record_kind_counts,
+            unsupported_field_record_counts,
             unsupported_fields,
             warnings,
             source_record_ids,
@@ -80,6 +83,25 @@ fn source_record_kind_counts(source_record_ids: &[String]) -> BTreeMap<String, u
             .split_once(':')
             .map_or(source_record_id.as_str(), |(kind, _rest)| kind);
         *counts.entry(format!("source_record_{kind}")).or_default() += 1;
+    }
+    counts
+}
+
+#[instrument(level = "trace", skip(unsupported_fields))]
+fn unsupported_field_record_counts(
+    unsupported_fields: &[UnsupportedField],
+) -> BTreeMap<String, usize> {
+    let mut counts = BTreeMap::new();
+    for unsupported_field in unsupported_fields {
+        let record_family = unsupported_field
+            .record()
+            .split_once('[')
+            .map_or(unsupported_field.record().as_str(), |(record, _index)| {
+                record
+            });
+        *counts
+            .entry(format!("unsupported_field_record_{record_family}"))
+            .or_default() += 1;
     }
     counts
 }
