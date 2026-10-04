@@ -1,4 +1,4 @@
-use std::{fs, process};
+use std::{collections::BTreeMap, fs, process};
 
 use belvedere::{
     ArtifactKind, AssessmentStreamIngestion, BELVEDERE_RUN_CERTIFICATE_SCHEMA_ID,
@@ -59,6 +59,22 @@ fn landscape_diff_surfaces_snapshot_changes_for_auditors() -> Result<()> {
             .get("diff_change_removed_gap"),
         Some(&1)
     );
+    assert_eq!(
+        receipt.trace_source_kind_counts(),
+        &trace_source_kind_counts(diff.items())
+    );
+    assert!(
+        receipt
+            .trace_source_kind_counts()
+            .get("diff_trace_source_kind_assessment")
+            .is_some_and(|count| *count > 0)
+    );
+    assert!(
+        receipt
+            .trace_source_kind_counts()
+            .get("diff_trace_source_kind_kani_proof")
+            .is_some_and(|count| *count > 0)
+    );
 
     let certificate = BelvedereStageCertificate::landscape_diff(&receipt);
     assert_eq!(certificate.stage(), BelvederePipelineStage::LandscapeDiff);
@@ -81,6 +97,14 @@ fn landscape_diff_surfaces_snapshot_changes_for_auditors() -> Result<()> {
     assert_eq!(
         certificate.counts().get("diff_change_added_assessment"),
         Some(&2)
+    );
+    assert_eq!(
+        certificate
+            .counts()
+            .get("diff_trace_source_kind_assessment"),
+        receipt
+            .trace_source_kind_counts()
+            .get("diff_trace_source_kind_assessment")
     );
     assert!(
         certificate
@@ -283,6 +307,16 @@ fn landscape_diff_runner_uses_the_normal_artifact_path() -> Result<()> {
         Some(&2)
     );
     assert_eq!(
+        report
+            .diff_certificate()
+            .counts()
+            .get("diff_trace_source_kind_assessment"),
+        report
+            .diff_receipt()
+            .trace_source_kind_counts()
+            .get("diff_trace_source_kind_assessment")
+    );
+    assert_eq!(
         report.certificate().schema_id(),
         BELVEDERE_RUN_CERTIFICATE_SCHEMA_ID
     );
@@ -322,6 +356,22 @@ fn landscape_diff_runner_uses_the_normal_artifact_path() -> Result<()> {
         .into_diagnostic()
         .wrap_err("temporary empty assessment artifact should be removable")?;
     Ok(())
+}
+
+fn trace_source_kind_counts(items: &[belvedere::LandscapeDiffItem]) -> BTreeMap<String, usize> {
+    let mut counts = BTreeMap::new();
+    for source_record_id in items
+        .iter()
+        .flat_map(|item| item.trace().source_record_ids())
+    {
+        let kind = source_record_id
+            .split_once(':')
+            .map_or(source_record_id.as_str(), |(kind, _identity)| kind);
+        *counts
+            .entry(format!("diff_trace_source_kind_{kind}"))
+            .or_default() += 1;
+    }
+    counts
 }
 
 fn fixture_landscape(assessment_bytes: Vec<u8>) -> Result<belvedere::LandscapeGraph> {

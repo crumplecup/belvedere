@@ -52,6 +52,23 @@ pub(super) fn change_subject_counts(items: &[LandscapeDiffItem]) -> BTreeMap<Str
     counts
 }
 
+#[instrument(level = "debug", skip(items))]
+pub(super) fn trace_source_kind_counts(items: &[LandscapeDiffItem]) -> BTreeMap<String, usize> {
+    let mut counts = BTreeMap::new();
+    for source_record_id in items
+        .iter()
+        .flat_map(|item| item.trace().source_record_ids())
+    {
+        let kind = source_record_id
+            .split_once(':')
+            .map_or(source_record_id.as_str(), |(kind, _identity)| kind);
+        *counts
+            .entry(format!("diff_trace_source_kind_{kind}"))
+            .or_default() += 1;
+    }
+    counts
+}
+
 const fn change_kind_key(change_kind: LandscapeDiffChangeKind) -> &'static str {
     match change_kind {
         LandscapeDiffChangeKind::Added => "added",

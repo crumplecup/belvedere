@@ -156,6 +156,7 @@ impl BelvedereStageCertificate {
         ]);
         counts.extend(receipt.subject_kind_counts().clone());
         counts.extend(receipt.change_subject_counts().clone());
+        counts.extend(receipt.trace_source_kind_counts().clone());
         Self::new(StageCertificateEvidence {
             stage: BelvederePipelineStage::LandscapeDiff,
             contract: receipt.contract().to_owned(),

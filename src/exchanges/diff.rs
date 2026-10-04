@@ -14,7 +14,7 @@ use crate::{
     exchanges::BelvedereExchange,
 };
 use changes::{diff_items, merged_source_record_ids};
-use receipt::{change_subject_counts, diff_counts, subject_kind_counts};
+use receipt::{change_subject_counts, diff_counts, subject_kind_counts, trace_source_kind_counts};
 
 /// Exchange from two landscape snapshots into deterministic diff evidence.
 #[derive(Debug, Clone, Copy, Default)]
@@ -55,6 +55,7 @@ impl BelvedereExchange<LandscapeDiffContract> for LandscapeDiffing {
             .counts(counts)
             .subject_kind_counts(subject_kind_counts(diff.items()))
             .change_subject_counts(change_subject_counts(diff.items()))
+            .trace_source_kind_counts(trace_source_kind_counts(diff.items()))
             .source_record_ids(source_record_ids)
             .warnings(Vec::new())
             .build()
