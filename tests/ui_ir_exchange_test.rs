@@ -60,6 +60,30 @@ fn ui_ir_projection_mints_elicit_ui_standards_and_tree_proofs() -> Result<()> {
             .iter()
             .any(|standard| standard.ends_with("ElicitUiIrSourcedStandard"))
     );
+    assert_eq!(
+        receipt
+            .minted_prop_counts()
+            .get("minted_elicit_ui_prop_IrSourced"),
+        Some(&1)
+    );
+    assert_eq!(
+        receipt
+            .minted_prop_counts()
+            .get("minted_elicit_ui_prop_WcagVerified"),
+        Some(&1)
+    );
+    assert_eq!(
+        receipt
+            .minted_prop_counts()
+            .get("minted_elicit_ui_prop_RenderComplete"),
+        Some(&1)
+    );
+    assert_eq!(
+        receipt
+            .minted_prop_counts()
+            .get("minted_elicit_ui_prop_RolePreserved"),
+        Some(&1)
+    );
     assert!(receipt.counts().node_count() >= projection.trace_widgets().len());
     assert_eq!(receipt.role_counts().get("role_button"), Some(&17));
     assert_eq!(receipt.role_counts().get("role_checkbox"), Some(&10));

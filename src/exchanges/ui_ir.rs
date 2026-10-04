@@ -226,6 +226,7 @@ impl BelvedereExchange<ElicitUiProjectionContract> for ElicitUiProjection {
             .role_counts(role_counts(&trace_widgets))
             .section_widget_counts(section_widget_counts(&sections))
             .trace_source_counts(trace_source_counts(&trace_widgets))
+            .minted_prop_counts(minted_prop_counts(&minted_standards))
             .minted_standards(
                 minted_standards
                     .iter()
@@ -255,6 +256,19 @@ fn minted_standards() -> Vec<UiStandardMint> {
         UiStandardMint::from_standard::<ElicitUiRenderCompleteStandard>(),
         UiStandardMint::from_standard::<ElicitUiRolePreservedStandard>(),
     ]
+}
+
+#[instrument(level = "debug", skip(minted_standards))]
+fn minted_prop_counts(minted_standards: &[UiStandardMint]) -> BTreeMap<String, usize> {
+    let mut counts = BTreeMap::new();
+    for mint in minted_standards {
+        let prop = mint.prop().as_str();
+        let prop_name = prop.strip_prefix("elicit_ui::").unwrap_or(prop);
+        *counts
+            .entry(format!("minted_elicit_ui_prop_{prop_name}"))
+            .or_default() += 1;
+    }
+    counts
 }
 
 #[instrument(level = "debug", skip(trace_widgets))]

@@ -147,6 +147,16 @@ fn run_pipeline_uses_the_normal_amenable_artifact_path() -> Result<()> {
             .certificate()
             .stage_certificates()
             .iter()
+            .any(|certificate| certificate
+                .counts()
+                .get("minted_elicit_ui_prop_WcagVerified")
+                == Some(&1))
+    );
+    assert!(
+        report
+            .certificate()
+            .stage_certificates()
+            .iter()
             .any(|certificate| certificate.counts().get("trace_unique_source_records") == Some(&7))
     );
     assert!(
