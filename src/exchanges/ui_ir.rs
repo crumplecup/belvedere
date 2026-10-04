@@ -1,6 +1,6 @@
 //! `elicit_ui` projection exchange implementations.
 
-use std::collections::BTreeMap;
+use std::collections::{BTreeMap, BTreeSet};
 
 use elicit_ui::{AccessKitUiBackend, Viewport};
 use elicitation::Established;
@@ -225,6 +225,7 @@ impl BelvedereExchange<ElicitUiProjectionContract> for ElicitUiProjection {
             )
             .role_counts(role_counts(&trace_widgets))
             .section_widget_counts(section_widget_counts(&sections))
+            .trace_source_counts(trace_source_counts(&trace_widgets))
             .minted_standards(
                 minted_standards
                     .iter()
@@ -271,4 +272,29 @@ fn section_widget_counts(sections: &[UiIrSection]) -> BTreeMap<String, usize> {
         .iter()
         .map(|section| (section.id().to_owned(), section.widget_count()))
         .collect()
+}
+
+#[instrument(level = "debug", skip(trace_widgets))]
+fn trace_source_counts(trace_widgets: &[TraceWidgetRef]) -> BTreeMap<String, usize> {
+    let mut unique_source_records = BTreeSet::new();
+    let mut widgets_with_sources = 0;
+    let mut source_links = 0;
+    for widget in trace_widgets {
+        if !widget.source_record_ids().is_empty() {
+            widgets_with_sources += 1;
+        }
+        source_links += widget.source_record_ids().len();
+        unique_source_records.extend(widget.source_record_ids().iter().cloned());
+    }
+    BTreeMap::from([
+        (
+            "trace_widgets_with_sources".to_owned(),
+            widgets_with_sources,
+        ),
+        (
+            "trace_unique_source_records".to_owned(),
+            unique_source_records.len(),
+        ),
+        ("trace_source_links".to_owned(), source_links),
+    ])
 }

@@ -78,6 +78,27 @@ fn ui_ir_projection_mints_elicit_ui_standards_and_tree_proofs() -> Result<()> {
             .get(UI_IR_SECTION_SOURCE_NAVIGATION),
         Some(&7)
     );
+    let trace_widgets_with_sources = projection
+        .trace_widgets()
+        .iter()
+        .filter(|widget| !widget.source_record_ids().is_empty())
+        .count();
+    assert_eq!(
+        receipt
+            .trace_source_counts()
+            .get("trace_widgets_with_sources"),
+        Some(&trace_widgets_with_sources)
+    );
+    assert_eq!(
+        receipt
+            .trace_source_counts()
+            .get("trace_unique_source_records"),
+        Some(&7)
+    );
+    assert_eq!(
+        receipt.trace_source_counts().get("trace_source_links"),
+        Some(&receipt.counts().trace_ref_count())
+    );
     assert!(projection.trace_widgets().iter().any(|widget| {
         widget.role() == "region"
             && widget.label()
