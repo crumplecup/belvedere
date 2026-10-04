@@ -57,6 +57,7 @@ impl BelvedereExchange<LandscapeDiffContract> for LandscapeDiffing {
             .contract(LandscapeDiffContract::NAME)
             .counts(counts)
             .subject_kind_counts(subject_kind_counts(diff.items()))
+            .change_subject_counts(change_subject_counts(diff.items()))
             .source_record_ids(source_record_ids)
             .warnings(Vec::new())
             .build()
@@ -349,4 +350,27 @@ fn subject_kind_counts(items: &[LandscapeDiffItem]) -> BTreeMap<String, usize> {
             .or_default() += 1;
     }
     counts
+}
+
+#[instrument(level = "debug", skip(items))]
+fn change_subject_counts(items: &[LandscapeDiffItem]) -> BTreeMap<String, usize> {
+    let mut counts = BTreeMap::new();
+    for item in items {
+        *counts
+            .entry(format!(
+                "diff_change_{}_{}",
+                change_kind_key(item.change_kind()),
+                item.subject_kind()
+            ))
+            .or_default() += 1;
+    }
+    counts
+}
+
+const fn change_kind_key(change_kind: LandscapeDiffChangeKind) -> &'static str {
+    match change_kind {
+        LandscapeDiffChangeKind::Added => "added",
+        LandscapeDiffChangeKind::Removed => "removed",
+        LandscapeDiffChangeKind::Changed => "changed",
+    }
 }

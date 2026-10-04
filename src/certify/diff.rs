@@ -13,6 +13,7 @@ pub struct LandscapeDiffReceipt {
     #[getter(skip)]
     counts: LandscapeDiffReceiptCounts,
     subject_kind_counts: BTreeMap<String, usize>,
+    change_subject_counts: BTreeMap<String, usize>,
     source_record_ids: Vec<String>,
     warnings: Vec<String>,
 }
