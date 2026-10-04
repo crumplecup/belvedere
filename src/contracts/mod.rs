@@ -33,7 +33,7 @@ pub use ui_ir::{
     UI_IR_SECTION_CLAIM_EXPLORER, UI_IR_SECTION_FILTERS, UI_IR_SECTION_GAP_QUEUE,
     UI_IR_SECTION_OVERVIEW, UI_IR_SECTION_PROOF_CHAINS, UI_IR_SECTION_PROVENANCE_ROOTS,
     UI_IR_SECTION_SOURCE_NAVIGATION, UI_IR_SECTION_WITNESS_SURFACE, UiIrInput, UiIrProjection,
-    UiIrProofBundle, UiIrSection, UiStandardMint, elicit_ui_provenance,
+    UiIrProofBundle, UiIrSection, UiStandardMint, UiViewportVerification, elicit_ui_provenance,
 };
 pub(crate) use ui_ir::{TraceWidgetRefBuilder, UiIrProjectionBuilder};
 pub use view_model::{

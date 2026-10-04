@@ -84,6 +84,16 @@ fn run_pipeline_uses_the_normal_amenable_artifact_path() -> Result<()> {
             .certificate()
             .stage_certificates()
             .iter()
+            .any(|certificate| certificate
+                .counts()
+                .get("ui_ir_proof_token_viewport_wcag_verified")
+                == Some(&3))
+    );
+    assert!(
+        report
+            .certificate()
+            .stage_certificates()
+            .iter()
             .any(|certificate| certificate.counts().get("gap_lane_witness_review") == Some(&1))
     );
     assert!(
@@ -287,6 +297,19 @@ fn run_pipeline_uses_the_normal_amenable_artifact_path() -> Result<()> {
             .counts()
             .get("ui_ir_section_trace_widgets:belvedere.ui.section.source_navigation"),
         Some(&7)
+    );
+    assert_eq!(
+        ui_stage.counts().get("ui_ir_viewports_verified_total"),
+        Some(&3)
+    );
+    assert!(
+        report
+            .ui_ir_receipt()
+            .viewport_ids()
+            .iter()
+            .all(|viewport_id| ui_stage
+                .output_ids()
+                .contains(&format!("elicit_ui.viewport:{viewport_id}")))
     );
     assert!(
         report

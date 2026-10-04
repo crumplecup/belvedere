@@ -1,36 +1,40 @@
 //! `elicit_ui` projection exchange implementations.
 
-use std::collections::{BTreeMap, BTreeSet};
-
 use elicit_ui::{AccessKitUiBackend, Viewport};
 use elicitation::Established;
 use tracing::instrument;
 
 use crate::{
-    certify::{UiIrReceipt, UiIrReceiptBuilder, UiIrReceiptCounts},
+    certify::UiIrReceipt,
     contracts::{
-        AuditorNavigationModel, BelvedereContract, ElicitUiIrSourcedStandard,
-        ElicitUiProjectionContract, ElicitUiRenderCompleteStandard, ElicitUiRolePreservedStandard,
+        AuditorNavigationModel, ElicitUiIrSourcedStandard, ElicitUiProjectionContract,
+        ElicitUiRenderCompleteStandard, ElicitUiRolePreservedStandard,
         ElicitUiWcagVerifiedStandard, TraceRef, TraceWidgetRef, UI_IR_SECTION_ASSESSMENT_QUEUE,
         UI_IR_SECTION_BACKEND_COVERAGE, UI_IR_SECTION_CLAIM_EXPLORER, UI_IR_SECTION_FILTERS,
         UI_IR_SECTION_GAP_QUEUE, UI_IR_SECTION_OVERVIEW, UI_IR_SECTION_PROOF_CHAINS,
         UI_IR_SECTION_PROVENANCE_ROOTS, UI_IR_SECTION_SOURCE_NAVIGATION,
         UI_IR_SECTION_WITNESS_SURFACE, UiIrInput, UiIrProjection, UiIrProjectionBuilder,
-        UiIrProofBundle, UiIrSection, UiStandardMint,
+        UiIrProofBundle, UiIrSection, UiStandardMint, UiViewportVerification,
     },
     exchanges::BelvedereExchange,
 };
 
 mod errors;
+mod receipt;
 mod widgets;
 
 pub use errors::UiIrError;
 
+use receipt::build_receipt;
 use widgets::{
     assessment_widget, assessment_work_widget, backend_coverage_widget, claim_widget,
     filter_widget, gap_widget, labeled_widget, proof_chain_widget, provenance_root_widget, section,
     source_navigation_widget, witness_widget,
 };
+
+const UI_IR_PRIMARY_VIEWPORT: (u32, u32) = (1440, 960);
+const UI_IR_VERIFICATION_VIEWPORTS: &[(u32, u32)] =
+    &[(390, 844), (768, 1024), UI_IR_PRIMARY_VIEWPORT];
 
 /// Exchange from auditor navigation evidence into `elicit_ui` IR.
 #[derive(Debug, Clone, Copy, Default)]
@@ -58,17 +62,29 @@ impl BelvedereExchange<ElicitUiProjectionContract> for ElicitUiProjection {
         let backend = AccessKitUiBackend::new();
         let mut trace_widgets = Vec::new();
         let sections = project_sections(&backend, model, &mut trace_widgets)?;
-        let tree = backend.to_verified_tree(Viewport::new(1440, 960));
+        let tree = backend.to_verified_tree(Viewport::new(
+            UI_IR_PRIMARY_VIEWPORT.0,
+            UI_IR_PRIMARY_VIEWPORT.1,
+        ));
         let proofs = UiIrProofBundle::new(
             Established::<elicit_ui::IrSourced>::assert(),
             Established::<elicit_ui::WcagVerified>::prove(&tree),
         );
+        let viewport_verifications = verify_viewports(&backend);
         let minted_standards = minted_standards();
-        let receipt = build_receipt(model, &sections, &trace_widgets, &tree, &minted_standards)?;
+        let receipt = build_receipt(
+            model,
+            &sections,
+            &trace_widgets,
+            &tree,
+            &viewport_verifications,
+            &minted_standards,
+        )?;
         let projection = UiIrProjectionBuilder::default()
             .tree(tree)
             .sections(sections)
             .trace_widgets(trace_widgets)
+            .viewport_verifications(viewport_verifications)
             .minted_standards(minted_standards)
             .proofs(proofs)
             .build()
@@ -288,62 +304,16 @@ fn source_navigation_section(
     )
 }
 
-#[instrument(
-    level = "debug",
-    skip(model, sections, trace_widgets, tree, minted_standards)
-)]
-fn build_receipt(
-    model: &AuditorNavigationModel,
-    sections: &[UiIrSection],
-    trace_widgets: &[TraceWidgetRef],
-    tree: &elicit_ui::VerifiedTree,
-    minted_standards: &[UiStandardMint],
-) -> Result<UiIrReceipt, UiIrError> {
-    UiIrReceiptBuilder::default()
-        .contract(ElicitUiProjectionContract::NAME)
-        .counts(UiIrReceiptCounts::new(
-            sections.len(),
-            trace_widgets.len(),
-            trace_widgets
-                .iter()
-                .map(|widget| widget.source_record_ids().len())
-                .sum(),
-            tree.nodes().len(),
-        ))
-        .source_record_ids(model.source_record_ids().to_vec())
-        .section_ids(
-            sections
-                .iter()
-                .map(|section| section.id().to_owned())
-                .collect::<Vec<_>>(),
-        )
-        .section_root_widget_ids(
-            sections
-                .iter()
-                .map(UiIrSection::root_widget_id)
-                .collect::<Vec<_>>(),
-        )
-        .trace_widget_ids(
-            trace_widgets
-                .iter()
-                .map(TraceWidgetRef::widget_id)
-                .collect::<Vec<_>>(),
-        )
-        .role_counts(role_counts(trace_widgets))
-        .section_widget_counts(section_widget_counts(sections))
-        .section_population_counts(section_population_counts(sections))
-        .section_trace_counts(section_trace_counts(sections, trace_widgets))
-        .trace_source_counts(trace_source_counts(trace_widgets))
-        .minted_prop_counts(minted_prop_counts(minted_standards))
-        .proof_token_counts(proof_token_counts())
-        .minted_standards(
-            minted_standards
-                .iter()
-                .map(|standard| standard.standard().to_owned())
-                .collect::<Vec<_>>(),
-        )
-        .build()
-        .map_err(|error| UiIrError::construction("UiIrReceipt", error))
+#[instrument(level = "debug", skip(backend))]
+fn verify_viewports(backend: &AccessKitUiBackend) -> Vec<UiViewportVerification> {
+    UI_IR_VERIFICATION_VIEWPORTS
+        .iter()
+        .map(|&(width, height)| {
+            let tree = backend.to_verified_tree(Viewport::new(width, height));
+            let _wcag_verified = Established::<elicit_ui::WcagVerified>::prove(&tree);
+            UiViewportVerification::new(width, height, tree.nodes().len())
+        })
+        .collect()
 }
 
 #[instrument(level = "debug")]
@@ -354,143 +324,4 @@ fn minted_standards() -> Vec<UiStandardMint> {
         UiStandardMint::from_standard::<ElicitUiRenderCompleteStandard>(),
         UiStandardMint::from_standard::<ElicitUiRolePreservedStandard>(),
     ]
-}
-
-#[instrument(level = "debug")]
-fn proof_token_counts() -> BTreeMap<String, usize> {
-    BTreeMap::from([
-        ("ui_ir_proof_token_ir_sourced".to_owned(), 1),
-        ("ui_ir_proof_token_wcag_verified".to_owned(), 1),
-    ])
-}
-
-#[instrument(level = "debug", skip(minted_standards))]
-fn minted_prop_counts(minted_standards: &[UiStandardMint]) -> BTreeMap<String, usize> {
-    let mut counts = BTreeMap::new();
-    for mint in minted_standards {
-        let prop = mint.prop().as_str();
-        let prop_name = prop.strip_prefix("elicit_ui::").unwrap_or(prop);
-        *counts
-            .entry(format!("minted_elicit_ui_prop_{prop_name}"))
-            .or_default() += 1;
-    }
-    counts
-}
-
-#[instrument(level = "debug", skip(trace_widgets))]
-fn role_counts(trace_widgets: &[TraceWidgetRef]) -> BTreeMap<String, usize> {
-    let mut counts = BTreeMap::new();
-    for widget in trace_widgets {
-        *counts.entry(format!("role_{}", widget.role())).or_default() += 1;
-    }
-    counts
-}
-
-#[instrument(level = "debug", skip(sections))]
-fn section_widget_counts(sections: &[UiIrSection]) -> BTreeMap<String, usize> {
-    sections
-        .iter()
-        .map(|section| (section.id().to_owned(), section.widget_count()))
-        .collect()
-}
-
-#[instrument(level = "debug", skip(sections))]
-fn section_population_counts(sections: &[UiIrSection]) -> BTreeMap<String, usize> {
-    let populated_sections = sections
-        .iter()
-        .filter(|section| section.widget_count() > 0)
-        .count();
-    BTreeMap::from([
-        (
-            "ui_ir_sections_empty".to_owned(),
-            sections.len() - populated_sections,
-        ),
-        ("ui_ir_sections_populated".to_owned(), populated_sections),
-        (
-            "ui_ir_section_widgets_total".to_owned(),
-            sections.iter().map(UiIrSection::widget_count).sum(),
-        ),
-    ])
-}
-
-#[instrument(level = "debug", skip(sections, trace_widgets))]
-fn section_trace_counts(
-    sections: &[UiIrSection],
-    trace_widgets: &[TraceWidgetRef],
-) -> BTreeMap<String, usize> {
-    let mut counts = BTreeMap::new();
-    let mut offset = 0;
-    let mut sections_with_source_widgets = 0;
-    let mut source_links_total = 0;
-
-    for section in sections {
-        let section_widgets = trace_widgets
-            .iter()
-            .skip(offset)
-            .take(section.widget_count());
-        let mut source_widgets = 0;
-        let mut source_links = 0;
-        for widget in section_widgets {
-            if !widget.source_record_ids().is_empty() {
-                source_widgets += 1;
-            }
-            source_links += widget.source_record_ids().len();
-        }
-        if source_widgets > 0 {
-            sections_with_source_widgets += 1;
-        }
-        source_links_total += source_links;
-        counts.insert(
-            format!("ui_ir_section_trace_widgets:{}", section.id()),
-            source_widgets,
-        );
-        counts.insert(
-            format!("ui_ir_section_trace_source_links:{}", section.id()),
-            source_links,
-        );
-        offset += section.widget_count();
-    }
-
-    counts.insert(
-        "ui_ir_sections_with_source_widgets".to_owned(),
-        sections_with_source_widgets,
-    );
-    counts.insert(
-        "ui_ir_sections_without_source_widgets".to_owned(),
-        sections.len() - sections_with_source_widgets,
-    );
-    counts.insert(
-        "ui_ir_section_trace_source_links_total".to_owned(),
-        source_links_total,
-    );
-    counts.insert(
-        "ui_ir_section_unassigned_trace_widgets".to_owned(),
-        trace_widgets.len().saturating_sub(offset),
-    );
-    counts
-}
-
-#[instrument(level = "debug", skip(trace_widgets))]
-fn trace_source_counts(trace_widgets: &[TraceWidgetRef]) -> BTreeMap<String, usize> {
-    let mut unique_source_records = BTreeSet::new();
-    let mut widgets_with_sources = 0;
-    let mut source_links = 0;
-    for widget in trace_widgets {
-        if !widget.source_record_ids().is_empty() {
-            widgets_with_sources += 1;
-        }
-        source_links += widget.source_record_ids().len();
-        unique_source_records.extend(widget.source_record_ids().iter().cloned());
-    }
-    BTreeMap::from([
-        (
-            "trace_widgets_with_sources".to_owned(),
-            widgets_with_sources,
-        ),
-        (
-            "trace_unique_source_records".to_owned(),
-            unique_source_records.len(),
-        ),
-        ("trace_source_links".to_owned(), source_links),
-    ])
 }

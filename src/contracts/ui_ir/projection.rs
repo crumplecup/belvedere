@@ -89,6 +89,44 @@ impl UiIrSection {
     }
 }
 
+/// A viewport where Belvedere verified the projected UI tree.
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Getters, new)]
+pub struct UiViewportVerification {
+    #[getter(skip)]
+    width: u32,
+    #[getter(skip)]
+    height: u32,
+    #[getter(skip)]
+    node_count: usize,
+}
+
+impl UiViewportVerification {
+    /// Viewport width in CSS pixels.
+    #[must_use]
+    pub const fn width(self) -> u32 {
+        self.width
+    }
+
+    /// Viewport height in CSS pixels.
+    #[must_use]
+    pub const fn height(self) -> u32 {
+        self.height
+    }
+
+    /// Number of verified nodes emitted at this viewport.
+    #[must_use]
+    pub const fn node_count(self) -> usize {
+        self.node_count
+    }
+
+    /// Stable viewport identifier used in receipts and certificates.
+    #[must_use]
+    #[instrument(level = "debug", skip(self))]
+    pub fn viewport_id(self) -> String {
+        format!("{}x{}", self.width, self.height)
+    }
+}
+
 /// A widget emitted from a traceable auditor navigation item.
 #[derive(Debug, Clone, PartialEq, Eq, Getters, Builder)]
 #[builder(vis = "pub(crate)", setter(into))]
@@ -150,6 +188,7 @@ pub struct UiIrProjection {
     tree: elicit_ui::VerifiedTree,
     sections: Vec<UiIrSection>,
     trace_widgets: Vec<TraceWidgetRef>,
+    viewport_verifications: Vec<UiViewportVerification>,
     minted_standards: Vec<UiStandardMint>,
     #[getter(skip)]
     proofs: UiIrProofBundle,

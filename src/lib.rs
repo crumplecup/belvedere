@@ -50,8 +50,8 @@ pub use contracts::{
     UI_IR_SECTION_FILTERS, UI_IR_SECTION_GAP_QUEUE, UI_IR_SECTION_OVERVIEW,
     UI_IR_SECTION_PROOF_CHAINS, UI_IR_SECTION_PROVENANCE_ROOTS, UI_IR_SECTION_SOURCE_NAVIGATION,
     UI_IR_SECTION_WITNESS_SURFACE, UiIrInput, UiIrProjection, UiIrProofBundle, UiIrSection,
-    UiStandardMint, UnsupportedField, ViewModelInput, WitnessExportRecord, WitnessSurfaceItem,
-    WitnessSurfaceSummary, elicit_ui_provenance,
+    UiStandardMint, UiViewportVerification, UnsupportedField, ViewModelInput, WitnessExportRecord,
+    WitnessSurfaceItem, WitnessSurfaceSummary, elicit_ui_provenance,
 };
 pub use error::{BelvedereConstructionError, BelvedereError};
 pub use exchanges::{

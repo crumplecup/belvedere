@@ -112,6 +112,44 @@ fn ui_ir_projection_mints_elicit_ui_standards_and_tree_proofs() -> Result<()> {
             .get("ui_ir_proof_token_wcag_verified"),
         Some(&1)
     );
+    assert_eq!(
+        projection
+            .viewport_verifications()
+            .iter()
+            .map(|verification| verification.viewport_id())
+            .collect::<Vec<_>>(),
+        vec!["390x844", "768x1024", "1440x960"]
+    );
+    assert_eq!(
+        receipt.viewport_ids(),
+        &projection
+            .viewport_verifications()
+            .iter()
+            .map(|verification| verification.viewport_id())
+            .collect::<Vec<_>>()
+    );
+    assert_eq!(
+        receipt
+            .proof_token_counts()
+            .get("ui_ir_proof_token_viewport_wcag_verified"),
+        Some(&3)
+    );
+    assert_eq!(
+        receipt
+            .viewport_verification_counts()
+            .get("ui_ir_viewports_verified_total"),
+        Some(&3)
+    );
+    for verification in projection.viewport_verifications() {
+        assert!(verification.node_count() >= projection.trace_widgets().len());
+        assert_eq!(
+            receipt.viewport_verification_counts().get(&format!(
+                "ui_ir_viewport_nodes:{}",
+                verification.viewport_id()
+            )),
+            Some(&verification.node_count())
+        );
+    }
     assert!(receipt.counts().node_count() >= projection.trace_widgets().len());
     assert_eq!(receipt.role_counts().get("role_button"), Some(&17));
     assert_eq!(receipt.role_counts().get("role_checkbox"), Some(&10));

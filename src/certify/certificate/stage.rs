@@ -234,11 +234,18 @@ impl BelvedereStageCertificate {
         counts.extend(receipt.section_widget_counts().clone());
         counts.extend(receipt.section_population_counts().clone());
         counts.extend(receipt.section_trace_counts().clone());
+        counts.extend(receipt.viewport_verification_counts().clone());
         counts.extend(receipt.trace_source_counts().clone());
         counts.extend(receipt.minted_prop_counts().clone());
         counts.extend(receipt.proof_token_counts().clone());
         let mut output_ids = receipt.minted_standards().clone();
         output_ids.extend(receipt.section_ids().iter().cloned());
+        output_ids.extend(
+            receipt
+                .viewport_ids()
+                .iter()
+                .map(|viewport_id| format!("elicit_ui.viewport:{viewport_id}")),
+        );
         output_ids.extend(
             receipt
                 .section_root_widget_ids()
