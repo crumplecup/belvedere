@@ -106,6 +106,24 @@ fn view_model_projection_builds_auditor_navigation_evidence() -> Result<()> {
             .get("proof_chain_chain_gaps"),
         Some(&chain_gaps)
     );
+    assert_eq!(
+        receipt
+            .provenance_root_kind_counts()
+            .get("provenance_root_kind_assessment_only_root"),
+        Some(&1)
+    );
+    assert_eq!(
+        receipt
+            .provenance_root_kind_counts()
+            .get("provenance_root_kind_proof_registration_root"),
+        Some(&1)
+    );
+    assert_eq!(
+        receipt
+            .provenance_root_kind_counts()
+            .get("provenance_root_kind_unmodeled_root"),
+        Some(&1)
+    );
 
     let decoded_item = model
         .claim_explorer()

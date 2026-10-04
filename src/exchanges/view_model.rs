@@ -120,6 +120,7 @@ impl BelvedereExchange<AuditorNavigationContract> for AuditorNavigationProjectio
         let receipt_facet_group_counts = facet_group_counts(&filter_facets);
         let receipt_source_artifact_counts = source_artifact_counts(&source_navigation);
         let receipt_proof_chain_topology_counts = proof_chain_topology_counts(&proof_chains);
+        let receipt_provenance_root_kind_counts = provenance_root_kind_counts(&provenance_roots);
 
         let counts = ViewModelReceiptCountsBuilder::default()
             .claim_cards(landscape.claims().len())
@@ -157,6 +158,7 @@ impl BelvedereExchange<AuditorNavigationContract> for AuditorNavigationProjectio
             .facet_group_counts(receipt_facet_group_counts)
             .source_artifact_counts(receipt_source_artifact_counts)
             .proof_chain_topology_counts(receipt_proof_chain_topology_counts)
+            .provenance_root_kind_counts(receipt_provenance_root_kind_counts)
             .source_record_ids(source_record_ids)
             .warnings(Vec::new())
             .build()
@@ -221,6 +223,17 @@ fn source_artifact_counts(source_navigation: &[SourceNavigationItem]) -> BTreeMa
     for item in source_navigation {
         *counts
             .entry(format!("source_artifact_{}", item.artifact_kind().as_str()))
+            .or_default() += 1;
+    }
+    counts
+}
+
+#[instrument(level = "debug", skip(provenance_roots))]
+fn provenance_root_kind_counts(provenance_roots: &[ProvenanceRootItem]) -> BTreeMap<String, usize> {
+    let mut counts = BTreeMap::new();
+    for item in provenance_roots {
+        *counts
+            .entry(format!("provenance_root_kind_{}", item.root_kind()))
             .or_default() += 1;
     }
     counts
