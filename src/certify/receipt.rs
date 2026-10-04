@@ -21,6 +21,7 @@ pub struct IngestionReceipt {
     digest: String,
     parser_version: String,
     decoded_counts: BTreeMap<String, usize>,
+    source_record_kind_counts: BTreeMap<String, usize>,
     unsupported_fields: Vec<UnsupportedField>,
     warnings: Vec<String>,
     source_record_ids: Vec<String>,
@@ -42,6 +43,7 @@ impl IngestionReceipt {
         warnings: Vec<String>,
         source_record_ids: Vec<String>,
     ) -> Self {
+        let source_record_kind_counts = source_record_kind_counts(&source_record_ids);
         Self {
             contract: contract.to_owned(),
             path: artifact.path().clone(),
@@ -50,6 +52,7 @@ impl IngestionReceipt {
             digest: artifact.digest().to_owned(),
             parser_version: env!("CARGO_PKG_VERSION").to_owned(),
             decoded_counts,
+            source_record_kind_counts,
             unsupported_fields,
             warnings,
             source_record_ids,
@@ -67,4 +70,16 @@ impl IngestionReceipt {
     pub const fn format(&self) -> AcceptedAmenableArtifactFormat {
         self.format
     }
+}
+
+#[instrument(level = "trace", skip(source_record_ids))]
+fn source_record_kind_counts(source_record_ids: &[String]) -> BTreeMap<String, usize> {
+    let mut counts = BTreeMap::new();
+    for source_record_id in source_record_ids {
+        let kind = source_record_id
+            .split_once(':')
+            .map_or(source_record_id.as_str(), |(kind, _rest)| kind);
+        *counts.entry(format!("source_record_{kind}")).or_default() += 1;
+    }
+    counts
 }

@@ -1,6 +1,7 @@
 use belvedere::{
-    AcceptedAmenableArtifactFormat, ArtifactKind, AssessmentStreamIngestion, RawAmenableArtifact,
-    Recommendation, RegistryDumpIngestion, ResolutionPath,
+    AcceptedAmenableArtifactFormat, ArtifactKind, AssessmentStreamIngestion,
+    BelvedereStageCertificate, RawAmenableArtifact, Recommendation, RegistryDumpIngestion,
+    ResolutionPath,
 };
 use miette::{IntoDiagnostic, Result, WrapErr, miette};
 
@@ -37,6 +38,18 @@ fn registry_ingestion_preserves_record_identity_and_unknown_fields() -> Result<(
         AcceptedAmenableArtifactFormat::RegistryDumpJson
     );
     assert_eq!(receipt.decoded_counts()["evidence_links"], 1);
+    assert_eq!(
+        receipt
+            .source_record_kind_counts()
+            .get("source_record_evidence_link"),
+        Some(&1)
+    );
+    assert_eq!(
+        receipt
+            .source_record_kind_counts()
+            .get("source_record_proof_record"),
+        Some(&1)
+    );
     assert!(
         receipt.source_record_ids().contains(
             &"proof_record:belvedere::ingestion::DecodedRegistrySnapshot@kani".to_owned()
@@ -52,6 +65,12 @@ fn registry_ingestion_preserves_record_identity_and_unknown_fields() -> Result<(
         receipt.unsupported_fields().iter().any(|field| {
             field.record() == "evidence_links[0]" && field.field() == "future_field"
         })
+    );
+
+    let certificate = BelvedereStageCertificate::registry_ingestion(&receipt);
+    assert_eq!(
+        certificate.counts().get("source_record_kani_proof"),
+        Some(&1)
     );
     Ok(())
 }
@@ -93,6 +112,12 @@ fn assessment_ingestion_preserves_current_and_legacy_shapes() -> Result<()> {
     assert_eq!(legacy.source_line(), 2);
 
     assert_eq!(receipt.decoded_counts()["assessments"], 2);
+    assert_eq!(
+        receipt
+            .source_record_kind_counts()
+            .get("source_record_assessment"),
+        Some(&2)
+    );
     assert!(
         receipt
             .source_record_ids()
@@ -101,6 +126,12 @@ fn assessment_ingestion_preserves_current_and_legacy_shapes() -> Result<()> {
     assert!(receipt.unsupported_fields().iter().any(|field| {
         field.record() == "assessment_line[1]" && field.field() == "future_assessment_field"
     }));
+
+    let certificate = BelvedereStageCertificate::assessment_ingestion(&receipt);
+    assert_eq!(
+        certificate.counts().get("source_record_assessment"),
+        Some(&2)
+    );
     Ok(())
 }
 
