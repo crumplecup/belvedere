@@ -48,6 +48,22 @@ fn ui_ir_projection_mints_elicit_ui_standards_and_tree_proofs() -> Result<()> {
             .section_ids()
             .contains(&UI_IR_SECTION_SOURCE_NAVIGATION.to_owned())
     );
+    assert_eq!(
+        receipt.section_root_widget_ids(),
+        &projection
+            .sections()
+            .iter()
+            .map(belvedere::UiIrSection::root_widget_id)
+            .collect::<Vec<_>>()
+    );
+    assert_eq!(
+        receipt.trace_widget_ids(),
+        &projection
+            .trace_widgets()
+            .iter()
+            .map(belvedere::TraceWidgetRef::widget_id)
+            .collect::<Vec<_>>()
+    );
     assert!(
         projection
             .minted_standards()
