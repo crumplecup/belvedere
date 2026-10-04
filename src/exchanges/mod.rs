@@ -5,6 +5,7 @@ mod exchange;
 mod diff;
 mod ingestion;
 mod landscape;
+mod source_records;
 mod ui_ir;
 mod view_model;
 

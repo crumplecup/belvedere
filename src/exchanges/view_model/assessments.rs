@@ -13,7 +13,7 @@ use crate::{
     error::BelvedereConstructionError,
 };
 
-use super::{gaps::gap_queue_lane, trace};
+use super::{gaps::gap_queue_lane, traces::trace_assessment};
 
 #[instrument(level = "debug", skip(assessments, source_record_ids))]
 pub(super) fn project_assessment_queue(
@@ -39,7 +39,7 @@ pub(super) fn project_assessment_queue(
                 .queue_lane(assessment_queue_lane(assessment.recommendation()))
                 .resolution_path(assessment.resolution_path())
                 .weak_dimensions(weak_dimensions(assessment.rubric()))
-                .trace(trace(assessment.proof_id(), source_record_ids))
+                .trace(trace_assessment(assessment, source_record_ids))
                 .build()
                 .map_err(|error| BelvedereConstructionError::new("AssessmentQueueItem", error))
         })
@@ -98,7 +98,7 @@ pub(super) fn project_assessment_work(
                     assessment.recommendation()
                 ))
                 .high_priority(high_priority)
-                .trace(trace(assessment.proof_id(), source_record_ids))
+                .trace(trace_assessment(assessment, source_record_ids))
                 .build()
                 .map_err(|error| BelvedereConstructionError::new("AssessmentWorkItem", error))?,
         );

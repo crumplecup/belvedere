@@ -193,11 +193,24 @@ fn view_model_projection_builds_auditor_navigation_evidence() -> Result<()> {
     assert!(decoded_item.verifiers().contains(&"kani".to_owned()));
     assert_eq!(decoded_item.contract_count(), 1);
     assert_eq!(decoded_item.gap_count(), 2);
+    assert_eq!(decoded_item.trace().source_record_ids().len(), 4);
+    assert!(decoded_item.trace().source_record_ids().contains(
+        &"contract_record:belvedere::ingestion::DecodedRegistrySnapshot@kani:ensures".to_owned()
+    ));
+    assert!(
+        decoded_item
+            .trace()
+            .source_record_ids()
+            .contains(&"evidence_link:belvedere::ingestion::DecodedRegistrySnapshot#0".to_owned())
+    );
     assert!(
         decoded_item.trace().source_record_ids().contains(
             &"proof_record:belvedere::ingestion::DecodedRegistrySnapshot@kani".to_owned()
         )
     );
+    assert!(decoded_item.trace().source_record_ids().contains(
+        &"witness_export:belvedere::ingestion::DecodedRegistrySnapshot@kani:belvedere::proofs::ingestion".to_owned()
+    ));
     assert!(
         decoded_item
             .filter_ids()
@@ -507,6 +520,13 @@ fn view_model_projection_preserves_review_queues_and_traceability() -> Result<()
             .source_record_ids()
             .contains(&"assessment:assess-belvedere-ingestion-1".to_owned())
     );
+    assert_eq!(assessment.trace().source_record_ids().len(), 2);
+    assert!(
+        assessment
+            .trace()
+            .source_record_ids()
+            .contains(&"kani_proof:belvedere::ingestion::record_identity_is_preserved".to_owned())
+    );
 
     let missing_assessment = model
         .assessment_work()
@@ -530,6 +550,7 @@ fn view_model_projection_preserves_review_queues_and_traceability() -> Result<()
             &"proof_record:belvedere::ingestion::DecodedRegistrySnapshot@kani".to_owned()
         )
     );
+    assert_eq!(missing_assessment.trace().source_record_ids().len(), 4);
 
     let strengthen = model
         .assessment_work()

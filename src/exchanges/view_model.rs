@@ -22,6 +22,7 @@ mod coverage;
 mod facets;
 mod gaps;
 mod sources;
+mod traces;
 mod witness;
 
 use assessments::{project_assessment_queue, project_assessment_work};
@@ -30,6 +31,7 @@ use coverage::project_backend_coverage;
 use facets::project_filter_facets;
 use gaps::project_gaps;
 use sources::project_source_navigation;
+use traces::trace;
 use witness::project_witness_surface;
 
 /// Exchange from a landscape graph into UI-neutral auditor navigation evidence.
@@ -359,11 +361,6 @@ fn review_workflow_counts(
         gaps.iter().filter(|item| item.high_priority()).count(),
     );
     counts
-}
-
-#[instrument(level = "debug")]
-pub(super) fn trace(claim_id: &str, source_record_ids: &[String]) -> TraceRef {
-    TraceRef::new(claim_id, source_record_ids.to_vec())
 }
 
 #[instrument(level = "trace", skip(claim))]
