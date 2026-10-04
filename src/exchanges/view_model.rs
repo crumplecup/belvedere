@@ -121,6 +121,8 @@ impl BelvedereExchange<AuditorNavigationContract> for AuditorNavigationProjectio
         let receipt_source_artifact_counts = source_artifact_counts(&source_navigation);
         let receipt_proof_chain_topology_counts = proof_chain_topology_counts(&proof_chains);
         let receipt_provenance_root_kind_counts = provenance_root_kind_counts(&provenance_roots);
+        let receipt_review_workflow_counts =
+            review_workflow_counts(&proof_chains, &assessment_work, &gaps);
         let receipt_trace_source_counts = trace_source_counts(
             filter_facets
                 .iter()
@@ -173,6 +175,7 @@ impl BelvedereExchange<AuditorNavigationContract> for AuditorNavigationProjectio
             .source_artifact_counts(receipt_source_artifact_counts)
             .proof_chain_topology_counts(receipt_proof_chain_topology_counts)
             .provenance_root_kind_counts(receipt_provenance_root_kind_counts)
+            .review_workflow_counts(receipt_review_workflow_counts)
             .trace_source_counts(receipt_trace_source_counts)
             .source_record_ids(source_record_ids)
             .warnings(Vec::new())
@@ -306,6 +309,56 @@ fn proof_chain_topology_counts(proof_chains: &[ProofChainItem]) -> BTreeMap<Stri
         ("proof_chain_branching_claims".to_owned(), branching_claims),
         ("proof_chain_chain_gaps".to_owned(), chain_gaps),
     ])
+}
+
+#[instrument(level = "debug", skip(proof_chains, assessment_work, gaps))]
+fn review_workflow_counts(
+    proof_chains: &[ProofChainItem],
+    assessment_work: &[AssessmentWorkItem],
+    gaps: &[GapItem],
+) -> BTreeMap<String, usize> {
+    let mut counts = BTreeMap::new();
+    for item in proof_chains {
+        *counts
+            .entry(format!(
+                "review_workflow_proof_chain_state_{}",
+                item.review_state()
+            ))
+            .or_default() += 1;
+    }
+
+    counts.insert(
+        "review_workflow_assessment_work_total".to_owned(),
+        assessment_work.len(),
+    );
+    counts.insert(
+        "review_workflow_assessment_work_high_priority".to_owned(),
+        assessment_work
+            .iter()
+            .filter(|item| item.high_priority())
+            .count(),
+    );
+    counts.insert(
+        "review_workflow_assessment_work_standard_priority".to_owned(),
+        assessment_work
+            .iter()
+            .filter(|item| !item.high_priority())
+            .count(),
+    );
+
+    for item in gaps {
+        *counts
+            .entry(format!(
+                "review_workflow_gap_severity_{}",
+                item.severity().label()
+            ))
+            .or_default() += 1;
+    }
+    counts.insert(
+        "review_workflow_gap_high_priority".to_owned(),
+        gaps.iter().filter(|item| item.high_priority()).count(),
+    );
+    counts
 }
 
 #[instrument(level = "debug")]

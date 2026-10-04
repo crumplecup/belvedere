@@ -126,6 +126,48 @@ fn view_model_projection_builds_auditor_navigation_evidence() -> Result<()> {
     );
     assert_eq!(
         receipt
+            .review_workflow_counts()
+            .get("review_workflow_proof_chain_state_blocked"),
+        Some(&2)
+    );
+    assert_eq!(
+        receipt
+            .review_workflow_counts()
+            .get("review_workflow_proof_chain_state_elevated"),
+        Some(&1)
+    );
+    assert_eq!(
+        receipt
+            .review_workflow_counts()
+            .get("review_workflow_proof_chain_state_ready"),
+        Some(&1)
+    );
+    assert_eq!(
+        receipt
+            .review_workflow_counts()
+            .get("review_workflow_assessment_work_total"),
+        Some(&2)
+    );
+    assert_eq!(
+        receipt
+            .review_workflow_counts()
+            .get("review_workflow_assessment_work_high_priority"),
+        Some(&0)
+    );
+    assert_eq!(
+        receipt
+            .review_workflow_counts()
+            .get("review_workflow_gap_severity_blocking"),
+        Some(&2)
+    );
+    assert_eq!(
+        receipt
+            .review_workflow_counts()
+            .get("review_workflow_gap_high_priority"),
+        Some(&3)
+    );
+    assert_eq!(
+        receipt
             .trace_source_counts()
             .get("view_model_traceable_items"),
         Some(&49)

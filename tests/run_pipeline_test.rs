@@ -143,6 +143,36 @@ fn run_pipeline_uses_the_normal_amenable_artifact_path() -> Result<()> {
             .iter()
             .any(|certificate| certificate
                 .counts()
+                .get("review_workflow_proof_chain_state_blocked")
+                == Some(&2))
+    );
+    assert!(
+        report
+            .certificate()
+            .stage_certificates()
+            .iter()
+            .any(|certificate| certificate
+                .counts()
+                .get("review_workflow_assessment_work_total")
+                == Some(&2))
+    );
+    assert!(
+        report
+            .certificate()
+            .stage_certificates()
+            .iter()
+            .any(|certificate| certificate
+                .counts()
+                .get("review_workflow_gap_high_priority")
+                == Some(&3))
+    );
+    assert!(
+        report
+            .certificate()
+            .stage_certificates()
+            .iter()
+            .any(|certificate| certificate
+                .counts()
                 .get("view_model_trace_unique_source_records")
                 == Some(&7))
     );

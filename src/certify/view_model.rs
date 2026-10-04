@@ -17,6 +17,7 @@ pub struct ViewModelReceipt {
     source_artifact_counts: BTreeMap<String, usize>,
     proof_chain_topology_counts: BTreeMap<String, usize>,
     provenance_root_kind_counts: BTreeMap<String, usize>,
+    review_workflow_counts: BTreeMap<String, usize>,
     trace_source_counts: BTreeMap<String, usize>,
     source_record_ids: Vec<String>,
     warnings: Vec<String>,
