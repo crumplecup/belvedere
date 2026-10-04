@@ -231,6 +231,7 @@ impl BelvedereStageCertificate {
         ]);
         counts.extend(receipt.role_counts().clone());
         counts.extend(receipt.section_widget_counts().clone());
+        counts.extend(receipt.section_population_counts().clone());
         counts.extend(receipt.trace_source_counts().clone());
         counts.extend(receipt.minted_prop_counts().clone());
         counts.extend(receipt.proof_token_counts().clone());

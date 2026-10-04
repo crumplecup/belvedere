@@ -233,6 +233,12 @@ fn run_pipeline_uses_the_normal_amenable_artifact_path() -> Result<()> {
         .ok_or_else(|| {
             miette::miette!("run certificate should include UI IR projection stage evidence")
         })?;
+    assert_eq!(ui_stage.counts().get("ui_ir_sections_populated"), Some(&10));
+    assert_eq!(ui_stage.counts().get("ui_ir_sections_empty"), Some(&0));
+    assert_eq!(
+        ui_stage.counts().get("ui_ir_section_widgets_total"),
+        Some(&report.projection().trace_widgets().len())
+    );
     assert!(
         report
             .ui_ir_receipt()

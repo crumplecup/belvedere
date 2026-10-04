@@ -331,6 +331,7 @@ fn build_receipt(
         )
         .role_counts(role_counts(trace_widgets))
         .section_widget_counts(section_widget_counts(sections))
+        .section_population_counts(section_population_counts(sections))
         .trace_source_counts(trace_source_counts(trace_widgets))
         .minted_prop_counts(minted_prop_counts(minted_standards))
         .proof_token_counts(proof_token_counts())
@@ -390,6 +391,25 @@ fn section_widget_counts(sections: &[UiIrSection]) -> BTreeMap<String, usize> {
         .iter()
         .map(|section| (section.id().to_owned(), section.widget_count()))
         .collect()
+}
+
+#[instrument(level = "debug", skip(sections))]
+fn section_population_counts(sections: &[UiIrSection]) -> BTreeMap<String, usize> {
+    let populated_sections = sections
+        .iter()
+        .filter(|section| section.widget_count() > 0)
+        .count();
+    BTreeMap::from([
+        (
+            "ui_ir_sections_empty".to_owned(),
+            sections.len() - populated_sections,
+        ),
+        ("ui_ir_sections_populated".to_owned(), populated_sections),
+        (
+            "ui_ir_section_widgets_total".to_owned(),
+            sections.iter().map(UiIrSection::widget_count).sum(),
+        ),
+    ])
 }
 
 #[instrument(level = "debug", skip(trace_widgets))]

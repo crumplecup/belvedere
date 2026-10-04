@@ -130,6 +130,24 @@ fn ui_ir_projection_mints_elicit_ui_standards_and_tree_proofs() -> Result<()> {
             .get(UI_IR_SECTION_SOURCE_NAVIGATION),
         Some(&7)
     );
+    assert_eq!(
+        receipt
+            .section_population_counts()
+            .get("ui_ir_sections_populated"),
+        Some(&10)
+    );
+    assert_eq!(
+        receipt
+            .section_population_counts()
+            .get("ui_ir_sections_empty"),
+        Some(&0)
+    );
+    assert_eq!(
+        receipt
+            .section_population_counts()
+            .get("ui_ir_section_widgets_total"),
+        Some(&projection.trace_widgets().len())
+    );
     let trace_widgets_with_sources = projection
         .trace_widgets()
         .iter()
