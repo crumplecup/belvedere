@@ -4,9 +4,10 @@ use std::collections::BTreeMap;
 
 use derive_builder::Builder;
 use derive_getters::Getters;
+use serde::Serialize;
 
 /// Audit receipt emitted by a view-model exchange.
-#[derive(Debug, Clone, PartialEq, Eq, Getters, Builder)]
+#[derive(Debug, Clone, PartialEq, Eq, Getters, Builder, Serialize)]
 #[builder(vis = "pub(crate)", setter(into))]
 pub struct ViewModelReceipt {
     contract: String,
@@ -34,7 +35,7 @@ impl ViewModelReceipt {
 }
 
 /// Counts emitted by an auditor navigation receipt.
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Builder)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Builder, Serialize)]
 #[builder(vis = "pub(crate)", setter(into))]
 pub struct ViewModelReceiptCounts {
     claim_cards: usize,

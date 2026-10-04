@@ -548,9 +548,35 @@ fn cli_help_is_a_successful_public_output_contract() -> Result<()> {
     assert!(help.contains("--run-certificate-json"));
     assert!(help.contains("--run-certificate-file"));
     assert!(help.contains("--diff-json"));
+    assert!(help.contains("--view-model-receipt-json"));
+    assert!(help.contains("--view-model-receipt-file"));
     assert!(help.contains("--ui-ir-receipt-json"));
     assert!(help.contains("--ui-ir-receipt-file"));
     Ok(())
+}
+
+fn assert_auditor_navigation_receipt(receipt: &Value) {
+    assert_eq!(
+        receipt["contract"].as_str(),
+        Some("belvedere.view_model.auditor_navigation")
+    );
+    assert_eq!(receipt["counts"]["claim_cards"].as_u64(), Some(4));
+    assert_eq!(
+        receipt["source_kind_counts"]["source_kind_assessment"].as_u64(),
+        Some(2)
+    );
+    assert_eq!(
+        receipt["trace_kind_counts"]["view_model_trace_kind_backend_coverage_item"].as_u64(),
+        Some(12)
+    );
+    assert_eq!(
+        receipt["trace_source_counts"]["view_model_trace_unique_source_records"].as_u64(),
+        Some(7)
+    );
+    assert_eq!(
+        receipt["source_record_ids"].as_array().map(Vec::len),
+        Some(7)
+    );
 }
 
 #[test]
@@ -718,6 +744,38 @@ fn cli_can_emit_the_ui_ir_receipt_as_json() -> Result<()> {
 }
 
 #[test]
+fn cli_can_emit_the_view_model_receipt_as_json() -> Result<()> {
+    belvedere::init_tracing();
+
+    let args = [
+        "--view-model-receipt-json",
+        "tests/fixtures/registry_dump.json",
+        "tests/fixtures/proof_assessments.jsonl",
+    ]
+    .into_iter()
+    .map(str::to_owned)
+    .collect::<Vec<_>>();
+    let command = BelvedereCli::from_args(args.clone())
+        .into_diagnostic()
+        .wrap_err("view-model receipt JSON flag should be part of the public CLI API")?;
+
+    assert_eq!(
+        command.output(),
+        BelvedereCliOutput::RunViewModelReceiptJson
+    );
+
+    let mut output = Vec::new();
+    let status = run_cli_with_writer(args, &mut output);
+    assert_eq!(status, ExitCode::SUCCESS);
+
+    let receipt: Value = serde_json::from_slice(&output)
+        .into_diagnostic()
+        .wrap_err("CLI view-model receipt output should be parseable JSON")?;
+    assert_auditor_navigation_receipt(&receipt);
+    Ok(())
+}
+
+#[test]
 fn cli_can_persist_the_ui_ir_receipt_as_json() -> Result<()> {
     belvedere::init_tracing();
 
@@ -767,6 +825,53 @@ fn cli_can_persist_the_ui_ir_receipt_as_json() -> Result<()> {
     fs::remove_file(&receipt_path)
         .into_diagnostic()
         .wrap_err("temporary UI IR receipt file should be removable")?;
+    Ok(())
+}
+
+#[test]
+fn cli_can_persist_the_view_model_receipt_as_json() -> Result<()> {
+    belvedere::init_tracing();
+
+    let receipt_path = std::env::temp_dir().join(format!(
+        "belvedere-view-model-receipt-{}.json",
+        process::id()
+    ));
+    let args = [
+        "--view-model-receipt-file",
+        receipt_path
+            .to_str()
+            .ok_or_else(|| miette::miette!("temporary view-model receipt path should be UTF-8"))?,
+        "tests/fixtures/registry_dump.json",
+        "tests/fixtures/proof_assessments.jsonl",
+    ]
+    .into_iter()
+    .map(str::to_owned)
+    .collect::<Vec<_>>();
+    let command = BelvedereCli::from_args(args.clone())
+        .into_diagnostic()
+        .wrap_err("view-model receipt file flag should be part of the public CLI API")?;
+
+    assert_eq!(
+        command.output(),
+        BelvedereCliOutput::RunViewModelReceiptFile(receipt_path.clone())
+    );
+
+    let mut output = Vec::new();
+    let status = run_cli_with_writer(args, &mut output);
+    assert_eq!(status, ExitCode::SUCCESS);
+    assert!(output.is_empty());
+
+    let receipt_bytes = fs::read(&receipt_path)
+        .into_diagnostic()
+        .wrap_err("view-model receipt file should be written")?;
+    let receipt: Value = serde_json::from_slice(&receipt_bytes)
+        .into_diagnostic()
+        .wrap_err("persisted view-model receipt should be parseable JSON")?;
+    assert_auditor_navigation_receipt(&receipt);
+
+    fs::remove_file(&receipt_path)
+        .into_diagnostic()
+        .wrap_err("temporary view-model receipt file should be removable")?;
     Ok(())
 }
 
@@ -1209,6 +1314,55 @@ fn cli_can_emit_the_landscape_diff_ui_ir_receipt_as_json() -> Result<()> {
 }
 
 #[test]
+fn cli_can_emit_the_landscape_diff_view_model_receipt_as_json() -> Result<()> {
+    belvedere::init_tracing();
+
+    let previous_assessments_path = std::env::temp_dir().join(format!(
+        "belvedere-cli-diff-view-model-empty-assessments-{}.jsonl",
+        process::id()
+    ));
+    fs::write(&previous_assessments_path, [])
+        .into_diagnostic()
+        .wrap_err("temporary empty assessment artifact should be writable")?;
+
+    let args = [
+        "diff",
+        "--view-model-receipt-json",
+        "tests/fixtures/registry_dump.json",
+        previous_assessments_path
+            .to_str()
+            .ok_or_else(|| miette::miette!("temporary assessment path should be UTF-8"))?,
+        "tests/fixtures/registry_dump.json",
+        "tests/fixtures/proof_assessments.jsonl",
+    ]
+    .into_iter()
+    .map(str::to_owned)
+    .collect::<Vec<_>>();
+    let command = BelvedereCli::from_args(args.clone())
+        .into_diagnostic()
+        .wrap_err("diff view-model receipt flag should be part of the public CLI API")?;
+
+    assert_eq!(
+        command.output(),
+        BelvedereCliOutput::LandscapeDiffViewModelReceiptJson
+    );
+
+    let mut output = Vec::new();
+    let status = run_cli_with_writer(args, &mut output);
+    assert_eq!(status, ExitCode::SUCCESS);
+
+    let receipt: Value = serde_json::from_slice(&output)
+        .into_diagnostic()
+        .wrap_err("CLI diff view-model receipt output should be parseable JSON")?;
+    assert_auditor_navigation_receipt(&receipt);
+
+    fs::remove_file(previous_assessments_path)
+        .into_diagnostic()
+        .wrap_err("temporary empty assessment artifact should be removable")?;
+    Ok(())
+}
+
+#[test]
 fn cli_can_persist_the_landscape_diff_ui_ir_receipt_as_json() -> Result<()> {
     belvedere::init_tracing();
 
@@ -1276,6 +1430,69 @@ fn cli_can_persist_the_landscape_diff_ui_ir_receipt_as_json() -> Result<()> {
     fs::remove_file(&receipt_path)
         .into_diagnostic()
         .wrap_err("temporary diff UI IR receipt file should be removable")?;
+    fs::remove_file(previous_assessments_path)
+        .into_diagnostic()
+        .wrap_err("temporary empty assessment artifact should be removable")?;
+    Ok(())
+}
+
+#[test]
+fn cli_can_persist_the_landscape_diff_view_model_receipt_as_json() -> Result<()> {
+    belvedere::init_tracing();
+
+    let previous_assessments_path = std::env::temp_dir().join(format!(
+        "belvedere-cli-diff-view-model-file-empty-assessments-{}.jsonl",
+        process::id()
+    ));
+    let receipt_path = std::env::temp_dir().join(format!(
+        "belvedere-diff-view-model-receipt-{}.json",
+        process::id()
+    ));
+    fs::write(&previous_assessments_path, [])
+        .into_diagnostic()
+        .wrap_err("temporary empty assessment artifact should be writable")?;
+
+    let args = [
+        "diff",
+        "--view-model-receipt-file",
+        receipt_path
+            .to_str()
+            .ok_or_else(|| miette::miette!("temporary view-model receipt path should be UTF-8"))?,
+        "tests/fixtures/registry_dump.json",
+        previous_assessments_path
+            .to_str()
+            .ok_or_else(|| miette::miette!("temporary assessment path should be UTF-8"))?,
+        "tests/fixtures/registry_dump.json",
+        "tests/fixtures/proof_assessments.jsonl",
+    ]
+    .into_iter()
+    .map(str::to_owned)
+    .collect::<Vec<_>>();
+    let command = BelvedereCli::from_args(args.clone())
+        .into_diagnostic()
+        .wrap_err("diff view-model receipt file flag should be part of the public CLI API")?;
+
+    assert_eq!(
+        command.output(),
+        BelvedereCliOutput::LandscapeDiffViewModelReceiptFile(receipt_path.clone())
+    );
+
+    let mut output = Vec::new();
+    let status = run_cli_with_writer(args, &mut output);
+    assert_eq!(status, ExitCode::SUCCESS);
+    assert!(output.is_empty());
+
+    let receipt_bytes = fs::read(&receipt_path)
+        .into_diagnostic()
+        .wrap_err("diff view-model receipt file should be written")?;
+    let receipt: Value = serde_json::from_slice(&receipt_bytes)
+        .into_diagnostic()
+        .wrap_err("persisted diff view-model receipt should be parseable JSON")?;
+    assert_auditor_navigation_receipt(&receipt);
+
+    fs::remove_file(&receipt_path)
+        .into_diagnostic()
+        .wrap_err("temporary diff view-model receipt file should be removable")?;
     fs::remove_file(previous_assessments_path)
         .into_diagnostic()
         .wrap_err("temporary empty assessment artifact should be removable")?;
