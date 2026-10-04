@@ -89,6 +89,23 @@ fn landscape_diff_surfaces_snapshot_changes_for_auditors() -> Result<()> {
     assert_eq!(assessment.subject_kind(), "assessment");
     assert_eq!(assessment.subject_id(), "assess-belvedere-ingestion-1");
     assert!(assessment.summary().contains("recommendation Strengthen"));
+    assert!(
+        assessment
+            .trace()
+            .source_record_ids()
+            .contains(&"assessment:assess-belvedere-ingestion-1".to_owned())
+    );
+    assert!(
+        assessment
+            .trace()
+            .source_record_ids()
+            .contains(&"kani_proof:belvedere::ingestion::record_identity_is_preserved".to_owned())
+    );
+    assert!(
+        !assessment.trace().source_record_ids().contains(
+            &"proof_record:belvedere::ingestion::DecodedRegistrySnapshot@kani".to_owned()
+        )
+    );
 
     let claim = diff
         .items()
@@ -104,6 +121,24 @@ fn landscape_diff_surfaces_snapshot_changes_for_auditors() -> Result<()> {
             .summary()
             .contains("to 0 bases, 1 verifier proofs, 1 assessments")
     );
+    assert!(
+        claim
+            .trace()
+            .source_record_ids()
+            .contains(&"assessment:assess-belvedere-ingestion-1".to_owned())
+    );
+    assert!(
+        claim
+            .trace()
+            .source_record_ids()
+            .contains(&"kani_proof:belvedere::ingestion::record_identity_is_preserved".to_owned())
+    );
+    assert!(
+        !claim
+            .trace()
+            .source_record_ids()
+            .contains(&"evidence_link:belvedere::ingestion::DecodedRegistrySnapshot#0".to_owned())
+    );
 
     let removed_gap = diff
         .items()
@@ -118,12 +153,27 @@ fn landscape_diff_surfaces_snapshot_changes_for_auditors() -> Result<()> {
         removed_gap.trace().claim_id(),
         "belvedere::ingestion::record_identity_is_preserved"
     );
+    assert_eq!(
+        removed_gap.trace().source_record_ids(),
+        &["kani_proof:belvedere::ingestion::record_identity_is_preserved".to_owned()]
+    );
 
-    assert!(diff.items().iter().any(|item| {
-        item.item_id()
-            == "belvedere.diff.Added.claim:belvedere::ingestion::unsupported_fields_are_accounted_for"
-            && item.summary().contains("added claim")
-    }));
+    let unsupported_claim = diff
+        .items()
+        .iter()
+        .find(|item| {
+            item.item_id()
+                == "belvedere.diff.Added.claim:belvedere::ingestion::unsupported_fields_are_accounted_for"
+        })
+        .ok_or_else(|| miette!("assessment-only proof claim should be added"))?;
+    assert!(unsupported_claim.summary().contains("added claim"));
+    assert_eq!(
+        unsupported_claim.trace().source_record_ids(),
+        &[
+            "assessment:belvedere::ingestion::unsupported_fields_are_accounted_for@1790550060"
+                .to_owned()
+        ]
+    );
     assert!(diff.items().iter().any(|item| {
         item.item_id()
             == "belvedere.diff.Added.gap:belvedere::ingestion::unsupported_fields_are_accounted_for:MissingProof"
