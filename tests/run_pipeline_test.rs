@@ -6,9 +6,10 @@ use std::{
 use belvedere::{
     BELVEDERE_RUN_CERTIFICATE_SCHEMA_ID, BELVEDERE_RUN_CERTIFICATE_SCHEMA_VERSION,
     BELVEDERE_STAGE_CERTIFICATE_SCHEMA_ID, BELVEDERE_STAGE_CERTIFICATE_SCHEMA_VERSION,
-    BelvedereCli, BelvedereCliOutput, BelvedereInvocationSurface, BelvedereRunInput,
-    UI_IR_SECTION_BACKEND_COVERAGE, UI_IR_SECTION_FILTERS, UI_IR_SECTION_PROOF_CHAINS,
-    UI_IR_SECTION_SOURCE_NAVIGATION, run_belvedere_pipeline, run_cli_with_writer,
+    BelvedereCli, BelvedereCliOutput, BelvedereInvocationSurface, BelvederePipelineStage,
+    BelvedereRunInput, UI_IR_SECTION_BACKEND_COVERAGE, UI_IR_SECTION_FILTERS,
+    UI_IR_SECTION_PROOF_CHAINS, UI_IR_SECTION_SOURCE_NAVIGATION, run_belvedere_pipeline,
+    run_cli_with_writer,
 };
 use miette::{IntoDiagnostic, Result, WrapErr};
 use serde_json::Value;
@@ -223,6 +224,32 @@ fn run_pipeline_uses_the_normal_amenable_artifact_path() -> Result<()> {
             .any(|certificate| certificate
                 .output_ids()
                 .contains(&UI_IR_SECTION_SOURCE_NAVIGATION.to_owned()))
+    );
+    let ui_stage = report
+        .certificate()
+        .stage_certificates()
+        .iter()
+        .find(|certificate| certificate.stage() == BelvederePipelineStage::UiIrProjection)
+        .ok_or_else(|| {
+            miette::miette!("run certificate should include UI IR projection stage evidence")
+        })?;
+    assert!(
+        report
+            .ui_ir_receipt()
+            .section_root_widget_ids()
+            .iter()
+            .all(|widget_id| ui_stage
+                .output_ids()
+                .contains(&format!("elicit_ui.section_root_widget:{widget_id}")))
+    );
+    assert!(
+        report
+            .ui_ir_receipt()
+            .trace_widget_ids()
+            .iter()
+            .all(|widget_id| ui_stage
+                .output_ids()
+                .contains(&format!("elicit_ui.trace_widget:{widget_id}")))
     );
     assert!(
         report

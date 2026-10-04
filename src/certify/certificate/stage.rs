@@ -236,6 +236,18 @@ impl BelvedereStageCertificate {
         counts.extend(receipt.proof_token_counts().clone());
         let mut output_ids = receipt.minted_standards().clone();
         output_ids.extend(receipt.section_ids().iter().cloned());
+        output_ids.extend(
+            receipt
+                .section_root_widget_ids()
+                .iter()
+                .map(|widget_id| format!("elicit_ui.section_root_widget:{widget_id}")),
+        );
+        output_ids.extend(
+            receipt
+                .trace_widget_ids()
+                .iter()
+                .map(|widget_id| format!("elicit_ui.trace_widget:{widget_id}")),
+        );
         Self::new(StageCertificateEvidence {
             stage: BelvederePipelineStage::UiIrProjection,
             contract: receipt.contract().to_owned(),
