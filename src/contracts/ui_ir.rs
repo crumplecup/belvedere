@@ -17,8 +17,8 @@ pub use projection::{
     TraceWidgetRef, UI_IR_SECTION_ASSESSMENT_QUEUE, UI_IR_SECTION_BACKEND_COVERAGE,
     UI_IR_SECTION_CLAIM_EXPLORER, UI_IR_SECTION_FILTERS, UI_IR_SECTION_GAP_QUEUE,
     UI_IR_SECTION_OVERVIEW, UI_IR_SECTION_PROOF_CHAINS, UI_IR_SECTION_PROVENANCE_ROOTS,
-    UI_IR_SECTION_SOURCE_NAVIGATION, UI_IR_SECTION_WITNESS_SURFACE, UiIrProjection,
-    UiIrProofBundle, UiIrSection, UiStandardMint, UiViewportVerification,
+    UI_IR_SECTION_REVIEW_WORKFLOW, UI_IR_SECTION_SOURCE_NAVIGATION, UI_IR_SECTION_WITNESS_SURFACE,
+    UiIrProjection, UiIrProofBundle, UiIrSection, UiStandardMint, UiViewportVerification,
 };
 pub(crate) use projection::{TraceWidgetRefBuilder, UiIrProjectionBuilder};
 pub use standards::{
@@ -81,6 +81,7 @@ impl BelvedereContract for ElicitUiProjectionContract {
             "auditor filter facets are represented as traceable UI controls",
             "backend coverage status is represented as traceable UI controls",
             "proof-chain widgets preserve chain topology and backend completeness labels",
+            "review workflow widgets preserve task lanes, priorities, actions, rationales, and trace IDs",
             "claim, assessment, witness, provenance, and gap widgets retain source trace references",
             "assessment widgets preserve review recency status in auditor-visible labels",
             "source record navigation widgets retain ingested source record IDs and artifact families",

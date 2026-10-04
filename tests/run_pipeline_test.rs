@@ -8,8 +8,8 @@ use belvedere::{
     BELVEDERE_STAGE_CERTIFICATE_SCHEMA_ID, BELVEDERE_STAGE_CERTIFICATE_SCHEMA_VERSION,
     BelvedereCli, BelvedereCliOutput, BelvedereInvocationSurface, BelvederePipelineStage,
     BelvedereRunInput, INPUT_FIDELITY_STANDARD_ID, UI_IR_SECTION_BACKEND_COVERAGE,
-    UI_IR_SECTION_FILTERS, UI_IR_SECTION_PROOF_CHAINS, UI_IR_SECTION_SOURCE_NAVIGATION,
-    run_belvedere_pipeline, run_cli_with_writer,
+    UI_IR_SECTION_FILTERS, UI_IR_SECTION_PROOF_CHAINS, UI_IR_SECTION_REVIEW_WORKFLOW,
+    UI_IR_SECTION_SOURCE_NAVIGATION, run_belvedere_pipeline, run_cli_with_writer,
 };
 use miette::{IntoDiagnostic, Result, WrapErr};
 use serde_json::Value;
@@ -49,7 +49,7 @@ fn run_pipeline_uses_the_normal_amenable_artifact_path() -> Result<()> {
         Some(&1)
     );
     assert_eq!(report.view_model_receipt().counts().source_items(), 7);
-    assert_eq!(report.ui_ir_receipt().counts().section_count(), 10);
+    assert_eq!(report.ui_ir_receipt().counts().section_count(), 11);
     assert!(
         report
             .ui_ir_receipt()
@@ -186,6 +186,13 @@ fn run_pipeline_uses_the_normal_amenable_artifact_path() -> Result<()> {
             .certificate()
             .stage_certificates()
             .iter()
+            .any(|certificate| certificate.counts().get("review_workflow_task_total") == Some(&4))
+    );
+    assert!(
+        report
+            .certificate()
+            .stage_certificates()
+            .iter()
             .any(|certificate| certificate
                 .counts()
                 .get("review_workflow_assessment_work_total")
@@ -216,7 +223,7 @@ fn run_pipeline_uses_the_normal_amenable_artifact_path() -> Result<()> {
             .certificate()
             .stage_certificates()
             .iter()
-            .any(|certificate| certificate.counts().get("role_button") == Some(&17))
+            .any(|certificate| certificate.counts().get("role_button") == Some(&21))
     );
     assert!(
         report
@@ -279,6 +286,15 @@ fn run_pipeline_uses_the_normal_amenable_artifact_path() -> Result<()> {
             .iter()
             .any(|certificate| certificate
                 .output_ids()
+                .contains(&UI_IR_SECTION_REVIEW_WORKFLOW.to_owned()))
+    );
+    assert!(
+        report
+            .certificate()
+            .stage_certificates()
+            .iter()
+            .any(|certificate| certificate
+                .output_ids()
                 .contains(&UI_IR_SECTION_BACKEND_COVERAGE.to_owned()))
     );
     assert!(
@@ -298,7 +314,7 @@ fn run_pipeline_uses_the_normal_amenable_artifact_path() -> Result<()> {
         .ok_or_else(|| {
             miette::miette!("run certificate should include UI IR projection stage evidence")
         })?;
-    assert_eq!(ui_stage.counts().get("ui_ir_sections_populated"), Some(&10));
+    assert_eq!(ui_stage.counts().get("ui_ir_sections_populated"), Some(&11));
     assert_eq!(ui_stage.counts().get("ui_ir_sections_empty"), Some(&0));
     assert_eq!(
         ui_stage.counts().get("ui_ir_section_widgets_total"),
@@ -306,7 +322,7 @@ fn run_pipeline_uses_the_normal_amenable_artifact_path() -> Result<()> {
     );
     assert_eq!(
         ui_stage.counts().get("ui_ir_sections_with_source_widgets"),
-        Some(&10)
+        Some(&11)
     );
     assert_eq!(
         ui_stage

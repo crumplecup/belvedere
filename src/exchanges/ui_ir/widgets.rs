@@ -10,8 +10,8 @@ use tracing::instrument;
 use crate::contracts::{
     AssessmentQueueItem, AssessmentWorkItem, AuditorFilterFacet, BackendCoverageItem,
     ClaimExplorerItem, GapItem, ProofChainItem, ProvenanceRootItem, ResolutionPath,
-    SourceNavigationItem, TraceRef, TraceWidgetRef, TraceWidgetRefBuilder, UiIrSection,
-    WitnessSurfaceItem,
+    ReviewWorkflowItem, SourceNavigationItem, TraceRef, TraceWidgetRef, TraceWidgetRefBuilder,
+    UiIrSection, WitnessSurfaceItem,
 };
 
 use super::UiIrError;
@@ -227,6 +227,30 @@ pub(super) fn assessment_work_widget(
             item.claim_id(),
             item.resolution_label(),
             item.reason()
+        ),
+        item.trace().clone(),
+        trace_widgets,
+    )
+}
+
+#[instrument(level = "debug", skip(backend, item, trace_widgets))]
+pub(super) fn review_workflow_widget(
+    backend: &AccessKitUiBackend,
+    item: &ReviewWorkflowItem,
+    trace_widgets: &mut Vec<TraceWidgetRef>,
+) -> Result<WidgetId, UiIrError> {
+    labeled_widget(
+        backend,
+        "button",
+        format!(
+            "Review task {} for {} lane {} priority {}; action: {}; rationale: {}; {}",
+            item.task_id(),
+            item.claim_id(),
+            item.lane(),
+            item.priority().label(),
+            item.action(),
+            item.rationale(),
+            count_label(item.source_count(), "source record", "source records")
         ),
         item.trace().clone(),
         trace_widgets,

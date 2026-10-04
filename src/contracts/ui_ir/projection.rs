@@ -23,6 +23,9 @@ pub const UI_IR_SECTION_BACKEND_COVERAGE: &str = "belvedere.ui.section.backend_c
 /// Stable section ID for the proof-chain navigation surface.
 pub const UI_IR_SECTION_PROOF_CHAINS: &str = "belvedere.ui.section.proof_chains";
 
+/// Stable section ID for auditor review workflow tasks.
+pub const UI_IR_SECTION_REVIEW_WORKFLOW: &str = "belvedere.ui.section.review_workflow";
+
 /// Stable section ID for the assessment queue surface.
 pub const UI_IR_SECTION_ASSESSMENT_QUEUE: &str = "belvedere.ui.section.assessment_queue";
 

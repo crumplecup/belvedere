@@ -10,7 +10,7 @@ use crate::{
         AssessmentQueueItem, AssessmentRecencySummary, AssessmentWorkItem, AuditorFilterFacet,
         AuditorNavigationContract, AuditorNavigationModel, AuditorNavigationModelBuilder,
         BelvedereContract, GapItem, LandscapeAssessment, OverviewView, ProofChainItem,
-        ProvenanceRootItem, SourceNavigationItem, TraceRef, ViewModelInput,
+        ProvenanceRootItem, ReviewWorkflowItem, SourceNavigationItem, TraceRef, ViewModelInput,
     },
     error::{BelvedereConstructionError, BelvedereError},
     exchanges::BelvedereExchange,
@@ -24,6 +24,7 @@ mod gaps;
 mod sources;
 mod traces;
 mod witness;
+mod workflow;
 
 use assessments::{project_assessment_queue, project_assessment_work};
 use claims::{project_claim_explorer, project_proof_chains};
@@ -33,6 +34,7 @@ use gaps::project_gaps;
 use sources::project_source_navigation;
 use traces::trace;
 use witness::project_witness_surface;
+use workflow::project_review_workflow;
 
 /// Exchange from a landscape graph into UI-neutral auditor navigation evidence.
 #[derive(Debug, Clone, Copy, Default)]
@@ -92,6 +94,7 @@ impl BelvedereExchange<AuditorNavigationContract> for AuditorNavigationProjectio
             &source_record_ids,
         );
         let proof_chains = project_proof_chains(landscape.claims(), &gaps, &source_record_ids)?;
+        let review_workflow = project_review_workflow(&proof_chains, &gaps)?;
         let assessment_queue =
             project_assessment_queue(landscape.assessments(), &source_record_ids)?;
         let assessment_work =
@@ -124,7 +127,7 @@ impl BelvedereExchange<AuditorNavigationContract> for AuditorNavigationProjectio
         let receipt_proof_chain_topology_counts = proof_chain_topology_counts(&proof_chains);
         let receipt_provenance_root_kind_counts = provenance_root_kind_counts(&provenance_roots);
         let receipt_review_workflow_counts =
-            review_workflow_counts(&proof_chains, &assessment_work, &gaps);
+            review_workflow_counts(&proof_chains, &review_workflow, &assessment_work, &gaps);
         let receipt_trace_source_counts = trace_source_counts(
             filter_facets
                 .iter()
@@ -132,6 +135,7 @@ impl BelvedereExchange<AuditorNavigationContract> for AuditorNavigationProjectio
                 .chain(backend_coverage.iter().map(|item| item.trace()))
                 .chain(claim_explorer.iter().map(|item| item.trace()))
                 .chain(proof_chains.iter().map(|item| item.trace()))
+                .chain(review_workflow.iter().map(|item| item.trace()))
                 .chain(assessment_queue.iter().map(|item| item.trace()))
                 .chain(assessment_work.iter().map(|item| item.trace()))
                 .chain(witness_surface.iter().map(|item| item.trace()))
@@ -145,6 +149,7 @@ impl BelvedereExchange<AuditorNavigationContract> for AuditorNavigationProjectio
             .filter_facets(filter_facets.len())
             .backend_coverage_items(backend_coverage.len())
             .proof_chain_items(proof_chains.len())
+            .review_workflow_items(review_workflow.len())
             .assessment_items(landscape.assessments().len())
             .assessment_work_items(assessment_work.len())
             .witness_items(witness_surface.len())
@@ -160,6 +165,7 @@ impl BelvedereExchange<AuditorNavigationContract> for AuditorNavigationProjectio
             .backend_coverage(backend_coverage)
             .claim_explorer(claim_explorer)
             .proof_chains(proof_chains)
+            .review_workflow(review_workflow)
             .assessment_queue(assessment_queue)
             .assessment_work(assessment_work)
             .witness_surface(witness_surface)
@@ -313,9 +319,13 @@ fn proof_chain_topology_counts(proof_chains: &[ProofChainItem]) -> BTreeMap<Stri
     ])
 }
 
-#[instrument(level = "debug", skip(proof_chains, assessment_work, gaps))]
+#[instrument(
+    level = "debug",
+    skip(proof_chains, review_workflow, assessment_work, gaps)
+)]
 fn review_workflow_counts(
     proof_chains: &[ProofChainItem],
+    review_workflow: &[ReviewWorkflowItem],
     assessment_work: &[AssessmentWorkItem],
     gaps: &[GapItem],
 ) -> BTreeMap<String, usize> {
@@ -326,6 +336,22 @@ fn review_workflow_counts(
                 "review_workflow_proof_chain_state_{}",
                 item.review_state()
             ))
+            .or_default() += 1;
+    }
+
+    counts.insert(
+        "review_workflow_task_total".to_owned(),
+        review_workflow.len(),
+    );
+    for item in review_workflow {
+        *counts
+            .entry(format!(
+                "review_workflow_task_priority_{}",
+                item.priority().label()
+            ))
+            .or_default() += 1;
+        *counts
+            .entry(format!("review_workflow_task_lane_{}", item.lane()))
             .or_default() += 1;
     }
 

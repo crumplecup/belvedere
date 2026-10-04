@@ -15,13 +15,14 @@ mod trace;
 pub use items::{
     AssessmentQueueItem, AssessmentWorkItem, AuditorFilterFacet, BackendCoverageItem,
     ClaimExplorerCounts, ClaimExplorerItem, GapItem, GapSeverity, ProofChainBackendCoverage,
-    ProofChainItem, ProofChainTopology, ProvenanceRootItem, SourceNavigationItem,
-    WitnessSurfaceItem,
+    ProofChainItem, ProofChainTopology, ProvenanceRootItem, ReviewWorkflowItem,
+    ReviewWorkflowPriority, SourceNavigationItem, WitnessSurfaceItem,
 };
 pub(crate) use items::{
     AssessmentQueueItemBuilder, AssessmentWorkItemBuilder, AuditorFilterFacetBuilder,
     BackendCoverageItemBuilder, GapItemBuilder, ProofChainBackendCoverageBuilder,
-    ProofChainItemBuilder, SourceNavigationItemBuilder, WitnessSurfaceItemBuilder,
+    ProofChainItemBuilder, ReviewWorkflowItemBuilder, SourceNavigationItemBuilder,
+    WitnessSurfaceItemBuilder,
 };
 pub use trace::TraceRef;
 
@@ -55,6 +56,7 @@ pub struct AuditorNavigationModel {
     backend_coverage: Vec<BackendCoverageItem>,
     claim_explorer: Vec<ClaimExplorerItem>,
     proof_chains: Vec<ProofChainItem>,
+    review_workflow: Vec<ReviewWorkflowItem>,
     assessment_queue: Vec<AssessmentQueueItem>,
     assessment_work: Vec<AssessmentWorkItem>,
     witness_surface: Vec<WitnessSurfaceItem>,
@@ -215,6 +217,7 @@ impl BelvedereContract for AuditorNavigationContract {
             "backend coverage entries expose Kani, Creusot, and Verus status per claim",
             "claim explorer entries retain bases, verifier coverage, filter memberships, contracts, assessments, gaps, and trace IDs",
             "proof-chain entries retain direct bases, resolved roots, subject verifier coverage, chain backend completeness, topology metrics, review state, next action, gaps, and trace IDs",
+            "review workflow entries consolidate proof-chain, gap, and assessment-work signals into stable auditor tasks",
             "assessment queue entries preserve recommendation lanes, resolution, recency vocabulary, and supersession links",
             "assessment work entries expose queue lanes, missing reviews, current reviewer actions, resolution labels, and trace IDs",
             "receipts count proof-chain review states, gap severities, and high-priority assessment work",

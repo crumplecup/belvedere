@@ -1,7 +1,7 @@
 use belvedere::{
     ArtifactKind, AssessmentStreamIngestion, AuditorNavigationProjection, GapSeverity,
     LandscapeGapKind, LandscapeInput, LandscapeModeling, RawAmenableArtifact,
-    RegistryDumpIngestion, ViewModelInput,
+    RegistryDumpIngestion, ReviewWorkflowPriority, ViewModelInput,
 };
 use miette::{IntoDiagnostic, Result, WrapErr, miette};
 
@@ -26,6 +26,7 @@ fn view_model_projection_builds_auditor_navigation_evidence() -> Result<()> {
     assert_eq!(receipt.counts().filter_facets(), 10);
     assert_eq!(receipt.counts().backend_coverage_items(), 12);
     assert_eq!(receipt.counts().proof_chain_items(), 4);
+    assert_eq!(receipt.counts().review_workflow_items(), 4);
     assert_eq!(receipt.counts().assessment_items(), 2);
     assert_eq!(receipt.counts().assessment_work_items(), 2);
     assert_eq!(receipt.counts().witness_items(), 1);
@@ -145,6 +146,30 @@ fn view_model_projection_builds_auditor_navigation_evidence() -> Result<()> {
     assert_eq!(
         receipt
             .review_workflow_counts()
+            .get("review_workflow_task_total"),
+        Some(&4)
+    );
+    assert_eq!(
+        receipt
+            .review_workflow_counts()
+            .get("review_workflow_task_priority_blocking"),
+        Some(&2)
+    );
+    assert_eq!(
+        receipt
+            .review_workflow_counts()
+            .get("review_workflow_task_priority_elevated"),
+        Some(&1)
+    );
+    assert_eq!(
+        receipt
+            .review_workflow_counts()
+            .get("review_workflow_task_priority_ready"),
+        Some(&1)
+    );
+    assert_eq!(
+        receipt
+            .review_workflow_counts()
             .get("review_workflow_assessment_work_total"),
         Some(&2)
     );
@@ -170,13 +195,13 @@ fn view_model_projection_builds_auditor_navigation_evidence() -> Result<()> {
         receipt
             .trace_source_counts()
             .get("view_model_traceable_items"),
-        Some(&49)
+        Some(&53)
     );
     assert_eq!(
         receipt
             .trace_source_counts()
             .get("view_model_trace_items_with_sources"),
-        Some(&49)
+        Some(&53)
     );
     assert_eq!(
         receipt
@@ -294,6 +319,23 @@ fn view_model_projection_builds_auditor_navigation_evidence() -> Result<()> {
     assert_eq!(creusot_chain_coverage.covered_claim_count(), 0);
     assert_eq!(creusot_chain_coverage.missing_claim_count(), 2);
     assert_eq!(decoded_chain.gap_count(), decoded_item.gap_count());
+
+    let decoded_task = model
+        .review_workflow()
+        .iter()
+        .find(|item| item.claim_id() == "belvedere::ingestion::DecodedRegistrySnapshot")
+        .ok_or_else(|| miette!("decoded registry claim should have a review task"))?;
+    assert_eq!(decoded_task.priority(), ReviewWorkflowPriority::Elevated);
+    assert_eq!(decoded_task.lane(), "elevated:witness-review");
+    assert_eq!(
+        decoded_task.action(),
+        "review trusted or opaque witness support"
+    );
+    assert!(decoded_task.rationale().contains("MissingAssessment"));
+    assert_eq!(
+        decoded_task.source_count(),
+        decoded_task.trace().source_record_ids().len()
+    );
     Ok(())
 }
 

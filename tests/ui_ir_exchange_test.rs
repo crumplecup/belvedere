@@ -2,8 +2,8 @@ use belvedere::{
     ArtifactKind, AssessmentStreamIngestion, AuditorNavigationProjection, ElicitUiProjection,
     LandscapeInput, LandscapeModeling, RawAmenableArtifact, RegistryDumpIngestion,
     UI_IR_SECTION_BACKEND_COVERAGE, UI_IR_SECTION_CLAIM_EXPLORER, UI_IR_SECTION_FILTERS,
-    UI_IR_SECTION_OVERVIEW, UI_IR_SECTION_PROOF_CHAINS, UI_IR_SECTION_SOURCE_NAVIGATION, UiIrInput,
-    ViewModelInput,
+    UI_IR_SECTION_OVERVIEW, UI_IR_SECTION_PROOF_CHAINS, UI_IR_SECTION_REVIEW_WORKFLOW,
+    UI_IR_SECTION_SOURCE_NAVIGATION, UiIrInput, ViewModelInput,
 };
 use miette::{IntoDiagnostic, Result, WrapErr, miette};
 
@@ -16,7 +16,7 @@ fn ui_ir_projection_mints_elicit_ui_standards_and_tree_proofs() -> Result<()> {
         .into_diagnostic()
         .wrap_err("fixture view model should project into elicit_ui")?;
 
-    assert_eq!(projection.sections().len(), 10);
+    assert_eq!(projection.sections().len(), 11);
     assert!(
         projection
             .sections()
@@ -42,6 +42,11 @@ fn ui_ir_projection_mints_elicit_ui_standards_and_tree_proofs() -> Result<()> {
         receipt
             .section_ids()
             .contains(&UI_IR_SECTION_PROOF_CHAINS.to_owned())
+    );
+    assert!(
+        receipt
+            .section_ids()
+            .contains(&UI_IR_SECTION_REVIEW_WORKFLOW.to_owned())
     );
     assert!(
         receipt
@@ -151,7 +156,7 @@ fn ui_ir_projection_mints_elicit_ui_standards_and_tree_proofs() -> Result<()> {
         );
     }
     assert!(receipt.counts().node_count() >= projection.trace_widgets().len());
-    assert_eq!(receipt.role_counts().get("role_button"), Some(&17));
+    assert_eq!(receipt.role_counts().get("role_button"), Some(&21));
     assert_eq!(receipt.role_counts().get("role_checkbox"), Some(&10));
     assert_eq!(receipt.role_counts().get("role_link"), Some(&10));
     assert_eq!(receipt.role_counts().get("role_region"), Some(&1));
@@ -170,9 +175,15 @@ fn ui_ir_projection_mints_elicit_ui_standards_and_tree_proofs() -> Result<()> {
     );
     assert_eq!(
         receipt
+            .section_widget_counts()
+            .get(UI_IR_SECTION_REVIEW_WORKFLOW),
+        Some(&4)
+    );
+    assert_eq!(
+        receipt
             .section_population_counts()
             .get("ui_ir_sections_populated"),
-        Some(&10)
+        Some(&11)
     );
     assert_eq!(
         receipt
@@ -190,7 +201,7 @@ fn ui_ir_projection_mints_elicit_ui_standards_and_tree_proofs() -> Result<()> {
         receipt
             .section_trace_counts()
             .get("ui_ir_sections_with_source_widgets"),
-        Some(&10)
+        Some(&11)
     );
     assert_eq!(
         receipt
@@ -398,6 +409,35 @@ fn ui_ir_projection_preserves_trace_widgets_for_auditor_deep_dives() -> Result<(
     assert!(chain_widget.label().contains("3 chain gaps"));
     assert!(chain_widget.label().contains("2 gaps"));
     assert!(!chain_widget.source_record_ids().is_empty());
+    let workflow_widget = projection
+        .trace_widgets()
+        .iter()
+        .find(|widget| {
+            widget.label().starts_with(
+                "Review task belvedere.review:belvedere::ingestion::DecodedRegistrySnapshot:elevated:witness-review",
+            )
+        })
+        .ok_or_else(|| miette!("review workflow task should have a traceable widget"))?;
+    assert!(
+        workflow_widget
+            .label()
+            .contains("lane elevated:witness-review priority elevated")
+    );
+    assert!(
+        workflow_widget
+            .label()
+            .contains("action: review trusted or opaque witness support")
+    );
+    assert!(
+        workflow_widget
+            .label()
+            .contains("rationale: proof chain is elevated with 2 modeled gaps")
+    );
+    assert!(
+        workflow_widget.source_record_ids().contains(
+            &"proof_record:belvedere::ingestion::DecodedRegistrySnapshot@kani".to_owned()
+        )
+    );
     let witness_widget = projection
         .trace_widgets()
         .iter()

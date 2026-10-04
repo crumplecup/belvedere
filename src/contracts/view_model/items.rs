@@ -9,6 +9,7 @@ use crate::contracts::{ArtifactKind, view_model::TraceRef};
 mod assessment;
 mod claim;
 mod gap;
+mod workflow;
 
 pub use assessment::{AssessmentQueueItem, AssessmentWorkItem};
 pub(crate) use assessment::{AssessmentQueueItemBuilder, AssessmentWorkItemBuilder};
@@ -19,6 +20,8 @@ pub use claim::{
 pub(crate) use claim::{ProofChainBackendCoverageBuilder, ProofChainItemBuilder};
 pub(crate) use gap::GapItemBuilder;
 pub use gap::{GapItem, GapSeverity};
+pub(crate) use workflow::ReviewWorkflowItemBuilder;
+pub use workflow::{ReviewWorkflowItem, ReviewWorkflowPriority};
 
 /// Auditor filter facet for narrowing the displayed defensive landscape.
 #[derive(Debug, Clone, PartialEq, Eq, Getters, Builder)]

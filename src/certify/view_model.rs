@@ -39,6 +39,7 @@ pub struct ViewModelReceiptCounts {
     filter_facets: usize,
     backend_coverage_items: usize,
     proof_chain_items: usize,
+    review_workflow_items: usize,
     assessment_items: usize,
     assessment_work_items: usize,
     witness_items: usize,
@@ -70,6 +71,12 @@ impl ViewModelReceiptCounts {
     #[must_use]
     pub const fn proof_chain_items(self) -> usize {
         self.proof_chain_items
+    }
+
+    /// Number of review workflow tasks.
+    #[must_use]
+    pub const fn review_workflow_items(self) -> usize {
+        self.review_workflow_items
     }
 
     /// Number of assessment queue items.
