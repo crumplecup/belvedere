@@ -7,7 +7,10 @@ use tracing::instrument;
 
 use crate::{
     certify::LandscapeDiffReceipt,
-    contracts::{BelvedereContract, LandscapeGraph, TraceRef},
+    contracts::{
+        BelvedereContract, LANDSCAPE_CONSTRUCTION_STANDARD_ID, LandscapeGraph,
+        REPORT_REPRODUCIBILITY_STANDARD_ID, TraceRef,
+    },
 };
 
 /// Two landscape snapshots accepted by the landscape diff exchange.
@@ -112,6 +115,14 @@ impl BelvedereContract for LandscapeDiffContract {
             "assessment additions, removals, and reviewer evidence changes are surfaced deterministically",
             "gap additions, removals, and detail changes are surfaced deterministically",
             "each diff item preserves the source identities available from the compared snapshots",
+        ]
+    }
+
+    #[instrument(level = "trace")]
+    fn standard_ids() -> &'static [&'static str] {
+        &[
+            LANDSCAPE_CONSTRUCTION_STANDARD_ID,
+            REPORT_REPRODUCIBILITY_STANDARD_ID,
         ]
     }
 }

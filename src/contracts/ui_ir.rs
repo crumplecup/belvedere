@@ -4,7 +4,10 @@ use tracing::instrument;
 
 use crate::{
     certify::UiIrReceipt,
-    contracts::{AuditorNavigationModel, BelvedereContract},
+    contracts::{
+        ACCESSIBILITY_BASELINE_STANDARD_ID, AuditorNavigationModel, BelvedereContract,
+        UI_PROJECTION_FIDELITY_STANDARD_ID,
+    },
 };
 
 mod projection;
@@ -85,6 +88,14 @@ impl BelvedereContract for ElicitUiProjectionContract {
             "projection receipts record WCAG verification coverage across configured auditor viewports",
             "IrSourced is asserted at the projection boundary and WcagVerified is proven from the emitted tree",
             "the projection records which elicit_ui props were lifted into Amenable standards",
+        ]
+    }
+
+    #[instrument(level = "trace")]
+    fn standard_ids() -> &'static [&'static str] {
+        &[
+            UI_PROJECTION_FIDELITY_STANDARD_ID,
+            ACCESSIBILITY_BASELINE_STANDARD_ID,
         ]
     }
 }

@@ -70,6 +70,7 @@ pub struct BelvedereStageCertificate {
     #[getter(skip)]
     stage: BelvederePipelineStage,
     contract: String,
+    standards: Vec<String>,
     requires: Vec<String>,
     ensures: Vec<String>,
     input_ids: Vec<String>,
@@ -84,6 +85,7 @@ pub struct BelvedereStageCertificate {
 struct StageCertificateEvidence {
     stage: BelvederePipelineStage,
     contract: String,
+    standards: Vec<String>,
     requires: Vec<String>,
     ensures: Vec<String>,
     input_ids: Vec<String>,
@@ -131,6 +133,7 @@ impl BelvedereStageCertificate {
         Self::new(StageCertificateEvidence {
             stage: BelvederePipelineStage::LandscapeModeling,
             contract: receipt.contract().to_owned(),
+            standards: contract_standards::<LandscapeModelingContract>(),
             requires: contract_requirements::<LandscapeModelingContract>(),
             ensures: contract_guarantees::<LandscapeModelingContract>(),
             input_ids: receipt.source_record_ids().clone(),
@@ -156,6 +159,7 @@ impl BelvedereStageCertificate {
         Self::new(StageCertificateEvidence {
             stage: BelvederePipelineStage::LandscapeDiff,
             contract: receipt.contract().to_owned(),
+            standards: contract_standards::<LandscapeDiffContract>(),
             requires: contract_requirements::<LandscapeDiffContract>(),
             ensures: contract_guarantees::<LandscapeDiffContract>(),
             input_ids: receipt.source_record_ids().clone(),
@@ -204,6 +208,7 @@ impl BelvedereStageCertificate {
         Self::new(StageCertificateEvidence {
             stage: BelvederePipelineStage::AuditorNavigation,
             contract: receipt.contract().to_owned(),
+            standards: contract_standards::<AuditorNavigationContract>(),
             requires: contract_requirements::<AuditorNavigationContract>(),
             ensures: contract_guarantees::<AuditorNavigationContract>(),
             input_ids: receipt.source_record_ids().clone(),
@@ -258,6 +263,7 @@ impl BelvedereStageCertificate {
         Self::new(StageCertificateEvidence {
             stage: BelvederePipelineStage::UiIrProjection,
             contract: receipt.contract().to_owned(),
+            standards: contract_standards::<ElicitUiProjectionContract>(),
             requires: contract_requirements::<ElicitUiProjectionContract>(),
             ensures: contract_guarantees::<ElicitUiProjectionContract>(),
             input_ids: receipt.source_record_ids().clone(),
@@ -289,6 +295,7 @@ impl BelvedereStageCertificate {
         Self::new(StageCertificateEvidence {
             stage,
             contract: receipt.contract().to_owned(),
+            standards: contract_standards::<C>(),
             requires: contract_requirements::<C>(),
             ensures: contract_guarantees::<C>(),
             input_ids: vec![format!(
@@ -321,6 +328,7 @@ impl BelvedereStageCertificate {
             id,
             stage: evidence.stage,
             contract: evidence.contract,
+            standards: evidence.standards,
             requires: evidence.requires,
             ensures: evidence.ensures,
             input_ids: evidence.input_ids,
@@ -346,6 +354,7 @@ fn stage_digest(
     );
     update_field(&mut hasher, evidence.stage.as_str());
     update_field(&mut hasher, &evidence.contract);
+    update_fields(&mut hasher, &evidence.standards);
     update_fields(&mut hasher, &evidence.requires);
     update_fields(&mut hasher, &evidence.ensures);
     update_fields(&mut hasher, &evidence.input_ids);
@@ -367,6 +376,14 @@ fn contract_requirements<C: BelvedereContract>() -> Vec<String> {
     C::requires()
         .iter()
         .map(|requirement| (*requirement).to_owned())
+        .collect()
+}
+
+#[instrument(level = "trace")]
+fn contract_standards<C: BelvedereContract>() -> Vec<String> {
+    C::standard_ids()
+        .iter()
+        .map(|standard| (*standard).to_owned())
         .collect()
 }
 

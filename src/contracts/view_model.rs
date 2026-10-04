@@ -6,7 +6,7 @@ use tracing::instrument;
 
 use crate::{
     certify::ViewModelReceipt,
-    contracts::{BelvedereContract, LandscapeGraph},
+    contracts::{BelvedereContract, LandscapeGraph, VIEW_MODEL_FIDELITY_STANDARD_ID},
 };
 
 mod items;
@@ -223,5 +223,10 @@ impl BelvedereContract for AuditorNavigationContract {
             "gap entries preserve conservative gap kinds, queue lanes, severity, action, and trace IDs",
             "source navigation entries preserve ingested source record identities, source kinds, and navigation targets",
         ]
+    }
+
+    #[instrument(level = "trace")]
+    fn standard_ids() -> &'static [&'static str] {
+        &[VIEW_MODEL_FIDELITY_STANDARD_ID]
     }
 }

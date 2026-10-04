@@ -8,7 +8,10 @@ use tracing::instrument;
 
 use crate::{
     certify::LandscapeReceipt,
-    contracts::{BelvedereContract, DecodedAssessmentStream, DecodedRegistrySnapshot},
+    contracts::{
+        BelvedereContract, DecodedAssessmentStream, DecodedRegistrySnapshot,
+        GAP_SOUNDNESS_STANDARD_ID, LANDSCAPE_CONSTRUCTION_STANDARD_ID,
+    },
 };
 
 mod claims;
@@ -124,6 +127,14 @@ impl BelvedereContract for LandscapeModelingContract {
             "assessment events attach by proof ID without losing reviewer vocabulary",
             "latest and superseded assessment events are distinguished per proof ID",
             "missing proofs, missing assessments, replacement, retirement, and trusted or opaque support remain visible as gaps",
+        ]
+    }
+
+    #[instrument(level = "trace")]
+    fn standard_ids() -> &'static [&'static str] {
+        &[
+            LANDSCAPE_CONSTRUCTION_STANDARD_ID,
+            GAP_SOUNDNESS_STANDARD_ID,
         ]
     }
 }

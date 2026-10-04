@@ -9,7 +9,10 @@ use derive_getters::Getters;
 use sha2::{Digest as _, Sha256};
 use tracing::instrument;
 
-use crate::{certify::IngestionReceipt, contracts::BelvedereContract};
+use crate::{
+    certify::IngestionReceipt,
+    contracts::{BelvedereContract, INPUT_FIDELITY_STANDARD_ID, SCHEMA_HONESTY_STANDARD_ID},
+};
 
 mod assessment;
 mod registry;
@@ -144,6 +147,11 @@ impl BelvedereContract for RegistryDumpIngestionContract {
             "unsupported fields are preserved in the ingestion receipt",
         ]
     }
+
+    #[instrument(level = "trace")]
+    fn standard_ids() -> &'static [&'static str] {
+        &[INPUT_FIDELITY_STANDARD_ID, SCHEMA_HONESTY_STANDARD_ID]
+    }
 }
 
 /// Ingestion contract for proof assessment JSON Lines.
@@ -173,6 +181,11 @@ impl BelvedereContract for AssessmentStreamIngestionContract {
             "legacy assessment records preserve schema version and timestamp field spelling",
             "unsupported fields are preserved in the ingestion receipt",
         ]
+    }
+
+    #[instrument(level = "trace")]
+    fn standard_ids() -> &'static [&'static str] {
+        &[INPUT_FIDELITY_STANDARD_ID, SCHEMA_HONESTY_STANDARD_ID]
     }
 }
 

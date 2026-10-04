@@ -7,9 +7,9 @@ use belvedere::{
     BELVEDERE_RUN_CERTIFICATE_SCHEMA_ID, BELVEDERE_RUN_CERTIFICATE_SCHEMA_VERSION,
     BELVEDERE_STAGE_CERTIFICATE_SCHEMA_ID, BELVEDERE_STAGE_CERTIFICATE_SCHEMA_VERSION,
     BelvedereCli, BelvedereCliOutput, BelvedereInvocationSurface, BelvederePipelineStage,
-    BelvedereRunInput, UI_IR_SECTION_BACKEND_COVERAGE, UI_IR_SECTION_FILTERS,
-    UI_IR_SECTION_PROOF_CHAINS, UI_IR_SECTION_SOURCE_NAVIGATION, run_belvedere_pipeline,
-    run_cli_with_writer,
+    BelvedereRunInput, INPUT_FIDELITY_STANDARD_ID, UI_IR_SECTION_BACKEND_COVERAGE,
+    UI_IR_SECTION_FILTERS, UI_IR_SECTION_PROOF_CHAINS, UI_IR_SECTION_SOURCE_NAVIGATION,
+    run_belvedere_pipeline, run_cli_with_writer,
 };
 use miette::{IntoDiagnostic, Result, WrapErr};
 use serde_json::Value;
@@ -75,9 +75,20 @@ fn run_pipeline_uses_the_normal_amenable_artifact_path() -> Result<()> {
             .all(
                 |certificate| certificate.schema_id() == BELVEDERE_STAGE_CERTIFICATE_SCHEMA_ID
                     && *certificate.schema_version() == BELVEDERE_STAGE_CERTIFICATE_SCHEMA_VERSION
+                    && !certificate.standards().is_empty()
                     && !certificate.requires().is_empty()
                     && !certificate.ensures().is_empty()
             )
+    );
+    assert!(
+        report
+            .certificate()
+            .stage_certificates()
+            .iter()
+            .any(|certificate| certificate
+                .standards()
+                .iter()
+                .any(|standard| standard == INPUT_FIDELITY_STANDARD_ID))
     );
     assert!(
         report
@@ -564,6 +575,9 @@ fn cli_can_emit_the_run_certificate_as_json() -> Result<()> {
                         == Some(BELVEDERE_STAGE_CERTIFICATE_SCHEMA_ID)
                         && stage_certificate["schema_version"].as_u64()
                             == Some(u64::from(BELVEDERE_STAGE_CERTIFICATE_SCHEMA_VERSION))
+                        && stage_certificate["standards"]
+                            .as_array()
+                            .is_some_and(|standards| !standards.is_empty())
                         && stage_certificate["requires"]
                             .as_array()
                             .is_some_and(|requirements| !requirements.is_empty())
@@ -675,6 +689,9 @@ fn cli_can_persist_the_run_certificate_as_json() -> Result<()> {
                     stage_certificate["invariant_checks"]
                         .as_array()
                         .is_some_and(|checks| !checks.is_empty())
+                        && stage_certificate["standards"]
+                            .as_array()
+                            .is_some_and(|standards| !standards.is_empty())
                 })
             )
     );

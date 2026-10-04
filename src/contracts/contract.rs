@@ -17,4 +17,9 @@ pub trait BelvedereContract {
 
     /// Postconditions the exchange promises for produced output.
     fn ensures() -> &'static [&'static str];
+
+    /// Amenable standard IDs the exchange claims to satisfy.
+    fn standard_ids() -> &'static [&'static str] {
+        &[]
+    }
 }

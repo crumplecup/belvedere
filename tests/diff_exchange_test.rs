@@ -3,8 +3,9 @@ use std::{fs, process};
 use belvedere::{
     ArtifactKind, AssessmentStreamIngestion, BELVEDERE_RUN_CERTIFICATE_SCHEMA_ID,
     BelvedereLandscapeDiffRunInput, BelvederePipelineStage, BelvedereRunInput,
-    BelvedereStageCertificate, LandscapeDiffChangeKind, LandscapeDiffInput, LandscapeDiffing,
-    LandscapeInput, LandscapeModeling, RawAmenableArtifact, RegistryDumpIngestion,
+    BelvedereStageCertificate, LANDSCAPE_CONSTRUCTION_STANDARD_ID, LandscapeDiffChangeKind,
+    LandscapeDiffInput, LandscapeDiffing, LandscapeInput, LandscapeModeling,
+    REPORT_REPRODUCIBILITY_STANDARD_ID, RawAmenableArtifact, RegistryDumpIngestion,
     run_belvedere_landscape_diff,
 };
 use miette::{IntoDiagnostic, Result, WrapErr, miette};
@@ -62,6 +63,16 @@ fn landscape_diff_surfaces_snapshot_changes_for_auditors() -> Result<()> {
     let certificate = BelvedereStageCertificate::landscape_diff(&receipt);
     assert_eq!(certificate.stage(), BelvederePipelineStage::LandscapeDiff);
     assert_eq!(certificate.contract(), "belvedere.diff.landscape");
+    assert!(
+        certificate
+            .standards()
+            .contains(&LANDSCAPE_CONSTRUCTION_STANDARD_ID.to_owned())
+    );
+    assert!(
+        certificate
+            .standards()
+            .contains(&REPORT_REPRODUCIBILITY_STANDARD_ID.to_owned())
+    );
     assert_eq!(
         certificate.counts().get("total_items"),
         Some(&diff.items().len())
