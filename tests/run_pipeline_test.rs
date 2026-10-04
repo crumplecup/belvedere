@@ -263,6 +263,18 @@ fn run_certificate_is_reproducible_portable_evidence() -> Result<()> {
         second.certificate().stage_certificate_ids()
     );
     assert_eq!(
+        first.certificate().input_artifact_digests(),
+        second.certificate().input_artifact_digests()
+    );
+    let expected_input_artifact_digests = vec![
+        first.registry_receipt().digest().to_owned(),
+        first.assessment_receipt().digest().to_owned(),
+    ];
+    assert_eq!(
+        first.certificate().input_artifact_digests(),
+        &expected_input_artifact_digests
+    );
+    assert_eq!(
         first.certificate().stage_certificate_digests(),
         second.certificate().stage_certificate_digests()
     );
@@ -371,6 +383,12 @@ fn cli_can_emit_the_run_certificate_as_json() -> Result<()> {
         certificate["input_artifact_ids"].as_array().map(Vec::len),
         Some(2)
     );
+    assert_eq!(
+        certificate["input_artifact_digests"]
+            .as_array()
+            .map(Vec::len),
+        Some(2)
+    );
     assert!(
         certificate["stage_certificates"]
             .as_array()
@@ -465,6 +483,12 @@ fn cli_can_persist_the_run_certificate_as_json() -> Result<()> {
             .as_array()
             .map(Vec::len),
         Some(5)
+    );
+    assert_eq!(
+        certificate["input_artifact_digests"]
+            .as_array()
+            .map(Vec::len),
+        Some(2)
     );
     assert!(
         certificate["stage_certificates"]

@@ -77,6 +77,7 @@ pub struct BelvedereRunCertificate {
     belvedere_version: String,
     invocation: BelvedereRunInvocation,
     input_artifact_ids: Vec<String>,
+    input_artifact_digests: Vec<String>,
     stage_certificates: Vec<BelvedereStageCertificate>,
     stage_certificate_ids: Vec<String>,
     stage_certificate_digests: Vec<String>,
@@ -145,6 +146,10 @@ impl BelvedereRunCertificate {
             artifact_id(registry_receipt),
             artifact_id(assessment_receipt),
         ];
+        let input_artifact_digests = vec![
+            registry_receipt.digest().to_owned(),
+            assessment_receipt.digest().to_owned(),
+        ];
         let stage_certificate_ids = stage_certificates
             .iter()
             .map(|certificate| certificate.id().to_owned())
@@ -158,6 +163,7 @@ impl BelvedereRunCertificate {
             &belvedere_version,
             &invocation,
             &input_artifact_ids,
+            &input_artifact_digests,
             &stage_certificate_ids,
             &stage_certificate_digests,
         );
@@ -169,6 +175,7 @@ impl BelvedereRunCertificate {
             belvedere_version,
             invocation,
             input_artifact_ids,
+            input_artifact_digests,
             stage_certificates,
             stage_certificate_ids,
             stage_certificate_digests,
@@ -192,6 +199,7 @@ fn run_digest(
     belvedere_version: &str,
     invocation: &BelvedereRunInvocation,
     input_artifact_ids: &[String],
+    input_artifact_digests: &[String],
     stage_certificate_ids: &[String],
     stage_certificate_digests: &[String],
 ) -> String {
@@ -205,6 +213,7 @@ fn run_digest(
     update_field(&mut hasher, invocation.surface().as_str());
     update_fields(&mut hasher, invocation.arguments());
     update_fields(&mut hasher, input_artifact_ids);
+    update_fields(&mut hasher, input_artifact_digests);
     update_fields(&mut hasher, stage_certificate_ids);
     update_fields(&mut hasher, stage_certificate_digests);
     hex_digest(hasher)
