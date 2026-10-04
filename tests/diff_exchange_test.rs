@@ -1,10 +1,11 @@
 use std::{fs, process};
 
 use belvedere::{
-    ArtifactKind, AssessmentStreamIngestion, BelvedereLandscapeDiffRunInput,
-    BelvederePipelineStage, BelvedereRunInput, BelvedereStageCertificate, LandscapeDiffChangeKind,
-    LandscapeDiffInput, LandscapeDiffing, LandscapeInput, LandscapeModeling, RawAmenableArtifact,
-    RegistryDumpIngestion, run_belvedere_landscape_diff,
+    ArtifactKind, AssessmentStreamIngestion, BELVEDERE_RUN_CERTIFICATE_SCHEMA_ID,
+    BelvedereLandscapeDiffRunInput, BelvederePipelineStage, BelvedereRunInput,
+    BelvedereStageCertificate, LandscapeDiffChangeKind, LandscapeDiffInput, LandscapeDiffing,
+    LandscapeInput, LandscapeModeling, RawAmenableArtifact, RegistryDumpIngestion,
+    run_belvedere_landscape_diff,
 };
 use miette::{IntoDiagnostic, Result, WrapErr, miette};
 
@@ -203,6 +204,33 @@ fn landscape_diff_runner_uses_the_normal_artifact_path() -> Result<()> {
             .counts()
             .get("diff_change_added_assessment"),
         Some(&2)
+    );
+    assert_eq!(
+        report.certificate().schema_id(),
+        BELVEDERE_RUN_CERTIFICATE_SCHEMA_ID
+    );
+    assert_eq!(report.certificate().input_artifact_ids().len(), 4);
+    assert_eq!(report.certificate().stage_certificates().len(), 7);
+    assert_eq!(report.certificate().stage_certificate_ids().len(), 7);
+    assert!(
+        report
+            .certificate()
+            .input_artifact_ids()
+            .iter()
+            .any(|artifact_id| artifact_id.starts_with("previous_registry:registry_dump:"))
+    );
+    assert!(
+        report
+            .certificate()
+            .input_artifact_ids()
+            .iter()
+            .any(|artifact_id| artifact_id.starts_with("current_assessment:proof_assessments:"))
+    );
+    assert!(
+        report
+            .certificate()
+            .stage_certificate_ids()
+            .contains(report.diff_certificate().id())
     );
 
     fs::remove_file(previous_assessments_path)

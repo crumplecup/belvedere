@@ -153,6 +153,29 @@ impl BelvedereRunCertificate {
             registry_receipt.digest().to_owned(),
             assessment_receipt.digest().to_owned(),
         ];
+        Self::from_stage_certificates(
+            invocation,
+            input_artifact_ids,
+            input_artifact_digests,
+            stage_certificates,
+        )
+    }
+
+    #[instrument(
+        level = "debug",
+        skip(
+            invocation,
+            input_artifact_ids,
+            input_artifact_digests,
+            stage_certificates
+        )
+    )]
+    pub(crate) fn from_stage_certificates(
+        invocation: BelvedereRunInvocation,
+        input_artifact_ids: Vec<String>,
+        input_artifact_digests: Vec<String>,
+        stage_certificates: Vec<BelvedereStageCertificate>,
+    ) -> Self {
         let stage_certificate_ids = stage_certificates
             .iter()
             .map(|certificate| certificate.id().to_owned())
