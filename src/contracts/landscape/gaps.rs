@@ -23,7 +23,8 @@ impl LandscapeGap {
 }
 
 /// Conservative gap categories computed by the landscape model.
-#[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash, serde::Serialize)]
+#[serde(rename_all = "snake_case")]
 pub enum LandscapeGapKind {
     /// A claim has no modeled proof coverage.
     MissingProof,

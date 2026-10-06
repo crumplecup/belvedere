@@ -2,11 +2,13 @@
 
 use derive_builder::Builder;
 use derive_getters::Getters;
+use serde::Serialize;
 
 use crate::contracts::{landscape::LandscapeGapKind, view_model::TraceRef};
 
 /// Auditor-facing severity for a conservative review gap.
-#[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash, Serialize)]
+#[serde(rename_all = "snake_case")]
 pub enum GapSeverity {
     /// Gap should block certification review until resolved.
     Blocking,
@@ -35,7 +37,7 @@ impl GapSeverity {
 }
 
 /// Gap item.
-#[derive(Debug, Clone, PartialEq, Eq, Getters, Builder)]
+#[derive(Debug, Clone, PartialEq, Eq, Getters, Builder, Serialize)]
 #[builder(vis = "pub(crate)", setter(into))]
 pub struct GapItem {
     claim_id: String,

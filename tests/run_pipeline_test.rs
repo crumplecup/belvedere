@@ -877,6 +877,58 @@ fn assert_ui_ir_receipt(receipt: &Value) {
     );
 }
 
+fn assert_auditor_navigation_model(model: &Value) {
+    assert_eq!(model["overview"]["claim_count"].as_u64(), Some(4));
+    assert_eq!(model["overview"]["root_count"].as_u64(), Some(3));
+    assert_eq!(
+        model["overview"]["assessment_recency"]["current_count"].as_u64(),
+        Some(2)
+    );
+    assert_eq!(model["filter_facets"].as_array().map(Vec::len), Some(10));
+    assert_eq!(model["backend_coverage"].as_array().map(Vec::len), Some(12));
+    assert_eq!(model["claim_explorer"].as_array().map(Vec::len), Some(4));
+    assert_eq!(model["proof_chains"].as_array().map(Vec::len), Some(4));
+    assert_eq!(model["review_workflow"].as_array().map(Vec::len), Some(4));
+    assert_eq!(model["source_record_ids"].as_array().map(Vec::len), Some(7));
+    assert!(model["claim_explorer"].as_array().is_some_and(|items| {
+        items.iter().any(|item| {
+            item["claim_id"].as_str() == Some("belvedere::ingestion::DecodedRegistrySnapshot")
+        })
+    }));
+}
+
+fn assert_ui_ir_projection(projection: &Value) {
+    assert!(projection.get("tree").is_none());
+    assert!(projection.get("proofs").is_none());
+    assert_eq!(projection["sections"].as_array().map(Vec::len), Some(11));
+    assert_eq!(
+        projection["trace_widgets"].as_array().map(Vec::len),
+        Some(54)
+    );
+    assert_eq!(
+        projection["viewport_verifications"]
+            .as_array()
+            .map(Vec::len),
+        Some(3)
+    );
+    assert_eq!(
+        projection["minted_standards"].as_array().map(Vec::len),
+        Some(4)
+    );
+    assert!(projection["sections"].as_array().is_some_and(|sections| {
+        sections
+            .iter()
+            .any(|section| section["id"].as_str() == Some(UI_IR_SECTION_REVIEW_WORKFLOW))
+    }));
+    assert!(
+        projection["minted_standards"]
+            .as_array()
+            .is_some_and(|standards| standards
+                .iter()
+                .any(|standard| standard["prop"].as_str() == Some("elicit_ui::WcagVerified")))
+    );
+}
+
 #[test]
 fn cli_can_emit_the_run_certificate_as_json() -> Result<()> {
     belvedere::init_tracing();
@@ -1167,6 +1219,51 @@ fn cli_can_emit_the_view_model_receipt_as_json() -> Result<()> {
 }
 
 #[test]
+fn cli_can_emit_run_projection_artifacts_as_json() -> Result<()> {
+    belvedere::init_tracing();
+
+    let cases: [(&str, BelvedereCliOutput, ReceiptAssertion); 2] = [
+        (
+            "--view-model-json",
+            BelvedereCliOutput::RunViewModelJson,
+            assert_auditor_navigation_model,
+        ),
+        (
+            "--ui-ir-json",
+            BelvedereCliOutput::RunUiIrJson,
+            assert_ui_ir_projection,
+        ),
+    ];
+
+    for (flag, expected_output, assert_artifact) in cases {
+        let args = [
+            flag,
+            "tests/fixtures/registry_dump.json",
+            "tests/fixtures/proof_assessments.jsonl",
+        ]
+        .into_iter()
+        .map(str::to_owned)
+        .collect::<Vec<_>>();
+        let command = BelvedereCli::from_args(args.clone())
+            .into_diagnostic()
+            .wrap_err("projection artifact JSON flag should be part of the public CLI API")?;
+
+        assert_eq!(command.output(), expected_output);
+
+        let mut output = Vec::new();
+        let status = run_cli_with_writer(args, &mut output);
+        assert_eq!(status, ExitCode::SUCCESS);
+
+        let artifact: Value = serde_json::from_slice(&output)
+            .into_diagnostic()
+            .wrap_err("CLI projection artifact output should be parseable JSON")?;
+        assert_artifact(&artifact);
+    }
+
+    Ok(())
+}
+
+#[test]
 fn cli_can_persist_the_registry_ingestion_receipt_as_json() -> Result<()> {
     belvedere::init_tracing();
 
@@ -1402,6 +1499,68 @@ fn cli_can_persist_the_view_model_receipt_as_json() -> Result<()> {
     fs::remove_file(&receipt_path)
         .into_diagnostic()
         .wrap_err("temporary view-model receipt file should be removable")?;
+    Ok(())
+}
+
+#[test]
+fn cli_can_persist_run_projection_artifacts_as_json() -> Result<()> {
+    belvedere::init_tracing();
+
+    let view_model_path =
+        std::env::temp_dir().join(format!("belvedere-view-model-{}.json", process::id()));
+    let ui_ir_path = std::env::temp_dir().join(format!("belvedere-ui-ir-{}.json", process::id()));
+    let cases: [(&str, PathBuf, BelvedereCliOutput, ReceiptAssertion); 2] = [
+        (
+            "--view-model-file",
+            view_model_path.clone(),
+            BelvedereCliOutput::RunViewModelFile(view_model_path.clone()),
+            assert_auditor_navigation_model,
+        ),
+        (
+            "--ui-ir-file",
+            ui_ir_path.clone(),
+            BelvedereCliOutput::RunUiIrFile(ui_ir_path.clone()),
+            assert_ui_ir_projection,
+        ),
+    ];
+
+    for (flag, artifact_path, expected_output, assert_artifact) in cases {
+        let artifact_path_text = artifact_path
+            .to_str()
+            .ok_or_else(|| miette::miette!("temporary projection path should be UTF-8"))?;
+        let args = [
+            flag,
+            artifact_path_text,
+            "tests/fixtures/registry_dump.json",
+            "tests/fixtures/proof_assessments.jsonl",
+        ]
+        .into_iter()
+        .map(str::to_owned)
+        .collect::<Vec<_>>();
+        let command = BelvedereCli::from_args(args.clone())
+            .into_diagnostic()
+            .wrap_err("projection artifact file flag should be part of the public CLI API")?;
+
+        assert_eq!(command.output(), expected_output);
+
+        let mut output = Vec::new();
+        let status = run_cli_with_writer(args, &mut output);
+        assert_eq!(status, ExitCode::SUCCESS);
+        assert!(output.is_empty());
+
+        let artifact_bytes = fs::read(&artifact_path)
+            .into_diagnostic()
+            .wrap_err("projection artifact file should be written")?;
+        let artifact: Value = serde_json::from_slice(&artifact_bytes)
+            .into_diagnostic()
+            .wrap_err("persisted projection artifact should be parseable JSON")?;
+        assert_artifact(&artifact);
+
+        fs::remove_file(artifact_path)
+            .into_diagnostic()
+            .wrap_err("temporary projection artifact file should be removable")?;
+    }
+
     Ok(())
 }
 
@@ -2360,6 +2519,248 @@ fn cli_can_persist_current_diff_projection_receipts_as_json() -> Result<()> {
         fs::remove_file(receipt_path)
             .into_diagnostic()
             .wrap_err("temporary current diff projection receipt file should be removable")?;
+    }
+
+    fs::remove_file(previous_assessments_path)
+        .into_diagnostic()
+        .wrap_err("temporary empty assessment artifact should be removable")?;
+    Ok(())
+}
+
+#[test]
+fn cli_can_emit_current_diff_projection_artifacts_as_json() -> Result<()> {
+    belvedere::init_tracing();
+
+    let previous_assessments_path = std::env::temp_dir().join(format!(
+        "belvedere-cli-current-diff-projection-artifacts-empty-assessments-{}.jsonl",
+        process::id()
+    ));
+    fs::write(&previous_assessments_path, [])
+        .into_diagnostic()
+        .wrap_err("temporary empty assessment artifact should be writable")?;
+
+    let cases: [(&str, BelvedereCliOutput, ReceiptAssertion); 2] = [
+        (
+            "--current-view-model-json",
+            BelvedereCliOutput::LandscapeDiffCurrentViewModelJson,
+            assert_auditor_navigation_model,
+        ),
+        (
+            "--current-ui-ir-json",
+            BelvedereCliOutput::LandscapeDiffCurrentUiIrJson,
+            assert_ui_ir_projection,
+        ),
+    ];
+
+    for (flag, expected_output, assert_artifact) in cases {
+        let args = diff_args_with_empty_previous_assessments(&[flag], &previous_assessments_path)?;
+        let command = BelvedereCli::from_args(args.clone())
+            .into_diagnostic()
+            .wrap_err(
+                "current diff projection artifact flag should be part of the public CLI API",
+            )?;
+
+        assert_eq!(command.output(), expected_output);
+
+        let mut output = Vec::new();
+        let status = run_cli_with_writer(args, &mut output);
+        assert_eq!(status, ExitCode::SUCCESS);
+
+        let artifact: Value = serde_json::from_slice(&output)
+            .into_diagnostic()
+            .wrap_err("CLI current diff projection artifact output should be parseable JSON")?;
+        assert_artifact(&artifact);
+    }
+
+    fs::remove_file(previous_assessments_path)
+        .into_diagnostic()
+        .wrap_err("temporary empty assessment artifact should be removable")?;
+    Ok(())
+}
+
+#[test]
+fn cli_can_persist_current_diff_projection_artifacts_as_json() -> Result<()> {
+    belvedere::init_tracing();
+
+    let previous_assessments_path = std::env::temp_dir().join(format!(
+        "belvedere-cli-current-diff-projection-artifact-files-empty-assessments-{}.jsonl",
+        process::id()
+    ));
+    fs::write(&previous_assessments_path, [])
+        .into_diagnostic()
+        .wrap_err("temporary empty assessment artifact should be writable")?;
+
+    let view_model_path = std::env::temp_dir().join(format!(
+        "belvedere-current-view-model-{}.json",
+        process::id()
+    ));
+    let ui_ir_path =
+        std::env::temp_dir().join(format!("belvedere-current-ui-ir-{}.json", process::id()));
+    let cases: [(&str, PathBuf, BelvedereCliOutput, ReceiptAssertion); 2] = [
+        (
+            "--current-view-model-file",
+            view_model_path.clone(),
+            BelvedereCliOutput::LandscapeDiffCurrentViewModelFile(view_model_path.clone()),
+            assert_auditor_navigation_model,
+        ),
+        (
+            "--current-ui-ir-file",
+            ui_ir_path.clone(),
+            BelvedereCliOutput::LandscapeDiffCurrentUiIrFile(ui_ir_path.clone()),
+            assert_ui_ir_projection,
+        ),
+    ];
+
+    for (flag, artifact_path, expected_output, assert_artifact) in cases {
+        let artifact_path_text = artifact_path
+            .to_str()
+            .ok_or_else(|| miette::miette!("temporary projection artifact path should be UTF-8"))?;
+        let args = diff_args_with_empty_previous_assessments(
+            &[flag, artifact_path_text],
+            &previous_assessments_path,
+        )?;
+        let command = BelvedereCli::from_args(args.clone())
+            .into_diagnostic()
+            .wrap_err(
+                "current diff projection artifact file flag should be part of the public CLI API",
+            )?;
+
+        assert_eq!(command.output(), expected_output);
+
+        let mut output = Vec::new();
+        let status = run_cli_with_writer(args, &mut output);
+        assert_eq!(status, ExitCode::SUCCESS);
+        assert!(output.is_empty());
+
+        let artifact_bytes = fs::read(&artifact_path)
+            .into_diagnostic()
+            .wrap_err("current diff projection artifact file should be written")?;
+        let artifact: Value = serde_json::from_slice(&artifact_bytes)
+            .into_diagnostic()
+            .wrap_err("persisted current diff projection artifact should be parseable JSON")?;
+        assert_artifact(&artifact);
+
+        fs::remove_file(artifact_path)
+            .into_diagnostic()
+            .wrap_err("temporary current diff projection artifact file should be removable")?;
+    }
+
+    fs::remove_file(previous_assessments_path)
+        .into_diagnostic()
+        .wrap_err("temporary empty assessment artifact should be removable")?;
+    Ok(())
+}
+
+#[test]
+fn cli_can_emit_landscape_diff_projection_artifact_aliases_as_json() -> Result<()> {
+    belvedere::init_tracing();
+
+    let previous_assessments_path = std::env::temp_dir().join(format!(
+        "belvedere-cli-diff-projection-artifact-aliases-empty-assessments-{}.jsonl",
+        process::id()
+    ));
+    fs::write(&previous_assessments_path, [])
+        .into_diagnostic()
+        .wrap_err("temporary empty assessment artifact should be writable")?;
+
+    let cases: [(&str, BelvedereCliOutput, ReceiptAssertion); 2] = [
+        (
+            "--view-model-json",
+            BelvedereCliOutput::LandscapeDiffViewModelJson,
+            assert_auditor_navigation_model,
+        ),
+        (
+            "--ui-ir-json",
+            BelvedereCliOutput::LandscapeDiffUiIrJson,
+            assert_ui_ir_projection,
+        ),
+    ];
+
+    for (flag, expected_output, assert_artifact) in cases {
+        let args = diff_args_with_empty_previous_assessments(&[flag], &previous_assessments_path)?;
+        let command = BelvedereCli::from_args(args.clone())
+            .into_diagnostic()
+            .wrap_err("diff projection artifact alias should be part of the public CLI API")?;
+
+        assert_eq!(command.output(), expected_output);
+
+        let mut output = Vec::new();
+        let status = run_cli_with_writer(args, &mut output);
+        assert_eq!(status, ExitCode::SUCCESS);
+
+        let artifact: Value = serde_json::from_slice(&output)
+            .into_diagnostic()
+            .wrap_err("CLI diff projection artifact alias output should be parseable JSON")?;
+        assert_artifact(&artifact);
+    }
+
+    fs::remove_file(previous_assessments_path)
+        .into_diagnostic()
+        .wrap_err("temporary empty assessment artifact should be removable")?;
+    Ok(())
+}
+
+#[test]
+fn cli_can_persist_landscape_diff_projection_artifact_aliases_as_json() -> Result<()> {
+    belvedere::init_tracing();
+
+    let previous_assessments_path = std::env::temp_dir().join(format!(
+        "belvedere-cli-diff-projection-artifact-alias-files-empty-assessments-{}.jsonl",
+        process::id()
+    ));
+    fs::write(&previous_assessments_path, [])
+        .into_diagnostic()
+        .wrap_err("temporary empty assessment artifact should be writable")?;
+
+    let view_model_path =
+        std::env::temp_dir().join(format!("belvedere-diff-view-model-{}.json", process::id()));
+    let ui_ir_path =
+        std::env::temp_dir().join(format!("belvedere-diff-ui-ir-{}.json", process::id()));
+    let cases: [(&str, PathBuf, BelvedereCliOutput, ReceiptAssertion); 2] = [
+        (
+            "--view-model-file",
+            view_model_path.clone(),
+            BelvedereCliOutput::LandscapeDiffViewModelFile(view_model_path.clone()),
+            assert_auditor_navigation_model,
+        ),
+        (
+            "--ui-ir-file",
+            ui_ir_path.clone(),
+            BelvedereCliOutput::LandscapeDiffUiIrFile(ui_ir_path.clone()),
+            assert_ui_ir_projection,
+        ),
+    ];
+
+    for (flag, artifact_path, expected_output, assert_artifact) in cases {
+        let artifact_path_text = artifact_path
+            .to_str()
+            .ok_or_else(|| miette::miette!("temporary projection artifact path should be UTF-8"))?;
+        let args = diff_args_with_empty_previous_assessments(
+            &[flag, artifact_path_text],
+            &previous_assessments_path,
+        )?;
+        let command = BelvedereCli::from_args(args.clone())
+            .into_diagnostic()
+            .wrap_err("diff projection artifact alias file should be part of the public CLI API")?;
+
+        assert_eq!(command.output(), expected_output);
+
+        let mut output = Vec::new();
+        let status = run_cli_with_writer(args, &mut output);
+        assert_eq!(status, ExitCode::SUCCESS);
+        assert!(output.is_empty());
+
+        let artifact_bytes = fs::read(&artifact_path)
+            .into_diagnostic()
+            .wrap_err("diff projection artifact alias file should be written")?;
+        let artifact: Value = serde_json::from_slice(&artifact_bytes)
+            .into_diagnostic()
+            .wrap_err("persisted diff projection artifact alias should be parseable JSON")?;
+        assert_artifact(&artifact);
+
+        fs::remove_file(artifact_path)
+            .into_diagnostic()
+            .wrap_err("temporary diff projection artifact alias file should be removable")?;
     }
 
     fs::remove_file(previous_assessments_path)

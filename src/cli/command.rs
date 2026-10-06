@@ -100,6 +100,16 @@ impl BelvedereCli {
                     output = BelvedereCliOutput::RunLandscapeReceiptFile(PathBuf::from(path));
                     index += 1;
                 }
+                "--view-model-json" => {
+                    output = BelvedereCliOutput::RunViewModelJson;
+                }
+                "--view-model-file" => {
+                    let Some(path) = arguments.get(index + 1) else {
+                        return Err(BelvedereCliUsageError::new().into());
+                    };
+                    output = BelvedereCliOutput::RunViewModelFile(PathBuf::from(path));
+                    index += 1;
+                }
                 "--view-model-receipt-json" => {
                     output = BelvedereCliOutput::RunViewModelReceiptJson;
                 }
@@ -108,6 +118,14 @@ impl BelvedereCli {
                         return Err(BelvedereCliUsageError::new().into());
                     };
                     output = BelvedereCliOutput::RunViewModelReceiptFile(PathBuf::from(path));
+                    index += 1;
+                }
+                "--ui-ir-json" => output = BelvedereCliOutput::RunUiIrJson,
+                "--ui-ir-file" => {
+                    let Some(path) = arguments.get(index + 1) else {
+                        return Err(BelvedereCliUsageError::new().into());
+                    };
+                    output = BelvedereCliOutput::RunUiIrFile(PathBuf::from(path));
                     index += 1;
                 }
                 "--ui-ir-receipt-json" => output = BelvedereCliOutput::RunUiIrReceiptJson,
@@ -302,6 +320,16 @@ impl BelvedereCli {
                 );
                 1
             }
+            "--current-view-model-json" => {
+                *output = BelvedereCliOutput::LandscapeDiffCurrentViewModelJson;
+                0
+            }
+            "--current-view-model-file" => {
+                *output = BelvedereCliOutput::LandscapeDiffCurrentViewModelFile(Self::next_path(
+                    arguments, index,
+                )?);
+                1
+            }
             "--current-view-model-receipt-json" => {
                 *output = BelvedereCliOutput::LandscapeDiffCurrentViewModelReceiptJson;
                 0
@@ -310,6 +338,16 @@ impl BelvedereCli {
                 *output = BelvedereCliOutput::LandscapeDiffCurrentViewModelReceiptFile(
                     Self::next_path(arguments, index)?,
                 );
+                1
+            }
+            "--current-ui-ir-json" => {
+                *output = BelvedereCliOutput::LandscapeDiffCurrentUiIrJson;
+                0
+            }
+            "--current-ui-ir-file" => {
+                *output = BelvedereCliOutput::LandscapeDiffCurrentUiIrFile(Self::next_path(
+                    arguments, index,
+                )?);
                 1
             }
             "--current-ui-ir-receipt-json" => {
@@ -332,6 +370,16 @@ impl BelvedereCli {
                 )?);
                 1
             }
+            "--view-model-json" => {
+                *output = BelvedereCliOutput::LandscapeDiffViewModelJson;
+                0
+            }
+            "--view-model-file" => {
+                *output = BelvedereCliOutput::LandscapeDiffViewModelFile(Self::next_path(
+                    arguments, index,
+                )?);
+                1
+            }
             "--view-model-receipt-json" => {
                 *output = BelvedereCliOutput::LandscapeDiffViewModelReceiptJson;
                 0
@@ -340,6 +388,15 @@ impl BelvedereCli {
                 *output = BelvedereCliOutput::LandscapeDiffViewModelReceiptFile(Self::next_path(
                     arguments, index,
                 )?);
+                1
+            }
+            "--ui-ir-json" => {
+                *output = BelvedereCliOutput::LandscapeDiffUiIrJson;
+                0
+            }
+            "--ui-ir-file" => {
+                *output =
+                    BelvedereCliOutput::LandscapeDiffUiIrFile(Self::next_path(arguments, index)?);
                 1
             }
             "--ui-ir-receipt-json" => {

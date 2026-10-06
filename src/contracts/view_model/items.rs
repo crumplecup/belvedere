@@ -3,6 +3,7 @@
 use derive_builder::Builder;
 use derive_getters::Getters;
 use derive_new::new;
+use serde::Serialize;
 
 use crate::contracts::{ArtifactKind, view_model::TraceRef};
 
@@ -24,7 +25,7 @@ pub(crate) use workflow::ReviewWorkflowItemBuilder;
 pub use workflow::{ReviewWorkflowItem, ReviewWorkflowPriority};
 
 /// Auditor filter facet for narrowing the displayed defensive landscape.
-#[derive(Debug, Clone, PartialEq, Eq, Getters, Builder)]
+#[derive(Debug, Clone, PartialEq, Eq, Getters, Builder, Serialize)]
 #[builder(vis = "pub(crate)", setter(into))]
 pub struct AuditorFilterFacet {
     facet_id: String,
@@ -52,7 +53,7 @@ impl AuditorFilterFacet {
 }
 
 /// Source record navigation item for jumping back to ingested evidence.
-#[derive(Debug, Clone, PartialEq, Eq, Getters, Builder)]
+#[derive(Debug, Clone, PartialEq, Eq, Getters, Builder, Serialize)]
 #[builder(vis = "pub(crate)", setter(into))]
 pub struct SourceNavigationItem {
     source_record_id: String,
@@ -80,7 +81,7 @@ impl SourceNavigationItem {
 }
 
 /// Backend coverage status for one claim and verifier.
-#[derive(Debug, Clone, PartialEq, Eq, Getters, Builder)]
+#[derive(Debug, Clone, PartialEq, Eq, Getters, Builder, Serialize)]
 #[builder(vis = "pub(crate)", setter(into))]
 pub struct BackendCoverageItem {
     claim_id: String,
@@ -106,7 +107,7 @@ impl BackendCoverageItem {
 }
 
 /// Witness surface item.
-#[derive(Debug, Clone, PartialEq, Eq, Getters, Builder)]
+#[derive(Debug, Clone, PartialEq, Eq, Getters, Builder, Serialize)]
 #[builder(vis = "pub(crate)", setter(into))]
 pub struct WitnessSurfaceItem {
     claim_id: String,
@@ -158,7 +159,7 @@ impl WitnessSurfaceItem {
 }
 
 /// Provenance root item.
-#[derive(Debug, Clone, PartialEq, Eq, Getters, new)]
+#[derive(Debug, Clone, PartialEq, Eq, Getters, Serialize, new)]
 pub struct ProvenanceRootItem {
     #[new(into)]
     claim_id: String,

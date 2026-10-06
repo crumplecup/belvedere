@@ -2,12 +2,13 @@
 
 use derive_builder::Builder;
 use derive_getters::Getters;
+use serde::Serialize;
 use tracing::instrument;
 
 use crate::contracts::{Recommendation, ResolutionPath, view_model::TraceRef};
 
 /// Assessment queue item.
-#[derive(Debug, Clone, PartialEq, Eq, Getters, Builder)]
+#[derive(Debug, Clone, PartialEq, Eq, Getters, Builder, Serialize)]
 #[builder(vis = "pub(crate)", setter(into))]
 pub struct AssessmentQueueItem {
     assessment_id: String,
@@ -68,7 +69,7 @@ impl AssessmentQueueItem {
 }
 
 /// Assessment work item for proofs or claims needing reviewer action.
-#[derive(Debug, Clone, PartialEq, Eq, Getters, Builder)]
+#[derive(Debug, Clone, PartialEq, Eq, Getters, Builder, Serialize)]
 #[builder(vis = "pub(crate)", setter(into))]
 pub struct AssessmentWorkItem {
     claim_id: String,

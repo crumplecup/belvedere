@@ -2,12 +2,13 @@
 
 use derive_builder::Builder;
 use derive_getters::Getters;
+use serde::Serialize;
 use tracing::instrument;
 
 use crate::contracts::view_model::TraceRef;
 
 /// Claim explorer row/card evidence.
-#[derive(Debug, Clone, PartialEq, Eq, Getters)]
+#[derive(Debug, Clone, PartialEq, Eq, Getters, Serialize)]
 pub struct ClaimExplorerItem {
     claim_id: String,
     #[getter(skip)]
@@ -83,7 +84,7 @@ impl ClaimExplorerItem {
 }
 
 /// Counts used when creating a claim explorer item.
-#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize)]
 pub struct ClaimExplorerCounts {
     contract_count: usize,
     assessment_count: usize,
@@ -121,7 +122,7 @@ impl ClaimExplorerCounts {
 }
 
 /// Proof-chain navigation item for one claim.
-#[derive(Debug, Clone, PartialEq, Eq, Getters, Builder)]
+#[derive(Debug, Clone, PartialEq, Eq, Getters, Builder, Serialize)]
 #[builder(vis = "pub(crate)", setter(into))]
 pub struct ProofChainItem {
     claim_id: String,
@@ -160,7 +161,7 @@ impl ProofChainItem {
 }
 
 /// Per-backend completeness evidence for a transitive proof chain.
-#[derive(Debug, Clone, PartialEq, Eq, Getters, Builder)]
+#[derive(Debug, Clone, PartialEq, Eq, Getters, Builder, Serialize)]
 #[builder(vis = "pub(crate)", setter(into))]
 pub struct ProofChainBackendCoverage {
     verifier: String,
@@ -193,7 +194,7 @@ impl ProofChainBackendCoverage {
 }
 
 /// Topology summary for a claim's transitive proof chain.
-#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize)]
 pub struct ProofChainTopology {
     transitive_claim_count: usize,
     max_depth: usize,

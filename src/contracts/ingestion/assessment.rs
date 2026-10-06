@@ -204,7 +204,9 @@ impl Rubric {
 }
 
 /// Reviewer recommendation vocabulary.
-#[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash, Deserialize)]
+#[derive(
+    Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash, Deserialize, serde::Serialize,
+)]
 #[serde(rename_all = "snake_case")]
 pub enum Recommendation {
     /// Accept the proof as persuasive in its current form.
@@ -218,7 +220,9 @@ pub enum Recommendation {
 }
 
 /// Operational path for acting on an assessment.
-#[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash, Deserialize)]
+#[derive(
+    Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash, Deserialize, serde::Serialize,
+)]
 #[serde(rename_all = "snake_case")]
 pub enum ResolutionPath {
     /// Keep the proof as-is.

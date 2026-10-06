@@ -2,6 +2,7 @@
 
 use derive_builder::Builder;
 use derive_getters::Getters;
+use serde::Serialize;
 use tracing::instrument;
 
 use crate::{
@@ -47,7 +48,7 @@ impl ViewModelInput {
 }
 
 /// UI-neutral navigation evidence for certification auditors.
-#[derive(Debug, Clone, PartialEq, Eq, Getters, Builder)]
+#[derive(Debug, Clone, PartialEq, Eq, Getters, Builder, Serialize)]
 #[builder(vis = "pub(crate)", setter(into))]
 pub struct AuditorNavigationModel {
     #[getter(skip)]
@@ -75,7 +76,7 @@ impl AuditorNavigationModel {
 }
 
 /// Overview totals and high-priority review signals.
-#[derive(Debug, Clone, PartialEq, Eq)]
+#[derive(Debug, Clone, PartialEq, Eq, Serialize)]
 pub struct OverviewView {
     claim_count: usize,
     root_count: usize,
@@ -156,7 +157,7 @@ impl OverviewView {
 }
 
 /// Assessment recency totals surfaced in the overview.
-#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize)]
 pub struct AssessmentRecencySummary {
     current_count: usize,
     superseded_count: usize,

@@ -2,11 +2,13 @@
 
 use derive_builder::Builder;
 use derive_getters::Getters;
+use serde::Serialize;
 
 use crate::contracts::view_model::TraceRef;
 
 /// Auditor-facing priority for a review workflow task.
-#[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash, Serialize)]
+#[serde(rename_all = "snake_case")]
 pub enum ReviewWorkflowPriority {
     /// Task blocks certification review until resolved.
     Blocking,
@@ -29,7 +31,7 @@ impl ReviewWorkflowPriority {
 }
 
 /// Workflow item that turns modeled review signals into an auditor task.
-#[derive(Debug, Clone, PartialEq, Eq, Getters, Builder)]
+#[derive(Debug, Clone, PartialEq, Eq, Getters, Builder, Serialize)]
 #[builder(vis = "pub(crate)", setter(into))]
 pub struct ReviewWorkflowItem {
     task_id: String,

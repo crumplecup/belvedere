@@ -4,6 +4,7 @@ use derive_builder::Builder;
 use derive_getters::Getters;
 use derive_new::new;
 use elicitation::Established;
+use serde::Serialize;
 use tracing::instrument;
 
 use super::MintedElicitUiStandard;
@@ -42,7 +43,7 @@ pub const UI_IR_SECTION_GAP_QUEUE: &str = "belvedere.ui.section.gap_queue";
 pub const UI_IR_SECTION_SOURCE_NAVIGATION: &str = "belvedere.ui.section.source_navigation";
 
 /// A minted-standard entry returned with the UI IR projection.
-#[derive(Debug, Clone, PartialEq, Eq, Getters)]
+#[derive(Debug, Clone, PartialEq, Eq, Getters, Serialize)]
 pub struct UiStandardMint {
     standard: String,
     prop: String,
@@ -66,7 +67,7 @@ impl UiStandardMint {
 }
 
 /// Top-level section projected into the UI IR.
-#[derive(Debug, Clone, PartialEq, Eq, Getters, new)]
+#[derive(Debug, Clone, PartialEq, Eq, Getters, Serialize, new)]
 pub struct UiIrSection {
     #[new(into)]
     id: String,
@@ -93,7 +94,7 @@ impl UiIrSection {
 }
 
 /// A viewport where Belvedere verified the projected UI tree.
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Getters, new)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Getters, Serialize, new)]
 pub struct UiViewportVerification {
     #[getter(skip)]
     width: u32,
@@ -131,7 +132,7 @@ impl UiViewportVerification {
 }
 
 /// A widget emitted from a traceable auditor navigation item.
-#[derive(Debug, Clone, PartialEq, Eq, Getters, Builder)]
+#[derive(Debug, Clone, PartialEq, Eq, Getters, Builder, Serialize)]
 #[builder(vis = "pub(crate)", setter(into))]
 pub struct TraceWidgetRef {
     #[getter(skip)]
@@ -184,16 +185,18 @@ impl UiIrProofBundle {
 }
 
 /// `elicit_ui` projection evidence for downstream renderers.
-#[derive(Debug, Clone, Getters, Builder)]
+#[derive(Debug, Clone, Getters, Builder, Serialize)]
 #[builder(vis = "pub(crate)", setter(into))]
 pub struct UiIrProjection {
     #[getter(skip)]
+    #[serde(skip_serializing)]
     tree: elicit_ui::VerifiedTree,
     sections: Vec<UiIrSection>,
     trace_widgets: Vec<TraceWidgetRef>,
     viewport_verifications: Vec<UiViewportVerification>,
     minted_standards: Vec<UiStandardMint>,
     #[getter(skip)]
+    #[serde(skip_serializing)]
     proofs: UiIrProofBundle,
 }
 

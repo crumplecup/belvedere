@@ -14,8 +14,8 @@ use crate::{
     },
     collect::read_raw_artifact,
     contracts::{
-        ArtifactKind, LandscapeDiff, LandscapeDiffInput, LandscapeGraph, LandscapeInput, UiIrInput,
-        UiIrProjection, ViewModelInput,
+        ArtifactKind, AuditorNavigationModel, LandscapeDiff, LandscapeDiffInput, LandscapeGraph,
+        LandscapeInput, UiIrInput, UiIrProjection, ViewModelInput,
     },
     error::{BelvedereConstructionError, BelvedereError},
     exchanges::{
@@ -74,6 +74,7 @@ pub struct BelvedereRunReport {
     registry_receipt: IngestionReceipt,
     assessment_receipt: IngestionReceipt,
     landscape_receipt: LandscapeReceipt,
+    view_model: AuditorNavigationModel,
     view_model_receipt: ViewModelReceipt,
     ui_ir_receipt: UiIrReceipt,
     certificate: BelvedereRunCertificate,
@@ -90,6 +91,7 @@ pub struct BelvedereLandscapeDiffRunReport {
     current_registry_receipt: IngestionReceipt,
     current_assessment_receipt: IngestionReceipt,
     current_landscape_receipt: LandscapeReceipt,
+    current_view_model: AuditorNavigationModel,
     current_view_model_receipt: ViewModelReceipt,
     current_ui_ir_receipt: UiIrReceipt,
     diff_receipt: LandscapeDiffReceipt,
@@ -128,7 +130,8 @@ pub fn run_belvedere_pipeline(
         LandscapeModeling.model(LandscapeInput::new(registry, assessments))?;
     let (view_model, view_model_receipt) =
         AuditorNavigationProjection.project(ViewModelInput::new(landscape))?;
-    let (projection, ui_ir_receipt) = ElicitUiProjection.project(UiIrInput::new(view_model))?;
+    let (projection, ui_ir_receipt) =
+        ElicitUiProjection.project(UiIrInput::new(view_model.clone()))?;
     let certificate = BelvedereRunCertificate::from_receipts_with_invocation(
         input.invocation().clone(),
         &registry_receipt,
@@ -142,6 +145,7 @@ pub fn run_belvedere_pipeline(
         .registry_receipt(registry_receipt)
         .assessment_receipt(assessment_receipt)
         .landscape_receipt(landscape_receipt)
+        .view_model(view_model)
         .view_model_receipt(view_model_receipt)
         .ui_ir_receipt(ui_ir_receipt)
         .certificate(certificate)
@@ -175,7 +179,7 @@ pub fn run_belvedere_landscape_diff(
     let (current_view_model, current_view_model_receipt) =
         AuditorNavigationProjection.project(ViewModelInput::new(current.landscape.clone()))?;
     let (current_projection, current_ui_ir_receipt) =
-        ElicitUiProjection.project(UiIrInput::new(current_view_model))?;
+        ElicitUiProjection.project(UiIrInput::new(current_view_model.clone()))?;
     let current_stage_certificates = current_auditor_stage_certificates(
         &current,
         &current_view_model_receipt,
@@ -205,6 +209,7 @@ pub fn run_belvedere_landscape_diff(
         .current_registry_receipt(current.registry_receipt)
         .current_assessment_receipt(current.assessment_receipt)
         .current_landscape_receipt(current.landscape_receipt)
+        .current_view_model(current_view_model)
         .current_view_model_receipt(current_view_model_receipt)
         .current_ui_ir_receipt(current_ui_ir_receipt)
         .diff_receipt(diff_receipt)
