@@ -1,5 +1,6 @@
 use std::{
     fs,
+    path::Path,
     process::{self, ExitCode},
 };
 
@@ -13,6 +14,8 @@ use belvedere::{
 };
 use miette::{IntoDiagnostic, Result, WrapErr};
 use serde_json::Value;
+
+type ReceiptAssertion = fn(&Value);
 
 #[test]
 fn run_pipeline_uses_the_normal_amenable_artifact_path() -> Result<()> {
@@ -602,6 +605,14 @@ fn cli_help_is_a_successful_public_output_contract() -> Result<()> {
     assert!(help.contains("--diff-json"));
     assert!(help.contains("--diff-receipt-json"));
     assert!(help.contains("--diff-receipt-file"));
+    assert!(help.contains("--previous-registry-receipt-json"));
+    assert!(help.contains("--previous-registry-receipt-file"));
+    assert!(help.contains("--previous-assessment-receipt-json"));
+    assert!(help.contains("--previous-assessment-receipt-file"));
+    assert!(help.contains("--current-registry-receipt-json"));
+    assert!(help.contains("--current-registry-receipt-file"));
+    assert!(help.contains("--current-assessment-receipt-json"));
+    assert!(help.contains("--current-assessment-receipt-file"));
     assert!(help.contains("--registry-receipt-json"));
     assert!(help.contains("--registry-receipt-file"));
     assert!(help.contains("--assessment-receipt-json"));
@@ -677,6 +688,49 @@ fn assert_assessment_ingestion_receipt(receipt: &Value) {
         ids.iter()
             .any(|id| id.as_str() == Some("assessment:assess-belvedere-ingestion-1"))
     }));
+}
+
+fn assert_empty_assessment_ingestion_receipt(receipt: &Value) {
+    assert_eq!(
+        receipt["contract"].as_str(),
+        Some("belvedere.ingest.proof_assessments")
+    );
+    assert_eq!(receipt["artifact_kind"].as_str(), Some("proof_assessments"));
+    assert_eq!(
+        receipt["format"].as_str(),
+        Some("amenable.proof_assessment_jsonl")
+    );
+    assert_eq!(receipt["decoded_counts"]["assessments"].as_u64(), Some(0));
+    assert_eq!(
+        receipt["source_record_kind_counts"]
+            .as_object()
+            .map(serde_json::Map::len),
+        Some(0)
+    );
+    assert_eq!(
+        receipt["source_record_ids"].as_array().map(Vec::len),
+        Some(0)
+    );
+}
+
+fn diff_args_with_empty_previous_assessments(
+    output_args: &[&str],
+    previous_assessments_path: &Path,
+) -> Result<Vec<String>> {
+    let previous_assessments_path = previous_assessments_path
+        .to_str()
+        .ok_or_else(|| miette::miette!("temporary assessment path should be UTF-8"))?;
+    Ok(["diff"]
+        .into_iter()
+        .chain(output_args.iter().copied())
+        .chain([
+            "tests/fixtures/registry_dump.json",
+            previous_assessments_path,
+            "tests/fixtures/registry_dump.json",
+            "tests/fixtures/proof_assessments.jsonl",
+        ])
+        .map(str::to_owned)
+        .collect())
 }
 
 fn assert_landscape_receipt(receipt: &Value) {
@@ -1771,6 +1825,121 @@ fn cli_can_persist_the_landscape_diff_receipt_as_json() -> Result<()> {
     fs::remove_file(receipt_path)
         .into_diagnostic()
         .wrap_err("temporary diff receipt file should be removable")?;
+    fs::remove_file(previous_assessments_path)
+        .into_diagnostic()
+        .wrap_err("temporary empty assessment artifact should be removable")?;
+    Ok(())
+}
+
+#[test]
+fn cli_can_emit_diff_snapshot_ingestion_receipts_as_json() -> Result<()> {
+    belvedere::init_tracing();
+
+    let previous_assessments_path = std::env::temp_dir().join(format!(
+        "belvedere-cli-diff-snapshot-ingestion-receipts-empty-assessments-{}.jsonl",
+        process::id()
+    ));
+    fs::write(&previous_assessments_path, [])
+        .into_diagnostic()
+        .wrap_err("temporary empty assessment artifact should be writable")?;
+
+    let cases: [(&str, BelvedereCliOutput, ReceiptAssertion); 4] = [
+        (
+            "--previous-registry-receipt-json",
+            BelvedereCliOutput::LandscapeDiffPreviousRegistryReceiptJson,
+            assert_registry_ingestion_receipt,
+        ),
+        (
+            "--previous-assessment-receipt-json",
+            BelvedereCliOutput::LandscapeDiffPreviousAssessmentReceiptJson,
+            assert_empty_assessment_ingestion_receipt,
+        ),
+        (
+            "--current-registry-receipt-json",
+            BelvedereCliOutput::LandscapeDiffCurrentRegistryReceiptJson,
+            assert_registry_ingestion_receipt,
+        ),
+        (
+            "--current-assessment-receipt-json",
+            BelvedereCliOutput::LandscapeDiffCurrentAssessmentReceiptJson,
+            assert_assessment_ingestion_receipt,
+        ),
+    ];
+
+    for (flag, expected_output, assert_receipt) in cases {
+        let args = diff_args_with_empty_previous_assessments(&[flag], &previous_assessments_path)?;
+        let command = BelvedereCli::from_args(args.clone())
+            .into_diagnostic()
+            .wrap_err(
+                "diff snapshot ingestion receipt flag should be part of the public CLI API",
+            )?;
+
+        assert_eq!(command.output(), expected_output);
+
+        let mut output = Vec::new();
+        let status = run_cli_with_writer(args, &mut output);
+        assert_eq!(status, ExitCode::SUCCESS);
+
+        let receipt: Value = serde_json::from_slice(&output)
+            .into_diagnostic()
+            .wrap_err("CLI diff snapshot ingestion receipt output should be parseable JSON")?;
+        assert_receipt(&receipt);
+    }
+
+    fs::remove_file(previous_assessments_path)
+        .into_diagnostic()
+        .wrap_err("temporary empty assessment artifact should be removable")?;
+    Ok(())
+}
+
+#[test]
+fn cli_can_persist_the_current_diff_registry_receipt_as_json() -> Result<()> {
+    belvedere::init_tracing();
+
+    let previous_assessments_path = std::env::temp_dir().join(format!(
+        "belvedere-cli-current-registry-receipt-empty-assessments-{}.jsonl",
+        process::id()
+    ));
+    let receipt_path = std::env::temp_dir().join(format!(
+        "belvedere-current-registry-receipt-{}.json",
+        process::id()
+    ));
+    fs::write(&previous_assessments_path, [])
+        .into_diagnostic()
+        .wrap_err("temporary empty assessment artifact should be writable")?;
+
+    let receipt_path_text = receipt_path.to_str().ok_or_else(|| {
+        miette::miette!("temporary current registry receipt path should be UTF-8")
+    })?;
+    let args = diff_args_with_empty_previous_assessments(
+        &["--current-registry-receipt-file", receipt_path_text],
+        &previous_assessments_path,
+    )?;
+    let command = BelvedereCli::from_args(args.clone())
+        .into_diagnostic()
+        .wrap_err("current registry receipt file flag should be part of the public CLI API")?;
+
+    assert_eq!(
+        command.output(),
+        BelvedereCliOutput::LandscapeDiffCurrentRegistryReceiptFile(receipt_path.clone())
+    );
+
+    let mut output = Vec::new();
+    let status = run_cli_with_writer(args, &mut output);
+    assert_eq!(status, ExitCode::SUCCESS);
+    assert!(output.is_empty());
+
+    let receipt_bytes = fs::read(&receipt_path)
+        .into_diagnostic()
+        .wrap_err("current registry receipt file should be written")?;
+    let receipt: Value = serde_json::from_slice(&receipt_bytes)
+        .into_diagnostic()
+        .wrap_err("persisted current registry receipt should be parseable JSON")?;
+    assert_registry_ingestion_receipt(&receipt);
+
+    fs::remove_file(receipt_path)
+        .into_diagnostic()
+        .wrap_err("temporary current registry receipt file should be removable")?;
     fs::remove_file(previous_assessments_path)
         .into_diagnostic()
         .wrap_err("temporary empty assessment artifact should be removable")?;

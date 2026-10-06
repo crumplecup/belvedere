@@ -12,7 +12,7 @@ use super::{BelvedereCliOutputError, BelvedereCliReport, BelvedereCliUsageError}
 /// Stable CLI help text.
 pub const BELVEDERE_CLI_HELP: &str = "\
 usage: belvedere [--help] [--certificate-json | --certificate-file <path> | --registry-receipt-json | --registry-receipt-file <path> | --assessment-receipt-json | --assessment-receipt-file <path> | --landscape-receipt-json | --landscape-receipt-file <path> | --view-model-receipt-json | --view-model-receipt-file <path> | --ui-ir-receipt-json | --ui-ir-receipt-file <path>] <registry-dump.json> <proof-assessments.jsonl>
-       belvedere diff [--certificate-json | --certificate-file <path> | --run-certificate-json | --run-certificate-file <path> | --diff-json | --diff-receipt-json | --diff-receipt-file <path> | --landscape-receipt-json | --landscape-receipt-file <path> | --view-model-receipt-json | --view-model-receipt-file <path> | --ui-ir-receipt-json | --ui-ir-receipt-file <path>] <previous-registry-dump.json> <previous-proof-assessments.jsonl> <current-registry-dump.json> <current-proof-assessments.jsonl>
+       belvedere diff [--certificate-json | --certificate-file <path> | --run-certificate-json | --run-certificate-file <path> | --diff-json | --diff-receipt-json | --diff-receipt-file <path> | --previous-registry-receipt-json | --previous-registry-receipt-file <path> | --previous-assessment-receipt-json | --previous-assessment-receipt-file <path> | --current-registry-receipt-json | --current-registry-receipt-file <path> | --current-assessment-receipt-json | --current-assessment-receipt-file <path> | --landscape-receipt-json | --landscape-receipt-file <path> | --view-model-receipt-json | --view-model-receipt-file <path> | --ui-ir-receipt-json | --ui-ir-receipt-file <path>] <previous-registry-dump.json> <previous-proof-assessments.jsonl> <current-registry-dump.json> <current-proof-assessments.jsonl>
 
 Options:
   -h, --help                       Show this help text.
@@ -27,6 +27,14 @@ Options:
       --diff-json                  Write the landscape diff as JSON to stdout.
       --diff-receipt-json          Write the landscape diff receipt as JSON to stdout.
       --diff-receipt-file          Write the landscape diff receipt as JSON to a file.
+      --previous-registry-receipt-json Write the previous registry ingestion receipt from a diff run as JSON to stdout.
+      --previous-registry-receipt-file Write the previous registry ingestion receipt from a diff run as JSON to a file.
+      --previous-assessment-receipt-json Write the previous assessment ingestion receipt from a diff run as JSON to stdout.
+      --previous-assessment-receipt-file Write the previous assessment ingestion receipt from a diff run as JSON to a file.
+      --current-registry-receipt-json Write the current registry ingestion receipt from a diff run as JSON to stdout.
+      --current-registry-receipt-file Write the current registry ingestion receipt from a diff run as JSON to a file.
+      --current-assessment-receipt-json Write the current assessment ingestion receipt from a diff run as JSON to stdout.
+      --current-assessment-receipt-file Write the current assessment ingestion receipt from a diff run as JSON to a file.
       --landscape-receipt-json     Write the landscape receipt as JSON to stdout.
       --landscape-receipt-file     Write the landscape receipt as JSON to a file.
       --view-model-receipt-json    Write the view-model receipt as JSON to stdout.
@@ -72,6 +80,22 @@ pub enum BelvedereCliOutput {
     LandscapeDiffReceiptJson,
     /// Write the landscape diff receipt as JSON to an artifact file.
     LandscapeDiffReceiptFile(PathBuf),
+    /// Write the previous registry ingestion receipt from a diff run as JSON.
+    LandscapeDiffPreviousRegistryReceiptJson,
+    /// Write the previous registry ingestion receipt from a diff run as JSON to an artifact file.
+    LandscapeDiffPreviousRegistryReceiptFile(PathBuf),
+    /// Write the previous assessment ingestion receipt from a diff run as JSON.
+    LandscapeDiffPreviousAssessmentReceiptJson,
+    /// Write the previous assessment ingestion receipt from a diff run as JSON to an artifact file.
+    LandscapeDiffPreviousAssessmentReceiptFile(PathBuf),
+    /// Write the current registry ingestion receipt from a diff run as JSON.
+    LandscapeDiffCurrentRegistryReceiptJson,
+    /// Write the current registry ingestion receipt from a diff run as JSON to an artifact file.
+    LandscapeDiffCurrentRegistryReceiptFile(PathBuf),
+    /// Write the current assessment ingestion receipt from a diff run as JSON.
+    LandscapeDiffCurrentAssessmentReceiptJson,
+    /// Write the current assessment ingestion receipt from a diff run as JSON to an artifact file.
+    LandscapeDiffCurrentAssessmentReceiptFile(PathBuf),
     /// Write the landscape diff stage certificate as JSON.
     LandscapeDiffCertificateJson,
     /// Write the landscape diff stage certificate as JSON to an artifact file.
@@ -212,6 +236,50 @@ pub(super) fn write_cli_output(
         ) => {
             let file = File::create(path).map_err(BelvedereCliOutputError::write)?;
             write_json(diff.diff_receipt(), file)
+        }
+        (
+            BelvedereCliOutput::LandscapeDiffPreviousRegistryReceiptJson,
+            BelvedereCliReport::LandscapeDiff(diff),
+        ) => write_json(diff.previous_registry_receipt(), writer),
+        (
+            BelvedereCliOutput::LandscapeDiffPreviousRegistryReceiptFile(path),
+            BelvedereCliReport::LandscapeDiff(diff),
+        ) => {
+            let file = File::create(path).map_err(BelvedereCliOutputError::write)?;
+            write_json(diff.previous_registry_receipt(), file)
+        }
+        (
+            BelvedereCliOutput::LandscapeDiffPreviousAssessmentReceiptJson,
+            BelvedereCliReport::LandscapeDiff(diff),
+        ) => write_json(diff.previous_assessment_receipt(), writer),
+        (
+            BelvedereCliOutput::LandscapeDiffPreviousAssessmentReceiptFile(path),
+            BelvedereCliReport::LandscapeDiff(diff),
+        ) => {
+            let file = File::create(path).map_err(BelvedereCliOutputError::write)?;
+            write_json(diff.previous_assessment_receipt(), file)
+        }
+        (
+            BelvedereCliOutput::LandscapeDiffCurrentRegistryReceiptJson,
+            BelvedereCliReport::LandscapeDiff(diff),
+        ) => write_json(diff.current_registry_receipt(), writer),
+        (
+            BelvedereCliOutput::LandscapeDiffCurrentRegistryReceiptFile(path),
+            BelvedereCliReport::LandscapeDiff(diff),
+        ) => {
+            let file = File::create(path).map_err(BelvedereCliOutputError::write)?;
+            write_json(diff.current_registry_receipt(), file)
+        }
+        (
+            BelvedereCliOutput::LandscapeDiffCurrentAssessmentReceiptJson,
+            BelvedereCliReport::LandscapeDiff(diff),
+        ) => write_json(diff.current_assessment_receipt(), writer),
+        (
+            BelvedereCliOutput::LandscapeDiffCurrentAssessmentReceiptFile(path),
+            BelvedereCliReport::LandscapeDiff(diff),
+        ) => {
+            let file = File::create(path).map_err(BelvedereCliOutputError::write)?;
+            write_json(diff.current_assessment_receipt(), file)
         }
         _ => Err(BelvedereCliUsageError::new().into()),
     }

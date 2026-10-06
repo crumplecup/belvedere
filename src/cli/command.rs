@@ -185,6 +185,54 @@ impl BelvedereCli {
                     output = BelvedereCliOutput::LandscapeDiffReceiptFile(PathBuf::from(path));
                     index += 1;
                 }
+                "--previous-registry-receipt-json" => {
+                    output = BelvedereCliOutput::LandscapeDiffPreviousRegistryReceiptJson;
+                }
+                "--previous-registry-receipt-file" => {
+                    let Some(path) = arguments.get(index + 1) else {
+                        return Err(BelvedereCliUsageError::new().into());
+                    };
+                    output = BelvedereCliOutput::LandscapeDiffPreviousRegistryReceiptFile(
+                        PathBuf::from(path),
+                    );
+                    index += 1;
+                }
+                "--previous-assessment-receipt-json" => {
+                    output = BelvedereCliOutput::LandscapeDiffPreviousAssessmentReceiptJson;
+                }
+                "--previous-assessment-receipt-file" => {
+                    let Some(path) = arguments.get(index + 1) else {
+                        return Err(BelvedereCliUsageError::new().into());
+                    };
+                    output = BelvedereCliOutput::LandscapeDiffPreviousAssessmentReceiptFile(
+                        PathBuf::from(path),
+                    );
+                    index += 1;
+                }
+                "--current-registry-receipt-json" => {
+                    output = BelvedereCliOutput::LandscapeDiffCurrentRegistryReceiptJson;
+                }
+                "--current-registry-receipt-file" => {
+                    let Some(path) = arguments.get(index + 1) else {
+                        return Err(BelvedereCliUsageError::new().into());
+                    };
+                    output = BelvedereCliOutput::LandscapeDiffCurrentRegistryReceiptFile(
+                        PathBuf::from(path),
+                    );
+                    index += 1;
+                }
+                "--current-assessment-receipt-json" => {
+                    output = BelvedereCliOutput::LandscapeDiffCurrentAssessmentReceiptJson;
+                }
+                "--current-assessment-receipt-file" => {
+                    let Some(path) = arguments.get(index + 1) else {
+                        return Err(BelvedereCliUsageError::new().into());
+                    };
+                    output = BelvedereCliOutput::LandscapeDiffCurrentAssessmentReceiptFile(
+                        PathBuf::from(path),
+                    );
+                    index += 1;
+                }
                 "--landscape-receipt-json" => {
                     output = BelvedereCliOutput::LandscapeDiffLandscapeReceiptJson;
                 }
