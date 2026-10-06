@@ -12,7 +12,7 @@ use super::{BelvedereCliOutputError, BelvedereCliReport, BelvedereCliUsageError}
 /// Stable CLI help text.
 pub const BELVEDERE_CLI_HELP: &str = "\
 usage: belvedere [--help] [--certificate-json | --certificate-file <path> | --registry-receipt-json | --registry-receipt-file <path> | --assessment-receipt-json | --assessment-receipt-file <path> | --landscape-json | --landscape-file <path> | --landscape-receipt-json | --landscape-receipt-file <path> | --view-model-json | --view-model-file <path> | --view-model-receipt-json | --view-model-receipt-file <path> | --ui-ir-json | --ui-ir-file <path> | --ui-ir-receipt-json | --ui-ir-receipt-file <path>] <registry-dump.json> <proof-assessments.jsonl>
-       belvedere diff [--certificate-json | --certificate-file <path> | --run-certificate-json | --run-certificate-file <path> | --diff-json | --diff-receipt-json | --diff-receipt-file <path> | --previous-registry-receipt-json | --previous-registry-receipt-file <path> | --previous-assessment-receipt-json | --previous-assessment-receipt-file <path> | --current-registry-receipt-json | --current-registry-receipt-file <path> | --current-assessment-receipt-json | --current-assessment-receipt-file <path> | --previous-landscape-json | --previous-landscape-file <path> | --previous-landscape-receipt-json | --previous-landscape-receipt-file <path> | --current-landscape-json | --current-landscape-file <path> | --current-landscape-receipt-json | --current-landscape-receipt-file <path> | --current-view-model-json | --current-view-model-file <path> | --current-view-model-receipt-json | --current-view-model-receipt-file <path> | --current-ui-ir-json | --current-ui-ir-file <path> | --current-ui-ir-receipt-json | --current-ui-ir-receipt-file <path> | --landscape-json | --landscape-file <path> | --landscape-receipt-json | --landscape-receipt-file <path> | --view-model-json | --view-model-file <path> | --view-model-receipt-json | --view-model-receipt-file <path> | --ui-ir-json | --ui-ir-file <path> | --ui-ir-receipt-json | --ui-ir-receipt-file <path>] <previous-registry-dump.json> <previous-proof-assessments.jsonl> <current-registry-dump.json> <current-proof-assessments.jsonl>
+       belvedere diff [--certificate-json | --certificate-file <path> | --run-certificate-json | --run-certificate-file <path> | --diff-json | --diff-receipt-json | --diff-receipt-file <path> | --previous-registry-receipt-json | --previous-registry-receipt-file <path> | --previous-assessment-receipt-json | --previous-assessment-receipt-file <path> | --current-registry-receipt-json | --current-registry-receipt-file <path> | --current-assessment-receipt-json | --current-assessment-receipt-file <path> | --previous-landscape-json | --previous-landscape-file <path> | --previous-landscape-receipt-json | --previous-landscape-receipt-file <path> | --previous-view-model-json | --previous-view-model-file <path> | --previous-view-model-receipt-json | --previous-view-model-receipt-file <path> | --previous-ui-ir-json | --previous-ui-ir-file <path> | --previous-ui-ir-receipt-json | --previous-ui-ir-receipt-file <path> | --current-landscape-json | --current-landscape-file <path> | --current-landscape-receipt-json | --current-landscape-receipt-file <path> | --current-view-model-json | --current-view-model-file <path> | --current-view-model-receipt-json | --current-view-model-receipt-file <path> | --current-ui-ir-json | --current-ui-ir-file <path> | --current-ui-ir-receipt-json | --current-ui-ir-receipt-file <path> | --landscape-json | --landscape-file <path> | --landscape-receipt-json | --landscape-receipt-file <path> | --view-model-json | --view-model-file <path> | --view-model-receipt-json | --view-model-receipt-file <path> | --ui-ir-json | --ui-ir-file <path> | --ui-ir-receipt-json | --ui-ir-receipt-file <path>] <previous-registry-dump.json> <previous-proof-assessments.jsonl> <current-registry-dump.json> <current-proof-assessments.jsonl>
 
 Options:
   -h, --help                       Show this help text.
@@ -39,6 +39,14 @@ Options:
       --previous-landscape-file Write the previous landscape graph from a diff run as JSON to a file.
       --previous-landscape-receipt-json Write the previous landscape receipt from a diff run as JSON to stdout.
       --previous-landscape-receipt-file Write the previous landscape receipt from a diff run as JSON to a file.
+      --previous-view-model-json Write the previous view model from a diff run as JSON to stdout.
+      --previous-view-model-file Write the previous view model from a diff run as JSON to a file.
+      --previous-view-model-receipt-json Write the previous view-model receipt from a diff run as JSON to stdout.
+      --previous-view-model-receipt-file Write the previous view-model receipt from a diff run as JSON to a file.
+      --previous-ui-ir-json   Write the previous UI IR projection from a diff run as JSON to stdout.
+      --previous-ui-ir-file   Write the previous UI IR projection from a diff run as JSON to a file.
+      --previous-ui-ir-receipt-json Write the previous UI IR receipt from a diff run as JSON to stdout.
+      --previous-ui-ir-receipt-file Write the previous UI IR receipt from a diff run as JSON to a file.
       --current-landscape-json Write the current landscape graph from a diff run as JSON to stdout.
       --current-landscape-file Write the current landscape graph from a diff run as JSON to a file.
       --current-landscape-receipt-json Write the current landscape receipt from a diff run as JSON to stdout.
@@ -142,6 +150,22 @@ pub enum BelvedereCliOutput {
     LandscapeDiffPreviousLandscapeReceiptJson,
     /// Write the previous landscape receipt from a diff run as JSON to an artifact file.
     LandscapeDiffPreviousLandscapeReceiptFile(PathBuf),
+    /// Write the previous view model from a diff run as JSON.
+    LandscapeDiffPreviousViewModelJson,
+    /// Write the previous view model from a diff run as JSON to an artifact file.
+    LandscapeDiffPreviousViewModelFile(PathBuf),
+    /// Write the previous view-model receipt from a diff run as JSON.
+    LandscapeDiffPreviousViewModelReceiptJson,
+    /// Write the previous view-model receipt from a diff run as JSON to an artifact file.
+    LandscapeDiffPreviousViewModelReceiptFile(PathBuf),
+    /// Write the previous UI IR projection from a diff run as JSON.
+    LandscapeDiffPreviousUiIrJson,
+    /// Write the previous UI IR projection from a diff run as JSON to an artifact file.
+    LandscapeDiffPreviousUiIrFile(PathBuf),
+    /// Write the previous UI IR receipt from a diff run as JSON.
+    LandscapeDiffPreviousUiIrReceiptJson,
+    /// Write the previous UI IR receipt from a diff run as JSON to an artifact file.
+    LandscapeDiffPreviousUiIrReceiptFile(PathBuf),
     /// Write the current landscape receipt from a diff run as JSON.
     LandscapeDiffCurrentLandscapeReceiptJson,
     /// Write the current landscape receipt from a diff run as JSON to an artifact file.
@@ -320,6 +344,34 @@ fn write_landscape_diff_output(
         BelvedereCliOutput::LandscapeDiffPreviousLandscapeReceiptFile(path) => {
             let file = File::create(path).map_err(BelvedereCliOutputError::write)?;
             write_json(diff.previous_landscape_receipt(), file)
+        }
+        BelvedereCliOutput::LandscapeDiffPreviousViewModelJson => {
+            write_json(diff.previous_view_model(), writer)
+        }
+        BelvedereCliOutput::LandscapeDiffPreviousViewModelFile(path) => {
+            let file = File::create(path).map_err(BelvedereCliOutputError::write)?;
+            write_json(diff.previous_view_model(), file)
+        }
+        BelvedereCliOutput::LandscapeDiffPreviousViewModelReceiptJson => {
+            write_json(diff.previous_view_model_receipt(), writer)
+        }
+        BelvedereCliOutput::LandscapeDiffPreviousViewModelReceiptFile(path) => {
+            let file = File::create(path).map_err(BelvedereCliOutputError::write)?;
+            write_json(diff.previous_view_model_receipt(), file)
+        }
+        BelvedereCliOutput::LandscapeDiffPreviousUiIrJson => {
+            write_json(diff.previous_projection(), writer)
+        }
+        BelvedereCliOutput::LandscapeDiffPreviousUiIrFile(path) => {
+            let file = File::create(path).map_err(BelvedereCliOutputError::write)?;
+            write_json(diff.previous_projection(), file)
+        }
+        BelvedereCliOutput::LandscapeDiffPreviousUiIrReceiptJson => {
+            write_json(diff.previous_ui_ir_receipt(), writer)
+        }
+        BelvedereCliOutput::LandscapeDiffPreviousUiIrReceiptFile(path) => {
+            let file = File::create(path).map_err(BelvedereCliOutputError::write)?;
+            write_json(diff.previous_ui_ir_receipt(), file)
         }
         BelvedereCliOutput::LandscapeDiffCurrentLandscapeReceiptJson => {
             write_json(diff.current_landscape_receipt(), writer)

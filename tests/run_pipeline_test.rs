@@ -615,6 +615,14 @@ fn cli_help_is_a_successful_public_output_contract() -> Result<()> {
     assert!(help.contains("--current-assessment-receipt-file"));
     assert!(help.contains("--previous-landscape-receipt-json"));
     assert!(help.contains("--previous-landscape-receipt-file"));
+    assert!(help.contains("--previous-view-model-json"));
+    assert!(help.contains("--previous-view-model-file"));
+    assert!(help.contains("--previous-view-model-receipt-json"));
+    assert!(help.contains("--previous-view-model-receipt-file"));
+    assert!(help.contains("--previous-ui-ir-json"));
+    assert!(help.contains("--previous-ui-ir-file"));
+    assert!(help.contains("--previous-ui-ir-receipt-json"));
+    assert!(help.contains("--previous-ui-ir-receipt-file"));
     assert!(help.contains("--current-landscape-receipt-json"));
     assert!(help.contains("--current-landscape-receipt-file"));
     assert!(help.contains("--current-view-model-receipt-json"));
@@ -893,6 +901,40 @@ fn assert_auditor_navigation_receipt(receipt: &Value) {
     );
 }
 
+fn assert_previous_auditor_navigation_receipt(receipt: &Value) {
+    assert_eq!(
+        receipt["contract"].as_str(),
+        Some("belvedere.view_model.auditor_navigation")
+    );
+    assert_eq!(receipt["counts"]["claim_cards"].as_u64(), Some(3));
+    assert_eq!(receipt["counts"]["assessment_items"].as_u64(), Some(0));
+    assert_eq!(receipt["counts"]["assessment_work_items"].as_u64(), Some(2));
+    assert!(
+        receipt["source_kind_counts"]
+            .as_object()
+            .is_some_and(|counts| !counts.contains_key("source_kind_assessment"))
+    );
+    assert_eq!(
+        receipt["trace_kind_counts"]["view_model_trace_kind_backend_coverage_item"].as_u64(),
+        Some(9)
+    );
+    assert_eq!(
+        receipt["trace_source_counts"]["view_model_trace_unique_source_records"].as_u64(),
+        Some(5)
+    );
+    assert_eq!(receipt["view_item_ids"].as_array().map(Vec::len), Some(41));
+    assert!(receipt["view_item_ids"].as_array().is_some_and(|ids| {
+        ids.iter().any(|id| {
+            id.as_str()
+                == Some("view_model.claim:belvedere::ingestion::record_identity_is_preserved")
+        })
+    }));
+    assert_eq!(
+        receipt["source_record_ids"].as_array().map(Vec::len),
+        Some(5)
+    );
+}
+
 fn assert_ui_ir_receipt(receipt: &Value) {
     assert_eq!(
         receipt["contract"].as_str(),
@@ -918,6 +960,30 @@ fn assert_ui_ir_receipt(receipt: &Value) {
     );
 }
 
+fn assert_previous_ui_ir_receipt(receipt: &Value) {
+    assert_eq!(
+        receipt["contract"].as_str(),
+        Some("belvedere.ui_ir.elicit_ui_projection")
+    );
+    assert_eq!(receipt["counts"]["section_count"].as_u64(), Some(11));
+    assert_eq!(receipt["counts"]["widget_count"].as_u64(), Some(41));
+    assert_eq!(
+        receipt["section_widget_counts"][UI_IR_SECTION_REVIEW_WORKFLOW].as_u64(),
+        Some(3)
+    );
+    assert_eq!(
+        receipt["trace_source_counts"]["trace_unique_source_records"].as_u64(),
+        Some(5)
+    );
+    assert!(
+        receipt["section_ids"]
+            .as_array()
+            .is_some_and(|section_ids| section_ids
+                .iter()
+                .any(|section_id| section_id.as_str() == Some(UI_IR_SECTION_REVIEW_WORKFLOW)))
+    );
+}
+
 fn assert_auditor_navigation_model(model: &Value) {
     assert_eq!(model["overview"]["claim_count"].as_u64(), Some(4));
     assert_eq!(model["overview"]["root_count"].as_u64(), Some(3));
@@ -938,6 +1004,28 @@ fn assert_auditor_navigation_model(model: &Value) {
     }));
 }
 
+fn assert_previous_auditor_navigation_model(model: &Value) {
+    assert_eq!(model["overview"]["claim_count"].as_u64(), Some(3));
+    assert_eq!(model["overview"]["root_count"].as_u64(), Some(2));
+    assert_eq!(
+        model["overview"]["assessment_recency"]["current_count"].as_u64(),
+        Some(0)
+    );
+    assert_eq!(model["filter_facets"].as_array().map(Vec::len), Some(8));
+    assert_eq!(model["backend_coverage"].as_array().map(Vec::len), Some(9));
+    assert_eq!(model["claim_explorer"].as_array().map(Vec::len), Some(3));
+    assert_eq!(model["proof_chains"].as_array().map(Vec::len), Some(3));
+    assert_eq!(model["review_workflow"].as_array().map(Vec::len), Some(3));
+    assert_eq!(model["assessment_queue"].as_array().map(Vec::len), Some(0));
+    assert_eq!(model["assessment_work"].as_array().map(Vec::len), Some(2));
+    assert_eq!(model["source_record_ids"].as_array().map(Vec::len), Some(5));
+    assert!(model["claim_explorer"].as_array().is_some_and(|items| {
+        items.iter().any(|item| {
+            item["claim_id"].as_str() == Some("belvedere::ingestion::record_identity_is_preserved")
+        })
+    }));
+}
+
 fn assert_ui_ir_projection(projection: &Value) {
     assert!(projection.get("tree").is_none());
     assert!(projection.get("proofs").is_none());
@@ -945,6 +1033,38 @@ fn assert_ui_ir_projection(projection: &Value) {
     assert_eq!(
         projection["trace_widgets"].as_array().map(Vec::len),
         Some(54)
+    );
+    assert_eq!(
+        projection["viewport_verifications"]
+            .as_array()
+            .map(Vec::len),
+        Some(3)
+    );
+    assert_eq!(
+        projection["minted_standards"].as_array().map(Vec::len),
+        Some(4)
+    );
+    assert!(projection["sections"].as_array().is_some_and(|sections| {
+        sections
+            .iter()
+            .any(|section| section["id"].as_str() == Some(UI_IR_SECTION_REVIEW_WORKFLOW))
+    }));
+    assert!(
+        projection["minted_standards"]
+            .as_array()
+            .is_some_and(|standards| standards
+                .iter()
+                .any(|standard| standard["prop"].as_str() == Some("elicit_ui::WcagVerified")))
+    );
+}
+
+fn assert_previous_ui_ir_projection(projection: &Value) {
+    assert!(projection.get("tree").is_none());
+    assert!(projection.get("proofs").is_none());
+    assert_eq!(projection["sections"].as_array().map(Vec::len), Some(11));
+    assert_eq!(
+        projection["trace_widgets"].as_array().map(Vec::len),
+        Some(41)
     );
     assert_eq!(
         projection["viewport_verifications"]
@@ -1895,13 +2015,13 @@ fn cli_can_emit_the_landscape_diff_run_certificate_as_json() -> Result<()> {
     );
     assert_eq!(
         certificate["stage_certificates"].as_array().map(Vec::len),
-        Some(9)
+        Some(11)
     );
     assert_eq!(
         certificate["stage_certificate_digests"]
             .as_array()
             .map(Vec::len),
-        Some(9)
+        Some(11)
     );
     assert_eq!(
         certificate["input_artifact_ids"].as_array().map(Vec::len),
@@ -2006,7 +2126,7 @@ fn cli_can_persist_the_landscape_diff_run_certificate_as_json() -> Result<()> {
     );
     assert_eq!(
         certificate["stage_certificates"].as_array().map(Vec::len),
-        Some(9)
+        Some(11)
     );
     assert_eq!(
         certificate["input_artifact_digests"]
@@ -2740,6 +2860,258 @@ fn cli_can_persist_the_landscape_diff_landscape_as_json() -> Result<()> {
     fs::remove_file(graph_path)
         .into_diagnostic()
         .wrap_err("temporary landscape graph file should be removable")?;
+    fs::remove_file(previous_assessments_path)
+        .into_diagnostic()
+        .wrap_err("temporary empty assessment artifact should be removable")?;
+    Ok(())
+}
+
+#[test]
+fn cli_can_emit_previous_diff_projection_receipts_as_json() -> Result<()> {
+    belvedere::init_tracing();
+
+    let previous_assessments_path = std::env::temp_dir().join(format!(
+        "belvedere-cli-previous-diff-projection-receipts-empty-assessments-{}.jsonl",
+        process::id()
+    ));
+    fs::write(&previous_assessments_path, [])
+        .into_diagnostic()
+        .wrap_err("temporary empty assessment artifact should be writable")?;
+
+    let cases: [(&str, BelvedereCliOutput, ReceiptAssertion); 2] = [
+        (
+            "--previous-view-model-receipt-json",
+            BelvedereCliOutput::LandscapeDiffPreviousViewModelReceiptJson,
+            assert_previous_auditor_navigation_receipt,
+        ),
+        (
+            "--previous-ui-ir-receipt-json",
+            BelvedereCliOutput::LandscapeDiffPreviousUiIrReceiptJson,
+            assert_previous_ui_ir_receipt,
+        ),
+    ];
+
+    for (flag, expected_output, assert_receipt) in cases {
+        let args = diff_args_with_empty_previous_assessments(&[flag], &previous_assessments_path)?;
+        let command = BelvedereCli::from_args(args.clone())
+            .into_diagnostic()
+            .wrap_err(
+                "previous diff projection receipt flag should be part of the public CLI API",
+            )?;
+
+        assert_eq!(command.output(), expected_output);
+
+        let mut output = Vec::new();
+        let status = run_cli_with_writer(args, &mut output);
+        assert_eq!(status, ExitCode::SUCCESS);
+
+        let receipt: Value = serde_json::from_slice(&output)
+            .into_diagnostic()
+            .wrap_err("CLI previous diff projection receipt output should be parseable JSON")?;
+        assert_receipt(&receipt);
+    }
+
+    fs::remove_file(previous_assessments_path)
+        .into_diagnostic()
+        .wrap_err("temporary empty assessment artifact should be removable")?;
+    Ok(())
+}
+
+#[test]
+fn cli_can_persist_previous_diff_projection_receipts_as_json() -> Result<()> {
+    belvedere::init_tracing();
+
+    let previous_assessments_path = std::env::temp_dir().join(format!(
+        "belvedere-cli-previous-diff-projection-receipt-files-empty-assessments-{}.jsonl",
+        process::id()
+    ));
+    fs::write(&previous_assessments_path, [])
+        .into_diagnostic()
+        .wrap_err("temporary empty assessment artifact should be writable")?;
+
+    let view_model_receipt_path = std::env::temp_dir().join(format!(
+        "belvedere-previous-view-model-receipt-{}.json",
+        process::id()
+    ));
+    let ui_ir_receipt_path = std::env::temp_dir().join(format!(
+        "belvedere-previous-ui-ir-receipt-{}.json",
+        process::id()
+    ));
+    let cases: [(&str, PathBuf, BelvedereCliOutput, ReceiptAssertion); 2] = [
+        (
+            "--previous-view-model-receipt-file",
+            view_model_receipt_path.clone(),
+            BelvedereCliOutput::LandscapeDiffPreviousViewModelReceiptFile(
+                view_model_receipt_path.clone(),
+            ),
+            assert_previous_auditor_navigation_receipt,
+        ),
+        (
+            "--previous-ui-ir-receipt-file",
+            ui_ir_receipt_path.clone(),
+            BelvedereCliOutput::LandscapeDiffPreviousUiIrReceiptFile(ui_ir_receipt_path.clone()),
+            assert_previous_ui_ir_receipt,
+        ),
+    ];
+
+    for (flag, receipt_path, expected_output, assert_receipt) in cases {
+        let receipt_path_text = receipt_path
+            .to_str()
+            .ok_or_else(|| miette::miette!("temporary projection receipt path should be UTF-8"))?;
+        let args = diff_args_with_empty_previous_assessments(
+            &[flag, receipt_path_text],
+            &previous_assessments_path,
+        )?;
+        let command = BelvedereCli::from_args(args.clone())
+            .into_diagnostic()
+            .wrap_err(
+                "previous diff projection receipt file flag should be part of the public CLI API",
+            )?;
+
+        assert_eq!(command.output(), expected_output);
+
+        let mut output = Vec::new();
+        let status = run_cli_with_writer(args, &mut output);
+        assert_eq!(status, ExitCode::SUCCESS);
+        assert!(output.is_empty());
+
+        let receipt_bytes = fs::read(&receipt_path)
+            .into_diagnostic()
+            .wrap_err("previous diff projection receipt file should be written")?;
+        let receipt: Value = serde_json::from_slice(&receipt_bytes)
+            .into_diagnostic()
+            .wrap_err("persisted previous diff projection receipt should be parseable JSON")?;
+        assert_receipt(&receipt);
+
+        fs::remove_file(receipt_path)
+            .into_diagnostic()
+            .wrap_err("temporary previous diff projection receipt file should be removable")?;
+    }
+
+    fs::remove_file(previous_assessments_path)
+        .into_diagnostic()
+        .wrap_err("temporary empty assessment artifact should be removable")?;
+    Ok(())
+}
+
+#[test]
+fn cli_can_emit_previous_diff_projection_artifacts_as_json() -> Result<()> {
+    belvedere::init_tracing();
+
+    let previous_assessments_path = std::env::temp_dir().join(format!(
+        "belvedere-cli-previous-diff-projection-artifacts-empty-assessments-{}.jsonl",
+        process::id()
+    ));
+    fs::write(&previous_assessments_path, [])
+        .into_diagnostic()
+        .wrap_err("temporary empty assessment artifact should be writable")?;
+
+    let cases: [(&str, BelvedereCliOutput, ReceiptAssertion); 2] = [
+        (
+            "--previous-view-model-json",
+            BelvedereCliOutput::LandscapeDiffPreviousViewModelJson,
+            assert_previous_auditor_navigation_model,
+        ),
+        (
+            "--previous-ui-ir-json",
+            BelvedereCliOutput::LandscapeDiffPreviousUiIrJson,
+            assert_previous_ui_ir_projection,
+        ),
+    ];
+
+    for (flag, expected_output, assert_artifact) in cases {
+        let args = diff_args_with_empty_previous_assessments(&[flag], &previous_assessments_path)?;
+        let command = BelvedereCli::from_args(args.clone())
+            .into_diagnostic()
+            .wrap_err(
+                "previous diff projection artifact flag should be part of the public CLI API",
+            )?;
+
+        assert_eq!(command.output(), expected_output);
+
+        let mut output = Vec::new();
+        let status = run_cli_with_writer(args, &mut output);
+        assert_eq!(status, ExitCode::SUCCESS);
+
+        let artifact: Value = serde_json::from_slice(&output)
+            .into_diagnostic()
+            .wrap_err("CLI previous diff projection artifact output should be parseable JSON")?;
+        assert_artifact(&artifact);
+    }
+
+    fs::remove_file(previous_assessments_path)
+        .into_diagnostic()
+        .wrap_err("temporary empty assessment artifact should be removable")?;
+    Ok(())
+}
+
+#[test]
+fn cli_can_persist_previous_diff_projection_artifacts_as_json() -> Result<()> {
+    belvedere::init_tracing();
+
+    let previous_assessments_path = std::env::temp_dir().join(format!(
+        "belvedere-cli-previous-diff-projection-artifact-files-empty-assessments-{}.jsonl",
+        process::id()
+    ));
+    fs::write(&previous_assessments_path, [])
+        .into_diagnostic()
+        .wrap_err("temporary empty assessment artifact should be writable")?;
+
+    let view_model_path = std::env::temp_dir().join(format!(
+        "belvedere-previous-view-model-{}.json",
+        process::id()
+    ));
+    let ui_ir_path =
+        std::env::temp_dir().join(format!("belvedere-previous-ui-ir-{}.json", process::id()));
+    let cases: [(&str, PathBuf, BelvedereCliOutput, ReceiptAssertion); 2] = [
+        (
+            "--previous-view-model-file",
+            view_model_path.clone(),
+            BelvedereCliOutput::LandscapeDiffPreviousViewModelFile(view_model_path.clone()),
+            assert_previous_auditor_navigation_model,
+        ),
+        (
+            "--previous-ui-ir-file",
+            ui_ir_path.clone(),
+            BelvedereCliOutput::LandscapeDiffPreviousUiIrFile(ui_ir_path.clone()),
+            assert_previous_ui_ir_projection,
+        ),
+    ];
+
+    for (flag, artifact_path, expected_output, assert_artifact) in cases {
+        let artifact_path_text = artifact_path
+            .to_str()
+            .ok_or_else(|| miette::miette!("temporary projection artifact path should be UTF-8"))?;
+        let args = diff_args_with_empty_previous_assessments(
+            &[flag, artifact_path_text],
+            &previous_assessments_path,
+        )?;
+        let command = BelvedereCli::from_args(args.clone())
+            .into_diagnostic()
+            .wrap_err(
+                "previous diff projection artifact file flag should be part of the public CLI API",
+            )?;
+
+        assert_eq!(command.output(), expected_output);
+
+        let mut output = Vec::new();
+        let status = run_cli_with_writer(args, &mut output);
+        assert_eq!(status, ExitCode::SUCCESS);
+        assert!(output.is_empty());
+
+        let artifact_bytes = fs::read(&artifact_path)
+            .into_diagnostic()
+            .wrap_err("previous diff projection artifact file should be written")?;
+        let artifact: Value = serde_json::from_slice(&artifact_bytes)
+            .into_diagnostic()
+            .wrap_err("persisted previous diff projection artifact should be parseable JSON")?;
+        assert_artifact(&artifact);
+
+        fs::remove_file(artifact_path)
+            .into_diagnostic()
+            .wrap_err("temporary previous diff projection artifact file should be removable")?;
+    }
+
     fs::remove_file(previous_assessments_path)
         .into_diagnostic()
         .wrap_err("temporary empty assessment artifact should be removable")?;

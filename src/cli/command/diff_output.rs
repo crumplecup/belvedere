@@ -124,6 +124,46 @@ impl BelvedereCli {
                 );
                 1
             }
+            "--previous-view-model-json" => {
+                *output = BelvedereCliOutput::LandscapeDiffPreviousViewModelJson;
+                0
+            }
+            "--previous-view-model-file" => {
+                *output = BelvedereCliOutput::LandscapeDiffPreviousViewModelFile(Self::next_path(
+                    arguments, index,
+                )?);
+                1
+            }
+            "--previous-view-model-receipt-json" => {
+                *output = BelvedereCliOutput::LandscapeDiffPreviousViewModelReceiptJson;
+                0
+            }
+            "--previous-view-model-receipt-file" => {
+                *output = BelvedereCliOutput::LandscapeDiffPreviousViewModelReceiptFile(
+                    Self::next_path(arguments, index)?,
+                );
+                1
+            }
+            "--previous-ui-ir-json" => {
+                *output = BelvedereCliOutput::LandscapeDiffPreviousUiIrJson;
+                0
+            }
+            "--previous-ui-ir-file" => {
+                *output = BelvedereCliOutput::LandscapeDiffPreviousUiIrFile(Self::next_path(
+                    arguments, index,
+                )?);
+                1
+            }
+            "--previous-ui-ir-receipt-json" => {
+                *output = BelvedereCliOutput::LandscapeDiffPreviousUiIrReceiptJson;
+                0
+            }
+            "--previous-ui-ir-receipt-file" => {
+                *output = BelvedereCliOutput::LandscapeDiffPreviousUiIrReceiptFile(
+                    Self::next_path(arguments, index)?,
+                );
+                1
+            }
             _ => return Ok(None),
         };
 
