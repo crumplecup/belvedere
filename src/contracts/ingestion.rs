@@ -6,6 +6,7 @@ use std::{
 };
 
 use derive_getters::Getters;
+use serde::{Serialize, Serializer};
 use sha2::{Digest as _, Sha256};
 use tracing::instrument;
 
@@ -53,6 +54,13 @@ impl Display for ArtifactKind {
     }
 }
 
+impl Serialize for ArtifactKind {
+    #[instrument(level = "trace", skip(self, serializer))]
+    fn serialize<S: Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
+        serializer.serialize_str(self.as_str())
+    }
+}
+
 /// Accepted schema roots for Amenable artifacts Belvedere can ingest.
 #[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash)]
 pub enum AcceptedAmenableArtifactFormat {
@@ -84,6 +92,13 @@ impl Display for AcceptedAmenableArtifactFormat {
     #[instrument(level = "trace", skip(self, f))]
     fn fmt(&self, f: &mut Formatter<'_>) -> fmt::Result {
         f.write_str(self.schema_id())
+    }
+}
+
+impl Serialize for AcceptedAmenableArtifactFormat {
+    #[instrument(level = "trace", skip(self, serializer))]
+    fn serialize<S: Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
+        serializer.serialize_str(self.schema_id())
     }
 }
 

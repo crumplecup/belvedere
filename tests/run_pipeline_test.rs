@@ -600,6 +600,10 @@ fn cli_help_is_a_successful_public_output_contract() -> Result<()> {
     assert!(help.contains("--run-certificate-json"));
     assert!(help.contains("--run-certificate-file"));
     assert!(help.contains("--diff-json"));
+    assert!(help.contains("--registry-receipt-json"));
+    assert!(help.contains("--registry-receipt-file"));
+    assert!(help.contains("--assessment-receipt-json"));
+    assert!(help.contains("--assessment-receipt-file"));
     assert!(help.contains("--landscape-receipt-json"));
     assert!(help.contains("--landscape-receipt-file"));
     assert!(help.contains("--view-model-receipt-json"));
@@ -607,6 +611,70 @@ fn cli_help_is_a_successful_public_output_contract() -> Result<()> {
     assert!(help.contains("--ui-ir-receipt-json"));
     assert!(help.contains("--ui-ir-receipt-file"));
     Ok(())
+}
+
+fn assert_registry_ingestion_receipt(receipt: &Value) {
+    assert_eq!(
+        receipt["contract"].as_str(),
+        Some("belvedere.ingest.registry_dump")
+    );
+    assert_eq!(receipt["artifact_kind"].as_str(), Some("registry_dump"));
+    assert_eq!(
+        receipt["format"].as_str(),
+        Some("amenable.registry_dump_json")
+    );
+    assert_eq!(
+        receipt["decoded_counts"]["evidence_links"].as_u64(),
+        Some(1)
+    );
+    assert_eq!(receipt["decoded_counts"]["proof_records"].as_u64(), Some(1));
+    assert_eq!(
+        receipt["decoded_counts"]["contract_records"].as_u64(),
+        Some(1)
+    );
+    assert_eq!(
+        receipt["decoded_counts"]["witness_export_records"].as_u64(),
+        Some(1)
+    );
+    assert_eq!(receipt["decoded_counts"]["kani_proofs"].as_u64(), Some(1));
+    assert_eq!(
+        receipt["source_record_kind_counts"]["source_record_evidence_link"].as_u64(),
+        Some(1)
+    );
+    assert_eq!(
+        receipt["source_record_ids"].as_array().map(Vec::len),
+        Some(5)
+    );
+    assert!(receipt["source_record_ids"].as_array().is_some_and(|ids| {
+        ids.iter().any(|id| {
+            id.as_str() == Some("evidence_link:belvedere::ingestion::DecodedRegistrySnapshot#0")
+        })
+    }));
+}
+
+fn assert_assessment_ingestion_receipt(receipt: &Value) {
+    assert_eq!(
+        receipt["contract"].as_str(),
+        Some("belvedere.ingest.proof_assessments")
+    );
+    assert_eq!(receipt["artifact_kind"].as_str(), Some("proof_assessments"));
+    assert_eq!(
+        receipt["format"].as_str(),
+        Some("amenable.proof_assessment_jsonl")
+    );
+    assert_eq!(receipt["decoded_counts"]["assessments"].as_u64(), Some(2));
+    assert_eq!(
+        receipt["source_record_kind_counts"]["source_record_assessment"].as_u64(),
+        Some(2)
+    );
+    assert_eq!(
+        receipt["source_record_ids"].as_array().map(Vec::len),
+        Some(2)
+    );
+    assert!(receipt["source_record_ids"].as_array().is_some_and(|ids| {
+        ids.iter()
+            .any(|id| id.as_str() == Some("assessment:assess-belvedere-ingestion-1"))
+    }));
 }
 
 fn assert_landscape_receipt(receipt: &Value) {
@@ -785,6 +853,67 @@ fn cli_can_emit_the_run_certificate_as_json() -> Result<()> {
 }
 
 #[test]
+fn cli_can_emit_the_registry_ingestion_receipt_as_json() -> Result<()> {
+    belvedere::init_tracing();
+
+    let args = [
+        "--registry-receipt-json",
+        "tests/fixtures/registry_dump.json",
+        "tests/fixtures/proof_assessments.jsonl",
+    ]
+    .into_iter()
+    .map(str::to_owned)
+    .collect::<Vec<_>>();
+    let command = BelvedereCli::from_args(args.clone())
+        .into_diagnostic()
+        .wrap_err("registry receipt JSON flag should be part of the public CLI API")?;
+
+    assert_eq!(command.output(), BelvedereCliOutput::RunRegistryReceiptJson);
+
+    let mut output = Vec::new();
+    let status = run_cli_with_writer(args, &mut output);
+    assert_eq!(status, ExitCode::SUCCESS);
+
+    let receipt: Value = serde_json::from_slice(&output)
+        .into_diagnostic()
+        .wrap_err("CLI registry receipt output should be parseable JSON")?;
+    assert_registry_ingestion_receipt(&receipt);
+    Ok(())
+}
+
+#[test]
+fn cli_can_emit_the_assessment_ingestion_receipt_as_json() -> Result<()> {
+    belvedere::init_tracing();
+
+    let args = [
+        "--assessment-receipt-json",
+        "tests/fixtures/registry_dump.json",
+        "tests/fixtures/proof_assessments.jsonl",
+    ]
+    .into_iter()
+    .map(str::to_owned)
+    .collect::<Vec<_>>();
+    let command = BelvedereCli::from_args(args.clone())
+        .into_diagnostic()
+        .wrap_err("assessment receipt JSON flag should be part of the public CLI API")?;
+
+    assert_eq!(
+        command.output(),
+        BelvedereCliOutput::RunAssessmentReceiptJson
+    );
+
+    let mut output = Vec::new();
+    let status = run_cli_with_writer(args, &mut output);
+    assert_eq!(status, ExitCode::SUCCESS);
+
+    let receipt: Value = serde_json::from_slice(&output)
+        .into_diagnostic()
+        .wrap_err("CLI assessment receipt output should be parseable JSON")?;
+    assert_assessment_ingestion_receipt(&receipt);
+    Ok(())
+}
+
+#[test]
 fn cli_can_emit_the_landscape_receipt_as_json() -> Result<()> {
     belvedere::init_tracing();
 
@@ -894,6 +1023,98 @@ fn cli_can_emit_the_view_model_receipt_as_json() -> Result<()> {
         .into_diagnostic()
         .wrap_err("CLI view-model receipt output should be parseable JSON")?;
     assert_auditor_navigation_receipt(&receipt);
+    Ok(())
+}
+
+#[test]
+fn cli_can_persist_the_registry_ingestion_receipt_as_json() -> Result<()> {
+    belvedere::init_tracing();
+
+    let receipt_path =
+        std::env::temp_dir().join(format!("belvedere-registry-receipt-{}.json", process::id()));
+    let args = [
+        "--registry-receipt-file",
+        receipt_path
+            .to_str()
+            .ok_or_else(|| miette::miette!("temporary registry receipt path should be UTF-8"))?,
+        "tests/fixtures/registry_dump.json",
+        "tests/fixtures/proof_assessments.jsonl",
+    ]
+    .into_iter()
+    .map(str::to_owned)
+    .collect::<Vec<_>>();
+    let command = BelvedereCli::from_args(args.clone())
+        .into_diagnostic()
+        .wrap_err("registry receipt file flag should be part of the public CLI API")?;
+
+    assert_eq!(
+        command.output(),
+        BelvedereCliOutput::RunRegistryReceiptFile(receipt_path.clone())
+    );
+
+    let mut output = Vec::new();
+    let status = run_cli_with_writer(args, &mut output);
+    assert_eq!(status, ExitCode::SUCCESS);
+    assert!(output.is_empty());
+
+    let receipt_bytes = fs::read(&receipt_path)
+        .into_diagnostic()
+        .wrap_err("registry receipt file should be written")?;
+    let receipt: Value = serde_json::from_slice(&receipt_bytes)
+        .into_diagnostic()
+        .wrap_err("persisted registry receipt should be parseable JSON")?;
+    assert_registry_ingestion_receipt(&receipt);
+
+    fs::remove_file(&receipt_path)
+        .into_diagnostic()
+        .wrap_err("temporary registry receipt file should be removable")?;
+    Ok(())
+}
+
+#[test]
+fn cli_can_persist_the_assessment_ingestion_receipt_as_json() -> Result<()> {
+    belvedere::init_tracing();
+
+    let receipt_path = std::env::temp_dir().join(format!(
+        "belvedere-assessment-receipt-{}.json",
+        process::id()
+    ));
+    let args = [
+        "--assessment-receipt-file",
+        receipt_path
+            .to_str()
+            .ok_or_else(|| miette::miette!("temporary assessment receipt path should be UTF-8"))?,
+        "tests/fixtures/registry_dump.json",
+        "tests/fixtures/proof_assessments.jsonl",
+    ]
+    .into_iter()
+    .map(str::to_owned)
+    .collect::<Vec<_>>();
+    let command = BelvedereCli::from_args(args.clone())
+        .into_diagnostic()
+        .wrap_err("assessment receipt file flag should be part of the public CLI API")?;
+
+    assert_eq!(
+        command.output(),
+        BelvedereCliOutput::RunAssessmentReceiptFile(receipt_path.clone())
+    );
+
+    let mut output = Vec::new();
+    let status = run_cli_with_writer(args, &mut output);
+    assert_eq!(status, ExitCode::SUCCESS);
+    assert!(output.is_empty());
+
+    let receipt_bytes = fs::read(&receipt_path)
+        .into_diagnostic()
+        .wrap_err("assessment receipt file should be written")?;
+    let receipt: Value = serde_json::from_slice(&receipt_bytes)
+        .into_diagnostic()
+        .wrap_err("persisted assessment receipt should be parseable JSON")?;
+    assert_assessment_ingestion_receipt(&receipt);
+
+    fs::remove_file(&receipt_path)
+        .into_diagnostic()
+        .wrap_err("temporary assessment receipt file should be removable")?;
     Ok(())
 }
 

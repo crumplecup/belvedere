@@ -3,6 +3,7 @@
 use std::{collections::BTreeMap, path::PathBuf};
 
 use derive_getters::Getters;
+use serde::Serialize;
 use tracing::instrument;
 
 use crate::contracts::{
@@ -10,7 +11,7 @@ use crate::contracts::{
 };
 
 /// Audit receipt emitted by an ingestion exchange.
-#[derive(Debug, Clone, PartialEq, Eq, Getters)]
+#[derive(Debug, Clone, PartialEq, Eq, Getters, Serialize)]
 pub struct IngestionReceipt {
     contract: String,
     path: PathBuf,

@@ -4,10 +4,11 @@ use std::collections::BTreeMap;
 
 use derive_getters::Getters;
 use derive_new::new;
+use serde::Serialize;
 use tracing::instrument;
 
 /// A field preserved by ingestion but not yet interpreted by Belvedere.
-#[derive(Debug, Clone, PartialEq, Eq, Getters, new)]
+#[derive(Debug, Clone, PartialEq, Eq, Getters, new, Serialize)]
 pub struct UnsupportedField {
     #[new(into)]
     record: String,

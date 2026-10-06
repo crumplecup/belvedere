@@ -70,6 +70,26 @@ impl BelvedereCli {
                     output = BelvedereCliOutput::RunCertificateFile(PathBuf::from(path));
                     index += 1;
                 }
+                "--registry-receipt-json" => {
+                    output = BelvedereCliOutput::RunRegistryReceiptJson;
+                }
+                "--registry-receipt-file" => {
+                    let Some(path) = arguments.get(index + 1) else {
+                        return Err(BelvedereCliUsageError::new().into());
+                    };
+                    output = BelvedereCliOutput::RunRegistryReceiptFile(PathBuf::from(path));
+                    index += 1;
+                }
+                "--assessment-receipt-json" => {
+                    output = BelvedereCliOutput::RunAssessmentReceiptJson;
+                }
+                "--assessment-receipt-file" => {
+                    let Some(path) = arguments.get(index + 1) else {
+                        return Err(BelvedereCliUsageError::new().into());
+                    };
+                    output = BelvedereCliOutput::RunAssessmentReceiptFile(PathBuf::from(path));
+                    index += 1;
+                }
                 "--landscape-receipt-json" => {
                     output = BelvedereCliOutput::RunLandscapeReceiptJson;
                 }
