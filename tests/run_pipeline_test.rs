@@ -1,6 +1,6 @@
 use std::{
     fs,
-    path::Path,
+    path::{Path, PathBuf},
     process::{self, ExitCode},
 };
 
@@ -613,6 +613,10 @@ fn cli_help_is_a_successful_public_output_contract() -> Result<()> {
     assert!(help.contains("--current-registry-receipt-file"));
     assert!(help.contains("--current-assessment-receipt-json"));
     assert!(help.contains("--current-assessment-receipt-file"));
+    assert!(help.contains("--previous-landscape-receipt-json"));
+    assert!(help.contains("--previous-landscape-receipt-file"));
+    assert!(help.contains("--current-landscape-receipt-json"));
+    assert!(help.contains("--current-landscape-receipt-file"));
     assert!(help.contains("--registry-receipt-json"));
     assert!(help.contains("--registry-receipt-file"));
     assert!(help.contains("--assessment-receipt-json"));
@@ -760,6 +764,25 @@ fn assert_landscape_receipt(receipt: &Value) {
     assert_eq!(
         receipt["source_record_ids"].as_array().map(Vec::len),
         Some(7)
+    );
+}
+
+fn assert_previous_landscape_receipt(receipt: &Value) {
+    assert_eq!(
+        receipt["contract"].as_str(),
+        Some("belvedere.model.landscape")
+    );
+    assert_eq!(receipt["counts"]["claim_count"].as_u64(), Some(3));
+    assert_eq!(receipt["counts"]["proof_count"].as_u64(), Some(2));
+    assert_eq!(
+        receipt["assessment_recency_counts"]
+            .as_object()
+            .map(serde_json::Map::len),
+        Some(0)
+    );
+    assert_eq!(
+        receipt["source_record_ids"].as_array().map(Vec::len),
+        Some(5)
     );
 }
 
@@ -1940,6 +1963,136 @@ fn cli_can_persist_the_current_diff_registry_receipt_as_json() -> Result<()> {
     fs::remove_file(receipt_path)
         .into_diagnostic()
         .wrap_err("temporary current registry receipt file should be removable")?;
+    fs::remove_file(previous_assessments_path)
+        .into_diagnostic()
+        .wrap_err("temporary empty assessment artifact should be removable")?;
+    Ok(())
+}
+
+#[test]
+fn cli_can_emit_diff_snapshot_landscape_receipts_as_json() -> Result<()> {
+    belvedere::init_tracing();
+
+    let previous_assessments_path = std::env::temp_dir().join(format!(
+        "belvedere-cli-diff-snapshot-landscape-receipts-empty-assessments-{}.jsonl",
+        process::id()
+    ));
+    fs::write(&previous_assessments_path, [])
+        .into_diagnostic()
+        .wrap_err("temporary empty assessment artifact should be writable")?;
+
+    let cases: [(&str, BelvedereCliOutput, ReceiptAssertion); 2] = [
+        (
+            "--previous-landscape-receipt-json",
+            BelvedereCliOutput::LandscapeDiffPreviousLandscapeReceiptJson,
+            assert_previous_landscape_receipt,
+        ),
+        (
+            "--current-landscape-receipt-json",
+            BelvedereCliOutput::LandscapeDiffCurrentLandscapeReceiptJson,
+            assert_landscape_receipt,
+        ),
+    ];
+
+    for (flag, expected_output, assert_receipt) in cases {
+        let args = diff_args_with_empty_previous_assessments(&[flag], &previous_assessments_path)?;
+        let command = BelvedereCli::from_args(args.clone())
+            .into_diagnostic()
+            .wrap_err(
+                "diff snapshot landscape receipt flag should be part of the public CLI API",
+            )?;
+
+        assert_eq!(command.output(), expected_output);
+
+        let mut output = Vec::new();
+        let status = run_cli_with_writer(args, &mut output);
+        assert_eq!(status, ExitCode::SUCCESS);
+
+        let receipt: Value = serde_json::from_slice(&output)
+            .into_diagnostic()
+            .wrap_err("CLI diff snapshot landscape receipt output should be parseable JSON")?;
+        assert_receipt(&receipt);
+    }
+
+    fs::remove_file(previous_assessments_path)
+        .into_diagnostic()
+        .wrap_err("temporary empty assessment artifact should be removable")?;
+    Ok(())
+}
+
+#[test]
+fn cli_can_persist_diff_snapshot_landscape_receipts_as_json() -> Result<()> {
+    belvedere::init_tracing();
+
+    let previous_assessments_path = std::env::temp_dir().join(format!(
+        "belvedere-cli-diff-snapshot-landscape-receipt-files-empty-assessments-{}.jsonl",
+        process::id()
+    ));
+    fs::write(&previous_assessments_path, [])
+        .into_diagnostic()
+        .wrap_err("temporary empty assessment artifact should be writable")?;
+
+    let previous_receipt_path = std::env::temp_dir().join(format!(
+        "belvedere-previous-landscape-receipt-{}.json",
+        process::id()
+    ));
+    let current_receipt_path = std::env::temp_dir().join(format!(
+        "belvedere-current-landscape-receipt-{}.json",
+        process::id()
+    ));
+    let cases: [(&str, PathBuf, BelvedereCliOutput, ReceiptAssertion); 2] = [
+        (
+            "--previous-landscape-receipt-file",
+            previous_receipt_path.clone(),
+            BelvedereCliOutput::LandscapeDiffPreviousLandscapeReceiptFile(
+                previous_receipt_path.clone(),
+            ),
+            assert_previous_landscape_receipt,
+        ),
+        (
+            "--current-landscape-receipt-file",
+            current_receipt_path.clone(),
+            BelvedereCliOutput::LandscapeDiffCurrentLandscapeReceiptFile(
+                current_receipt_path.clone(),
+            ),
+            assert_landscape_receipt,
+        ),
+    ];
+
+    for (flag, receipt_path, expected_output, assert_receipt) in cases {
+        let receipt_path_text = receipt_path
+            .to_str()
+            .ok_or_else(|| miette::miette!("temporary landscape receipt path should be UTF-8"))?;
+        let args = diff_args_with_empty_previous_assessments(
+            &[flag, receipt_path_text],
+            &previous_assessments_path,
+        )?;
+        let command = BelvedereCli::from_args(args.clone())
+            .into_diagnostic()
+            .wrap_err(
+                "diff snapshot landscape receipt file flag should be part of the public CLI API",
+            )?;
+
+        assert_eq!(command.output(), expected_output);
+
+        let mut output = Vec::new();
+        let status = run_cli_with_writer(args, &mut output);
+        assert_eq!(status, ExitCode::SUCCESS);
+        assert!(output.is_empty());
+
+        let receipt_bytes = fs::read(&receipt_path)
+            .into_diagnostic()
+            .wrap_err("snapshot landscape receipt file should be written")?;
+        let receipt: Value = serde_json::from_slice(&receipt_bytes)
+            .into_diagnostic()
+            .wrap_err("persisted snapshot landscape receipt should be parseable JSON")?;
+        assert_receipt(&receipt);
+
+        fs::remove_file(receipt_path)
+            .into_diagnostic()
+            .wrap_err("temporary snapshot landscape receipt file should be removable")?;
+    }
+
     fs::remove_file(previous_assessments_path)
         .into_diagnostic()
         .wrap_err("temporary empty assessment artifact should be removable")?;

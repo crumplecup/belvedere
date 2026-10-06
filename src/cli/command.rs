@@ -233,6 +233,30 @@ impl BelvedereCli {
                     );
                     index += 1;
                 }
+                "--previous-landscape-receipt-json" => {
+                    output = BelvedereCliOutput::LandscapeDiffPreviousLandscapeReceiptJson;
+                }
+                "--previous-landscape-receipt-file" => {
+                    let Some(path) = arguments.get(index + 1) else {
+                        return Err(BelvedereCliUsageError::new().into());
+                    };
+                    output = BelvedereCliOutput::LandscapeDiffPreviousLandscapeReceiptFile(
+                        PathBuf::from(path),
+                    );
+                    index += 1;
+                }
+                "--current-landscape-receipt-json" => {
+                    output = BelvedereCliOutput::LandscapeDiffCurrentLandscapeReceiptJson;
+                }
+                "--current-landscape-receipt-file" => {
+                    let Some(path) = arguments.get(index + 1) else {
+                        return Err(BelvedereCliUsageError::new().into());
+                    };
+                    output = BelvedereCliOutput::LandscapeDiffCurrentLandscapeReceiptFile(
+                        PathBuf::from(path),
+                    );
+                    index += 1;
+                }
                 "--landscape-receipt-json" => {
                     output = BelvedereCliOutput::LandscapeDiffLandscapeReceiptJson;
                 }
