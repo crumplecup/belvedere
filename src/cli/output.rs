@@ -5,14 +5,14 @@ use std::{fs::File, io::Write, path::PathBuf};
 use serde::Serialize;
 use tracing::instrument;
 
-use crate::BelvedereError;
+use crate::{BelvedereError, BelvedereLandscapeDiffRunReport, BelvedereRunReport};
 
 use super::{BelvedereCliOutputError, BelvedereCliReport, BelvedereCliUsageError};
 
 /// Stable CLI help text.
 pub const BELVEDERE_CLI_HELP: &str = "\
 usage: belvedere [--help] [--certificate-json | --certificate-file <path> | --registry-receipt-json | --registry-receipt-file <path> | --assessment-receipt-json | --assessment-receipt-file <path> | --landscape-receipt-json | --landscape-receipt-file <path> | --view-model-receipt-json | --view-model-receipt-file <path> | --ui-ir-receipt-json | --ui-ir-receipt-file <path>] <registry-dump.json> <proof-assessments.jsonl>
-       belvedere diff [--certificate-json | --certificate-file <path> | --run-certificate-json | --run-certificate-file <path> | --diff-json | --diff-receipt-json | --diff-receipt-file <path> | --previous-registry-receipt-json | --previous-registry-receipt-file <path> | --previous-assessment-receipt-json | --previous-assessment-receipt-file <path> | --current-registry-receipt-json | --current-registry-receipt-file <path> | --current-assessment-receipt-json | --current-assessment-receipt-file <path> | --previous-landscape-receipt-json | --previous-landscape-receipt-file <path> | --current-landscape-receipt-json | --current-landscape-receipt-file <path> | --landscape-receipt-json | --landscape-receipt-file <path> | --view-model-receipt-json | --view-model-receipt-file <path> | --ui-ir-receipt-json | --ui-ir-receipt-file <path>] <previous-registry-dump.json> <previous-proof-assessments.jsonl> <current-registry-dump.json> <current-proof-assessments.jsonl>
+       belvedere diff [--certificate-json | --certificate-file <path> | --run-certificate-json | --run-certificate-file <path> | --diff-json | --diff-receipt-json | --diff-receipt-file <path> | --previous-registry-receipt-json | --previous-registry-receipt-file <path> | --previous-assessment-receipt-json | --previous-assessment-receipt-file <path> | --current-registry-receipt-json | --current-registry-receipt-file <path> | --current-assessment-receipt-json | --current-assessment-receipt-file <path> | --previous-landscape-receipt-json | --previous-landscape-receipt-file <path> | --current-landscape-receipt-json | --current-landscape-receipt-file <path> | --current-view-model-receipt-json | --current-view-model-receipt-file <path> | --current-ui-ir-receipt-json | --current-ui-ir-receipt-file <path> | --landscape-receipt-json | --landscape-receipt-file <path> | --view-model-receipt-json | --view-model-receipt-file <path> | --ui-ir-receipt-json | --ui-ir-receipt-file <path>] <previous-registry-dump.json> <previous-proof-assessments.jsonl> <current-registry-dump.json> <current-proof-assessments.jsonl>
 
 Options:
   -h, --help                       Show this help text.
@@ -39,6 +39,10 @@ Options:
       --previous-landscape-receipt-file Write the previous landscape receipt from a diff run as JSON to a file.
       --current-landscape-receipt-json Write the current landscape receipt from a diff run as JSON to stdout.
       --current-landscape-receipt-file Write the current landscape receipt from a diff run as JSON to a file.
+      --current-view-model-receipt-json Write the current view-model receipt from a diff run as JSON to stdout.
+      --current-view-model-receipt-file Write the current view-model receipt from a diff run as JSON to a file.
+      --current-ui-ir-receipt-json Write the current UI IR receipt from a diff run as JSON to stdout.
+      --current-ui-ir-receipt-file Write the current UI IR receipt from a diff run as JSON to a file.
       --landscape-receipt-json     Write the landscape receipt as JSON to stdout.
       --landscape-receipt-file     Write the landscape receipt as JSON to a file.
       --view-model-receipt-json    Write the view-model receipt as JSON to stdout.
@@ -108,6 +112,14 @@ pub enum BelvedereCliOutput {
     LandscapeDiffCurrentLandscapeReceiptJson,
     /// Write the current landscape receipt from a diff run as JSON to an artifact file.
     LandscapeDiffCurrentLandscapeReceiptFile(PathBuf),
+    /// Write the current view-model receipt from a diff run as JSON.
+    LandscapeDiffCurrentViewModelReceiptJson,
+    /// Write the current view-model receipt from a diff run as JSON to an artifact file.
+    LandscapeDiffCurrentViewModelReceiptFile(PathBuf),
+    /// Write the current UI IR receipt from a diff run as JSON.
+    LandscapeDiffCurrentUiIrReceiptJson,
+    /// Write the current UI IR receipt from a diff run as JSON to an artifact file.
+    LandscapeDiffCurrentUiIrReceiptFile(PathBuf),
     /// Write the landscape diff stage certificate as JSON.
     LandscapeDiffCertificateJson,
     /// Write the landscape diff stage certificate as JSON to an artifact file.
@@ -136,182 +148,162 @@ pub(super) fn write_cli_output(
     report: &BelvedereCliReport,
     writer: impl Write,
 ) -> Result<(), BelvedereError> {
-    match (output, report) {
-        (BelvedereCliOutput::Help, _) => write_cli_help(writer),
-        (BelvedereCliOutput::LogSummary, _) => Ok(()),
-        (BelvedereCliOutput::RunCertificateJson, BelvedereCliReport::Run(run)) => {
-            write_json(run.certificate(), writer)
-        }
-        (BelvedereCliOutput::RunCertificateFile(path), BelvedereCliReport::Run(run)) => {
+    match output {
+        BelvedereCliOutput::Help => write_cli_help(writer),
+        BelvedereCliOutput::LogSummary => Ok(()),
+        _ => match report {
+            BelvedereCliReport::Run(run) => write_run_output(output, run, writer),
+            BelvedereCliReport::LandscapeDiff(diff) => {
+                write_landscape_diff_output(output, diff, writer)
+            }
+        },
+    }
+}
+
+#[instrument(level = "info", skip(output, run, writer))]
+fn write_run_output(
+    output: BelvedereCliOutput,
+    run: &BelvedereRunReport,
+    writer: impl Write,
+) -> Result<(), BelvedereError> {
+    match output {
+        BelvedereCliOutput::RunCertificateJson => write_json(run.certificate(), writer),
+        BelvedereCliOutput::RunCertificateFile(path) => {
             let file = File::create(path).map_err(BelvedereCliOutputError::write)?;
             write_json(run.certificate(), file)
         }
-        (BelvedereCliOutput::RunRegistryReceiptJson, BelvedereCliReport::Run(run)) => {
-            write_json(run.registry_receipt(), writer)
-        }
-        (BelvedereCliOutput::RunRegistryReceiptFile(path), BelvedereCliReport::Run(run)) => {
+        BelvedereCliOutput::RunRegistryReceiptJson => write_json(run.registry_receipt(), writer),
+        BelvedereCliOutput::RunRegistryReceiptFile(path) => {
             let file = File::create(path).map_err(BelvedereCliOutputError::write)?;
             write_json(run.registry_receipt(), file)
         }
-        (BelvedereCliOutput::RunAssessmentReceiptJson, BelvedereCliReport::Run(run)) => {
+        BelvedereCliOutput::RunAssessmentReceiptJson => {
             write_json(run.assessment_receipt(), writer)
         }
-        (BelvedereCliOutput::RunAssessmentReceiptFile(path), BelvedereCliReport::Run(run)) => {
+        BelvedereCliOutput::RunAssessmentReceiptFile(path) => {
             let file = File::create(path).map_err(BelvedereCliOutputError::write)?;
             write_json(run.assessment_receipt(), file)
         }
-        (BelvedereCliOutput::RunLandscapeReceiptJson, BelvedereCliReport::Run(run)) => {
-            write_json(run.landscape_receipt(), writer)
-        }
-        (BelvedereCliOutput::RunLandscapeReceiptFile(path), BelvedereCliReport::Run(run)) => {
+        BelvedereCliOutput::RunLandscapeReceiptJson => write_json(run.landscape_receipt(), writer),
+        BelvedereCliOutput::RunLandscapeReceiptFile(path) => {
             let file = File::create(path).map_err(BelvedereCliOutputError::write)?;
             write_json(run.landscape_receipt(), file)
         }
-        (BelvedereCliOutput::RunViewModelReceiptJson, BelvedereCliReport::Run(run)) => {
-            write_json(run.view_model_receipt(), writer)
-        }
-        (BelvedereCliOutput::RunViewModelReceiptFile(path), BelvedereCliReport::Run(run)) => {
+        BelvedereCliOutput::RunViewModelReceiptJson => write_json(run.view_model_receipt(), writer),
+        BelvedereCliOutput::RunViewModelReceiptFile(path) => {
             let file = File::create(path).map_err(BelvedereCliOutputError::write)?;
             write_json(run.view_model_receipt(), file)
         }
-        (BelvedereCliOutput::RunUiIrReceiptJson, BelvedereCliReport::Run(run)) => {
-            write_json(run.ui_ir_receipt(), writer)
-        }
-        (BelvedereCliOutput::RunUiIrReceiptFile(path), BelvedereCliReport::Run(run)) => {
+        BelvedereCliOutput::RunUiIrReceiptJson => write_json(run.ui_ir_receipt(), writer),
+        BelvedereCliOutput::RunUiIrReceiptFile(path) => {
             let file = File::create(path).map_err(BelvedereCliOutputError::write)?;
             write_json(run.ui_ir_receipt(), file)
         }
-        (
-            BelvedereCliOutput::LandscapeDiffCertificateJson,
-            BelvedereCliReport::LandscapeDiff(diff),
-        ) => write_json(diff.diff_certificate(), writer),
-        (
-            BelvedereCliOutput::LandscapeDiffCertificateFile(path),
-            BelvedereCliReport::LandscapeDiff(diff),
-        ) => {
+        _ => Err(BelvedereCliUsageError::new().into()),
+    }
+}
+
+#[instrument(level = "info", skip(output, diff, writer))]
+fn write_landscape_diff_output(
+    output: BelvedereCliOutput,
+    diff: &BelvedereLandscapeDiffRunReport,
+    writer: impl Write,
+) -> Result<(), BelvedereError> {
+    match output {
+        BelvedereCliOutput::LandscapeDiffCertificateJson => {
+            write_json(diff.diff_certificate(), writer)
+        }
+        BelvedereCliOutput::LandscapeDiffCertificateFile(path) => {
             let file = File::create(path).map_err(BelvedereCliOutputError::write)?;
             write_json(diff.diff_certificate(), file)
         }
-        (
-            BelvedereCliOutput::LandscapeDiffRunCertificateJson,
-            BelvedereCliReport::LandscapeDiff(diff),
-        ) => write_json(diff.certificate(), writer),
-        (
-            BelvedereCliOutput::LandscapeDiffRunCertificateFile(path),
-            BelvedereCliReport::LandscapeDiff(diff),
-        ) => {
+        BelvedereCliOutput::LandscapeDiffRunCertificateJson => {
+            write_json(diff.certificate(), writer)
+        }
+        BelvedereCliOutput::LandscapeDiffRunCertificateFile(path) => {
             let file = File::create(path).map_err(BelvedereCliOutputError::write)?;
             write_json(diff.certificate(), file)
         }
-        (
-            BelvedereCliOutput::LandscapeDiffLandscapeReceiptJson,
-            BelvedereCliReport::LandscapeDiff(diff),
-        ) => write_json(diff.current_landscape_receipt(), writer),
-        (
-            BelvedereCliOutput::LandscapeDiffLandscapeReceiptFile(path),
-            BelvedereCliReport::LandscapeDiff(diff),
-        ) => {
+        BelvedereCliOutput::LandscapeDiffLandscapeReceiptJson => {
+            write_json(diff.current_landscape_receipt(), writer)
+        }
+        BelvedereCliOutput::LandscapeDiffLandscapeReceiptFile(path) => {
             let file = File::create(path).map_err(BelvedereCliOutputError::write)?;
             write_json(diff.current_landscape_receipt(), file)
         }
-        (
-            BelvedereCliOutput::LandscapeDiffPreviousLandscapeReceiptJson,
-            BelvedereCliReport::LandscapeDiff(diff),
-        ) => write_json(diff.previous_landscape_receipt(), writer),
-        (
-            BelvedereCliOutput::LandscapeDiffPreviousLandscapeReceiptFile(path),
-            BelvedereCliReport::LandscapeDiff(diff),
-        ) => {
+        BelvedereCliOutput::LandscapeDiffPreviousLandscapeReceiptJson => {
+            write_json(diff.previous_landscape_receipt(), writer)
+        }
+        BelvedereCliOutput::LandscapeDiffPreviousLandscapeReceiptFile(path) => {
             let file = File::create(path).map_err(BelvedereCliOutputError::write)?;
             write_json(diff.previous_landscape_receipt(), file)
         }
-        (
-            BelvedereCliOutput::LandscapeDiffCurrentLandscapeReceiptJson,
-            BelvedereCliReport::LandscapeDiff(diff),
-        ) => write_json(diff.current_landscape_receipt(), writer),
-        (
-            BelvedereCliOutput::LandscapeDiffCurrentLandscapeReceiptFile(path),
-            BelvedereCliReport::LandscapeDiff(diff),
-        ) => {
+        BelvedereCliOutput::LandscapeDiffCurrentLandscapeReceiptJson => {
+            write_json(diff.current_landscape_receipt(), writer)
+        }
+        BelvedereCliOutput::LandscapeDiffCurrentLandscapeReceiptFile(path) => {
             let file = File::create(path).map_err(BelvedereCliOutputError::write)?;
             write_json(diff.current_landscape_receipt(), file)
         }
-        (
-            BelvedereCliOutput::LandscapeDiffViewModelReceiptJson,
-            BelvedereCliReport::LandscapeDiff(diff),
-        ) => write_json(diff.current_view_model_receipt(), writer),
-        (
-            BelvedereCliOutput::LandscapeDiffViewModelReceiptFile(path),
-            BelvedereCliReport::LandscapeDiff(diff),
-        ) => {
+        BelvedereCliOutput::LandscapeDiffCurrentViewModelReceiptJson => {
+            write_json(diff.current_view_model_receipt(), writer)
+        }
+        BelvedereCliOutput::LandscapeDiffCurrentViewModelReceiptFile(path) => {
             let file = File::create(path).map_err(BelvedereCliOutputError::write)?;
             write_json(diff.current_view_model_receipt(), file)
         }
-        (
-            BelvedereCliOutput::LandscapeDiffUiIrReceiptJson,
-            BelvedereCliReport::LandscapeDiff(diff),
-        ) => write_json(diff.current_ui_ir_receipt(), writer),
-        (
-            BelvedereCliOutput::LandscapeDiffUiIrReceiptFile(path),
-            BelvedereCliReport::LandscapeDiff(diff),
-        ) => {
+        BelvedereCliOutput::LandscapeDiffCurrentUiIrReceiptJson => {
+            write_json(diff.current_ui_ir_receipt(), writer)
+        }
+        BelvedereCliOutput::LandscapeDiffCurrentUiIrReceiptFile(path) => {
             let file = File::create(path).map_err(BelvedereCliOutputError::write)?;
             write_json(diff.current_ui_ir_receipt(), file)
         }
-        (BelvedereCliOutput::LandscapeDiffJson, BelvedereCliReport::LandscapeDiff(diff)) => {
-            write_json(diff.diff(), writer)
+        BelvedereCliOutput::LandscapeDiffViewModelReceiptJson => {
+            write_json(diff.current_view_model_receipt(), writer)
         }
-        (BelvedereCliOutput::LandscapeDiffReceiptJson, BelvedereCliReport::LandscapeDiff(diff)) => {
-            write_json(diff.diff_receipt(), writer)
+        BelvedereCliOutput::LandscapeDiffViewModelReceiptFile(path) => {
+            let file = File::create(path).map_err(BelvedereCliOutputError::write)?;
+            write_json(diff.current_view_model_receipt(), file)
         }
-        (
-            BelvedereCliOutput::LandscapeDiffReceiptFile(path),
-            BelvedereCliReport::LandscapeDiff(diff),
-        ) => {
+        BelvedereCliOutput::LandscapeDiffUiIrReceiptJson => {
+            write_json(diff.current_ui_ir_receipt(), writer)
+        }
+        BelvedereCliOutput::LandscapeDiffUiIrReceiptFile(path) => {
+            let file = File::create(path).map_err(BelvedereCliOutputError::write)?;
+            write_json(diff.current_ui_ir_receipt(), file)
+        }
+        BelvedereCliOutput::LandscapeDiffJson => write_json(diff.diff(), writer),
+        BelvedereCliOutput::LandscapeDiffReceiptJson => write_json(diff.diff_receipt(), writer),
+        BelvedereCliOutput::LandscapeDiffReceiptFile(path) => {
             let file = File::create(path).map_err(BelvedereCliOutputError::write)?;
             write_json(diff.diff_receipt(), file)
         }
-        (
-            BelvedereCliOutput::LandscapeDiffPreviousRegistryReceiptJson,
-            BelvedereCliReport::LandscapeDiff(diff),
-        ) => write_json(diff.previous_registry_receipt(), writer),
-        (
-            BelvedereCliOutput::LandscapeDiffPreviousRegistryReceiptFile(path),
-            BelvedereCliReport::LandscapeDiff(diff),
-        ) => {
+        BelvedereCliOutput::LandscapeDiffPreviousRegistryReceiptJson => {
+            write_json(diff.previous_registry_receipt(), writer)
+        }
+        BelvedereCliOutput::LandscapeDiffPreviousRegistryReceiptFile(path) => {
             let file = File::create(path).map_err(BelvedereCliOutputError::write)?;
             write_json(diff.previous_registry_receipt(), file)
         }
-        (
-            BelvedereCliOutput::LandscapeDiffPreviousAssessmentReceiptJson,
-            BelvedereCliReport::LandscapeDiff(diff),
-        ) => write_json(diff.previous_assessment_receipt(), writer),
-        (
-            BelvedereCliOutput::LandscapeDiffPreviousAssessmentReceiptFile(path),
-            BelvedereCliReport::LandscapeDiff(diff),
-        ) => {
+        BelvedereCliOutput::LandscapeDiffPreviousAssessmentReceiptJson => {
+            write_json(diff.previous_assessment_receipt(), writer)
+        }
+        BelvedereCliOutput::LandscapeDiffPreviousAssessmentReceiptFile(path) => {
             let file = File::create(path).map_err(BelvedereCliOutputError::write)?;
             write_json(diff.previous_assessment_receipt(), file)
         }
-        (
-            BelvedereCliOutput::LandscapeDiffCurrentRegistryReceiptJson,
-            BelvedereCliReport::LandscapeDiff(diff),
-        ) => write_json(diff.current_registry_receipt(), writer),
-        (
-            BelvedereCliOutput::LandscapeDiffCurrentRegistryReceiptFile(path),
-            BelvedereCliReport::LandscapeDiff(diff),
-        ) => {
+        BelvedereCliOutput::LandscapeDiffCurrentRegistryReceiptJson => {
+            write_json(diff.current_registry_receipt(), writer)
+        }
+        BelvedereCliOutput::LandscapeDiffCurrentRegistryReceiptFile(path) => {
             let file = File::create(path).map_err(BelvedereCliOutputError::write)?;
             write_json(diff.current_registry_receipt(), file)
         }
-        (
-            BelvedereCliOutput::LandscapeDiffCurrentAssessmentReceiptJson,
-            BelvedereCliReport::LandscapeDiff(diff),
-        ) => write_json(diff.current_assessment_receipt(), writer),
-        (
-            BelvedereCliOutput::LandscapeDiffCurrentAssessmentReceiptFile(path),
-            BelvedereCliReport::LandscapeDiff(diff),
-        ) => {
+        BelvedereCliOutput::LandscapeDiffCurrentAssessmentReceiptJson => {
+            write_json(diff.current_assessment_receipt(), writer)
+        }
+        BelvedereCliOutput::LandscapeDiffCurrentAssessmentReceiptFile(path) => {
             let file = File::create(path).map_err(BelvedereCliOutputError::write)?;
             write_json(diff.current_assessment_receipt(), file)
         }

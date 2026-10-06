@@ -154,143 +154,12 @@ impl BelvedereCli {
         let mut index = 1;
 
         while let Some(arg) = arguments.get(index) {
-            match arg.as_str() {
-                "--certificate-json" => {
-                    output = BelvedereCliOutput::LandscapeDiffCertificateJson;
-                }
-                "--certificate-file" => {
-                    let Some(path) = arguments.get(index + 1) else {
-                        return Err(BelvedereCliUsageError::new().into());
-                    };
-                    output = BelvedereCliOutput::LandscapeDiffCertificateFile(PathBuf::from(path));
-                    index += 1;
-                }
-                "--run-certificate-json" => {
-                    output = BelvedereCliOutput::LandscapeDiffRunCertificateJson;
-                }
-                "--run-certificate-file" => {
-                    let Some(path) = arguments.get(index + 1) else {
-                        return Err(BelvedereCliUsageError::new().into());
-                    };
-                    output =
-                        BelvedereCliOutput::LandscapeDiffRunCertificateFile(PathBuf::from(path));
-                    index += 1;
-                }
-                "--diff-json" => output = BelvedereCliOutput::LandscapeDiffJson,
-                "--diff-receipt-json" => output = BelvedereCliOutput::LandscapeDiffReceiptJson,
-                "--diff-receipt-file" => {
-                    let Some(path) = arguments.get(index + 1) else {
-                        return Err(BelvedereCliUsageError::new().into());
-                    };
-                    output = BelvedereCliOutput::LandscapeDiffReceiptFile(PathBuf::from(path));
-                    index += 1;
-                }
-                "--previous-registry-receipt-json" => {
-                    output = BelvedereCliOutput::LandscapeDiffPreviousRegistryReceiptJson;
-                }
-                "--previous-registry-receipt-file" => {
-                    let Some(path) = arguments.get(index + 1) else {
-                        return Err(BelvedereCliUsageError::new().into());
-                    };
-                    output = BelvedereCliOutput::LandscapeDiffPreviousRegistryReceiptFile(
-                        PathBuf::from(path),
-                    );
-                    index += 1;
-                }
-                "--previous-assessment-receipt-json" => {
-                    output = BelvedereCliOutput::LandscapeDiffPreviousAssessmentReceiptJson;
-                }
-                "--previous-assessment-receipt-file" => {
-                    let Some(path) = arguments.get(index + 1) else {
-                        return Err(BelvedereCliUsageError::new().into());
-                    };
-                    output = BelvedereCliOutput::LandscapeDiffPreviousAssessmentReceiptFile(
-                        PathBuf::from(path),
-                    );
-                    index += 1;
-                }
-                "--current-registry-receipt-json" => {
-                    output = BelvedereCliOutput::LandscapeDiffCurrentRegistryReceiptJson;
-                }
-                "--current-registry-receipt-file" => {
-                    let Some(path) = arguments.get(index + 1) else {
-                        return Err(BelvedereCliUsageError::new().into());
-                    };
-                    output = BelvedereCliOutput::LandscapeDiffCurrentRegistryReceiptFile(
-                        PathBuf::from(path),
-                    );
-                    index += 1;
-                }
-                "--current-assessment-receipt-json" => {
-                    output = BelvedereCliOutput::LandscapeDiffCurrentAssessmentReceiptJson;
-                }
-                "--current-assessment-receipt-file" => {
-                    let Some(path) = arguments.get(index + 1) else {
-                        return Err(BelvedereCliUsageError::new().into());
-                    };
-                    output = BelvedereCliOutput::LandscapeDiffCurrentAssessmentReceiptFile(
-                        PathBuf::from(path),
-                    );
-                    index += 1;
-                }
-                "--previous-landscape-receipt-json" => {
-                    output = BelvedereCliOutput::LandscapeDiffPreviousLandscapeReceiptJson;
-                }
-                "--previous-landscape-receipt-file" => {
-                    let Some(path) = arguments.get(index + 1) else {
-                        return Err(BelvedereCliUsageError::new().into());
-                    };
-                    output = BelvedereCliOutput::LandscapeDiffPreviousLandscapeReceiptFile(
-                        PathBuf::from(path),
-                    );
-                    index += 1;
-                }
-                "--current-landscape-receipt-json" => {
-                    output = BelvedereCliOutput::LandscapeDiffCurrentLandscapeReceiptJson;
-                }
-                "--current-landscape-receipt-file" => {
-                    let Some(path) = arguments.get(index + 1) else {
-                        return Err(BelvedereCliUsageError::new().into());
-                    };
-                    output = BelvedereCliOutput::LandscapeDiffCurrentLandscapeReceiptFile(
-                        PathBuf::from(path),
-                    );
-                    index += 1;
-                }
-                "--landscape-receipt-json" => {
-                    output = BelvedereCliOutput::LandscapeDiffLandscapeReceiptJson;
-                }
-                "--landscape-receipt-file" => {
-                    let Some(path) = arguments.get(index + 1) else {
-                        return Err(BelvedereCliUsageError::new().into());
-                    };
-                    output =
-                        BelvedereCliOutput::LandscapeDiffLandscapeReceiptFile(PathBuf::from(path));
-                    index += 1;
-                }
-                "--view-model-receipt-json" => {
-                    output = BelvedereCliOutput::LandscapeDiffViewModelReceiptJson;
-                }
-                "--view-model-receipt-file" => {
-                    let Some(path) = arguments.get(index + 1) else {
-                        return Err(BelvedereCliUsageError::new().into());
-                    };
-                    output =
-                        BelvedereCliOutput::LandscapeDiffViewModelReceiptFile(PathBuf::from(path));
-                    index += 1;
-                }
-                "--ui-ir-receipt-json" => {
-                    output = BelvedereCliOutput::LandscapeDiffUiIrReceiptJson;
-                }
-                "--ui-ir-receipt-file" => {
-                    let Some(path) = arguments.get(index + 1) else {
-                        return Err(BelvedereCliUsageError::new().into());
-                    };
-                    output = BelvedereCliOutput::LandscapeDiffUiIrReceiptFile(PathBuf::from(path));
-                    index += 1;
-                }
-                _ if arg.starts_with("--") => return Err(BelvedereCliUsageError::new().into()),
-                _ => paths.push(arg.clone()),
+            if let Some(consumed) = Self::parse_diff_output_arg(&arguments, index, &mut output)? {
+                index += consumed;
+            } else if arg.starts_with("--") {
+                return Err(BelvedereCliUsageError::new().into());
+            } else {
+                paths.push(arg.clone());
             }
             index += 1;
         }
@@ -330,6 +199,171 @@ impl BelvedereCli {
                 output,
             },
         })
+    }
+
+    #[instrument(level = "info", skip(output))]
+    fn parse_diff_output_arg(
+        arguments: &[String],
+        index: usize,
+        output: &mut BelvedereCliOutput,
+    ) -> Result<Option<usize>, BelvedereError> {
+        let consumed = match arguments[index].as_str() {
+            "--certificate-json" => {
+                *output = BelvedereCliOutput::LandscapeDiffCertificateJson;
+                0
+            }
+            "--certificate-file" => {
+                *output = BelvedereCliOutput::LandscapeDiffCertificateFile(Self::next_path(
+                    arguments, index,
+                )?);
+                1
+            }
+            "--run-certificate-json" => {
+                *output = BelvedereCliOutput::LandscapeDiffRunCertificateJson;
+                0
+            }
+            "--run-certificate-file" => {
+                *output = BelvedereCliOutput::LandscapeDiffRunCertificateFile(Self::next_path(
+                    arguments, index,
+                )?);
+                1
+            }
+            "--diff-json" => {
+                *output = BelvedereCliOutput::LandscapeDiffJson;
+                0
+            }
+            "--diff-receipt-json" => {
+                *output = BelvedereCliOutput::LandscapeDiffReceiptJson;
+                0
+            }
+            "--diff-receipt-file" => {
+                *output = BelvedereCliOutput::LandscapeDiffReceiptFile(Self::next_path(
+                    arguments, index,
+                )?);
+                1
+            }
+            "--previous-registry-receipt-json" => {
+                *output = BelvedereCliOutput::LandscapeDiffPreviousRegistryReceiptJson;
+                0
+            }
+            "--previous-registry-receipt-file" => {
+                *output = BelvedereCliOutput::LandscapeDiffPreviousRegistryReceiptFile(
+                    Self::next_path(arguments, index)?,
+                );
+                1
+            }
+            "--previous-assessment-receipt-json" => {
+                *output = BelvedereCliOutput::LandscapeDiffPreviousAssessmentReceiptJson;
+                0
+            }
+            "--previous-assessment-receipt-file" => {
+                *output = BelvedereCliOutput::LandscapeDiffPreviousAssessmentReceiptFile(
+                    Self::next_path(arguments, index)?,
+                );
+                1
+            }
+            "--current-registry-receipt-json" => {
+                *output = BelvedereCliOutput::LandscapeDiffCurrentRegistryReceiptJson;
+                0
+            }
+            "--current-registry-receipt-file" => {
+                *output = BelvedereCliOutput::LandscapeDiffCurrentRegistryReceiptFile(
+                    Self::next_path(arguments, index)?,
+                );
+                1
+            }
+            "--current-assessment-receipt-json" => {
+                *output = BelvedereCliOutput::LandscapeDiffCurrentAssessmentReceiptJson;
+                0
+            }
+            "--current-assessment-receipt-file" => {
+                *output = BelvedereCliOutput::LandscapeDiffCurrentAssessmentReceiptFile(
+                    Self::next_path(arguments, index)?,
+                );
+                1
+            }
+            "--previous-landscape-receipt-json" => {
+                *output = BelvedereCliOutput::LandscapeDiffPreviousLandscapeReceiptJson;
+                0
+            }
+            "--previous-landscape-receipt-file" => {
+                *output = BelvedereCliOutput::LandscapeDiffPreviousLandscapeReceiptFile(
+                    Self::next_path(arguments, index)?,
+                );
+                1
+            }
+            "--current-landscape-receipt-json" => {
+                *output = BelvedereCliOutput::LandscapeDiffCurrentLandscapeReceiptJson;
+                0
+            }
+            "--current-landscape-receipt-file" => {
+                *output = BelvedereCliOutput::LandscapeDiffCurrentLandscapeReceiptFile(
+                    Self::next_path(arguments, index)?,
+                );
+                1
+            }
+            "--current-view-model-receipt-json" => {
+                *output = BelvedereCliOutput::LandscapeDiffCurrentViewModelReceiptJson;
+                0
+            }
+            "--current-view-model-receipt-file" => {
+                *output = BelvedereCliOutput::LandscapeDiffCurrentViewModelReceiptFile(
+                    Self::next_path(arguments, index)?,
+                );
+                1
+            }
+            "--current-ui-ir-receipt-json" => {
+                *output = BelvedereCliOutput::LandscapeDiffCurrentUiIrReceiptJson;
+                0
+            }
+            "--current-ui-ir-receipt-file" => {
+                *output = BelvedereCliOutput::LandscapeDiffCurrentUiIrReceiptFile(Self::next_path(
+                    arguments, index,
+                )?);
+                1
+            }
+            "--landscape-receipt-json" => {
+                *output = BelvedereCliOutput::LandscapeDiffLandscapeReceiptJson;
+                0
+            }
+            "--landscape-receipt-file" => {
+                *output = BelvedereCliOutput::LandscapeDiffLandscapeReceiptFile(Self::next_path(
+                    arguments, index,
+                )?);
+                1
+            }
+            "--view-model-receipt-json" => {
+                *output = BelvedereCliOutput::LandscapeDiffViewModelReceiptJson;
+                0
+            }
+            "--view-model-receipt-file" => {
+                *output = BelvedereCliOutput::LandscapeDiffViewModelReceiptFile(Self::next_path(
+                    arguments, index,
+                )?);
+                1
+            }
+            "--ui-ir-receipt-json" => {
+                *output = BelvedereCliOutput::LandscapeDiffUiIrReceiptJson;
+                0
+            }
+            "--ui-ir-receipt-file" => {
+                *output = BelvedereCliOutput::LandscapeDiffUiIrReceiptFile(Self::next_path(
+                    arguments, index,
+                )?);
+                1
+            }
+            _ => return Ok(None),
+        };
+
+        Ok(Some(consumed))
+    }
+
+    #[instrument(level = "debug")]
+    fn next_path(arguments: &[String], index: usize) -> Result<PathBuf, BelvedereError> {
+        let Some(path) = arguments.get(index + 1) else {
+            return Err(BelvedereCliUsageError::new().into());
+        };
+        Ok(PathBuf::from(path))
     }
 
     /// Execute the parsed command.

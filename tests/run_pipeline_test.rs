@@ -617,6 +617,10 @@ fn cli_help_is_a_successful_public_output_contract() -> Result<()> {
     assert!(help.contains("--previous-landscape-receipt-file"));
     assert!(help.contains("--current-landscape-receipt-json"));
     assert!(help.contains("--current-landscape-receipt-file"));
+    assert!(help.contains("--current-view-model-receipt-json"));
+    assert!(help.contains("--current-view-model-receipt-file"));
+    assert!(help.contains("--current-ui-ir-receipt-json"));
+    assert!(help.contains("--current-ui-ir-receipt-file"));
     assert!(help.contains("--registry-receipt-json"));
     assert!(help.contains("--registry-receipt-file"));
     assert!(help.contains("--assessment-receipt-json"));
@@ -845,6 +849,31 @@ fn assert_auditor_navigation_receipt(receipt: &Value) {
     assert_eq!(
         receipt["source_record_ids"].as_array().map(Vec::len),
         Some(7)
+    );
+}
+
+fn assert_ui_ir_receipt(receipt: &Value) {
+    assert_eq!(
+        receipt["contract"].as_str(),
+        Some("belvedere.ui_ir.elicit_ui_projection")
+    );
+    assert_eq!(receipt["counts"]["section_count"].as_u64(), Some(11));
+    assert_eq!(
+        receipt["section_widget_counts"][UI_IR_SECTION_REVIEW_WORKFLOW].as_u64(),
+        Some(4)
+    );
+    assert_eq!(
+        receipt["trace_source_counts"]["trace_unique_source_records"].as_u64(),
+        Some(7)
+    );
+    assert!(
+        receipt["section_ids"]
+            .as_array()
+            .is_some_and(|section_ids| {
+                section_ids
+                    .iter()
+                    .any(|section_id| section_id.as_str() == Some(UI_IR_SECTION_REVIEW_WORKFLOW))
+            })
     );
 }
 
@@ -2212,6 +2241,134 @@ fn cli_can_persist_the_landscape_diff_landscape_receipt_as_json() -> Result<()> 
 }
 
 #[test]
+fn cli_can_emit_current_diff_projection_receipts_as_json() -> Result<()> {
+    belvedere::init_tracing();
+
+    let previous_assessments_path = std::env::temp_dir().join(format!(
+        "belvedere-cli-current-diff-projection-receipts-empty-assessments-{}.jsonl",
+        process::id()
+    ));
+    fs::write(&previous_assessments_path, [])
+        .into_diagnostic()
+        .wrap_err("temporary empty assessment artifact should be writable")?;
+
+    let cases: [(&str, BelvedereCliOutput, ReceiptAssertion); 2] = [
+        (
+            "--current-view-model-receipt-json",
+            BelvedereCliOutput::LandscapeDiffCurrentViewModelReceiptJson,
+            assert_auditor_navigation_receipt,
+        ),
+        (
+            "--current-ui-ir-receipt-json",
+            BelvedereCliOutput::LandscapeDiffCurrentUiIrReceiptJson,
+            assert_ui_ir_receipt,
+        ),
+    ];
+
+    for (flag, expected_output, assert_receipt) in cases {
+        let args = diff_args_with_empty_previous_assessments(&[flag], &previous_assessments_path)?;
+        let command = BelvedereCli::from_args(args.clone())
+            .into_diagnostic()
+            .wrap_err(
+                "current diff projection receipt flag should be part of the public CLI API",
+            )?;
+
+        assert_eq!(command.output(), expected_output);
+
+        let mut output = Vec::new();
+        let status = run_cli_with_writer(args, &mut output);
+        assert_eq!(status, ExitCode::SUCCESS);
+
+        let receipt: Value = serde_json::from_slice(&output)
+            .into_diagnostic()
+            .wrap_err("CLI current diff projection receipt output should be parseable JSON")?;
+        assert_receipt(&receipt);
+    }
+
+    fs::remove_file(previous_assessments_path)
+        .into_diagnostic()
+        .wrap_err("temporary empty assessment artifact should be removable")?;
+    Ok(())
+}
+
+#[test]
+fn cli_can_persist_current_diff_projection_receipts_as_json() -> Result<()> {
+    belvedere::init_tracing();
+
+    let previous_assessments_path = std::env::temp_dir().join(format!(
+        "belvedere-cli-current-diff-projection-receipt-files-empty-assessments-{}.jsonl",
+        process::id()
+    ));
+    fs::write(&previous_assessments_path, [])
+        .into_diagnostic()
+        .wrap_err("temporary empty assessment artifact should be writable")?;
+
+    let view_model_receipt_path = std::env::temp_dir().join(format!(
+        "belvedere-current-view-model-receipt-{}.json",
+        process::id()
+    ));
+    let ui_ir_receipt_path = std::env::temp_dir().join(format!(
+        "belvedere-current-ui-ir-receipt-{}.json",
+        process::id()
+    ));
+    let cases: [(&str, PathBuf, BelvedereCliOutput, ReceiptAssertion); 2] = [
+        (
+            "--current-view-model-receipt-file",
+            view_model_receipt_path.clone(),
+            BelvedereCliOutput::LandscapeDiffCurrentViewModelReceiptFile(
+                view_model_receipt_path.clone(),
+            ),
+            assert_auditor_navigation_receipt,
+        ),
+        (
+            "--current-ui-ir-receipt-file",
+            ui_ir_receipt_path.clone(),
+            BelvedereCliOutput::LandscapeDiffCurrentUiIrReceiptFile(ui_ir_receipt_path.clone()),
+            assert_ui_ir_receipt,
+        ),
+    ];
+
+    for (flag, receipt_path, expected_output, assert_receipt) in cases {
+        let receipt_path_text = receipt_path
+            .to_str()
+            .ok_or_else(|| miette::miette!("temporary projection receipt path should be UTF-8"))?;
+        let args = diff_args_with_empty_previous_assessments(
+            &[flag, receipt_path_text],
+            &previous_assessments_path,
+        )?;
+        let command = BelvedereCli::from_args(args.clone())
+            .into_diagnostic()
+            .wrap_err(
+                "current diff projection receipt file flag should be part of the public CLI API",
+            )?;
+
+        assert_eq!(command.output(), expected_output);
+
+        let mut output = Vec::new();
+        let status = run_cli_with_writer(args, &mut output);
+        assert_eq!(status, ExitCode::SUCCESS);
+        assert!(output.is_empty());
+
+        let receipt_bytes = fs::read(&receipt_path)
+            .into_diagnostic()
+            .wrap_err("current diff projection receipt file should be written")?;
+        let receipt: Value = serde_json::from_slice(&receipt_bytes)
+            .into_diagnostic()
+            .wrap_err("persisted current diff projection receipt should be parseable JSON")?;
+        assert_receipt(&receipt);
+
+        fs::remove_file(receipt_path)
+            .into_diagnostic()
+            .wrap_err("temporary current diff projection receipt file should be removable")?;
+    }
+
+    fs::remove_file(previous_assessments_path)
+        .into_diagnostic()
+        .wrap_err("temporary empty assessment artifact should be removable")?;
+    Ok(())
+}
+
+#[test]
 fn cli_can_emit_the_landscape_diff_ui_ir_receipt_as_json() -> Result<()> {
     belvedere::init_tracing();
 
@@ -2252,28 +2409,7 @@ fn cli_can_emit_the_landscape_diff_ui_ir_receipt_as_json() -> Result<()> {
     let receipt: Value = serde_json::from_slice(&output)
         .into_diagnostic()
         .wrap_err("CLI diff UI IR receipt output should be parseable JSON")?;
-    assert_eq!(
-        receipt["contract"].as_str(),
-        Some("belvedere.ui_ir.elicit_ui_projection")
-    );
-    assert_eq!(receipt["counts"]["section_count"].as_u64(), Some(11));
-    assert_eq!(
-        receipt["section_widget_counts"][UI_IR_SECTION_REVIEW_WORKFLOW].as_u64(),
-        Some(4)
-    );
-    assert_eq!(
-        receipt["trace_source_counts"]["trace_unique_source_records"].as_u64(),
-        Some(7)
-    );
-    assert!(
-        receipt["section_ids"]
-            .as_array()
-            .is_some_and(|section_ids| {
-                section_ids
-                    .iter()
-                    .any(|section_id| section_id.as_str() == Some(UI_IR_SECTION_REVIEW_WORKFLOW))
-            })
-    );
+    assert_ui_ir_receipt(&receipt);
 
     fs::remove_file(previous_assessments_path)
         .into_diagnostic()
@@ -2382,18 +2518,7 @@ fn cli_can_persist_the_landscape_diff_ui_ir_receipt_as_json() -> Result<()> {
     let receipt: Value = serde_json::from_slice(&receipt_bytes)
         .into_diagnostic()
         .wrap_err("persisted diff UI IR receipt should be parseable JSON")?;
-    assert_eq!(
-        receipt["contract"].as_str(),
-        Some("belvedere.ui_ir.elicit_ui_projection")
-    );
-    assert_eq!(
-        receipt["trace_source_counts"]["trace_unique_source_records"].as_u64(),
-        Some(7)
-    );
-    assert_eq!(
-        receipt["section_widget_counts"][UI_IR_SECTION_REVIEW_WORKFLOW].as_u64(),
-        Some(4)
-    );
+    assert_ui_ir_receipt(&receipt);
 
     fs::remove_file(&receipt_path)
         .into_diagnostic()
