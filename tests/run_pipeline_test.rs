@@ -600,6 +600,8 @@ fn cli_help_is_a_successful_public_output_contract() -> Result<()> {
     assert!(help.contains("--run-certificate-json"));
     assert!(help.contains("--run-certificate-file"));
     assert!(help.contains("--diff-json"));
+    assert!(help.contains("--diff-receipt-json"));
+    assert!(help.contains("--diff-receipt-file"));
     assert!(help.contains("--registry-receipt-json"));
     assert!(help.contains("--registry-receipt-file"));
     assert!(help.contains("--assessment-receipt-json"));
@@ -700,6 +702,38 @@ fn assert_landscape_receipt(receipt: &Value) {
     assert!(receipt["landscape_item_ids"].as_array().is_some_and(|ids| {
         ids.iter()
             .any(|id| id.as_str() == Some("landscape.assessment:assess-belvedere-ingestion-1"))
+    }));
+    assert_eq!(
+        receipt["source_record_ids"].as_array().map(Vec::len),
+        Some(7)
+    );
+}
+
+fn assert_landscape_diff_receipt(receipt: &Value) {
+    assert_eq!(
+        receipt["contract"].as_str(),
+        Some("belvedere.diff.landscape")
+    );
+    assert_eq!(receipt["counts"]["added_items"].as_u64(), Some(4));
+    assert_eq!(receipt["counts"]["removed_items"].as_u64(), Some(1));
+    assert_eq!(receipt["counts"]["changed_items"].as_u64(), Some(1));
+    assert_eq!(
+        receipt["subject_kind_counts"]["diff_subject_assessment"].as_u64(),
+        Some(2)
+    );
+    assert_eq!(
+        receipt["change_subject_counts"]["diff_change_added_assessment"].as_u64(),
+        Some(2)
+    );
+    assert_eq!(
+        receipt["trace_source_kind_counts"]["diff_trace_source_kind_assessment"].as_u64(),
+        Some(5)
+    );
+    assert_eq!(receipt["diff_item_ids"].as_array().map(Vec::len), Some(6));
+    assert!(receipt["diff_item_ids"].as_array().is_some_and(|ids| {
+        ids.iter().any(|id| {
+            id.as_str() == Some("belvedere.diff.Added.assessment:assess-belvedere-ingestion-1")
+        })
     }));
     assert_eq!(
         receipt["source_record_ids"].as_array().map(Vec::len),
@@ -1627,6 +1661,116 @@ fn cli_can_persist_the_landscape_diff_run_certificate_as_json() -> Result<()> {
     fs::remove_file(&certificate_path)
         .into_diagnostic()
         .wrap_err("temporary diff run certificate file should be removable")?;
+    fs::remove_file(previous_assessments_path)
+        .into_diagnostic()
+        .wrap_err("temporary empty assessment artifact should be removable")?;
+    Ok(())
+}
+
+#[test]
+fn cli_can_emit_the_landscape_diff_receipt_as_json() -> Result<()> {
+    belvedere::init_tracing();
+
+    let previous_assessments_path = std::env::temp_dir().join(format!(
+        "belvedere-cli-diff-receipt-empty-assessments-{}.jsonl",
+        process::id()
+    ));
+    fs::write(&previous_assessments_path, [])
+        .into_diagnostic()
+        .wrap_err("temporary empty assessment artifact should be writable")?;
+
+    let args = [
+        "diff",
+        "--diff-receipt-json",
+        "tests/fixtures/registry_dump.json",
+        previous_assessments_path
+            .to_str()
+            .ok_or_else(|| miette::miette!("temporary assessment path should be UTF-8"))?,
+        "tests/fixtures/registry_dump.json",
+        "tests/fixtures/proof_assessments.jsonl",
+    ]
+    .into_iter()
+    .map(str::to_owned)
+    .collect::<Vec<_>>();
+    let command = BelvedereCli::from_args(args.clone())
+        .into_diagnostic()
+        .wrap_err("diff receipt flag should be part of the public CLI API")?;
+
+    assert_eq!(
+        command.output(),
+        BelvedereCliOutput::LandscapeDiffReceiptJson
+    );
+
+    let mut output = Vec::new();
+    let status = run_cli_with_writer(args, &mut output);
+    assert_eq!(status, ExitCode::SUCCESS);
+
+    let receipt: Value = serde_json::from_slice(&output)
+        .into_diagnostic()
+        .wrap_err("CLI diff receipt output should be parseable JSON")?;
+    assert_landscape_diff_receipt(&receipt);
+
+    fs::remove_file(previous_assessments_path)
+        .into_diagnostic()
+        .wrap_err("temporary empty assessment artifact should be removable")?;
+    Ok(())
+}
+
+#[test]
+fn cli_can_persist_the_landscape_diff_receipt_as_json() -> Result<()> {
+    belvedere::init_tracing();
+
+    let previous_assessments_path = std::env::temp_dir().join(format!(
+        "belvedere-cli-diff-receipt-file-empty-assessments-{}.jsonl",
+        process::id()
+    ));
+    let receipt_path =
+        std::env::temp_dir().join(format!("belvedere-diff-receipt-{}.json", process::id()));
+    fs::write(&previous_assessments_path, [])
+        .into_diagnostic()
+        .wrap_err("temporary empty assessment artifact should be writable")?;
+
+    let args = [
+        "diff",
+        "--diff-receipt-file",
+        receipt_path
+            .to_str()
+            .ok_or_else(|| miette::miette!("temporary diff receipt path should be UTF-8"))?,
+        "tests/fixtures/registry_dump.json",
+        previous_assessments_path
+            .to_str()
+            .ok_or_else(|| miette::miette!("temporary assessment path should be UTF-8"))?,
+        "tests/fixtures/registry_dump.json",
+        "tests/fixtures/proof_assessments.jsonl",
+    ]
+    .into_iter()
+    .map(str::to_owned)
+    .collect::<Vec<_>>();
+    let command = BelvedereCli::from_args(args.clone())
+        .into_diagnostic()
+        .wrap_err("diff receipt file flag should be part of the public CLI API")?;
+
+    assert_eq!(
+        command.output(),
+        BelvedereCliOutput::LandscapeDiffReceiptFile(receipt_path.clone())
+    );
+
+    let mut output = Vec::new();
+    let status = run_cli_with_writer(args, &mut output);
+    assert_eq!(status, ExitCode::SUCCESS);
+    assert!(output.is_empty());
+
+    let receipt_bytes = fs::read(&receipt_path)
+        .into_diagnostic()
+        .wrap_err("diff receipt file should be written")?;
+    let receipt: Value = serde_json::from_slice(&receipt_bytes)
+        .into_diagnostic()
+        .wrap_err("persisted diff receipt should be parseable JSON")?;
+    assert_landscape_diff_receipt(&receipt);
+
+    fs::remove_file(receipt_path)
+        .into_diagnostic()
+        .wrap_err("temporary diff receipt file should be removable")?;
     fs::remove_file(previous_assessments_path)
         .into_diagnostic()
         .wrap_err("temporary empty assessment artifact should be removable")?;

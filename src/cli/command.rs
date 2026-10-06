@@ -177,6 +177,14 @@ impl BelvedereCli {
                     index += 1;
                 }
                 "--diff-json" => output = BelvedereCliOutput::LandscapeDiffJson,
+                "--diff-receipt-json" => output = BelvedereCliOutput::LandscapeDiffReceiptJson,
+                "--diff-receipt-file" => {
+                    let Some(path) = arguments.get(index + 1) else {
+                        return Err(BelvedereCliUsageError::new().into());
+                    };
+                    output = BelvedereCliOutput::LandscapeDiffReceiptFile(PathBuf::from(path));
+                    index += 1;
+                }
                 "--landscape-receipt-json" => {
                     output = BelvedereCliOutput::LandscapeDiffLandscapeReceiptJson;
                 }

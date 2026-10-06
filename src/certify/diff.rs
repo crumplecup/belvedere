@@ -4,9 +4,10 @@ use std::collections::BTreeMap;
 
 use derive_builder::Builder;
 use derive_getters::Getters;
+use serde::Serialize;
 
 /// Audit receipt emitted by a landscape diff exchange.
-#[derive(Debug, Clone, PartialEq, Eq, Getters, Builder)]
+#[derive(Debug, Clone, PartialEq, Eq, Getters, Builder, Serialize)]
 #[builder(vis = "pub(crate)", setter(into))]
 pub struct LandscapeDiffReceipt {
     contract: String,
@@ -29,7 +30,7 @@ impl LandscapeDiffReceipt {
 }
 
 /// Counts emitted by a landscape diff receipt.
-#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize)]
 pub struct LandscapeDiffReceiptCounts {
     added_items: usize,
     removed_items: usize,

@@ -12,7 +12,7 @@ use super::{BelvedereCliOutputError, BelvedereCliReport, BelvedereCliUsageError}
 /// Stable CLI help text.
 pub const BELVEDERE_CLI_HELP: &str = "\
 usage: belvedere [--help] [--certificate-json | --certificate-file <path> | --registry-receipt-json | --registry-receipt-file <path> | --assessment-receipt-json | --assessment-receipt-file <path> | --landscape-receipt-json | --landscape-receipt-file <path> | --view-model-receipt-json | --view-model-receipt-file <path> | --ui-ir-receipt-json | --ui-ir-receipt-file <path>] <registry-dump.json> <proof-assessments.jsonl>
-       belvedere diff [--certificate-json | --certificate-file <path> | --run-certificate-json | --run-certificate-file <path> | --diff-json | --landscape-receipt-json | --landscape-receipt-file <path> | --view-model-receipt-json | --view-model-receipt-file <path> | --ui-ir-receipt-json | --ui-ir-receipt-file <path>] <previous-registry-dump.json> <previous-proof-assessments.jsonl> <current-registry-dump.json> <current-proof-assessments.jsonl>
+       belvedere diff [--certificate-json | --certificate-file <path> | --run-certificate-json | --run-certificate-file <path> | --diff-json | --diff-receipt-json | --diff-receipt-file <path> | --landscape-receipt-json | --landscape-receipt-file <path> | --view-model-receipt-json | --view-model-receipt-file <path> | --ui-ir-receipt-json | --ui-ir-receipt-file <path>] <previous-registry-dump.json> <previous-proof-assessments.jsonl> <current-registry-dump.json> <current-proof-assessments.jsonl>
 
 Options:
   -h, --help                       Show this help text.
@@ -25,6 +25,8 @@ Options:
       --run-certificate-json       Write the full diff run certificate as JSON to stdout.
       --run-certificate-file       Write the full diff run certificate as JSON to a file.
       --diff-json                  Write the landscape diff as JSON to stdout.
+      --diff-receipt-json          Write the landscape diff receipt as JSON to stdout.
+      --diff-receipt-file          Write the landscape diff receipt as JSON to a file.
       --landscape-receipt-json     Write the landscape receipt as JSON to stdout.
       --landscape-receipt-file     Write the landscape receipt as JSON to a file.
       --view-model-receipt-json    Write the view-model receipt as JSON to stdout.
@@ -66,6 +68,10 @@ pub enum BelvedereCliOutput {
     RunUiIrReceiptFile(PathBuf),
     /// Write the certified landscape diff as JSON.
     LandscapeDiffJson,
+    /// Write the landscape diff receipt as JSON.
+    LandscapeDiffReceiptJson,
+    /// Write the landscape diff receipt as JSON to an artifact file.
+    LandscapeDiffReceiptFile(PathBuf),
     /// Write the landscape diff stage certificate as JSON.
     LandscapeDiffCertificateJson,
     /// Write the landscape diff stage certificate as JSON to an artifact file.
@@ -196,6 +202,16 @@ pub(super) fn write_cli_output(
         }
         (BelvedereCliOutput::LandscapeDiffJson, BelvedereCliReport::LandscapeDiff(diff)) => {
             write_json(diff.diff(), writer)
+        }
+        (BelvedereCliOutput::LandscapeDiffReceiptJson, BelvedereCliReport::LandscapeDiff(diff)) => {
+            write_json(diff.diff_receipt(), writer)
+        }
+        (
+            BelvedereCliOutput::LandscapeDiffReceiptFile(path),
+            BelvedereCliReport::LandscapeDiff(diff),
+        ) => {
+            let file = File::create(path).map_err(BelvedereCliOutputError::write)?;
+            write_json(diff.diff_receipt(), file)
         }
         _ => Err(BelvedereCliUsageError::new().into()),
     }
