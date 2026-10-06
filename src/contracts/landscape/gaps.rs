@@ -2,9 +2,10 @@
 
 use derive_getters::Getters;
 use derive_new::new;
+use serde::Serialize;
 
 /// Conservative review gap surfaced by landscape modeling.
-#[derive(Debug, Clone, PartialEq, Eq, Getters, new)]
+#[derive(Debug, Clone, PartialEq, Eq, Getters, new, Serialize)]
 pub struct LandscapeGap {
     #[new(into)]
     claim_id: String,

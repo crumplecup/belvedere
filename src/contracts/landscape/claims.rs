@@ -4,6 +4,7 @@ use std::collections::BTreeSet;
 
 use derive_getters::Getters;
 use derive_new::new;
+use serde::Serialize;
 use tracing::instrument;
 
 use crate::contracts::{
@@ -11,7 +12,7 @@ use crate::contracts::{
 };
 
 /// A claim, proof harness, root, or evidence node in the defensive landscape.
-#[derive(Debug, Clone, PartialEq, Eq, Getters)]
+#[derive(Debug, Clone, PartialEq, Eq, Getters, Serialize)]
 pub struct LandscapeClaim {
     id: String,
     #[getter(skip)]
@@ -91,7 +92,7 @@ impl LandscapeClaim {
 }
 
 /// A directed evidence edge from a claim to one of its bases.
-#[derive(Debug, Clone, PartialEq, Eq, Getters, new)]
+#[derive(Debug, Clone, PartialEq, Eq, Getters, new, Serialize)]
 pub struct ClaimEdge {
     #[new(into)]
     claim_id: String,
@@ -110,7 +111,7 @@ impl ClaimEdge {
 }
 
 /// Backend-native contract fragment attached to a claim.
-#[derive(Debug, Clone, PartialEq, Eq, Getters, new)]
+#[derive(Debug, Clone, PartialEq, Eq, Getters, new, Serialize)]
 pub struct LandscapeContractFragment {
     #[new(into)]
     verifier: String,
@@ -121,7 +122,7 @@ pub struct LandscapeContractFragment {
 }
 
 /// Witness export support summary attached to a claim.
-#[derive(Debug, Clone, PartialEq, Eq, Getters)]
+#[derive(Debug, Clone, PartialEq, Eq, Getters, Serialize)]
 pub struct WitnessSurfaceSummary {
     verifier: String,
     destination_module: String,
@@ -178,7 +179,7 @@ impl WitnessSurfaceSummary {
 }
 
 /// Kani proof registration attached to a claim.
-#[derive(Debug, Clone, PartialEq, Eq, Getters, new)]
+#[derive(Debug, Clone, PartialEq, Eq, Getters, new, Serialize)]
 pub struct KaniProofSummary {
     #[new(into)]
     id: String,
@@ -189,7 +190,7 @@ pub struct KaniProofSummary {
 }
 
 /// Normalized assessment event attached to a claim or proof.
-#[derive(Debug, Clone, PartialEq, Eq, Getters)]
+#[derive(Debug, Clone, PartialEq, Eq, Getters, Serialize)]
 pub struct LandscapeAssessment {
     id: String,
     proof_id: String,

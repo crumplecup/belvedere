@@ -4,6 +4,7 @@ use std::collections::BTreeMap;
 
 use derive_builder::Builder;
 use derive_getters::Getters;
+use serde::Serialize;
 use tracing::instrument;
 
 use crate::{
@@ -57,7 +58,7 @@ impl LandscapeInput {
 }
 
 /// Auditor-facing defensive landscape graph.
-#[derive(Debug, Clone, PartialEq, Eq, Getters, Builder)]
+#[derive(Debug, Clone, PartialEq, Eq, Getters, Builder, Serialize)]
 #[builder(vis = "pub(crate)", setter(into))]
 pub struct LandscapeGraph {
     #[getter(skip)]

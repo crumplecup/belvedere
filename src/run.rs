@@ -73,6 +73,7 @@ pub struct BelvedereLandscapeDiffRunInput {
 pub struct BelvedereRunReport {
     registry_receipt: IngestionReceipt,
     assessment_receipt: IngestionReceipt,
+    landscape: LandscapeGraph,
     landscape_receipt: LandscapeReceipt,
     view_model: AuditorNavigationModel,
     view_model_receipt: ViewModelReceipt,
@@ -87,9 +88,11 @@ pub struct BelvedereRunReport {
 pub struct BelvedereLandscapeDiffRunReport {
     previous_registry_receipt: IngestionReceipt,
     previous_assessment_receipt: IngestionReceipt,
+    previous_landscape: LandscapeGraph,
     previous_landscape_receipt: LandscapeReceipt,
     current_registry_receipt: IngestionReceipt,
     current_assessment_receipt: IngestionReceipt,
+    current_landscape: LandscapeGraph,
     current_landscape_receipt: LandscapeReceipt,
     current_view_model: AuditorNavigationModel,
     current_view_model_receipt: ViewModelReceipt,
@@ -129,7 +132,7 @@ pub fn run_belvedere_pipeline(
     let (landscape, landscape_receipt) =
         LandscapeModeling.model(LandscapeInput::new(registry, assessments))?;
     let (view_model, view_model_receipt) =
-        AuditorNavigationProjection.project(ViewModelInput::new(landscape))?;
+        AuditorNavigationProjection.project(ViewModelInput::new(landscape.clone()))?;
     let (projection, ui_ir_receipt) =
         ElicitUiProjection.project(UiIrInput::new(view_model.clone()))?;
     let certificate = BelvedereRunCertificate::from_receipts_with_invocation(
@@ -144,6 +147,7 @@ pub fn run_belvedere_pipeline(
     BelvedereRunReportBuilder::default()
         .registry_receipt(registry_receipt)
         .assessment_receipt(assessment_receipt)
+        .landscape(landscape)
         .landscape_receipt(landscape_receipt)
         .view_model(view_model)
         .view_model_receipt(view_model_receipt)
@@ -186,6 +190,8 @@ pub fn run_belvedere_landscape_diff(
         &current_ui_ir_receipt,
     );
 
+    let previous_landscape = previous.landscape.clone();
+    let current_landscape = current.landscape.clone();
     let (diff, diff_receipt) = LandscapeDiffing.diff(LandscapeDiffInput::new(
         previous.landscape,
         current.landscape,
@@ -205,9 +211,11 @@ pub fn run_belvedere_landscape_diff(
     BelvedereLandscapeDiffRunReportBuilder::default()
         .previous_registry_receipt(previous.registry_receipt)
         .previous_assessment_receipt(previous.assessment_receipt)
+        .previous_landscape(previous_landscape)
         .previous_landscape_receipt(previous.landscape_receipt)
         .current_registry_receipt(current.registry_receipt)
         .current_assessment_receipt(current.assessment_receipt)
+        .current_landscape(current_landscape)
         .current_landscape_receipt(current.landscape_receipt)
         .current_view_model(current_view_model)
         .current_view_model_receipt(current_view_model_receipt)

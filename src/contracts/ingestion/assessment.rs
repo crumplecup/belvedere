@@ -3,7 +3,7 @@
 use std::collections::BTreeMap;
 
 use derive_getters::Getters;
-use serde::Deserialize;
+use serde::{Deserialize, Serialize};
 use tracing::instrument;
 
 use super::unsupported::{UnsupportedField, unsupported};
@@ -155,7 +155,7 @@ impl AssessmentRecord {
 }
 
 /// Six scored proof-quality dimensions.
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Deserialize)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Deserialize, Serialize)]
 pub struct Rubric {
     claim_alignment: u8,
     assumption_adequacy: u8,

@@ -790,6 +790,47 @@ fn assert_previous_landscape_receipt(receipt: &Value) {
     );
 }
 
+fn assert_landscape_graph(graph: &Value) {
+    assert_eq!(
+        graph["claims"].as_object().map(serde_json::Map::len),
+        Some(4)
+    );
+    assert_eq!(graph["edges"].as_array().map(Vec::len), Some(1));
+    assert_eq!(graph["assessments"].as_array().map(Vec::len), Some(2));
+    assert_eq!(graph["gaps"].as_array().map(Vec::len), Some(4));
+    assert_eq!(graph["source_record_ids"].as_array().map(Vec::len), Some(7));
+    assert!(graph["claims"].as_object().is_some_and(|claims| {
+        claims.contains_key("belvedere::ingestion::DecodedRegistrySnapshot")
+    }));
+    assert!(graph["assessments"].as_array().is_some_and(|assessments| {
+        assessments.iter().any(|assessment| {
+            assessment["id"].as_str() == Some("assess-belvedere-ingestion-1")
+                && assessment["current"].as_bool() == Some(true)
+        })
+    }));
+    assert!(graph["gaps"].as_array().is_some_and(|gaps| {
+        gaps.iter()
+            .any(|gap| gap["kind"].as_str() == Some("missing_proof"))
+    }));
+}
+
+fn assert_previous_landscape_graph(graph: &Value) {
+    assert_eq!(
+        graph["claims"].as_object().map(serde_json::Map::len),
+        Some(3)
+    );
+    assert_eq!(graph["edges"].as_array().map(Vec::len), Some(1));
+    assert_eq!(graph["assessments"].as_array().map(Vec::len), Some(0));
+    assert_eq!(graph["source_record_ids"].as_array().map(Vec::len), Some(5));
+    assert!(graph["claims"].as_object().is_some_and(|claims| {
+        claims.contains_key("belvedere::ingestion::record_identity_is_preserved")
+    }));
+    assert!(graph["gaps"].as_array().is_some_and(|gaps| {
+        gaps.iter()
+            .any(|gap| gap["kind"].as_str() == Some("missing_assessment"))
+    }));
+}
+
 fn assert_landscape_diff_receipt(receipt: &Value) {
     assert_eq!(
         receipt["contract"].as_str(),
@@ -1138,6 +1179,35 @@ fn cli_can_emit_the_landscape_receipt_as_json() -> Result<()> {
 }
 
 #[test]
+fn cli_can_emit_the_landscape_graph_as_json() -> Result<()> {
+    belvedere::init_tracing();
+
+    let args = [
+        "--landscape-json",
+        "tests/fixtures/registry_dump.json",
+        "tests/fixtures/proof_assessments.jsonl",
+    ]
+    .into_iter()
+    .map(str::to_owned)
+    .collect::<Vec<_>>();
+    let command = BelvedereCli::from_args(args.clone())
+        .into_diagnostic()
+        .wrap_err("landscape graph JSON flag should be part of the public CLI API")?;
+
+    assert_eq!(command.output(), BelvedereCliOutput::RunLandscapeJson);
+
+    let mut output = Vec::new();
+    let status = run_cli_with_writer(args, &mut output);
+    assert_eq!(status, ExitCode::SUCCESS);
+
+    let graph: Value = serde_json::from_slice(&output)
+        .into_diagnostic()
+        .wrap_err("CLI landscape graph output should be parseable JSON")?;
+    assert_landscape_graph(&graph);
+    Ok(())
+}
+
+#[test]
 fn cli_can_emit_the_ui_ir_receipt_as_json() -> Result<()> {
     belvedere::init_tracing();
 
@@ -1399,6 +1469,51 @@ fn cli_can_persist_the_landscape_receipt_as_json() -> Result<()> {
     fs::remove_file(&receipt_path)
         .into_diagnostic()
         .wrap_err("temporary landscape receipt file should be removable")?;
+    Ok(())
+}
+
+#[test]
+fn cli_can_persist_the_landscape_graph_as_json() -> Result<()> {
+    belvedere::init_tracing();
+
+    let graph_path =
+        std::env::temp_dir().join(format!("belvedere-landscape-{}.json", process::id()));
+    let args = [
+        "--landscape-file",
+        graph_path
+            .to_str()
+            .ok_or_else(|| miette::miette!("temporary landscape graph path should be UTF-8"))?,
+        "tests/fixtures/registry_dump.json",
+        "tests/fixtures/proof_assessments.jsonl",
+    ]
+    .into_iter()
+    .map(str::to_owned)
+    .collect::<Vec<_>>();
+    let command = BelvedereCli::from_args(args.clone())
+        .into_diagnostic()
+        .wrap_err("landscape graph file flag should be part of the public CLI API")?;
+
+    assert_eq!(
+        command.output(),
+        BelvedereCliOutput::RunLandscapeFile(graph_path.clone())
+    );
+
+    let mut output = Vec::new();
+    let status = run_cli_with_writer(args, &mut output);
+    assert_eq!(status, ExitCode::SUCCESS);
+    assert!(output.is_empty());
+
+    let graph_bytes = fs::read(&graph_path)
+        .into_diagnostic()
+        .wrap_err("landscape graph file should be written")?;
+    let graph: Value = serde_json::from_slice(&graph_bytes)
+        .into_diagnostic()
+        .wrap_err("persisted landscape graph should be parseable JSON")?;
+    assert_landscape_graph(&graph);
+
+    fs::remove_file(&graph_path)
+        .into_diagnostic()
+        .wrap_err("temporary landscape graph file should be removable")?;
     Ok(())
 }
 
@@ -2209,6 +2324,55 @@ fn cli_can_emit_diff_snapshot_landscape_receipts_as_json() -> Result<()> {
 }
 
 #[test]
+fn cli_can_emit_diff_snapshot_landscapes_as_json() -> Result<()> {
+    belvedere::init_tracing();
+
+    let previous_assessments_path = std::env::temp_dir().join(format!(
+        "belvedere-cli-diff-snapshot-landscapes-empty-assessments-{}.jsonl",
+        process::id()
+    ));
+    fs::write(&previous_assessments_path, [])
+        .into_diagnostic()
+        .wrap_err("temporary empty assessment artifact should be writable")?;
+
+    let cases: [(&str, BelvedereCliOutput, ReceiptAssertion); 2] = [
+        (
+            "--previous-landscape-json",
+            BelvedereCliOutput::LandscapeDiffPreviousLandscapeJson,
+            assert_previous_landscape_graph,
+        ),
+        (
+            "--current-landscape-json",
+            BelvedereCliOutput::LandscapeDiffCurrentLandscapeJson,
+            assert_landscape_graph,
+        ),
+    ];
+
+    for (flag, expected_output, assert_graph) in cases {
+        let args = diff_args_with_empty_previous_assessments(&[flag], &previous_assessments_path)?;
+        let command = BelvedereCli::from_args(args.clone())
+            .into_diagnostic()
+            .wrap_err("diff snapshot landscape flag should be part of the public CLI API")?;
+
+        assert_eq!(command.output(), expected_output);
+
+        let mut output = Vec::new();
+        let status = run_cli_with_writer(args, &mut output);
+        assert_eq!(status, ExitCode::SUCCESS);
+
+        let graph: Value = serde_json::from_slice(&output)
+            .into_diagnostic()
+            .wrap_err("CLI diff snapshot landscape output should be parseable JSON")?;
+        assert_graph(&graph);
+    }
+
+    fs::remove_file(previous_assessments_path)
+        .into_diagnostic()
+        .wrap_err("temporary empty assessment artifact should be removable")?;
+    Ok(())
+}
+
+#[test]
 fn cli_can_persist_diff_snapshot_landscape_receipts_as_json() -> Result<()> {
     belvedere::init_tracing();
 
@@ -2279,6 +2443,79 @@ fn cli_can_persist_diff_snapshot_landscape_receipts_as_json() -> Result<()> {
         fs::remove_file(receipt_path)
             .into_diagnostic()
             .wrap_err("temporary snapshot landscape receipt file should be removable")?;
+    }
+
+    fs::remove_file(previous_assessments_path)
+        .into_diagnostic()
+        .wrap_err("temporary empty assessment artifact should be removable")?;
+    Ok(())
+}
+
+#[test]
+fn cli_can_persist_diff_snapshot_landscapes_as_json() -> Result<()> {
+    belvedere::init_tracing();
+
+    let previous_assessments_path = std::env::temp_dir().join(format!(
+        "belvedere-cli-diff-snapshot-landscape-files-empty-assessments-{}.jsonl",
+        process::id()
+    ));
+    fs::write(&previous_assessments_path, [])
+        .into_diagnostic()
+        .wrap_err("temporary empty assessment artifact should be writable")?;
+
+    let previous_graph_path = std::env::temp_dir().join(format!(
+        "belvedere-previous-landscape-{}.json",
+        process::id()
+    ));
+    let current_graph_path = std::env::temp_dir().join(format!(
+        "belvedere-current-landscape-{}.json",
+        process::id()
+    ));
+    let cases: [(&str, PathBuf, BelvedereCliOutput, ReceiptAssertion); 2] = [
+        (
+            "--previous-landscape-file",
+            previous_graph_path.clone(),
+            BelvedereCliOutput::LandscapeDiffPreviousLandscapeFile(previous_graph_path.clone()),
+            assert_previous_landscape_graph,
+        ),
+        (
+            "--current-landscape-file",
+            current_graph_path.clone(),
+            BelvedereCliOutput::LandscapeDiffCurrentLandscapeFile(current_graph_path.clone()),
+            assert_landscape_graph,
+        ),
+    ];
+
+    for (flag, graph_path, expected_output, assert_graph) in cases {
+        let graph_path_text = graph_path
+            .to_str()
+            .ok_or_else(|| miette::miette!("temporary landscape graph path should be UTF-8"))?;
+        let args = diff_args_with_empty_previous_assessments(
+            &[flag, graph_path_text],
+            &previous_assessments_path,
+        )?;
+        let command = BelvedereCli::from_args(args.clone())
+            .into_diagnostic()
+            .wrap_err("diff snapshot landscape file flag should be part of the public CLI API")?;
+
+        assert_eq!(command.output(), expected_output);
+
+        let mut output = Vec::new();
+        let status = run_cli_with_writer(args, &mut output);
+        assert_eq!(status, ExitCode::SUCCESS);
+        assert!(output.is_empty());
+
+        let graph_bytes = fs::read(&graph_path)
+            .into_diagnostic()
+            .wrap_err("snapshot landscape graph file should be written")?;
+        let graph: Value = serde_json::from_slice(&graph_bytes)
+            .into_diagnostic()
+            .wrap_err("persisted snapshot landscape graph should be parseable JSON")?;
+        assert_graph(&graph);
+
+        fs::remove_file(graph_path)
+            .into_diagnostic()
+            .wrap_err("temporary snapshot landscape graph file should be removable")?;
     }
 
     fs::remove_file(previous_assessments_path)
@@ -2393,6 +2630,116 @@ fn cli_can_persist_the_landscape_diff_landscape_receipt_as_json() -> Result<()> 
     fs::remove_file(receipt_path)
         .into_diagnostic()
         .wrap_err("temporary landscape receipt file should be removable")?;
+    fs::remove_file(previous_assessments_path)
+        .into_diagnostic()
+        .wrap_err("temporary empty assessment artifact should be removable")?;
+    Ok(())
+}
+
+#[test]
+fn cli_can_emit_the_landscape_diff_landscape_as_json() -> Result<()> {
+    belvedere::init_tracing();
+
+    let previous_assessments_path = std::env::temp_dir().join(format!(
+        "belvedere-cli-diff-landscape-graph-empty-assessments-{}.jsonl",
+        process::id()
+    ));
+    fs::write(&previous_assessments_path, [])
+        .into_diagnostic()
+        .wrap_err("temporary empty assessment artifact should be writable")?;
+
+    let args = [
+        "diff",
+        "--landscape-json",
+        "tests/fixtures/registry_dump.json",
+        previous_assessments_path
+            .to_str()
+            .ok_or_else(|| miette::miette!("temporary assessment path should be UTF-8"))?,
+        "tests/fixtures/registry_dump.json",
+        "tests/fixtures/proof_assessments.jsonl",
+    ]
+    .into_iter()
+    .map(str::to_owned)
+    .collect::<Vec<_>>();
+    let command = BelvedereCli::from_args(args.clone())
+        .into_diagnostic()
+        .wrap_err("diff landscape graph flag should be part of the public CLI API")?;
+
+    assert_eq!(
+        command.output(),
+        BelvedereCliOutput::LandscapeDiffLandscapeJson
+    );
+
+    let mut output = Vec::new();
+    let status = run_cli_with_writer(args, &mut output);
+    assert_eq!(status, ExitCode::SUCCESS);
+
+    let graph: Value = serde_json::from_slice(&output)
+        .into_diagnostic()
+        .wrap_err("CLI diff landscape graph output should be parseable JSON")?;
+    assert_landscape_graph(&graph);
+
+    fs::remove_file(previous_assessments_path)
+        .into_diagnostic()
+        .wrap_err("temporary empty assessment artifact should be removable")?;
+    Ok(())
+}
+
+#[test]
+fn cli_can_persist_the_landscape_diff_landscape_as_json() -> Result<()> {
+    belvedere::init_tracing();
+
+    let previous_assessments_path = std::env::temp_dir().join(format!(
+        "belvedere-cli-diff-landscape-graph-file-empty-assessments-{}.jsonl",
+        process::id()
+    ));
+    let graph_path =
+        std::env::temp_dir().join(format!("belvedere-diff-landscape-{}.json", process::id()));
+    fs::write(&previous_assessments_path, [])
+        .into_diagnostic()
+        .wrap_err("temporary empty assessment artifact should be writable")?;
+
+    let args = [
+        "diff",
+        "--landscape-file",
+        graph_path
+            .to_str()
+            .ok_or_else(|| miette::miette!("temporary landscape graph path should be UTF-8"))?,
+        "tests/fixtures/registry_dump.json",
+        previous_assessments_path
+            .to_str()
+            .ok_or_else(|| miette::miette!("temporary assessment path should be UTF-8"))?,
+        "tests/fixtures/registry_dump.json",
+        "tests/fixtures/proof_assessments.jsonl",
+    ]
+    .into_iter()
+    .map(str::to_owned)
+    .collect::<Vec<_>>();
+    let command = BelvedereCli::from_args(args.clone())
+        .into_diagnostic()
+        .wrap_err("diff landscape graph file flag should be part of the public CLI API")?;
+
+    assert_eq!(
+        command.output(),
+        BelvedereCliOutput::LandscapeDiffLandscapeFile(graph_path.clone())
+    );
+
+    let mut output = Vec::new();
+    let status = run_cli_with_writer(args, &mut output);
+    assert_eq!(status, ExitCode::SUCCESS);
+    assert!(output.is_empty());
+
+    let graph_bytes = fs::read(&graph_path)
+        .into_diagnostic()
+        .wrap_err("diff landscape graph file should be written")?;
+    let graph: Value = serde_json::from_slice(&graph_bytes)
+        .into_diagnostic()
+        .wrap_err("persisted diff landscape graph should be parseable JSON")?;
+    assert_landscape_graph(&graph);
+
+    fs::remove_file(graph_path)
+        .into_diagnostic()
+        .wrap_err("temporary landscape graph file should be removable")?;
     fs::remove_file(previous_assessments_path)
         .into_diagnostic()
         .wrap_err("temporary empty assessment artifact should be removable")?;
