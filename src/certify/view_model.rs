@@ -50,6 +50,7 @@ pub struct ViewModelReceiptCounts {
     root_items: usize,
     gap_items: usize,
     source_items: usize,
+    claim_detail_items: usize,
 }
 
 impl ViewModelReceiptCounts {
@@ -117,5 +118,11 @@ impl ViewModelReceiptCounts {
     #[must_use]
     pub const fn source_items(self) -> usize {
         self.source_items
+    }
+
+    /// Number of claim detail deep-dive items.
+    #[must_use]
+    pub const fn claim_detail_items(self) -> usize {
+        self.claim_detail_items
     }
 }

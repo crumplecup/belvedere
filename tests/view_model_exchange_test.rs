@@ -23,6 +23,7 @@ fn view_model_projection_builds_auditor_navigation_evidence() -> Result<()> {
     assert_eq!(model.overview().high_priority_gap_count(), 3);
 
     assert_eq!(receipt.counts().claim_cards(), 4);
+    assert_eq!(receipt.counts().claim_detail_items(), 4);
     assert_eq!(receipt.counts().filter_facets(), 10);
     assert_eq!(receipt.counts().backend_coverage_items(), 12);
     assert_eq!(receipt.counts().proof_chain_items(), 4);
@@ -242,6 +243,12 @@ fn view_model_projection_builds_auditor_navigation_evidence() -> Result<()> {
     assert_eq!(
         receipt
             .trace_kind_counts()
+            .get("view_model_trace_kind_claim_detail_item"),
+        Some(&4)
+    );
+    assert_eq!(
+        receipt
+            .trace_kind_counts()
             .get("view_model_trace_kind_proof_chain_item"),
         Some(&4)
     );
@@ -291,13 +298,13 @@ fn view_model_projection_builds_auditor_navigation_evidence() -> Result<()> {
         receipt
             .trace_source_counts()
             .get("view_model_traceable_items"),
-        Some(&53)
+        Some(&57)
     );
     assert_eq!(
         receipt
             .trace_source_counts()
             .get("view_model_trace_items_with_sources"),
-        Some(&53)
+        Some(&57)
     );
     assert_eq!(
         receipt
@@ -305,7 +312,7 @@ fn view_model_projection_builds_auditor_navigation_evidence() -> Result<()> {
             .get("view_model_trace_unique_source_records"),
         Some(&7)
     );
-    assert_eq!(receipt.view_item_ids().len(), 54);
+    assert_eq!(receipt.view_item_ids().len(), 58);
     assert!(
         receipt
             .view_item_ids()
@@ -316,6 +323,9 @@ fn view_model_projection_builds_auditor_navigation_evidence() -> Result<()> {
             .view_item_ids()
             .contains(&"view_model.claim:belvedere::ingestion::DecodedRegistrySnapshot".to_owned())
     );
+    assert!(receipt.view_item_ids().contains(
+        &"view_model.claim_detail:belvedere::ingestion::DecodedRegistrySnapshot".to_owned()
+    ));
     assert!(
         receipt.view_item_ids().contains(
             &"view_model.backend_coverage:belvedere::ingestion::DecodedRegistrySnapshot:kani"
@@ -390,6 +400,52 @@ fn view_model_projection_builds_auditor_navigation_evidence() -> Result<()> {
             .filter_ids()
             .contains(&"belvedere.filter.priority:high".to_owned())
     );
+
+    let decoded_detail = model
+        .claim_details()
+        .iter()
+        .find(|item| item.claim_id() == "belvedere::ingestion::DecodedRegistrySnapshot")
+        .ok_or_else(|| miette!("decoded registry claim should have a detail item"))?;
+    assert!(!decoded_detail.root());
+    assert!(
+        decoded_detail
+            .basis_ids()
+            .contains(&"belvedere::ingestion::RawAmenableArtifact".to_owned())
+    );
+    assert!(
+        decoded_detail
+            .root_ids()
+            .contains(&"belvedere::ingestion::RawAmenableArtifact".to_owned())
+    );
+    assert!(decoded_detail.verifiers().contains(&"kani".to_owned()));
+    assert!(
+        decoded_detail
+            .contract_fragments()
+            .iter()
+            .any(|fragment| fragment.contains("kani ensures"))
+    );
+    assert!(decoded_detail.assessment_ids().is_empty());
+    assert!(
+        decoded_detail
+            .gap_summaries()
+            .iter()
+            .any(|summary| summary.contains("MissingAssessment review: assess proof coverage"))
+    );
+    assert!(
+        decoded_detail
+            .gap_summaries()
+            .iter()
+            .any(|summary| summary.contains(
+                "TrustedOrOpaqueWitnessSupport elevated: review trusted or opaque witness support"
+            ))
+    );
+    assert_eq!(decoded_detail.review_state(), "elevated");
+    assert_eq!(
+        decoded_detail.next_action(),
+        "review trusted or opaque witness support"
+    );
+    assert_eq!(decoded_detail.source_record_count(), 4);
+    assert_eq!(decoded_detail.trace(), decoded_item.trace());
 
     let proof_item = model
         .claim_explorer()

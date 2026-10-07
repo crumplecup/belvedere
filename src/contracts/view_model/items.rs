@@ -15,10 +15,12 @@ mod workflow;
 pub use assessment::{AssessmentQueueItem, AssessmentWorkItem};
 pub(crate) use assessment::{AssessmentQueueItemBuilder, AssessmentWorkItemBuilder};
 pub use claim::{
-    ClaimExplorerCounts, ClaimExplorerItem, ProofChainBackendCoverage, ProofChainItem,
-    ProofChainTopology,
+    ClaimDetailItem, ClaimExplorerCounts, ClaimExplorerItem, ProofChainBackendCoverage,
+    ProofChainItem, ProofChainTopology,
 };
-pub(crate) use claim::{ProofChainBackendCoverageBuilder, ProofChainItemBuilder};
+pub(crate) use claim::{
+    ClaimDetailItemBuilder, ProofChainBackendCoverageBuilder, ProofChainItemBuilder,
+};
 pub(crate) use gap::GapItemBuilder;
 pub use gap::{GapItem, GapSeverity};
 pub(crate) use workflow::ReviewWorkflowItemBuilder;

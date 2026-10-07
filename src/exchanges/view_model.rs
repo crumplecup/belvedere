@@ -28,7 +28,7 @@ mod witness;
 mod workflow;
 
 use assessments::{project_assessment_queue, project_assessment_work};
-use claims::{project_claim_explorer, project_proof_chains};
+use claims::{project_claim_details, project_claim_explorer, project_proof_chains};
 use coverage::project_backend_coverage;
 use facets::project_filter_facets;
 use gaps::project_gaps;
@@ -95,6 +95,7 @@ impl BelvedereExchange<AuditorNavigationContract> for AuditorNavigationProjectio
             &gaps,
             &source_record_ids,
         );
+        let claim_details = project_claim_details(landscape.claims(), &gaps, &source_record_ids)?;
         let proof_chains = project_proof_chains(landscape.claims(), &gaps, &source_record_ids)?;
         let review_workflow = project_review_workflow(&proof_chains, &gaps)?;
         let assessment_queue =
@@ -135,6 +136,7 @@ impl BelvedereExchange<AuditorNavigationContract> for AuditorNavigationProjectio
             ("filter_facet", filter_facets.len()),
             ("backend_coverage_item", backend_coverage.len()),
             ("claim_card", claim_explorer.len()),
+            ("claim_detail_item", claim_details.len()),
             ("proof_chain_item", proof_chains.len()),
             ("review_workflow_item", review_workflow.len()),
             ("assessment_queue_item", assessment_queue.len()),
@@ -150,6 +152,7 @@ impl BelvedereExchange<AuditorNavigationContract> for AuditorNavigationProjectio
                 .map(|item| item.trace())
                 .chain(backend_coverage.iter().map(|item| item.trace()))
                 .chain(claim_explorer.iter().map(|item| item.trace()))
+                .chain(claim_details.iter().map(|item| item.trace()))
                 .chain(proof_chains.iter().map(|item| item.trace()))
                 .chain(review_workflow.iter().map(|item| item.trace()))
                 .chain(assessment_queue.iter().map(|item| item.trace()))
@@ -162,6 +165,7 @@ impl BelvedereExchange<AuditorNavigationContract> for AuditorNavigationProjectio
 
         let counts = ViewModelReceiptCountsBuilder::default()
             .claim_cards(landscape.claims().len())
+            .claim_detail_items(claim_details.len())
             .filter_facets(filter_facets.len())
             .backend_coverage_items(backend_coverage.len())
             .proof_chain_items(proof_chains.len())
@@ -180,6 +184,7 @@ impl BelvedereExchange<AuditorNavigationContract> for AuditorNavigationProjectio
             .filter_facets(filter_facets)
             .backend_coverage(backend_coverage)
             .claim_explorer(claim_explorer)
+            .claim_details(claim_details)
             .proof_chains(proof_chains)
             .review_workflow(review_workflow)
             .assessment_queue(assessment_queue)

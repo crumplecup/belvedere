@@ -15,15 +15,15 @@ mod trace;
 
 pub use items::{
     AssessmentQueueItem, AssessmentWorkItem, AuditorFilterFacet, BackendCoverageItem,
-    ClaimExplorerCounts, ClaimExplorerItem, GapItem, GapSeverity, ProofChainBackendCoverage,
-    ProofChainItem, ProofChainTopology, ProvenanceRootItem, ReviewWorkflowItem,
-    ReviewWorkflowPriority, SourceNavigationItem, WitnessSurfaceItem,
+    ClaimDetailItem, ClaimExplorerCounts, ClaimExplorerItem, GapItem, GapSeverity,
+    ProofChainBackendCoverage, ProofChainItem, ProofChainTopology, ProvenanceRootItem,
+    ReviewWorkflowItem, ReviewWorkflowPriority, SourceNavigationItem, WitnessSurfaceItem,
 };
 pub(crate) use items::{
     AssessmentQueueItemBuilder, AssessmentWorkItemBuilder, AuditorFilterFacetBuilder,
-    BackendCoverageItemBuilder, GapItemBuilder, ProofChainBackendCoverageBuilder,
-    ProofChainItemBuilder, ReviewWorkflowItemBuilder, SourceNavigationItemBuilder,
-    WitnessSurfaceItemBuilder,
+    BackendCoverageItemBuilder, ClaimDetailItemBuilder, GapItemBuilder,
+    ProofChainBackendCoverageBuilder, ProofChainItemBuilder, ReviewWorkflowItemBuilder,
+    SourceNavigationItemBuilder, WitnessSurfaceItemBuilder,
 };
 pub use trace::TraceRef;
 
@@ -56,6 +56,7 @@ pub struct AuditorNavigationModel {
     filter_facets: Vec<AuditorFilterFacet>,
     backend_coverage: Vec<BackendCoverageItem>,
     claim_explorer: Vec<ClaimExplorerItem>,
+    claim_details: Vec<ClaimDetailItem>,
     proof_chains: Vec<ProofChainItem>,
     review_workflow: Vec<ReviewWorkflowItem>,
     assessment_queue: Vec<AssessmentQueueItem>,
@@ -217,6 +218,7 @@ impl BelvedereContract for AuditorNavigationContract {
             "filter facets expose deterministic claim-family, verifier, recommendation, support, package, gap, and priority axes with trace IDs",
             "backend coverage entries expose Kani, Creusot, and Verus status per claim",
             "claim explorer entries retain bases, verifier coverage, filter memberships, contracts, assessments, gaps, and trace IDs",
+            "claim detail entries consolidate direct bases, resolved roots, verifier coverage, contracts, assessments, gaps, review state, next action, source counts, and trace IDs",
             "proof-chain entries retain direct bases, resolved roots, subject verifier coverage, chain backend completeness, topology metrics, review state, next action, gaps, and trace IDs",
             "review workflow entries consolidate proof-chain, gap, and assessment-work signals into stable auditor tasks",
             "assessment queue entries preserve recommendation lanes, resolution, recency vocabulary, and supersession links",

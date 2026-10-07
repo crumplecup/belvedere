@@ -9,9 +9,9 @@ use tracing::instrument;
 
 use crate::contracts::{
     AssessmentQueueItem, AssessmentWorkItem, AuditorFilterFacet, BackendCoverageItem,
-    ClaimExplorerItem, GapItem, ProofChainItem, ProvenanceRootItem, ResolutionPath,
-    ReviewWorkflowItem, SourceNavigationItem, TraceRef, TraceWidgetRef, TraceWidgetRefBuilder,
-    UiIrSection, WitnessSurfaceItem,
+    ClaimDetailItem, ClaimExplorerItem, GapItem, ProofChainItem, ProvenanceRootItem,
+    ResolutionPath, ReviewWorkflowItem, SourceNavigationItem, TraceRef, TraceWidgetRef,
+    TraceWidgetRefBuilder, UiIrSection, WitnessSurfaceItem,
 };
 
 use super::UiIrError;
@@ -91,6 +91,47 @@ fn claim_role_label(item: &ClaimExplorerItem) -> &'static str {
 fn count_label(count: usize, singular: &str, plural: &str) -> String {
     let noun = if count == 1 { singular } else { plural };
     format!("{count} {noun}")
+}
+
+#[instrument(level = "debug", skip(backend, item, trace_widgets))]
+pub(super) fn claim_detail_widget(
+    backend: &AccessKitUiBackend,
+    item: &ClaimDetailItem,
+    trace_widgets: &mut Vec<TraceWidgetRef>,
+) -> Result<WidgetId, UiIrError> {
+    let role = claim_detail_role_label(item);
+    let bases = list_label(item.basis_ids(), "no direct bases");
+    let roots = list_label(item.root_ids(), "no modeled roots");
+    let verifiers = list_label(item.verifiers(), "no verifier proofs");
+    let contracts = list_label(item.contract_fragments(), "no contract fragments");
+    let assessments = list_label(item.assessment_ids(), "no assessments");
+    let gaps = list_label(item.gap_summaries(), "no gaps");
+    labeled_widget(
+        backend,
+        "button",
+        format!(
+            "Claim detail {} is a {role}; direct bases {bases}; resolved roots {roots}; verifier proofs {verifiers}; contracts {contracts}; assessments {assessments}; gaps {gaps}; review state {}; next action: {}; {}",
+            item.claim_id(),
+            item.review_state(),
+            item.next_action(),
+            count_label(
+                item.source_record_count(),
+                "source record",
+                "source records"
+            )
+        ),
+        item.trace().clone(),
+        trace_widgets,
+    )
+}
+
+#[instrument(level = "trace", skip(item))]
+fn claim_detail_role_label(item: &ClaimDetailItem) -> &'static str {
+    if item.root() {
+        "provenance root"
+    } else {
+        "derived claim"
+    }
 }
 
 #[instrument(level = "debug", skip(backend, item, trace_widgets))]

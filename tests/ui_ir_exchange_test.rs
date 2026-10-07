@@ -3,9 +3,9 @@ use std::collections::BTreeMap;
 use belvedere::{
     ArtifactKind, AssessmentStreamIngestion, AuditorNavigationProjection, ElicitUiProjection,
     LandscapeInput, LandscapeModeling, RawAmenableArtifact, RegistryDumpIngestion,
-    UI_IR_SECTION_BACKEND_COVERAGE, UI_IR_SECTION_CLAIM_EXPLORER, UI_IR_SECTION_FILTERS,
-    UI_IR_SECTION_OVERVIEW, UI_IR_SECTION_PROOF_CHAINS, UI_IR_SECTION_REVIEW_WORKFLOW,
-    UI_IR_SECTION_SOURCE_NAVIGATION, UiIrInput, ViewModelInput,
+    UI_IR_SECTION_BACKEND_COVERAGE, UI_IR_SECTION_CLAIM_DETAIL, UI_IR_SECTION_CLAIM_EXPLORER,
+    UI_IR_SECTION_FILTERS, UI_IR_SECTION_OVERVIEW, UI_IR_SECTION_PROOF_CHAINS,
+    UI_IR_SECTION_REVIEW_WORKFLOW, UI_IR_SECTION_SOURCE_NAVIGATION, UiIrInput, ViewModelInput,
 };
 use miette::{IntoDiagnostic, Result, WrapErr, miette};
 
@@ -18,7 +18,7 @@ fn ui_ir_projection_mints_elicit_ui_standards_and_tree_proofs() -> Result<()> {
         .into_diagnostic()
         .wrap_err("fixture view model should project into elicit_ui")?;
 
-    assert_eq!(projection.sections().len(), 11);
+    assert_eq!(projection.sections().len(), 12);
     assert!(
         projection
             .sections()
@@ -29,6 +29,11 @@ fn ui_ir_projection_mints_elicit_ui_standards_and_tree_proofs() -> Result<()> {
         receipt
             .section_ids()
             .contains(&UI_IR_SECTION_CLAIM_EXPLORER.to_owned())
+    );
+    assert!(
+        receipt
+            .section_ids()
+            .contains(&UI_IR_SECTION_CLAIM_DETAIL.to_owned())
     );
     assert!(
         receipt
@@ -158,7 +163,7 @@ fn ui_ir_projection_mints_elicit_ui_standards_and_tree_proofs() -> Result<()> {
         );
     }
     assert!(receipt.counts().node_count() >= projection.trace_widgets().len());
-    assert_eq!(receipt.role_counts().get("role_button"), Some(&21));
+    assert_eq!(receipt.role_counts().get("role_button"), Some(&25));
     assert_eq!(receipt.role_counts().get("role_checkbox"), Some(&10));
     assert_eq!(receipt.role_counts().get("role_link"), Some(&10));
     assert_eq!(receipt.role_counts().get("role_region"), Some(&1));
@@ -167,6 +172,12 @@ fn ui_ir_projection_mints_elicit_ui_standards_and_tree_proofs() -> Result<()> {
         receipt
             .section_widget_counts()
             .get(UI_IR_SECTION_CLAIM_EXPLORER),
+        Some(&4)
+    );
+    assert_eq!(
+        receipt
+            .section_widget_counts()
+            .get(UI_IR_SECTION_CLAIM_DETAIL),
         Some(&4)
     );
     assert_eq!(
@@ -185,7 +196,7 @@ fn ui_ir_projection_mints_elicit_ui_standards_and_tree_proofs() -> Result<()> {
         receipt
             .section_population_counts()
             .get("ui_ir_sections_populated"),
-        Some(&11)
+        Some(&12)
     );
     assert_eq!(
         receipt
@@ -203,7 +214,7 @@ fn ui_ir_projection_mints_elicit_ui_standards_and_tree_proofs() -> Result<()> {
         receipt
             .section_trace_counts()
             .get("ui_ir_sections_with_source_widgets"),
-        Some(&11)
+        Some(&12)
     );
     assert_eq!(
         receipt
@@ -352,6 +363,44 @@ fn ui_ir_projection_preserves_trace_widgets_for_auditor_deep_dives() -> Result<(
         decoded_claim.source_record_ids().contains(
             &"proof_record:belvedere::ingestion::DecodedRegistrySnapshot@kani".to_owned()
         )
+    );
+    let decoded_detail = projection
+        .trace_widgets()
+        .iter()
+        .find(|widget| {
+            widget.claim_id() == "belvedere::ingestion::DecodedRegistrySnapshot"
+                && widget
+                    .label()
+                    .starts_with("Claim detail belvedere::ingestion::DecodedRegistrySnapshot")
+        })
+        .ok_or_else(|| miette!("claim detail item should have a traceable widget"))?;
+    assert!(decoded_detail.label().contains("derived claim"));
+    assert!(
+        decoded_detail
+            .label()
+            .contains("direct bases belvedere::ingestion::RawAmenableArtifact")
+    );
+    assert!(
+        decoded_detail
+            .label()
+            .contains("resolved roots belvedere::ingestion::RawAmenableArtifact")
+    );
+    assert!(decoded_detail.label().contains("verifier proofs kani"));
+    assert!(decoded_detail.label().contains("kani ensures"));
+    assert!(
+        decoded_detail
+            .label()
+            .contains("MissingAssessment review: assess proof coverage")
+    );
+    assert!(
+        decoded_detail.label().contains(
+            "review state elevated; next action: review trusted or opaque witness support"
+        )
+    );
+    assert!(decoded_detail.label().contains("4 source records"));
+    assert_eq!(
+        decoded_detail.source_record_ids(),
+        decoded_claim.source_record_ids()
     );
 
     let gap_widget = projection

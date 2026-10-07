@@ -10,9 +10,9 @@ use crate::{
         AuditorNavigationModel, ElicitUiIrSourcedStandard, ElicitUiProjectionContract,
         ElicitUiRenderCompleteStandard, ElicitUiRolePreservedStandard,
         ElicitUiWcagVerifiedStandard, TraceRef, TraceWidgetRef, UI_IR_SECTION_ASSESSMENT_QUEUE,
-        UI_IR_SECTION_BACKEND_COVERAGE, UI_IR_SECTION_CLAIM_EXPLORER, UI_IR_SECTION_FILTERS,
-        UI_IR_SECTION_GAP_QUEUE, UI_IR_SECTION_OVERVIEW, UI_IR_SECTION_PROOF_CHAINS,
-        UI_IR_SECTION_PROVENANCE_ROOTS, UI_IR_SECTION_REVIEW_WORKFLOW,
+        UI_IR_SECTION_BACKEND_COVERAGE, UI_IR_SECTION_CLAIM_DETAIL, UI_IR_SECTION_CLAIM_EXPLORER,
+        UI_IR_SECTION_FILTERS, UI_IR_SECTION_GAP_QUEUE, UI_IR_SECTION_OVERVIEW,
+        UI_IR_SECTION_PROOF_CHAINS, UI_IR_SECTION_PROVENANCE_ROOTS, UI_IR_SECTION_REVIEW_WORKFLOW,
         UI_IR_SECTION_SOURCE_NAVIGATION, UI_IR_SECTION_WITNESS_SURFACE, UiIrInput, UiIrProjection,
         UiIrProjectionBuilder, UiIrProofBundle, UiIrSection, UiStandardMint,
         UiViewportVerification,
@@ -28,9 +28,10 @@ pub use errors::UiIrError;
 
 use receipt::build_receipt;
 use widgets::{
-    assessment_widget, assessment_work_widget, backend_coverage_widget, claim_widget,
-    filter_widget, gap_widget, labeled_widget, proof_chain_widget, provenance_root_widget,
-    review_workflow_widget, section, source_navigation_widget, witness_widget,
+    assessment_widget, assessment_work_widget, backend_coverage_widget, claim_detail_widget,
+    claim_widget, filter_widget, gap_widget, labeled_widget, proof_chain_widget,
+    provenance_root_widget, review_workflow_widget, section, source_navigation_widget,
+    witness_widget,
 };
 
 const UI_IR_PRIMARY_VIEWPORT: (u32, u32) = (1440, 960);
@@ -106,6 +107,7 @@ fn project_sections(
         filter_section(backend, model, trace_widgets)?,
         backend_coverage_section(backend, model, trace_widgets)?,
         claim_explorer_section(backend, model, trace_widgets)?,
+        claim_detail_section(backend, model, trace_widgets)?,
         proof_chains_section(backend, model, trace_widgets)?,
         review_workflow_section(backend, model, trace_widgets)?,
         assessment_queue_section(backend, model, trace_widgets)?,
@@ -191,6 +193,20 @@ fn claim_explorer_section(
         "claim explorer",
         widgets,
     )
+}
+
+#[instrument(level = "debug", skip(backend, model, trace_widgets))]
+fn claim_detail_section(
+    backend: &AccessKitUiBackend,
+    model: &AuditorNavigationModel,
+    trace_widgets: &mut Vec<TraceWidgetRef>,
+) -> Result<UiIrSection, UiIrError> {
+    let widgets = model
+        .claim_details()
+        .iter()
+        .map(|item| claim_detail_widget(backend, item, trace_widgets))
+        .collect::<Result<Vec<_>, _>>()?;
+    section(backend, UI_IR_SECTION_CLAIM_DETAIL, "claim detail", widgets)
 }
 
 #[instrument(level = "debug", skip(backend, model, trace_widgets))]

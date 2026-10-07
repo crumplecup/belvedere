@@ -6,9 +6,10 @@ use tracing::instrument;
 
 use crate::{
     contracts::{
-        ClaimExplorerCounts, ClaimExplorerItem, GapItem, GapSeverity, LandscapeAssessment,
-        LandscapeClaim, ProofChainBackendCoverage, ProofChainBackendCoverageBuilder,
-        ProofChainItem, ProofChainItemBuilder, ProofChainTopology,
+        ClaimDetailItem, ClaimDetailItemBuilder, ClaimExplorerCounts, ClaimExplorerItem, GapItem,
+        GapSeverity, LandscapeAssessment, LandscapeClaim, ProofChainBackendCoverage,
+        ProofChainBackendCoverageBuilder, ProofChainItem, ProofChainItemBuilder,
+        ProofChainTopology,
     },
     error::BelvedereConstructionError,
 };
@@ -39,6 +40,66 @@ pub(super) fn project_claim_explorer<'a>(
                     claim_gap_count,
                 ),
                 trace(claim.id(), source_record_ids),
+            )
+        })
+        .collect()
+}
+
+#[instrument(level = "debug", skip(claims, gaps, source_record_ids))]
+pub(super) fn project_claim_details(
+    claims: &BTreeMap<String, LandscapeClaim>,
+    gaps: &[GapItem],
+    source_record_ids: &[String],
+) -> Result<Vec<ClaimDetailItem>, BelvedereConstructionError> {
+    claims
+        .values()
+        .map(|claim| {
+            let trace = trace(claim.id(), source_record_ids);
+            ClaimDetailItemBuilder::default()
+                .claim_id(claim.id())
+                .root(claim.is_root())
+                .basis_ids(claim.bases().iter().cloned().collect::<Vec<_>>())
+                .root_ids(chain_roots(claim.id(), claims))
+                .verifiers(claim.proofs().iter().cloned().collect::<Vec<_>>())
+                .contract_fragments(contract_fragment_labels(claim))
+                .assessment_ids(claim.assessment_ids().to_vec())
+                .gap_summaries(claim_gap_summaries(claim.id(), gaps))
+                .review_state(chain_review_state(claim.id(), gaps))
+                .next_action(chain_next_action(claim.id(), gaps))
+                .source_record_count(trace.source_record_ids().len())
+                .trace(trace)
+                .build()
+                .map_err(|error| BelvedereConstructionError::new("ClaimDetailItem", error))
+        })
+        .collect()
+}
+
+#[instrument(level = "trace", skip(claim))]
+fn contract_fragment_labels(claim: &LandscapeClaim) -> Vec<String> {
+    claim
+        .contracts()
+        .iter()
+        .map(|contract| {
+            format!(
+                "{} {} {}",
+                contract.verifier(),
+                contract.kind(),
+                contract.fragment()
+            )
+        })
+        .collect()
+}
+
+#[instrument(level = "trace", skip(gaps))]
+fn claim_gap_summaries(claim_id: &str, gaps: &[GapItem]) -> Vec<String> {
+    gaps.iter()
+        .filter(|gap| gap.claim_id() == claim_id)
+        .map(|gap| {
+            format!(
+                "{:?} {}: {}",
+                gap.kind(),
+                gap.severity().label(),
+                gap.action()
             )
         })
         .collect()

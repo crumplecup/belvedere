@@ -1,4 +1,4 @@
-//! Claim explorer and proof-chain navigation items.
+//! Claim explorer, claim detail, and proof-chain navigation items.
 
 use derive_builder::Builder;
 use derive_getters::Getters;
@@ -118,6 +118,47 @@ impl ClaimExplorerCounts {
     #[must_use]
     pub const fn gap_count(self) -> usize {
         self.gap_count
+    }
+}
+
+/// Claim detail evidence for an auditor deep dive.
+#[derive(Debug, Clone, PartialEq, Eq, Getters, Builder, Serialize)]
+#[builder(vis = "pub(crate)", setter(into))]
+pub struct ClaimDetailItem {
+    claim_id: String,
+    #[getter(skip)]
+    root: bool,
+    basis_ids: Vec<String>,
+    root_ids: Vec<String>,
+    verifiers: Vec<String>,
+    contract_fragments: Vec<String>,
+    assessment_ids: Vec<String>,
+    gap_summaries: Vec<String>,
+    review_state: String,
+    next_action: String,
+    #[getter(skip)]
+    source_record_count: usize,
+    #[getter(skip)]
+    trace: TraceRef,
+}
+
+impl ClaimDetailItem {
+    /// Whether this claim is a provenance root.
+    #[must_use]
+    pub const fn root(&self) -> bool {
+        self.root
+    }
+
+    /// Number of source records available through the trace.
+    #[must_use]
+    pub const fn source_record_count(&self) -> usize {
+        self.source_record_count
+    }
+
+    /// Trace reference.
+    #[must_use]
+    pub const fn trace(&self) -> &TraceRef {
+        &self.trace
     }
 }
 

@@ -24,6 +24,12 @@ pub(super) fn view_item_ids(model: &AuditorNavigationModel) -> Vec<String> {
     );
     ids.extend(
         model
+            .claim_details()
+            .iter()
+            .map(|item| format!("view_model.claim_detail:{}", item.claim_id())),
+    );
+    ids.extend(
+        model
             .proof_chains()
             .iter()
             .map(|item| format!("view_model.proof_chain:{}", item.claim_id())),
