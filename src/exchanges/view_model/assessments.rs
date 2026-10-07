@@ -1,19 +1,74 @@
 //! Assessment queue and assessment work projections.
 
-use std::collections::BTreeMap;
+use std::collections::{BTreeMap, BTreeSet};
 
 use tracing::instrument;
 
 use crate::{
     contracts::{
-        AssessmentQueueItem, AssessmentQueueItemBuilder, AssessmentWorkItem,
-        AssessmentWorkItemBuilder, GapItem, LandscapeAssessment, LandscapeGapKind, Recommendation,
-        ResolutionPath, Rubric,
+        AssessmentHistoryItem, AssessmentHistoryItemBuilder, AssessmentQueueItem,
+        AssessmentQueueItemBuilder, AssessmentWorkItem, AssessmentWorkItemBuilder, GapItem,
+        LandscapeAssessment, LandscapeGapKind, Recommendation, ResolutionPath, Rubric, TraceRef,
     },
     error::BelvedereConstructionError,
 };
 
 use super::{gaps::gap_queue_lane, traces::trace_assessment};
+
+#[instrument(level = "debug", skip(assessments, source_record_ids))]
+pub(super) fn project_assessment_history(
+    assessments: &[LandscapeAssessment],
+    source_record_ids: &[String],
+) -> Result<Vec<AssessmentHistoryItem>, BelvedereConstructionError> {
+    let mut assessments_by_proof: BTreeMap<&str, Vec<&LandscapeAssessment>> = BTreeMap::new();
+    for assessment in assessments {
+        assessments_by_proof
+            .entry(assessment.proof_id())
+            .or_default()
+            .push(assessment);
+    }
+
+    let mut items = Vec::new();
+    for (proof_id, mut proof_assessments) in assessments_by_proof {
+        proof_assessments.sort_by_key(|assessment| assessment.timestamp());
+        let Some(current) = current_assessment(&proof_assessments) else {
+            continue;
+        };
+        items.push(
+            AssessmentHistoryItemBuilder::default()
+                .proof_id(proof_id)
+                .current_assessment_id(current.id())
+                .assessment_ids(
+                    proof_assessments
+                        .iter()
+                        .map(|assessment| assessment.id().to_owned())
+                        .collect::<Vec<_>>(),
+                )
+                .reviewer_ids(reviewer_ids(&proof_assessments))
+                .recommendation_flow(recommendation_flow(&proof_assessments))
+                .weak_dimensions(weak_dimensions(current.rubric()))
+                .current_resolution_label(resolution_label(current.resolution_path()))
+                .current_comment(current.comment())
+                .latest_timestamp(current.timestamp())
+                .history_count(proof_assessments.len())
+                .superseded_count(
+                    proof_assessments
+                        .iter()
+                        .filter(|assessment| !assessment.current())
+                        .count(),
+                )
+                .trace(assessment_history_trace(
+                    proof_id,
+                    &proof_assessments,
+                    source_record_ids,
+                ))
+                .build()
+                .map_err(|error| BelvedereConstructionError::new("AssessmentHistoryItem", error))?,
+        );
+    }
+
+    Ok(items)
+}
 
 #[instrument(level = "debug", skip(assessments, source_record_ids))]
 pub(super) fn project_assessment_queue(
@@ -127,6 +182,53 @@ fn resolution_label(path: Option<ResolutionPath>) -> &'static str {
         Some(ResolutionPath::RetireClaim) => "retire claim",
         None => "no resolution path",
     }
+}
+
+#[instrument(level = "trace", skip(assessments))]
+fn current_assessment<'a>(
+    assessments: &[&'a LandscapeAssessment],
+) -> Option<&'a LandscapeAssessment> {
+    assessments
+        .iter()
+        .rev()
+        .find(|assessment| assessment.current())
+        .or_else(|| assessments.last())
+        .copied()
+}
+
+#[instrument(level = "debug", skip(assessments))]
+fn reviewer_ids(assessments: &[&LandscapeAssessment]) -> Vec<String> {
+    let mut reviewers = assessments
+        .iter()
+        .map(|assessment| assessment.reviewer().to_owned())
+        .collect::<Vec<_>>();
+    reviewers.sort();
+    reviewers.dedup();
+    reviewers
+}
+
+#[instrument(level = "debug", skip(assessments))]
+fn recommendation_flow(assessments: &[&LandscapeAssessment]) -> Vec<String> {
+    assessments
+        .iter()
+        .map(|assessment| format!("{:?}", assessment.recommendation()))
+        .collect()
+}
+
+#[instrument(level = "debug", skip(assessments, source_record_ids))]
+fn assessment_history_trace(
+    proof_id: &str,
+    assessments: &[&LandscapeAssessment],
+    source_record_ids: &[String],
+) -> TraceRef {
+    let mut ids = BTreeSet::new();
+    for assessment in assessments {
+        for source_record_id in trace_assessment(assessment, source_record_ids).source_record_ids()
+        {
+            ids.insert(source_record_id.to_owned());
+        }
+    }
+    TraceRef::new(proof_id, ids.into_iter().collect())
 }
 
 #[instrument(level = "debug", skip(assessments))]

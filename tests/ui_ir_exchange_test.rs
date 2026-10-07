@@ -3,9 +3,10 @@ use std::collections::BTreeMap;
 use belvedere::{
     ArtifactKind, AssessmentStreamIngestion, AuditorNavigationProjection, ElicitUiProjection,
     LandscapeInput, LandscapeModeling, RawAmenableArtifact, RegistryDumpIngestion,
-    UI_IR_SECTION_BACKEND_COVERAGE, UI_IR_SECTION_CLAIM_DETAIL, UI_IR_SECTION_CLAIM_EXPLORER,
-    UI_IR_SECTION_FILTERS, UI_IR_SECTION_OVERVIEW, UI_IR_SECTION_PROOF_CHAINS,
-    UI_IR_SECTION_REVIEW_WORKFLOW, UI_IR_SECTION_SOURCE_NAVIGATION, UiIrInput, ViewModelInput,
+    UI_IR_SECTION_ASSESSMENT_HISTORY, UI_IR_SECTION_BACKEND_COVERAGE, UI_IR_SECTION_CLAIM_DETAIL,
+    UI_IR_SECTION_CLAIM_EXPLORER, UI_IR_SECTION_FILTERS, UI_IR_SECTION_OVERVIEW,
+    UI_IR_SECTION_PROOF_CHAINS, UI_IR_SECTION_REVIEW_WORKFLOW, UI_IR_SECTION_SOURCE_NAVIGATION,
+    UiIrInput, ViewModelInput,
 };
 use miette::{IntoDiagnostic, Result, WrapErr, miette};
 
@@ -18,7 +19,7 @@ fn ui_ir_projection_mints_elicit_ui_standards_and_tree_proofs() -> Result<()> {
         .into_diagnostic()
         .wrap_err("fixture view model should project into elicit_ui")?;
 
-    assert_eq!(projection.sections().len(), 12);
+    assert_eq!(projection.sections().len(), 13);
     assert!(
         projection
             .sections()
@@ -54,6 +55,11 @@ fn ui_ir_projection_mints_elicit_ui_standards_and_tree_proofs() -> Result<()> {
         receipt
             .section_ids()
             .contains(&UI_IR_SECTION_REVIEW_WORKFLOW.to_owned())
+    );
+    assert!(
+        receipt
+            .section_ids()
+            .contains(&UI_IR_SECTION_ASSESSMENT_HISTORY.to_owned())
     );
     assert!(
         receipt
@@ -163,7 +169,7 @@ fn ui_ir_projection_mints_elicit_ui_standards_and_tree_proofs() -> Result<()> {
         );
     }
     assert!(receipt.counts().node_count() >= projection.trace_widgets().len());
-    assert_eq!(receipt.role_counts().get("role_button"), Some(&25));
+    assert_eq!(receipt.role_counts().get("role_button"), Some(&27));
     assert_eq!(receipt.role_counts().get("role_checkbox"), Some(&10));
     assert_eq!(receipt.role_counts().get("role_link"), Some(&10));
     assert_eq!(receipt.role_counts().get("role_region"), Some(&1));
@@ -194,9 +200,15 @@ fn ui_ir_projection_mints_elicit_ui_standards_and_tree_proofs() -> Result<()> {
     );
     assert_eq!(
         receipt
+            .section_widget_counts()
+            .get(UI_IR_SECTION_ASSESSMENT_HISTORY),
+        Some(&2)
+    );
+    assert_eq!(
+        receipt
             .section_population_counts()
             .get("ui_ir_sections_populated"),
-        Some(&12)
+        Some(&13)
     );
     assert_eq!(
         receipt
@@ -214,7 +226,7 @@ fn ui_ir_projection_mints_elicit_ui_standards_and_tree_proofs() -> Result<()> {
         receipt
             .section_trace_counts()
             .get("ui_ir_sections_with_source_widgets"),
-        Some(&12)
+        Some(&13)
     );
     assert_eq!(
         receipt
@@ -563,6 +575,31 @@ fn ui_ir_projection_preserves_trace_widgets_for_auditor_deep_dives() -> Result<(
             .label()
             .contains("resolution: strengthen current proof")
     }));
+    let assessment_history_widget = projection
+        .trace_widgets()
+        .iter()
+        .find(|widget| {
+            widget.label().starts_with(
+                "Assessment history for belvedere::ingestion::record_identity_is_preserved current assess-belvedere-ingestion-1",
+            )
+        })
+        .ok_or_else(|| miette!("assessment history should have a traceable widget"))?;
+    assert!(
+        assessment_history_widget
+            .label()
+            .contains("recommendations Strengthen")
+    );
+    assert!(
+        assessment_history_widget
+            .label()
+            .contains("weak dimensions assertion_strength, adversarial_coverage")
+    );
+    assert!(
+        assessment_history_widget
+            .label()
+            .contains("resolution: strengthen current proof")
+    );
+    assert_eq!(assessment_history_widget.source_record_ids().len(), 2);
     let root_widget = projection
         .trace_widgets()
         .iter()
@@ -657,6 +694,17 @@ fn ui_ir_projection_labels_assessment_recency() -> Result<()> {
             && widget
                 .label()
                 .contains("weak dimensions assertion_strength, adversarial_coverage")
+    }));
+    assert!(projection.trace_widgets().iter().any(|widget| {
+        widget.label().starts_with(
+            "Assessment history for belvedere::ingestion::record_identity_is_preserved current assess-current",
+        ) && widget
+            .label()
+            .contains("has assess-old, assess-current")
+            && widget
+                .label()
+                .contains("recommendations Strengthen, Accept")
+            && widget.label().contains("1 superseded assessment")
     }));
     Ok(())
 }

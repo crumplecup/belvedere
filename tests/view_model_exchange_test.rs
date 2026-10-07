@@ -28,6 +28,7 @@ fn view_model_projection_builds_auditor_navigation_evidence() -> Result<()> {
     assert_eq!(receipt.counts().backend_coverage_items(), 12);
     assert_eq!(receipt.counts().proof_chain_items(), 4);
     assert_eq!(receipt.counts().review_workflow_items(), 4);
+    assert_eq!(receipt.counts().assessment_history_items(), 2);
     assert_eq!(receipt.counts().assessment_items(), 2);
     assert_eq!(receipt.counts().assessment_work_items(), 2);
     assert_eq!(receipt.counts().witness_items(), 1);
@@ -261,6 +262,12 @@ fn view_model_projection_builds_auditor_navigation_evidence() -> Result<()> {
     assert_eq!(
         receipt
             .trace_kind_counts()
+            .get("view_model_trace_kind_assessment_history_item"),
+        Some(&2)
+    );
+    assert_eq!(
+        receipt
+            .trace_kind_counts()
             .get("view_model_trace_kind_assessment_queue_item"),
         Some(&2)
     );
@@ -298,13 +305,13 @@ fn view_model_projection_builds_auditor_navigation_evidence() -> Result<()> {
         receipt
             .trace_source_counts()
             .get("view_model_traceable_items"),
-        Some(&57)
+        Some(&59)
     );
     assert_eq!(
         receipt
             .trace_source_counts()
             .get("view_model_trace_items_with_sources"),
-        Some(&57)
+        Some(&59)
     );
     assert_eq!(
         receipt
@@ -312,7 +319,7 @@ fn view_model_projection_builds_auditor_navigation_evidence() -> Result<()> {
             .get("view_model_trace_unique_source_records"),
         Some(&7)
     );
-    assert_eq!(receipt.view_item_ids().len(), 58);
+    assert_eq!(receipt.view_item_ids().len(), 60);
     assert!(
         receipt
             .view_item_ids()
@@ -537,6 +544,12 @@ fn view_model_projection_builds_auditor_navigation_evidence() -> Result<()> {
         "view_model.review_task:{}",
         decoded_task.task_id()
     )));
+    assert!(
+        receipt.view_item_ids().contains(
+            &"view_model.assessment_history:belvedere::ingestion::record_identity_is_preserved"
+                .to_owned()
+        )
+    );
     Ok(())
 }
 
@@ -771,6 +784,37 @@ fn view_model_projection_preserves_review_queues_and_traceability() -> Result<()
             .contains(&"kani_proof:belvedere::ingestion::record_identity_is_preserved".to_owned())
     );
 
+    let history = model
+        .assessment_history()
+        .iter()
+        .find(|item| item.proof_id() == "belvedere::ingestion::record_identity_is_preserved")
+        .ok_or_else(|| miette!("proof assessment history should be grouped by proof ID"))?;
+    assert_eq!(
+        history.current_assessment_id(),
+        "assess-belvedere-ingestion-1"
+    );
+    assert_eq!(history.history_count(), 1);
+    assert_eq!(history.superseded_count(), 0);
+    assert_eq!(
+        history.recommendation_flow(),
+        &vec!["Strengthen".to_owned()]
+    );
+    assert!(
+        history
+            .weak_dimensions()
+            .contains(&"assertion_strength".to_owned())
+    );
+    assert_eq!(
+        history.current_resolution_label(),
+        "strengthen current proof"
+    );
+    assert!(
+        history
+            .current_comment()
+            .contains("preserves the source IDs")
+    );
+    assert_eq!(history.trace().source_record_ids().len(), 2);
+
     let missing_assessment = model
         .assessment_work()
         .iter()
@@ -898,6 +942,30 @@ fn view_model_projection_exposes_assessment_recency() -> Result<()> {
     assert!(current.current());
     assert_eq!(current.superseded_count(), 1);
     assert_eq!(current.superseded_by(), None);
+
+    let history = model
+        .assessment_history()
+        .iter()
+        .find(|item| item.proof_id() == "belvedere::ingestion::record_identity_is_preserved")
+        .ok_or_else(|| miette!("stale fixture should expose grouped assessment history"))?;
+    assert_eq!(history.current_assessment_id(), "assess-current");
+    assert_eq!(
+        history.assessment_ids(),
+        &vec!["assess-old".to_owned(), "assess-current".to_owned()]
+    );
+    assert_eq!(
+        history.recommendation_flow(),
+        &vec!["Strengthen".to_owned(), "Accept".to_owned()]
+    );
+    assert_eq!(history.history_count(), 2);
+    assert_eq!(history.superseded_count(), 1);
+    assert_eq!(history.weak_dimensions(), &Vec::<String>::new());
+    assert_eq!(history.current_resolution_label(), "keep current proof");
+    assert!(
+        history
+            .current_comment()
+            .contains("Latest review supersedes the earlier strengthening request")
+    );
 
     let older = model
         .assessment_queue()

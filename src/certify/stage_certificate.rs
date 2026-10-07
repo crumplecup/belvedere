@@ -180,6 +180,10 @@ impl BelvedereStageCertificate {
     pub fn auditor_navigation(receipt: &ViewModelReceipt) -> Self {
         let mut counts = BTreeMap::from([
             (
+                "assessment_history_items".to_owned(),
+                receipt.counts().assessment_history_items(),
+            ),
+            (
                 "assessment_items".to_owned(),
                 receipt.counts().assessment_items(),
             ),

@@ -7,6 +7,54 @@ use tracing::instrument;
 
 use crate::contracts::{Recommendation, ResolutionPath, view_model::TraceRef};
 
+/// Assessment history grouped by proof ID.
+#[derive(Debug, Clone, PartialEq, Eq, Getters, Builder, Serialize)]
+#[builder(vis = "pub(crate)", setter(into))]
+pub struct AssessmentHistoryItem {
+    proof_id: String,
+    current_assessment_id: String,
+    assessment_ids: Vec<String>,
+    reviewer_ids: Vec<String>,
+    recommendation_flow: Vec<String>,
+    weak_dimensions: Vec<String>,
+    current_resolution_label: String,
+    current_comment: String,
+    #[getter(skip)]
+    latest_timestamp: u64,
+    #[getter(skip)]
+    history_count: usize,
+    #[getter(skip)]
+    superseded_count: usize,
+    #[getter(skip)]
+    trace: TraceRef,
+}
+
+impl AssessmentHistoryItem {
+    /// Latest assessment timestamp in the history group.
+    #[must_use]
+    pub const fn latest_timestamp(&self) -> u64 {
+        self.latest_timestamp
+    }
+
+    /// Number of assessments in this proof's review history.
+    #[must_use]
+    pub const fn history_count(&self) -> usize {
+        self.history_count
+    }
+
+    /// Number of prior assessments superseded by the current assessment.
+    #[must_use]
+    pub const fn superseded_count(&self) -> usize {
+        self.superseded_count
+    }
+
+    /// Trace reference.
+    #[must_use]
+    pub const fn trace(&self) -> &TraceRef {
+        &self.trace
+    }
+}
+
 /// Assessment queue item.
 #[derive(Debug, Clone, PartialEq, Eq, Getters, Builder, Serialize)]
 #[builder(vis = "pub(crate)", setter(into))]

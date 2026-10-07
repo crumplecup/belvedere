@@ -42,6 +42,12 @@ pub(super) fn view_item_ids(model: &AuditorNavigationModel) -> Vec<String> {
     );
     ids.extend(
         model
+            .assessment_history()
+            .iter()
+            .map(|item| format!("view_model.assessment_history:{}", item.proof_id())),
+    );
+    ids.extend(
+        model
             .assessment_queue()
             .iter()
             .map(|item| format!("view_model.assessment_queue:{}", item.assessment_id())),

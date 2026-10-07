@@ -33,6 +33,9 @@ pub const UI_IR_SECTION_REVIEW_WORKFLOW: &str = "belvedere.ui.section.review_wor
 /// Stable section ID for the assessment queue surface.
 pub const UI_IR_SECTION_ASSESSMENT_QUEUE: &str = "belvedere.ui.section.assessment_queue";
 
+/// Stable section ID for proof-grouped assessment history.
+pub const UI_IR_SECTION_ASSESSMENT_HISTORY: &str = "belvedere.ui.section.assessment_history";
+
 /// Stable section ID for the witness surface.
 pub const UI_IR_SECTION_WITNESS_SURFACE: &str = "belvedere.ui.section.witness_surface";
 

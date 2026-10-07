@@ -9,10 +9,10 @@ use belvedere::{
     BELVEDERE_RUN_CERTIFICATE_SCHEMA_ID, BELVEDERE_RUN_CERTIFICATE_SCHEMA_VERSION,
     BELVEDERE_STAGE_CERTIFICATE_SCHEMA_ID, BELVEDERE_STAGE_CERTIFICATE_SCHEMA_VERSION,
     BelvedereCli, BelvedereCliOutput, BelvedereInvocationSurface, BelvederePipelineStage,
-    BelvedereRunInput, INPUT_FIDELITY_STANDARD_ID, UI_IR_SECTION_BACKEND_COVERAGE,
-    UI_IR_SECTION_CLAIM_DETAIL, UI_IR_SECTION_FILTERS, UI_IR_SECTION_PROOF_CHAINS,
-    UI_IR_SECTION_REVIEW_WORKFLOW, UI_IR_SECTION_SOURCE_NAVIGATION, run_belvedere_pipeline,
-    run_cli_with_writer,
+    BelvedereRunInput, INPUT_FIDELITY_STANDARD_ID, UI_IR_SECTION_ASSESSMENT_HISTORY,
+    UI_IR_SECTION_BACKEND_COVERAGE, UI_IR_SECTION_CLAIM_DETAIL, UI_IR_SECTION_FILTERS,
+    UI_IR_SECTION_PROOF_CHAINS, UI_IR_SECTION_REVIEW_WORKFLOW, UI_IR_SECTION_SOURCE_NAVIGATION,
+    run_belvedere_pipeline, run_cli_with_writer,
 };
 use miette::{IntoDiagnostic, Result, WrapErr};
 use serde_json::Value;
@@ -54,7 +54,7 @@ fn run_pipeline_uses_the_normal_amenable_artifact_path() -> Result<()> {
         Some(&1)
     );
     assert_eq!(report.view_model_receipt().counts().source_items(), 7);
-    assert_eq!(report.ui_ir_receipt().counts().section_count(), 12);
+    assert_eq!(report.ui_ir_receipt().counts().section_count(), 13);
     assert!(
         report
             .ui_ir_receipt()
@@ -66,6 +66,12 @@ fn run_pipeline_uses_the_normal_amenable_artifact_path() -> Result<()> {
             .ui_ir_receipt()
             .section_ids()
             .contains(&UI_IR_SECTION_PROOF_CHAINS.to_owned())
+    );
+    assert!(
+        report
+            .ui_ir_receipt()
+            .section_ids()
+            .contains(&UI_IR_SECTION_ASSESSMENT_HISTORY.to_owned())
     );
     assert_eq!(
         report.certificate().schema_id(),
@@ -311,7 +317,7 @@ fn run_pipeline_uses_the_normal_amenable_artifact_path() -> Result<()> {
             .certificate()
             .stage_certificates()
             .iter()
-            .any(|certificate| certificate.counts().get("role_button") == Some(&25))
+            .any(|certificate| certificate.counts().get("role_button") == Some(&27))
     );
     assert!(
         report
@@ -440,7 +446,7 @@ fn run_pipeline_uses_the_normal_amenable_artifact_path() -> Result<()> {
         .ok_or_else(|| {
             miette::miette!("run certificate should include UI IR projection stage evidence")
         })?;
-    assert_eq!(ui_stage.counts().get("ui_ir_sections_populated"), Some(&12));
+    assert_eq!(ui_stage.counts().get("ui_ir_sections_populated"), Some(&13));
     assert_eq!(ui_stage.counts().get("ui_ir_sections_empty"), Some(&0));
     assert_eq!(
         ui_stage.counts().get("ui_ir_section_widgets_total"),
@@ -448,7 +454,7 @@ fn run_pipeline_uses_the_normal_amenable_artifact_path() -> Result<()> {
     );
     assert_eq!(
         ui_stage.counts().get("ui_ir_sections_with_source_widgets"),
-        Some(&12)
+        Some(&13)
     );
     assert_eq!(
         ui_stage
@@ -925,13 +931,29 @@ fn assert_auditor_navigation_receipt(receipt: &Value) {
         Some(4)
     );
     assert_eq!(
+        receipt["trace_kind_counts"]["view_model_trace_kind_assessment_history_item"].as_u64(),
+        Some(2)
+    );
+    assert_eq!(
+        receipt["counts"]["assessment_history_items"].as_u64(),
+        Some(2)
+    );
+    assert_eq!(
         receipt["trace_source_counts"]["view_model_trace_unique_source_records"].as_u64(),
         Some(7)
     );
-    assert_eq!(receipt["view_item_ids"].as_array().map(Vec::len), Some(58));
+    assert_eq!(receipt["view_item_ids"].as_array().map(Vec::len), Some(60));
     assert!(receipt["view_item_ids"].as_array().is_some_and(|ids| {
         ids.iter().any(|id| {
             id.as_str() == Some("view_model.claim:belvedere::ingestion::DecodedRegistrySnapshot")
+        })
+    }));
+    assert!(receipt["view_item_ids"].as_array().is_some_and(|ids| {
+        ids.iter().any(|id| {
+            id.as_str()
+                == Some(
+                    "view_model.assessment_history:belvedere::ingestion::record_identity_is_preserved",
+                )
         })
     }));
     assert_eq!(
@@ -948,6 +970,10 @@ fn assert_previous_auditor_navigation_receipt(receipt: &Value) {
     assert_eq!(receipt["counts"]["claim_cards"].as_u64(), Some(3));
     assert_eq!(receipt["counts"]["claim_detail_items"].as_u64(), Some(3));
     assert_eq!(receipt["counts"]["assessment_items"].as_u64(), Some(0));
+    assert_eq!(
+        receipt["counts"]["assessment_history_items"].as_u64(),
+        Some(0)
+    );
     assert_eq!(receipt["counts"]["assessment_work_items"].as_u64(), Some(2));
     assert!(
         receipt["source_kind_counts"]
@@ -984,7 +1010,11 @@ fn assert_ui_ir_receipt(receipt: &Value) {
         receipt["contract"].as_str(),
         Some("belvedere.ui_ir.elicit_ui_projection")
     );
-    assert_eq!(receipt["counts"]["section_count"].as_u64(), Some(12));
+    assert_eq!(receipt["counts"]["section_count"].as_u64(), Some(13));
+    assert_eq!(
+        receipt["section_widget_counts"][UI_IR_SECTION_ASSESSMENT_HISTORY].as_u64(),
+        Some(2)
+    );
     assert_eq!(
         receipt["section_widget_counts"][UI_IR_SECTION_REVIEW_WORKFLOW].as_u64(),
         Some(4)
@@ -1015,6 +1045,15 @@ fn assert_ui_ir_receipt(receipt: &Value) {
                     .any(|section_id| section_id.as_str() == Some(UI_IR_SECTION_CLAIM_DETAIL))
             })
     );
+    assert!(
+        receipt["section_ids"]
+            .as_array()
+            .is_some_and(|section_ids| {
+                section_ids
+                    .iter()
+                    .any(|section_id| section_id.as_str() == Some(UI_IR_SECTION_ASSESSMENT_HISTORY))
+            })
+    );
 }
 
 fn assert_previous_ui_ir_receipt(receipt: &Value) {
@@ -1022,7 +1061,7 @@ fn assert_previous_ui_ir_receipt(receipt: &Value) {
         receipt["contract"].as_str(),
         Some("belvedere.ui_ir.elicit_ui_projection")
     );
-    assert_eq!(receipt["counts"]["section_count"].as_u64(), Some(12));
+    assert_eq!(receipt["counts"]["section_count"].as_u64(), Some(13));
     assert_eq!(receipt["counts"]["widget_count"].as_u64(), Some(44));
     assert_eq!(
         receipt["section_widget_counts"][UI_IR_SECTION_REVIEW_WORKFLOW].as_u64(),
@@ -1031,6 +1070,10 @@ fn assert_previous_ui_ir_receipt(receipt: &Value) {
     assert_eq!(
         receipt["section_widget_counts"][UI_IR_SECTION_CLAIM_DETAIL].as_u64(),
         Some(3)
+    );
+    assert_eq!(
+        receipt["section_widget_counts"][UI_IR_SECTION_ASSESSMENT_HISTORY].as_u64(),
+        Some(0)
     );
     assert_eq!(
         receipt["trace_source_counts"]["trace_unique_source_records"].as_u64(),
@@ -1057,6 +1100,10 @@ fn assert_auditor_navigation_model(model: &Value) {
     assert_eq!(model["claim_explorer"].as_array().map(Vec::len), Some(4));
     assert_eq!(model["proof_chains"].as_array().map(Vec::len), Some(4));
     assert_eq!(model["review_workflow"].as_array().map(Vec::len), Some(4));
+    assert_eq!(
+        model["assessment_history"].as_array().map(Vec::len),
+        Some(2)
+    );
     assert_eq!(model["source_record_ids"].as_array().map(Vec::len), Some(7));
     assert!(model["claim_explorer"].as_array().is_some_and(|items| {
         items.iter().any(|item| {
@@ -1077,6 +1124,10 @@ fn assert_previous_auditor_navigation_model(model: &Value) {
     assert_eq!(model["claim_explorer"].as_array().map(Vec::len), Some(3));
     assert_eq!(model["proof_chains"].as_array().map(Vec::len), Some(3));
     assert_eq!(model["review_workflow"].as_array().map(Vec::len), Some(3));
+    assert_eq!(
+        model["assessment_history"].as_array().map(Vec::len),
+        Some(0)
+    );
     assert_eq!(model["assessment_queue"].as_array().map(Vec::len), Some(0));
     assert_eq!(model["assessment_work"].as_array().map(Vec::len), Some(2));
     assert_eq!(model["source_record_ids"].as_array().map(Vec::len), Some(5));
@@ -1090,10 +1141,10 @@ fn assert_previous_auditor_navigation_model(model: &Value) {
 fn assert_ui_ir_projection(projection: &Value) {
     assert!(projection.get("tree").is_none());
     assert!(projection.get("proofs").is_none());
-    assert_eq!(projection["sections"].as_array().map(Vec::len), Some(12));
+    assert_eq!(projection["sections"].as_array().map(Vec::len), Some(13));
     assert_eq!(
         projection["trace_widgets"].as_array().map(Vec::len),
-        Some(58)
+        Some(60)
     );
     assert_eq!(
         projection["viewport_verifications"]
@@ -1115,6 +1166,11 @@ fn assert_ui_ir_projection(projection: &Value) {
             .iter()
             .any(|section| section["id"].as_str() == Some(UI_IR_SECTION_CLAIM_DETAIL))
     }));
+    assert!(projection["sections"].as_array().is_some_and(|sections| {
+        sections
+            .iter()
+            .any(|section| section["id"].as_str() == Some(UI_IR_SECTION_ASSESSMENT_HISTORY))
+    }));
     assert!(
         projection["minted_standards"]
             .as_array()
@@ -1127,7 +1183,7 @@ fn assert_ui_ir_projection(projection: &Value) {
 fn assert_previous_ui_ir_projection(projection: &Value) {
     assert!(projection.get("tree").is_none());
     assert!(projection.get("proofs").is_none());
-    assert_eq!(projection["sections"].as_array().map(Vec::len), Some(12));
+    assert_eq!(projection["sections"].as_array().map(Vec::len), Some(13));
     assert_eq!(
         projection["trace_widgets"].as_array().map(Vec::len),
         Some(44)
@@ -1531,13 +1587,17 @@ fn cli_can_emit_the_ui_ir_receipt_as_json() -> Result<()> {
         receipt["contract"].as_str(),
         Some("belvedere.ui_ir.elicit_ui_projection")
     );
-    assert_eq!(receipt["counts"]["section_count"].as_u64(), Some(12));
-    assert_eq!(receipt["section_ids"].as_array().map(Vec::len), Some(12));
+    assert_eq!(receipt["counts"]["section_count"].as_u64(), Some(13));
+    assert_eq!(receipt["section_ids"].as_array().map(Vec::len), Some(13));
     assert_eq!(
         receipt["section_widget_counts"][UI_IR_SECTION_REVIEW_WORKFLOW].as_u64(),
         Some(4)
     );
-    assert_eq!(receipt["role_counts"]["role_button"].as_u64(), Some(25));
+    assert_eq!(
+        receipt["section_widget_counts"][UI_IR_SECTION_ASSESSMENT_HISTORY].as_u64(),
+        Some(2)
+    );
+    assert_eq!(receipt["role_counts"]["role_button"].as_u64(), Some(27));
     assert_eq!(receipt["viewport_ids"].as_array().map(Vec::len), Some(3));
     assert_eq!(
         receipt["trace_source_counts"]["trace_unique_source_records"].as_u64(),
@@ -1853,10 +1913,14 @@ fn cli_can_persist_the_ui_ir_receipt_as_json() -> Result<()> {
         receipt["contract"].as_str(),
         Some("belvedere.ui_ir.elicit_ui_projection")
     );
-    assert_eq!(receipt["counts"]["section_count"].as_u64(), Some(12));
+    assert_eq!(receipt["counts"]["section_count"].as_u64(), Some(13));
     assert_eq!(
         receipt["section_widget_counts"][UI_IR_SECTION_REVIEW_WORKFLOW].as_u64(),
         Some(4)
+    );
+    assert_eq!(
+        receipt["section_widget_counts"][UI_IR_SECTION_ASSESSMENT_HISTORY].as_u64(),
+        Some(2)
     );
 
     fs::remove_file(&receipt_path)
@@ -2272,7 +2336,7 @@ fn cli_can_emit_the_landscape_diff_run_certificate_as_json() -> Result<()> {
                 |stage_certificates| stage_certificates.iter().any(|stage_certificate| {
                     stage_certificate["stage"].as_str() == Some("ui_ir_projection")
                         && stage_certificate["counts"]["ui_ir_sections_populated"].as_u64()
-                            == Some(12)
+                            == Some(13)
                 })
             )
     );

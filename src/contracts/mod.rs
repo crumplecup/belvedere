@@ -38,26 +38,26 @@ pub use standards::{
 pub use ui_ir::{
     ElicitUiIrSourcedStandard, ElicitUiProjectionContract, ElicitUiRenderCompleteStandard,
     ElicitUiRolePreservedStandard, ElicitUiWcagVerifiedStandard, MintedElicitUiStandard,
-    TraceWidgetRef, UI_IR_SECTION_ASSESSMENT_QUEUE, UI_IR_SECTION_BACKEND_COVERAGE,
-    UI_IR_SECTION_CLAIM_DETAIL, UI_IR_SECTION_CLAIM_EXPLORER, UI_IR_SECTION_FILTERS,
-    UI_IR_SECTION_GAP_QUEUE, UI_IR_SECTION_OVERVIEW, UI_IR_SECTION_PROOF_CHAINS,
-    UI_IR_SECTION_PROVENANCE_ROOTS, UI_IR_SECTION_REVIEW_WORKFLOW, UI_IR_SECTION_SOURCE_NAVIGATION,
-    UI_IR_SECTION_WITNESS_SURFACE, UiIrInput, UiIrProjection, UiIrProofBundle, UiIrSection,
-    UiStandardMint, UiViewportVerification, elicit_ui_provenance,
+    TraceWidgetRef, UI_IR_SECTION_ASSESSMENT_HISTORY, UI_IR_SECTION_ASSESSMENT_QUEUE,
+    UI_IR_SECTION_BACKEND_COVERAGE, UI_IR_SECTION_CLAIM_DETAIL, UI_IR_SECTION_CLAIM_EXPLORER,
+    UI_IR_SECTION_FILTERS, UI_IR_SECTION_GAP_QUEUE, UI_IR_SECTION_OVERVIEW,
+    UI_IR_SECTION_PROOF_CHAINS, UI_IR_SECTION_PROVENANCE_ROOTS, UI_IR_SECTION_REVIEW_WORKFLOW,
+    UI_IR_SECTION_SOURCE_NAVIGATION, UI_IR_SECTION_WITNESS_SURFACE, UiIrInput, UiIrProjection,
+    UiIrProofBundle, UiIrSection, UiStandardMint, UiViewportVerification, elicit_ui_provenance,
 };
 pub(crate) use ui_ir::{TraceWidgetRefBuilder, UiIrProjectionBuilder};
 pub use view_model::{
-    AssessmentQueueItem, AssessmentRecencySummary, AssessmentWorkItem, AuditorFilterFacet,
-    AuditorNavigationContract, AuditorNavigationModel, BackendCoverageItem, ClaimDetailItem,
-    ClaimExplorerCounts, ClaimExplorerItem, GapItem, GapSeverity, OverviewView,
+    AssessmentHistoryItem, AssessmentQueueItem, AssessmentRecencySummary, AssessmentWorkItem,
+    AuditorFilterFacet, AuditorNavigationContract, AuditorNavigationModel, BackendCoverageItem,
+    ClaimDetailItem, ClaimExplorerCounts, ClaimExplorerItem, GapItem, GapSeverity, OverviewView,
     ProofChainBackendCoverage, ProofChainItem, ProofChainTopology, ProvenanceRootItem,
     ReviewWorkflowItem, ReviewWorkflowPriority, SourceNavigationItem, TraceRef, ViewModelInput,
     WitnessSurfaceItem,
 };
 pub(crate) use view_model::{
-    AssessmentQueueItemBuilder, AssessmentWorkItemBuilder, AuditorFilterFacetBuilder,
-    AuditorNavigationModelBuilder, BackendCoverageItemBuilder, ClaimDetailItemBuilder,
-    GapItemBuilder, ProofChainBackendCoverageBuilder, ProofChainItemBuilder,
-    ProvenanceRootItemBuilder, ReviewWorkflowItemBuilder, SourceNavigationItemBuilder,
-    WitnessSurfaceItemBuilder,
+    AssessmentHistoryItemBuilder, AssessmentQueueItemBuilder, AssessmentWorkItemBuilder,
+    AuditorFilterFacetBuilder, AuditorNavigationModelBuilder, BackendCoverageItemBuilder,
+    ClaimDetailItemBuilder, GapItemBuilder, ProofChainBackendCoverageBuilder,
+    ProofChainItemBuilder, ProvenanceRootItemBuilder, ReviewWorkflowItemBuilder,
+    SourceNavigationItemBuilder, WitnessSurfaceItemBuilder,
 };

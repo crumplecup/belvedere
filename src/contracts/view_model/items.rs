@@ -11,8 +11,10 @@ mod claim;
 mod gap;
 mod workflow;
 
-pub use assessment::{AssessmentQueueItem, AssessmentWorkItem};
-pub(crate) use assessment::{AssessmentQueueItemBuilder, AssessmentWorkItemBuilder};
+pub use assessment::{AssessmentHistoryItem, AssessmentQueueItem, AssessmentWorkItem};
+pub(crate) use assessment::{
+    AssessmentHistoryItemBuilder, AssessmentQueueItemBuilder, AssessmentWorkItemBuilder,
+};
 pub use claim::{
     ClaimDetailItem, ClaimExplorerCounts, ClaimExplorerItem, ProofChainBackendCoverage,
     ProofChainItem, ProofChainTopology,

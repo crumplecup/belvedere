@@ -7,10 +7,9 @@ use elicit_ui::{
 use tracing::instrument;
 
 use crate::contracts::{
-    AssessmentQueueItem, AssessmentWorkItem, AuditorFilterFacet, BackendCoverageItem,
-    ClaimDetailItem, ClaimExplorerItem, GapItem, ProofChainItem, ProvenanceRootItem,
-    ResolutionPath, ReviewWorkflowItem, SourceNavigationItem, TraceRef, TraceWidgetRef,
-    TraceWidgetRefBuilder, UiIrSection, WitnessSurfaceItem,
+    AuditorFilterFacet, BackendCoverageItem, ClaimDetailItem, ClaimExplorerItem, GapItem,
+    ProofChainItem, ProvenanceRootItem, ReviewWorkflowItem, SourceNavigationItem, TraceRef,
+    TraceWidgetRef, TraceWidgetRefBuilder, UiIrSection, WitnessSurfaceItem,
 };
 
 use super::{UiIrError, accessibility::establish_interactive_proofs};
@@ -87,7 +86,7 @@ fn claim_role_label(item: &ClaimExplorerItem) -> &'static str {
 }
 
 #[instrument(level = "trace", skip(singular, plural))]
-fn count_label(count: usize, singular: &str, plural: &str) -> String {
+pub(super) fn count_label(count: usize, singular: &str, plural: &str) -> String {
     let noun = if count == 1 { singular } else { plural };
     format!("{count} {noun}")
 }
@@ -193,84 +192,12 @@ fn chain_backend_coverage_label(item: &ProofChainItem) -> String {
 }
 
 #[instrument(level = "trace", skip(values))]
-fn list_label(values: &[String], empty: &str) -> String {
+pub(super) fn list_label(values: &[String], empty: &str) -> String {
     if values.is_empty() {
         empty.to_owned()
     } else {
         values.join(", ")
     }
-}
-
-#[instrument(level = "debug", skip(backend, item, trace_widgets))]
-pub(super) fn assessment_widget(
-    backend: &AccessKitUiBackend,
-    item: &AssessmentQueueItem,
-    trace_widgets: &mut Vec<TraceWidgetRef>,
-) -> Result<WidgetId, UiIrError> {
-    let recency = assessment_recency_label(item);
-    let resolution = resolution_path_label(item.resolution_path());
-    let weaknesses = weak_dimensions_label(item);
-    labeled_widget(
-        backend,
-        "button",
-        format!(
-            "Assessment {} ({recency}) lane {} recommends {:?} for {}; resolution: {resolution}; {weaknesses}",
-            item.assessment_id(),
-            item.queue_lane(),
-            item.recommendation(),
-            item.proof_id()
-        ),
-        item.trace().clone(),
-        trace_widgets,
-    )
-}
-
-#[instrument(level = "trace", skip(item))]
-fn weak_dimensions_label(item: &AssessmentQueueItem) -> String {
-    if item.weak_dimensions().is_empty() {
-        "no weak dimensions".to_owned()
-    } else {
-        format!("weak dimensions {}", item.weak_dimensions().join(", "))
-    }
-}
-
-#[instrument(level = "debug", skip(path))]
-fn resolution_path_label(path: Option<ResolutionPath>) -> &'static str {
-    match path {
-        Some(ResolutionPath::KeepCurrentProof) => "keep current proof",
-        Some(ResolutionPath::StrengthenCurrentProof) => "strengthen current proof",
-        Some(ResolutionPath::ReplaceWithProofSpecificModel) => "replace with proof-specific model",
-        Some(ResolutionPath::ReplaceWithAccommodationModel) => "replace with accommodation model",
-        Some(ResolutionPath::RetireClaim) => "retire claim",
-        None => "no resolution path",
-    }
-}
-
-#[instrument(level = "debug", skip(backend, item, trace_widgets))]
-pub(super) fn assessment_work_widget(
-    backend: &AccessKitUiBackend,
-    item: &AssessmentWorkItem,
-    trace_widgets: &mut Vec<TraceWidgetRef>,
-) -> Result<WidgetId, UiIrError> {
-    let priority = if item.high_priority() {
-        "high priority"
-    } else {
-        "normal priority"
-    };
-    labeled_widget(
-        backend,
-        "button",
-        format!(
-            "Assessment work {} lane {} for {} ({priority}); resolution: {}; reason: {}",
-            item.action(),
-            item.queue_lane(),
-            item.claim_id(),
-            item.resolution_label(),
-            item.reason()
-        ),
-        item.trace().clone(),
-        trace_widgets,
-    )
 }
 
 #[instrument(level = "debug", skip(backend, item, trace_widgets))]
@@ -295,24 +222,6 @@ pub(super) fn review_workflow_widget(
         item.trace().clone(),
         trace_widgets,
     )
-}
-
-#[instrument(level = "trace", skip(item))]
-fn assessment_recency_label(item: &AssessmentQueueItem) -> String {
-    if item.current() && item.superseded_count() == 0 {
-        "current".to_owned()
-    } else if item.current() && item.superseded_count() == 1 {
-        "current, supersedes 1 older assessment".to_owned()
-    } else if item.current() {
-        format!(
-            "current, supersedes {} older assessments",
-            item.superseded_count()
-        )
-    } else if let Some(current_id) = item.superseded_by() {
-        format!("superseded by {current_id}")
-    } else {
-        "superseded".to_owned()
-    }
 }
 
 #[instrument(level = "debug", skip(backend, item, trace_widgets))]
