@@ -2,7 +2,6 @@
 
 use derive_builder::Builder;
 use derive_getters::Getters;
-use derive_new::new;
 use serde::Serialize;
 
 use crate::contracts::{ArtifactKind, view_model::TraceRef};
@@ -161,18 +160,23 @@ impl WitnessSurfaceItem {
 }
 
 /// Provenance root item.
-#[derive(Debug, Clone, PartialEq, Eq, Getters, Serialize, new)]
+#[derive(Debug, Clone, PartialEq, Eq, Getters, Builder, Serialize)]
+#[builder(vis = "pub(crate)", setter(into))]
 pub struct ProvenanceRootItem {
-    #[new(into)]
     claim_id: String,
-    #[new(into)]
     root_kind: String,
+    verifiers: Vec<String>,
+    assessment_ids: Vec<String>,
+    gap_summaries: Vec<String>,
+    next_action: String,
     #[getter(skip)]
     verifier_count: usize,
     #[getter(skip)]
     assessment_count: usize,
     #[getter(skip)]
     gap_count: usize,
+    #[getter(skip)]
+    source_record_count: usize,
     #[getter(skip)]
     trace: TraceRef,
 }
@@ -194,6 +198,12 @@ impl ProvenanceRootItem {
     #[must_use]
     pub const fn gap_count(&self) -> usize {
         self.gap_count
+    }
+
+    /// Number of source records available through the trace.
+    #[must_use]
+    pub const fn source_record_count(&self) -> usize {
+        self.source_record_count
     }
 
     /// Trace reference.

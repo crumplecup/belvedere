@@ -1,9 +1,8 @@
 //! Traceable widget construction for the `elicit_ui` projection exchange.
 
 use elicit_ui::{
-    AccessKitUiBackend, ContainerId, ContrastDescriptor, FocusDescriptor, KeyboardDescriptor,
-    LabelDescriptor, SrgbColor, TargetDescriptor, UiLayoutManager, WcagContrastFactory,
-    WcagFocusFactory, WcagKeyboardFactory, WcagLabelFactory, WcagTargetFactory, WidgetId,
+    AccessKitUiBackend, ContainerId, ContrastDescriptor, LabelDescriptor, SrgbColor,
+    UiLayoutManager, WcagContrastFactory, WcagLabelFactory, WidgetId,
 };
 use tracing::instrument;
 
@@ -14,7 +13,7 @@ use crate::contracts::{
     TraceWidgetRefBuilder, UiIrSection, WitnessSurfaceItem,
 };
 
-use super::UiIrError;
+use super::{UiIrError, accessibility::establish_interactive_proofs};
 
 const ROOT_CONTAINER: ContainerId = ContainerId(0);
 
@@ -346,16 +345,25 @@ pub(super) fn provenance_root_widget(
     item: &ProvenanceRootItem,
     trace_widgets: &mut Vec<TraceWidgetRef>,
 ) -> Result<WidgetId, UiIrError> {
+    let verifiers = list_label(item.verifiers(), "no verifier proofs");
+    let assessments = list_label(item.assessment_ids(), "no assessments");
+    let gaps = list_label(item.gap_summaries(), "no gaps");
     labeled_widget(
         backend,
         "link",
         format!(
-            "Provenance root {} is {}; {}, {}, {}",
+            "Provenance root {} is {}; verifier proofs {verifiers}; assessments {assessments}; gaps {gaps}; next action: {}; {}, {}, {}, {}",
             item.claim_id(),
             item.root_kind(),
+            item.next_action(),
             count_label(item.verifier_count(), "verifier proof", "verifier proofs"),
             count_label(item.assessment_count(), "assessment", "assessments"),
-            count_label(item.gap_count(), "gap", "gaps")
+            count_label(item.gap_count(), "gap", "gaps"),
+            count_label(
+                item.source_record_count(),
+                "source record",
+                "source records"
+            )
         ),
         item.trace().clone(),
         trace_widgets,
@@ -444,36 +452,6 @@ pub(super) fn labeled_widget(
         .map_err(|error| UiIrError::construction("TraceWidgetRef", error))?;
     trace_widgets.push(trace_widget);
     Ok(element.id)
-}
-
-#[instrument(level = "debug", skip(backend, widget))]
-fn establish_interactive_proofs(
-    backend: &AccessKitUiBackend,
-    widget: WidgetId,
-) -> Result<(), UiIrError> {
-    backend
-        .build_keyboard_accessible(KeyboardDescriptor {
-            widget,
-            tab_index: 0,
-            shortcut: None,
-        })
-        .map_err(UiIrError::elicit_ui)?;
-    backend
-        .build_target_minimum(TargetDescriptor {
-            widget,
-            width_px: 44.0,
-            height_px: 44.0,
-            adjacent_spacing_px: 8.0,
-        })
-        .map_err(UiIrError::elicit_ui)?;
-    backend
-        .build_focus_visible(FocusDescriptor {
-            widget,
-            indicator_area_px: 88.0,
-            indicator_contrast: 3.0,
-        })
-        .map_err(UiIrError::elicit_ui)?;
-    Ok(())
 }
 
 #[instrument(level = "debug", skip(backend, content))]

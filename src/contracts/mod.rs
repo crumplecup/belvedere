@@ -58,5 +58,6 @@ pub(crate) use view_model::{
     AssessmentQueueItemBuilder, AssessmentWorkItemBuilder, AuditorFilterFacetBuilder,
     AuditorNavigationModelBuilder, BackendCoverageItemBuilder, ClaimDetailItemBuilder,
     GapItemBuilder, ProofChainBackendCoverageBuilder, ProofChainItemBuilder,
-    ReviewWorkflowItemBuilder, SourceNavigationItemBuilder, WitnessSurfaceItemBuilder,
+    ProvenanceRootItemBuilder, ReviewWorkflowItemBuilder, SourceNavigationItemBuilder,
+    WitnessSurfaceItemBuilder,
 };

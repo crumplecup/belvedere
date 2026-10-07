@@ -447,6 +447,23 @@ fn view_model_projection_builds_auditor_navigation_evidence() -> Result<()> {
     assert_eq!(decoded_detail.source_record_count(), 4);
     assert_eq!(decoded_detail.trace(), decoded_item.trace());
 
+    let raw_root = model
+        .provenance_roots()
+        .iter()
+        .find(|item| item.claim_id() == "belvedere::ingestion::RawAmenableArtifact")
+        .ok_or_else(|| miette!("raw artifact root should be visible in provenance catalog"))?;
+    assert_eq!(raw_root.root_kind(), "unmodeled_root");
+    assert!(raw_root.verifiers().is_empty());
+    assert!(raw_root.assessment_ids().is_empty());
+    assert!(raw_root.gap_summaries().iter().any(|summary| {
+        summary.contains("MissingProof blocking: establish modeled proof coverage")
+    }));
+    assert_eq!(raw_root.next_action(), "establish modeled proof coverage");
+    assert_eq!(
+        raw_root.source_record_count(),
+        raw_root.trace().source_record_ids().len()
+    );
+
     let proof_item = model
         .claim_explorer()
         .iter()

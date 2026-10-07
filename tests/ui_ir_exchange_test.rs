@@ -572,9 +572,24 @@ fn ui_ir_projection_preserves_trace_widgets_for_auditor_deep_dives() -> Result<(
             )
         })
         .ok_or_else(|| miette!("provenance root catalog should have traceable widgets"))?;
-    assert!(root_widget.label().contains("0 verifier proofs"));
-    assert!(root_widget.label().contains("0 assessments"));
+    assert!(
+        root_widget
+            .label()
+            .contains("verifier proofs no verifier proofs")
+    );
+    assert!(root_widget.label().contains("assessments no assessments"));
+    assert!(
+        root_widget
+            .label()
+            .contains("gaps MissingProof blocking: establish modeled proof coverage")
+    );
+    assert!(
+        root_widget
+            .label()
+            .contains("next action: establish modeled proof coverage")
+    );
     assert!(root_widget.label().contains("1 gap"));
+    assert!(root_widget.label().contains("7 source records"));
     let source_widget = projection
         .trace_widgets()
         .iter()

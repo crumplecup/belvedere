@@ -20,6 +20,7 @@ use crate::{
     exchanges::BelvedereExchange,
 };
 
+mod accessibility;
 mod errors;
 mod receipt;
 mod widgets;

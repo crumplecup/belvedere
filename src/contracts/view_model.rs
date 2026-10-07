@@ -22,8 +22,8 @@ pub use items::{
 pub(crate) use items::{
     AssessmentQueueItemBuilder, AssessmentWorkItemBuilder, AuditorFilterFacetBuilder,
     BackendCoverageItemBuilder, ClaimDetailItemBuilder, GapItemBuilder,
-    ProofChainBackendCoverageBuilder, ProofChainItemBuilder, ReviewWorkflowItemBuilder,
-    SourceNavigationItemBuilder, WitnessSurfaceItemBuilder,
+    ProofChainBackendCoverageBuilder, ProofChainItemBuilder, ProvenanceRootItemBuilder,
+    ReviewWorkflowItemBuilder, SourceNavigationItemBuilder, WitnessSurfaceItemBuilder,
 };
 pub use trace::TraceRef;
 
@@ -225,7 +225,7 @@ impl BelvedereContract for AuditorNavigationContract {
             "assessment work entries expose queue lanes, missing reviews, current reviewer actions, resolution labels, and trace IDs",
             "receipts count proof-chain review states, gap severities, and high-priority assessment work",
             "witness surface entries preserve support kind and support counts",
-            "provenance root entries preserve explicit root identities, root kinds, coverage counts, assessment counts, and gap counts",
+            "provenance root entries preserve explicit root identities, root kinds, verifier names, assessment IDs, gap summaries, next actions, source counts, and trace IDs",
             "gap entries preserve conservative gap kinds, queue lanes, severity, action, and trace IDs",
             "source navigation entries preserve ingested source record identities, source kinds, and navigation targets",
         ]
