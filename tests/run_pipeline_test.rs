@@ -5,6 +5,7 @@ use std::{
 };
 
 use belvedere::{
+    BELVEDERE_ARTIFACT_MANIFEST_SCHEMA_ID, BELVEDERE_ARTIFACT_MANIFEST_SCHEMA_VERSION,
     BELVEDERE_RUN_CERTIFICATE_SCHEMA_ID, BELVEDERE_RUN_CERTIFICATE_SCHEMA_VERSION,
     BELVEDERE_STAGE_CERTIFICATE_SCHEMA_ID, BELVEDERE_STAGE_CERTIFICATE_SCHEMA_VERSION,
     BelvedereCli, BelvedereCliOutput, BelvedereInvocationSurface, BelvederePipelineStage,
@@ -84,6 +85,30 @@ fn run_pipeline_uses_the_normal_amenable_artifact_path() -> Result<()> {
             .any(|artifact_id| artifact_id.starts_with("assessment:proof_assessments:"))
     );
     assert_eq!(report.certificate().stage_certificate_ids().len(), 5);
+    assert_eq!(
+        report.manifest().schema_id(),
+        BELVEDERE_ARTIFACT_MANIFEST_SCHEMA_ID
+    );
+    assert_eq!(
+        *report.manifest().schema_version(),
+        BELVEDERE_ARTIFACT_MANIFEST_SCHEMA_VERSION
+    );
+    assert_eq!(report.manifest().input_artifacts().len(), 2);
+    assert_eq!(report.manifest().stage_certificates().len(), 5);
+    assert_eq!(report.manifest().output_artifacts().len(), 9);
+    assert_eq!(
+        report.manifest().run_certificate_id(),
+        report.certificate().id()
+    );
+    assert!(
+        report
+            .manifest()
+            .output_artifacts()
+            .iter()
+            .any(|artifact| artifact.role() == "ui_ir_projection"
+                && artifact.source_stage_role() == "ui_ir_projection"
+                && *artifact.item_count() == report.ui_ir_receipt().trace_widget_ids().len())
+    );
     assert!(
         report
             .certificate()
@@ -600,6 +625,8 @@ fn cli_help_is_a_successful_public_output_contract() -> Result<()> {
     assert!(help.contains("belvedere diff"));
     assert!(help.contains("--certificate-json"));
     assert!(help.contains("--certificate-file"));
+    assert!(help.contains("--manifest-json"));
+    assert!(help.contains("--manifest-file"));
     assert!(help.contains("--run-certificate-json"));
     assert!(help.contains("--run-certificate-file"));
     assert!(help.contains("--diff-json"));
@@ -1090,6 +1117,81 @@ fn assert_previous_ui_ir_projection(projection: &Value) {
     );
 }
 
+fn assert_run_manifest(manifest: &Value) {
+    assert_eq!(
+        manifest["schema_id"].as_str(),
+        Some(BELVEDERE_ARTIFACT_MANIFEST_SCHEMA_ID)
+    );
+    assert_eq!(
+        manifest["schema_version"].as_u64(),
+        Some(u64::from(BELVEDERE_ARTIFACT_MANIFEST_SCHEMA_VERSION))
+    );
+    assert!(
+        manifest["run_certificate_id"]
+            .as_str()
+            .is_some_and(|id| id.starts_with("belvedere.run:"))
+    );
+    assert_eq!(manifest["counts"]["input_artifacts"].as_u64(), Some(2));
+    assert_eq!(manifest["counts"]["stage_certificates"].as_u64(), Some(5));
+    assert_eq!(manifest["counts"]["output_artifacts"].as_u64(), Some(9));
+    assert_eq!(
+        manifest["input_artifacts"].as_array().map(Vec::len),
+        Some(2)
+    );
+    assert_eq!(
+        manifest["stage_certificates"].as_array().map(Vec::len),
+        Some(5)
+    );
+    assert_eq!(
+        manifest["output_artifacts"].as_array().map(Vec::len),
+        Some(9)
+    );
+    assert!(
+        manifest["output_artifacts"]
+            .as_array()
+            .is_some_and(|artifacts| {
+                artifacts.iter().any(|artifact| {
+                    artifact["role"].as_str() == Some("ui_ir_projection")
+                        && artifact["artifact_kind"].as_str() == Some("elicit_ui_projection")
+                        && artifact["source_stage_role"].as_str() == Some("ui_ir_projection")
+                })
+            })
+    );
+}
+
+fn assert_diff_manifest(manifest: &Value) {
+    assert_eq!(
+        manifest["schema_id"].as_str(),
+        Some(BELVEDERE_ARTIFACT_MANIFEST_SCHEMA_ID)
+    );
+    assert_eq!(manifest["counts"]["input_artifacts"].as_u64(), Some(4));
+    assert_eq!(manifest["counts"]["stage_certificates"].as_u64(), Some(11));
+    assert_eq!(manifest["counts"]["output_artifacts"].as_u64(), Some(20));
+    assert_eq!(
+        manifest["stage_certificates"].as_array().map(Vec::len),
+        Some(11)
+    );
+    assert!(
+        manifest["stage_certificates"]
+            .as_array()
+            .is_some_and(|certificates| certificates.iter().any(|certificate| {
+                certificate["role"].as_str() == Some("landscape_diff")
+                    && certificate["stage"].as_str() == Some("landscape_diff")
+            }))
+    );
+    assert!(
+        manifest["output_artifacts"]
+            .as_array()
+            .is_some_and(|artifacts| {
+                artifacts.iter().any(|artifact| {
+                    artifact["role"].as_str() == Some("landscape_diff")
+                        && artifact["artifact_kind"].as_str() == Some("landscape_diff")
+                        && artifact["item_count"].as_u64() == Some(6)
+                })
+            })
+    );
+}
+
 #[test]
 fn cli_can_emit_the_run_certificate_as_json() -> Result<()> {
     belvedere::init_tracing();
@@ -1202,6 +1304,35 @@ fn cli_can_emit_the_run_certificate_as_json() -> Result<()> {
             .map(Vec::len),
         Some(3)
     );
+    Ok(())
+}
+
+#[test]
+fn cli_can_emit_the_run_manifest_as_json() -> Result<()> {
+    belvedere::init_tracing();
+
+    let args = [
+        "--manifest-json",
+        "tests/fixtures/registry_dump.json",
+        "tests/fixtures/proof_assessments.jsonl",
+    ]
+    .into_iter()
+    .map(str::to_owned)
+    .collect::<Vec<_>>();
+    let command = BelvedereCli::from_args(args.clone())
+        .into_diagnostic()
+        .wrap_err("manifest JSON flag should be part of the public CLI API")?;
+
+    assert_eq!(command.output(), BelvedereCliOutput::RunManifestJson);
+
+    let mut output = Vec::new();
+    let status = run_cli_with_writer(args, &mut output);
+    assert_eq!(status, ExitCode::SUCCESS);
+
+    let manifest: Value = serde_json::from_slice(&output)
+        .into_diagnostic()
+        .wrap_err("CLI manifest output should be parseable JSON")?;
+    assert_run_manifest(&manifest);
     Ok(())
 }
 
@@ -1896,6 +2027,51 @@ fn cli_can_persist_the_run_certificate_as_json() -> Result<()> {
 }
 
 #[test]
+fn cli_can_persist_the_run_manifest_as_json() -> Result<()> {
+    belvedere::init_tracing();
+
+    let manifest_path =
+        std::env::temp_dir().join(format!("belvedere-manifest-{}.json", process::id()));
+    let args = [
+        "--manifest-file",
+        manifest_path
+            .to_str()
+            .ok_or_else(|| miette::miette!("temporary manifest path should be UTF-8"))?,
+        "tests/fixtures/registry_dump.json",
+        "tests/fixtures/proof_assessments.jsonl",
+    ]
+    .into_iter()
+    .map(str::to_owned)
+    .collect::<Vec<_>>();
+    let command = BelvedereCli::from_args(args.clone())
+        .into_diagnostic()
+        .wrap_err("manifest file flag should be part of the public CLI API")?;
+
+    assert_eq!(
+        command.output(),
+        BelvedereCliOutput::RunManifestFile(manifest_path.clone())
+    );
+
+    let mut output = Vec::new();
+    let status = run_cli_with_writer(args, &mut output);
+    assert_eq!(status, ExitCode::SUCCESS);
+    assert!(output.is_empty());
+
+    let manifest_bytes = fs::read(&manifest_path)
+        .into_diagnostic()
+        .wrap_err("manifest file should be written")?;
+    let manifest: Value = serde_json::from_slice(&manifest_bytes)
+        .into_diagnostic()
+        .wrap_err("persisted manifest should be parseable JSON")?;
+    assert_run_manifest(&manifest);
+
+    fs::remove_file(&manifest_path)
+        .into_diagnostic()
+        .wrap_err("temporary manifest file should be removable")?;
+    Ok(())
+}
+
+#[test]
 fn cli_can_emit_the_landscape_diff_certificate_as_json() -> Result<()> {
     belvedere::init_tracing();
 
@@ -2056,6 +2232,55 @@ fn cli_can_emit_the_landscape_diff_run_certificate_as_json() -> Result<()> {
                 })
             )
     );
+
+    fs::remove_file(previous_assessments_path)
+        .into_diagnostic()
+        .wrap_err("temporary empty assessment artifact should be removable")?;
+    Ok(())
+}
+
+#[test]
+fn cli_can_emit_the_landscape_diff_manifest_as_json() -> Result<()> {
+    belvedere::init_tracing();
+
+    let previous_assessments_path = std::env::temp_dir().join(format!(
+        "belvedere-cli-diff-manifest-empty-assessments-{}.jsonl",
+        process::id()
+    ));
+    fs::write(&previous_assessments_path, [])
+        .into_diagnostic()
+        .wrap_err("temporary empty assessment artifact should be writable")?;
+
+    let args = [
+        "diff",
+        "--manifest-json",
+        "tests/fixtures/registry_dump.json",
+        previous_assessments_path
+            .to_str()
+            .ok_or_else(|| miette::miette!("temporary assessment path should be UTF-8"))?,
+        "tests/fixtures/registry_dump.json",
+        "tests/fixtures/proof_assessments.jsonl",
+    ]
+    .into_iter()
+    .map(str::to_owned)
+    .collect::<Vec<_>>();
+    let command = BelvedereCli::from_args(args.clone())
+        .into_diagnostic()
+        .wrap_err("diff manifest flag should be part of the public CLI API")?;
+
+    assert_eq!(
+        command.output(),
+        BelvedereCliOutput::LandscapeDiffManifestJson
+    );
+
+    let mut output = Vec::new();
+    let status = run_cli_with_writer(args, &mut output);
+    assert_eq!(status, ExitCode::SUCCESS);
+
+    let manifest: Value = serde_json::from_slice(&output)
+        .into_diagnostic()
+        .wrap_err("CLI diff manifest output should be parseable JSON")?;
+    assert_diff_manifest(&manifest);
 
     fs::remove_file(previous_assessments_path)
         .into_diagnostic()

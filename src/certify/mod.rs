@@ -1,5 +1,6 @@
 //! Audit artifacts emitted by Belvedere pipeline exchanges.
 
+mod artifact_manifest;
 mod certificate_digest;
 mod certificate_schema;
 mod diff;
@@ -11,8 +12,16 @@ mod stage_certificate;
 mod ui_ir;
 mod view_model;
 
+pub use artifact_manifest::{
+    BelvedereArtifactManifest, BelvedereManifestInputArtifact, BelvedereManifestOutputArtifact,
+    BelvedereManifestStageCertificate,
+};
+pub(crate) use artifact_manifest::{
+    BelvedereDiffManifestReceipts, BelvedereSnapshotManifestReceipts,
+};
 pub(crate) use certificate_digest::{hex_digest, update_field, update_fields};
 pub use certificate_schema::{
+    BELVEDERE_ARTIFACT_MANIFEST_SCHEMA_ID, BELVEDERE_ARTIFACT_MANIFEST_SCHEMA_VERSION,
     BELVEDERE_RUN_CERTIFICATE_SCHEMA_ID, BELVEDERE_RUN_CERTIFICATE_SCHEMA_VERSION,
     BELVEDERE_STAGE_CERTIFICATE_SCHEMA_ID, BELVEDERE_STAGE_CERTIFICATE_SCHEMA_VERSION,
 };

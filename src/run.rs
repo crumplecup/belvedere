@@ -9,7 +9,8 @@ use tracing::instrument;
 
 use crate::{
     certify::{
-        BelvedereRunCertificate, BelvedereRunInvocation, BelvedereStageCertificate,
+        BelvedereArtifactManifest, BelvedereDiffManifestReceipts, BelvedereRunCertificate,
+        BelvedereRunInvocation, BelvedereSnapshotManifestReceipts, BelvedereStageCertificate,
         IngestionReceipt, LandscapeDiffReceipt, LandscapeReceipt, UiIrReceipt, ViewModelReceipt,
     },
     collect::read_raw_artifact,
@@ -79,6 +80,7 @@ pub struct BelvedereRunReport {
     view_model_receipt: ViewModelReceipt,
     ui_ir_receipt: UiIrReceipt,
     certificate: BelvedereRunCertificate,
+    manifest: BelvedereArtifactManifest,
     projection: UiIrProjection,
 }
 
@@ -102,6 +104,7 @@ pub struct BelvedereLandscapeDiffRunReport {
     current_ui_ir_receipt: UiIrReceipt,
     diff_receipt: LandscapeDiffReceipt,
     certificate: BelvedereRunCertificate,
+    manifest: BelvedereArtifactManifest,
     diff_certificate: BelvedereStageCertificate,
     previous_projection: UiIrProjection,
     current_projection: UiIrProjection,
@@ -147,6 +150,14 @@ pub fn run_belvedere_pipeline(
         &view_model_receipt,
         &ui_ir_receipt,
     );
+    let manifest = BelvedereArtifactManifest::normal_run(
+        &certificate,
+        &registry_receipt,
+        &assessment_receipt,
+        &landscape_receipt,
+        &view_model_receipt,
+        &ui_ir_receipt,
+    );
 
     BelvedereRunReportBuilder::default()
         .registry_receipt(registry_receipt)
@@ -157,6 +168,7 @@ pub fn run_belvedere_pipeline(
         .view_model_receipt(view_model_receipt)
         .ui_ir_receipt(ui_ir_receipt)
         .certificate(certificate)
+        .manifest(manifest)
         .projection(projection)
         .build()
         .map_err(|error| BelvedereConstructionError::new("BelvedereRunReport", error).into())
@@ -219,6 +231,26 @@ pub fn run_belvedere_landscape_diff(
             .chain([diff_certificate.clone()])
             .collect(),
     );
+    let manifest = BelvedereArtifactManifest::landscape_diff_run(
+        &certificate,
+        BelvedereDiffManifestReceipts::new(
+            BelvedereSnapshotManifestReceipts::new(
+                &previous.registry_receipt,
+                &previous.assessment_receipt,
+                &previous.landscape_receipt,
+                &previous_view_model_receipt,
+                &previous_ui_ir_receipt,
+            ),
+            BelvedereSnapshotManifestReceipts::new(
+                &current.registry_receipt,
+                &current.assessment_receipt,
+                &current.landscape_receipt,
+                &current_view_model_receipt,
+                &current_ui_ir_receipt,
+            ),
+            &diff_receipt,
+        ),
+    );
 
     BelvedereLandscapeDiffRunReportBuilder::default()
         .previous_registry_receipt(previous.registry_receipt)
@@ -237,6 +269,7 @@ pub fn run_belvedere_landscape_diff(
         .current_ui_ir_receipt(current_ui_ir_receipt)
         .diff_receipt(diff_receipt)
         .certificate(certificate)
+        .manifest(manifest)
         .diff_certificate(diff_certificate)
         .previous_projection(previous_projection)
         .current_projection(current_projection)

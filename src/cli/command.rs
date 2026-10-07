@@ -72,6 +72,14 @@ impl BelvedereCli {
                     output = BelvedereCliOutput::RunCertificateFile(PathBuf::from(path));
                     index += 1;
                 }
+                "--manifest-json" => output = BelvedereCliOutput::RunManifestJson,
+                "--manifest-file" => {
+                    let Some(path) = arguments.get(index + 1) else {
+                        return Err(BelvedereCliUsageError::new().into());
+                    };
+                    output = BelvedereCliOutput::RunManifestFile(PathBuf::from(path));
+                    index += 1;
+                }
                 "--registry-receipt-json" => {
                     output = BelvedereCliOutput::RunRegistryReceiptJson;
                 }

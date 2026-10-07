@@ -11,3 +11,9 @@ pub const BELVEDERE_RUN_CERTIFICATE_SCHEMA_ID: &str = "belvedere.certificates.ru
 
 /// Stable schema version for run certificates.
 pub const BELVEDERE_RUN_CERTIFICATE_SCHEMA_VERSION: u16 = 1;
+
+/// Stable schema identifier for artifact manifests.
+pub const BELVEDERE_ARTIFACT_MANIFEST_SCHEMA_ID: &str = "belvedere.manifests.artifacts.v1";
+
+/// Stable schema version for artifact manifests.
+pub const BELVEDERE_ARTIFACT_MANIFEST_SCHEMA_VERSION: u16 = 1;

@@ -17,12 +17,15 @@ mod run;
 mod telemetry;
 
 pub use certify::{
+    BELVEDERE_ARTIFACT_MANIFEST_SCHEMA_ID, BELVEDERE_ARTIFACT_MANIFEST_SCHEMA_VERSION,
     BELVEDERE_RUN_CERTIFICATE_SCHEMA_ID, BELVEDERE_RUN_CERTIFICATE_SCHEMA_VERSION,
     BELVEDERE_STAGE_CERTIFICATE_SCHEMA_ID, BELVEDERE_STAGE_CERTIFICATE_SCHEMA_VERSION,
-    BelvedereInvariantCheck, BelvedereInvocationSurface, BelvederePipelineStage,
-    BelvedereRunCertificate, BelvedereRunInvocation, BelvedereStageCertificate, IngestionReceipt,
-    LandscapeDiffReceipt, LandscapeDiffReceiptCounts, LandscapeReceipt, LandscapeReceiptCounts,
-    UiIrReceipt, UiIrReceiptCounts, ViewModelReceipt, ViewModelReceiptCounts,
+    BelvedereArtifactManifest, BelvedereInvariantCheck, BelvedereInvocationSurface,
+    BelvedereManifestInputArtifact, BelvedereManifestOutputArtifact,
+    BelvedereManifestStageCertificate, BelvederePipelineStage, BelvedereRunCertificate,
+    BelvedereRunInvocation, BelvedereStageCertificate, IngestionReceipt, LandscapeDiffReceipt,
+    LandscapeDiffReceiptCounts, LandscapeReceipt, LandscapeReceiptCounts, UiIrReceipt,
+    UiIrReceiptCounts, ViewModelReceipt, ViewModelReceiptCounts,
 };
 pub use cli::{
     BelvedereCli, BelvedereCliOutput, BelvedereCliOutputError, BelvedereCliReport,

@@ -1,0 +1,67 @@
+//! Stable CLI help text.
+
+/// Stable CLI help text.
+pub const BELVEDERE_CLI_HELP: &str = "\
+usage: belvedere [--help] [--certificate-json | --certificate-file <path> | --manifest-json | --manifest-file <path> | --registry-receipt-json | --registry-receipt-file <path> | --assessment-receipt-json | --assessment-receipt-file <path> | --landscape-json | --landscape-file <path> | --landscape-receipt-json | --landscape-receipt-file <path> | --view-model-json | --view-model-file <path> | --view-model-receipt-json | --view-model-receipt-file <path> | --ui-ir-json | --ui-ir-file <path> | --ui-ir-receipt-json | --ui-ir-receipt-file <path>] <registry-dump.json> <proof-assessments.jsonl>
+       belvedere diff [--certificate-json | --certificate-file <path> | --run-certificate-json | --run-certificate-file <path> | --manifest-json | --manifest-file <path> | --diff-json | --diff-receipt-json | --diff-receipt-file <path> | --previous-registry-receipt-json | --previous-registry-receipt-file <path> | --previous-assessment-receipt-json | --previous-assessment-receipt-file <path> | --current-registry-receipt-json | --current-registry-receipt-file <path> | --current-assessment-receipt-json | --current-assessment-receipt-file <path> | --previous-landscape-json | --previous-landscape-file <path> | --previous-landscape-receipt-json | --previous-landscape-receipt-file <path> | --previous-view-model-json | --previous-view-model-file <path> | --previous-view-model-receipt-json | --previous-view-model-receipt-file <path> | --previous-ui-ir-json | --previous-ui-ir-file <path> | --previous-ui-ir-receipt-json | --previous-ui-ir-receipt-file <path> | --current-landscape-json | --current-landscape-file <path> | --current-landscape-receipt-json | --current-landscape-receipt-file <path> | --current-view-model-json | --current-view-model-file <path> | --current-view-model-receipt-json | --current-view-model-receipt-file <path> | --current-ui-ir-json | --current-ui-ir-file <path> | --current-ui-ir-receipt-json | --current-ui-ir-receipt-file <path> | --landscape-json | --landscape-file <path> | --landscape-receipt-json | --landscape-receipt-file <path> | --view-model-json | --view-model-file <path> | --view-model-receipt-json | --view-model-receipt-file <path> | --ui-ir-json | --ui-ir-file <path> | --ui-ir-receipt-json | --ui-ir-receipt-file <path>] <previous-registry-dump.json> <previous-proof-assessments.jsonl> <current-registry-dump.json> <current-proof-assessments.jsonl>
+
+Options:
+  -h, --help                       Show this help text.
+      --certificate-json           Write the requested certificate as JSON to stdout.
+      --certificate-file           Write the requested certificate as JSON to a file.
+      --manifest-json              Write the run artifact manifest as JSON to stdout.
+      --manifest-file              Write the run artifact manifest as JSON to a file.
+      --registry-receipt-json      Write the registry ingestion receipt as JSON to stdout.
+      --registry-receipt-file      Write the registry ingestion receipt as JSON to a file.
+      --assessment-receipt-json    Write the assessment ingestion receipt as JSON to stdout.
+      --assessment-receipt-file    Write the assessment ingestion receipt as JSON to a file.
+      --run-certificate-json       Write the full diff run certificate as JSON to stdout.
+      --run-certificate-file       Write the full diff run certificate as JSON to a file.
+      --diff-json                  Write the landscape diff as JSON to stdout.
+      --diff-receipt-json          Write the landscape diff receipt as JSON to stdout.
+      --diff-receipt-file          Write the landscape diff receipt as JSON to a file.
+      --previous-registry-receipt-json Write the previous registry ingestion receipt from a diff run as JSON to stdout.
+      --previous-registry-receipt-file Write the previous registry ingestion receipt from a diff run as JSON to a file.
+      --previous-assessment-receipt-json Write the previous assessment ingestion receipt from a diff run as JSON to stdout.
+      --previous-assessment-receipt-file Write the previous assessment ingestion receipt from a diff run as JSON to a file.
+      --current-registry-receipt-json Write the current registry ingestion receipt from a diff run as JSON to stdout.
+      --current-registry-receipt-file Write the current registry ingestion receipt from a diff run as JSON to a file.
+      --current-assessment-receipt-json Write the current assessment ingestion receipt from a diff run as JSON to stdout.
+      --current-assessment-receipt-file Write the current assessment ingestion receipt from a diff run as JSON to a file.
+      --previous-landscape-json Write the previous landscape graph from a diff run as JSON to stdout.
+      --previous-landscape-file Write the previous landscape graph from a diff run as JSON to a file.
+      --previous-landscape-receipt-json Write the previous landscape receipt from a diff run as JSON to stdout.
+      --previous-landscape-receipt-file Write the previous landscape receipt from a diff run as JSON to a file.
+      --previous-view-model-json Write the previous view model from a diff run as JSON to stdout.
+      --previous-view-model-file Write the previous view model from a diff run as JSON to a file.
+      --previous-view-model-receipt-json Write the previous view-model receipt from a diff run as JSON to stdout.
+      --previous-view-model-receipt-file Write the previous view-model receipt from a diff run as JSON to a file.
+      --previous-ui-ir-json   Write the previous UI IR projection from a diff run as JSON to stdout.
+      --previous-ui-ir-file   Write the previous UI IR projection from a diff run as JSON to a file.
+      --previous-ui-ir-receipt-json Write the previous UI IR receipt from a diff run as JSON to stdout.
+      --previous-ui-ir-receipt-file Write the previous UI IR receipt from a diff run as JSON to a file.
+      --current-landscape-json Write the current landscape graph from a diff run as JSON to stdout.
+      --current-landscape-file Write the current landscape graph from a diff run as JSON to a file.
+      --current-landscape-receipt-json Write the current landscape receipt from a diff run as JSON to stdout.
+      --current-landscape-receipt-file Write the current landscape receipt from a diff run as JSON to a file.
+      --current-view-model-json Write the current view model from a diff run as JSON to stdout.
+      --current-view-model-file Write the current view model from a diff run as JSON to a file.
+      --current-view-model-receipt-json Write the current view-model receipt from a diff run as JSON to stdout.
+      --current-view-model-receipt-file Write the current view-model receipt from a diff run as JSON to a file.
+      --current-ui-ir-json      Write the current UI IR projection from a diff run as JSON to stdout.
+      --current-ui-ir-file      Write the current UI IR projection from a diff run as JSON to a file.
+      --current-ui-ir-receipt-json Write the current UI IR receipt from a diff run as JSON to stdout.
+      --current-ui-ir-receipt-file Write the current UI IR receipt from a diff run as JSON to a file.
+      --landscape-json            Write the landscape graph as JSON to stdout.
+      --landscape-file            Write the landscape graph as JSON to a file.
+      --landscape-receipt-json     Write the landscape receipt as JSON to stdout.
+      --landscape-receipt-file     Write the landscape receipt as JSON to a file.
+      --view-model-json        Write the view model as JSON to stdout.
+      --view-model-file        Write the view model as JSON to a file.
+      --view-model-receipt-json    Write the view-model receipt as JSON to stdout.
+      --view-model-receipt-file    Write the view-model receipt as JSON to a file.
+      --ui-ir-json             Write the UI IR projection as JSON to stdout.
+      --ui-ir-file             Write the UI IR projection as JSON to a file.
+      --ui-ir-receipt-json         Write the UI IR receipt as JSON to stdout.
+      --ui-ir-receipt-file         Write the UI IR receipt as JSON to a file.
+";

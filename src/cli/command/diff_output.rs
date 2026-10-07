@@ -57,6 +57,16 @@ impl BelvedereCli {
                 )?);
                 1
             }
+            "--manifest-json" => {
+                *output = BelvedereCliOutput::LandscapeDiffManifestJson;
+                0
+            }
+            "--manifest-file" => {
+                *output = BelvedereCliOutput::LandscapeDiffManifestFile(Self::next_path(
+                    arguments, index,
+                )?);
+                1
+            }
             "--diff-json" => {
                 *output = BelvedereCliOutput::LandscapeDiffJson;
                 0
