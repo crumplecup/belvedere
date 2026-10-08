@@ -1,5 +1,7 @@
 //! Stable output IDs emitted by the landscape modeling exchange.
 
+use std::collections::BTreeMap;
+
 use tracing::instrument;
 
 use crate::contracts::{LandscapeGapKind, LandscapeGraph};
@@ -93,6 +95,23 @@ pub(super) fn landscape_item_ids(graph: &LandscapeGraph) -> Vec<String> {
     }));
 
     ids
+}
+
+#[instrument(level = "debug", skip(item_ids))]
+pub(super) fn landscape_item_kind_counts(item_ids: &[String]) -> BTreeMap<String, usize> {
+    let mut counts = BTreeMap::new();
+    for item_id in item_ids {
+        let Some(kind) = item_id
+            .strip_prefix("landscape.")
+            .and_then(|suffix| suffix.split_once(':').map(|(kind, _id)| kind))
+        else {
+            continue;
+        };
+        *counts
+            .entry(format!("landscape_item_kind_{kind}"))
+            .or_default() += 1;
+    }
+    counts
 }
 
 #[instrument(level = "debug", skip(kind))]

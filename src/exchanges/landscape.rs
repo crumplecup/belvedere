@@ -19,7 +19,7 @@ mod gaps;
 mod item_ids;
 
 use gaps::{gap_kind_counts, model_gaps};
-use item_ids::landscape_item_ids;
+use item_ids::{landscape_item_ids, landscape_item_kind_counts};
 
 /// Exchange for decoded Amenable records into a defensive landscape graph.
 #[derive(Debug, Clone, Copy, Default)]
@@ -122,12 +122,14 @@ impl BelvedereExchange<LandscapeModelingContract> for LandscapeModeling {
             graph.assessments().len(),
             graph.gaps().len(),
         );
+        let landscape_item_ids = landscape_item_ids(&graph);
         let receipt = LandscapeReceiptBuilder::default()
             .contract(LandscapeModelingContract::NAME)
             .counts(counts)
+            .item_kind_counts(landscape_item_kind_counts(&landscape_item_ids))
             .gap_kind_counts(gap_kind_counts(graph.gaps()))
             .assessment_recency_counts(assessment_recency_counts(graph.assessments()))
-            .landscape_item_ids(landscape_item_ids(&graph))
+            .landscape_item_ids(landscape_item_ids)
             .source_record_ids(graph.source_record_ids().to_vec())
             .warnings(Vec::new())
             .build()

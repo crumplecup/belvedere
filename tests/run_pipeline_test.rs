@@ -439,6 +439,22 @@ fn run_pipeline_uses_the_normal_amenable_artifact_path() -> Result<()> {
         landscape_stage.counts().get("landscape_items"),
         Some(&report.landscape_receipt().landscape_item_ids().len())
     );
+    assert_eq!(
+        landscape_stage.counts().get("landscape_item_kind_claim"),
+        Some(&report.landscape_receipt().claim_count())
+    );
+    assert!(
+        landscape_stage
+            .invariant_checks()
+            .iter()
+            .any(|check| check.name() == "landscape_item_ids_classified" && check.passed())
+    );
+    assert!(
+        landscape_stage
+            .invariant_checks()
+            .iter()
+            .any(|check| { check.name() == "landscape_core_counts_match_items" && check.passed() })
+    );
     assert!(
         report
             .landscape_receipt()
@@ -869,6 +885,22 @@ fn assert_landscape_receipt(receipt: &Value) {
     assert_eq!(
         receipt["gap_kind_counts"]["landscape_gap_kind_MissingProof"].as_u64(),
         Some(2)
+    );
+    assert_eq!(
+        receipt["item_kind_counts"]["landscape_item_kind_claim"].as_u64(),
+        Some(4)
+    );
+    assert_eq!(
+        receipt["item_kind_counts"]["landscape_item_kind_contract"].as_u64(),
+        Some(1)
+    );
+    assert_eq!(
+        receipt["item_kind_counts"]["landscape_item_kind_witness"].as_u64(),
+        Some(1)
+    );
+    assert_eq!(
+        receipt["item_kind_counts"]["landscape_item_kind_gap"].as_u64(),
+        Some(4)
     );
     assert_eq!(
         receipt["assessment_recency_counts"]["assessment_recency_current"].as_u64(),

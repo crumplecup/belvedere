@@ -26,6 +26,26 @@ fn landscape_modeling_maps_decoded_records_into_a_review_graph() -> Result<()> {
         Some(&2)
     );
     assert_eq!(
+        receipt.item_kind_counts().get("landscape_item_kind_claim"),
+        Some(&4)
+    );
+    assert_eq!(
+        receipt
+            .item_kind_counts()
+            .get("landscape_item_kind_contract"),
+        Some(&1)
+    );
+    assert_eq!(
+        receipt
+            .item_kind_counts()
+            .get("landscape_item_kind_witness"),
+        Some(&1)
+    );
+    assert_eq!(
+        receipt.item_kind_counts().get("landscape_item_kind_gap"),
+        Some(&4)
+    );
+    assert_eq!(
         receipt
             .gap_kind_counts()
             .get("landscape_gap_kind_MissingProof"),
@@ -82,6 +102,22 @@ fn landscape_modeling_maps_decoded_records_into_a_review_graph() -> Result<()> {
     assert_eq!(
         certificate.counts().get("landscape_items"),
         Some(&receipt.landscape_item_ids().len())
+    );
+    assert_eq!(
+        certificate.counts().get("landscape_item_kind_claim"),
+        receipt.item_kind_counts().get("landscape_item_kind_claim")
+    );
+    assert!(
+        certificate
+            .invariant_checks()
+            .iter()
+            .any(|check| check.name() == "landscape_item_ids_classified" && check.passed())
+    );
+    assert!(
+        certificate
+            .invariant_checks()
+            .iter()
+            .any(|check| { check.name() == "landscape_core_counts_match_items" && check.passed() })
     );
     assert!(
         receipt

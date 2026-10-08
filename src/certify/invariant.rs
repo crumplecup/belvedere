@@ -125,6 +125,52 @@ pub(crate) fn view_model_trace_invariant_checks(
     ]
 }
 
+#[instrument(level = "trace", skip(counts, item_kind_counts, landscape_item_ids))]
+pub(crate) fn landscape_model_invariant_checks(
+    counts: &BTreeMap<String, usize>,
+    item_kind_counts: &BTreeMap<String, usize>,
+    landscape_item_ids: &[String],
+) -> Vec<BelvedereInvariantCheck> {
+    let item_kind_total = item_kind_counts.values().sum::<usize>();
+    let claim_items = count_value(item_kind_counts, "landscape_item_kind_claim");
+    let root_items = count_value(item_kind_counts, "landscape_item_kind_root");
+    let edge_items = count_value(item_kind_counts, "landscape_item_kind_edge");
+    let proof_items = count_value(item_kind_counts, "landscape_item_kind_proof");
+    let assessment_items = count_value(item_kind_counts, "landscape_item_kind_assessment");
+    let gap_items = count_value(item_kind_counts, "landscape_item_kind_gap");
+    vec![
+        BelvedereInvariantCheck::new(
+            "landscape_item_ids_classified".to_owned(),
+            item_kind_total == landscape_item_ids.len(),
+            format!(
+                "{item_kind_total} classified landscape item IDs recorded for {} outputs",
+                landscape_item_ids.len()
+            ),
+        ),
+        BelvedereInvariantCheck::new(
+            "landscape_core_counts_match_items".to_owned(),
+            claim_items == count_value(counts, "claims")
+                && root_items == count_value(counts, "roots")
+                && edge_items == count_value(counts, "edges")
+                && proof_items == count_value(counts, "proofs")
+                && assessment_items == count_value(counts, "assessments")
+                && gap_items == count_value(counts, "gaps"),
+            format!(
+                "claims={claim_items}, roots={root_items}, edges={edge_items}, proofs={proof_items}, assessments={assessment_items}, gaps={gap_items}"
+            ),
+        ),
+        BelvedereInvariantCheck::new(
+            "landscape_explicit_review_gaps_modeled".to_owned(),
+            count_value(counts, "gaps") == 0 || gap_items == count_value(counts, "gaps"),
+            format!(
+                "{} gap outputs recorded for {} modeled gaps",
+                gap_items,
+                count_value(counts, "gaps")
+            ),
+        ),
+    ]
+}
+
 #[instrument(
     level = "trace",
     skip(trace_source_counts, source_record_ids, trace_source_record_ids)
