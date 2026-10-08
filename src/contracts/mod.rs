@@ -27,13 +27,16 @@ pub use landscape::{
     LandscapeGap, LandscapeGapKind, LandscapeGraph, LandscapeInput, LandscapeModelingContract,
     WitnessSurfaceSummary,
 };
+pub(crate) use standards::belvedere_pipeline_claims_for_standard_ids;
 pub use standards::{
-    ACCESSIBILITY_BASELINE_STANDARD_ID, AccessibilityBaselineStandard, BelvederePipelineStandard,
-    GAP_SOUNDNESS_STANDARD_ID, GapSoundnessStandard, INPUT_FIDELITY_STANDARD_ID,
-    InputFidelityStandard, LANDSCAPE_CONSTRUCTION_STANDARD_ID, LandscapeConstructionStandard,
-    REPORT_REPRODUCIBILITY_STANDARD_ID, ReportReproducibilityStandard, SCHEMA_HONESTY_STANDARD_ID,
-    SchemaHonestyStandard, UI_PROJECTION_FIDELITY_STANDARD_ID, UiProjectionFidelityStandard,
-    VIEW_MODEL_FIDELITY_STANDARD_ID, ViewModelFidelityStandard, belvedere_pipeline_provenance,
+    ACCESSIBILITY_BASELINE_STANDARD_ID, AccessibilityBaselineStandard, BelvederePipelineClaim,
+    BelvederePipelineStandard, GAP_SOUNDNESS_STANDARD_ID, GapSoundnessStandard,
+    INPUT_FIDELITY_STANDARD_ID, InputFidelityStandard, LANDSCAPE_CONSTRUCTION_STANDARD_ID,
+    LandscapeConstructionStandard, REPORT_REPRODUCIBILITY_STANDARD_ID,
+    ReportReproducibilityStandard, SCHEMA_HONESTY_STANDARD_ID, SchemaHonestyStandard,
+    UI_PROJECTION_FIDELITY_STANDARD_ID, UiProjectionFidelityStandard,
+    VIEW_MODEL_FIDELITY_STANDARD_ID, ViewModelFidelityStandard, belvedere_pipeline_claims,
+    belvedere_pipeline_provenance,
 };
 pub use ui_ir::{
     ElicitUiIrSourcedStandard, ElicitUiProjectionContract, ElicitUiRenderCompleteStandard,

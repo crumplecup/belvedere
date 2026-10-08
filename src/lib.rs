@@ -40,11 +40,11 @@ pub use contracts::{
     AccessibilityBaselineStandard, ArtifactKind, AssessmentHistoryItem, AssessmentQueueItem,
     AssessmentRecord, AssessmentStreamIngestionContract, AssessmentWorkItem, AuditorFilterFacet,
     AuditorNavigationContract, AuditorNavigationModel, BackendCoverageItem, BelvedereContract,
-    BelvederePipelineStandard, ClaimDetailItem, ClaimEdge, ClaimExplorerCounts, ClaimExplorerItem,
-    ContractRecordRecord, DecodedAssessmentStream, DecodedRegistrySnapshot,
-    ElicitUiIrSourcedStandard, ElicitUiProjectionContract, ElicitUiRenderCompleteStandard,
-    ElicitUiRolePreservedStandard, ElicitUiWcagVerifiedStandard, EvidenceLinkRecord,
-    GAP_SOUNDNESS_STANDARD_ID, GapItem, GapSeverity, GapSoundnessStandard,
+    BelvederePipelineClaim, BelvederePipelineStandard, ClaimDetailItem, ClaimEdge,
+    ClaimExplorerCounts, ClaimExplorerItem, ContractRecordRecord, DecodedAssessmentStream,
+    DecodedRegistrySnapshot, ElicitUiIrSourcedStandard, ElicitUiProjectionContract,
+    ElicitUiRenderCompleteStandard, ElicitUiRolePreservedStandard, ElicitUiWcagVerifiedStandard,
+    EvidenceLinkRecord, GAP_SOUNDNESS_STANDARD_ID, GapItem, GapSeverity, GapSoundnessStandard,
     INPUT_FIDELITY_STANDARD_ID, InputFidelityStandard, KaniProofRecord, KaniProofSummary,
     LANDSCAPE_CONSTRUCTION_STANDARD_ID, LandscapeAssessment, LandscapeClaim,
     LandscapeConstructionStandard, LandscapeContractFragment, LandscapeDiff,
@@ -63,8 +63,8 @@ pub use contracts::{
     UI_PROJECTION_FIDELITY_STANDARD_ID, UiIrInput, UiIrProjection, UiIrProofBundle, UiIrSection,
     UiProjectionFidelityStandard, UiStandardMint, UiViewportVerification, UnsupportedField,
     VIEW_MODEL_FIDELITY_STANDARD_ID, ViewModelFidelityStandard, ViewModelInput,
-    WitnessExportRecord, WitnessSurfaceItem, WitnessSurfaceSummary, belvedere_pipeline_provenance,
-    elicit_ui_provenance,
+    WitnessExportRecord, WitnessSurfaceItem, WitnessSurfaceSummary, belvedere_pipeline_claims,
+    belvedere_pipeline_provenance, elicit_ui_provenance,
 };
 pub use error::{BelvedereConstructionError, BelvedereError};
 pub use exchanges::{

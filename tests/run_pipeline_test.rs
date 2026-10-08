@@ -9,10 +9,11 @@ use belvedere::{
     BELVEDERE_RUN_CERTIFICATE_SCHEMA_ID, BELVEDERE_RUN_CERTIFICATE_SCHEMA_VERSION,
     BELVEDERE_STAGE_CERTIFICATE_SCHEMA_ID, BELVEDERE_STAGE_CERTIFICATE_SCHEMA_VERSION,
     BelvedereCli, BelvedereCliOutput, BelvedereInvocationSurface, BelvederePipelineStage,
-    BelvedereRunInput, INPUT_FIDELITY_STANDARD_ID, UI_IR_SECTION_ASSESSMENT_HISTORY,
-    UI_IR_SECTION_BACKEND_COVERAGE, UI_IR_SECTION_CLAIM_DETAIL, UI_IR_SECTION_FILTERS,
-    UI_IR_SECTION_PROOF_CHAINS, UI_IR_SECTION_REVIEW_WORKFLOW, UI_IR_SECTION_SOURCE_NAVIGATION,
-    run_belvedere_pipeline, run_cli_with_writer,
+    BelvedereRunInput, INPUT_FIDELITY_STANDARD_ID, REPORT_REPRODUCIBILITY_STANDARD_ID,
+    UI_IR_SECTION_ASSESSMENT_HISTORY, UI_IR_SECTION_BACKEND_COVERAGE, UI_IR_SECTION_CLAIM_DETAIL,
+    UI_IR_SECTION_FILTERS, UI_IR_SECTION_PROOF_CHAINS, UI_IR_SECTION_REVIEW_WORKFLOW,
+    UI_IR_SECTION_SOURCE_NAVIGATION, VIEW_MODEL_FIDELITY_STANDARD_ID, run_belvedere_pipeline,
+    run_cli_with_writer,
 };
 use miette::{IntoDiagnostic, Result, WrapErr};
 use serde_json::Value;
@@ -98,6 +99,25 @@ fn run_pipeline_uses_the_normal_amenable_artifact_path() -> Result<()> {
             .any(|artifact_id| artifact_id.starts_with("assessment:proof_assessments:"))
     );
     assert_eq!(report.certificate().stage_certificate_ids().len(), 5);
+    assert_eq!(report.certificate().pipeline_claims().len(), 8);
+    assert!(
+        report
+            .certificate()
+            .pipeline_claims()
+            .iter()
+            .any(
+                |claim| claim.claim_id() == REPORT_REPRODUCIBILITY_STANDARD_ID
+                    && claim.phase() == "run"
+            )
+    );
+    assert!(
+        report
+            .certificate()
+            .pipeline_claims()
+            .iter()
+            .any(|claim| claim.claim_id() == VIEW_MODEL_FIDELITY_STANDARD_ID
+                && claim.phase() == "view_model")
+    );
     assert_eq!(
         report.manifest().schema_id(),
         BELVEDERE_ARTIFACT_MANIFEST_SCHEMA_ID
@@ -158,6 +178,13 @@ fn run_pipeline_uses_the_normal_amenable_artifact_path() -> Result<()> {
             .invariant_checks()
             .iter()
             .any(|check| check.name() == "run_stage_certificate_digests_match")
+    );
+    assert!(
+        report
+            .certificate()
+            .invariant_checks()
+            .iter()
+            .any(|check| check.name() == "run_pipeline_claims_recorded" && check.passed())
     );
     assert!(
         report
@@ -1366,6 +1393,28 @@ fn cli_can_emit_the_run_certificate_as_json() -> Result<()> {
     assert_eq!(
         certificate["input_artifact_ids"].as_array().map(Vec::len),
         Some(2)
+    );
+    assert_eq!(
+        certificate["pipeline_claims"].as_array().map(Vec::len),
+        Some(8)
+    );
+    assert!(
+        certificate["pipeline_claims"]
+            .as_array()
+            .is_some_and(
+                |claims| claims.iter().any(|claim| claim["claim_id"].as_str()
+                    == Some(REPORT_REPRODUCIBILITY_STANDARD_ID)
+                    && claim["phase"].as_str() == Some("run"))
+            )
+    );
+    assert!(
+        certificate["pipeline_claims"]
+            .as_array()
+            .is_some_and(
+                |claims| claims.iter().any(|claim| claim["claim_id"].as_str()
+                    == Some(VIEW_MODEL_FIDELITY_STANDARD_ID)
+                    && claim["phase"].as_str() == Some("view_model"))
+            )
     );
     assert_eq!(
         certificate["component_versions"]["belvedere"].as_str(),

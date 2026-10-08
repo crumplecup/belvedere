@@ -1,6 +1,10 @@
 //! Amenable standards for Belvedere pipeline claims.
 
+use std::collections::BTreeSet;
+
 use amenable_derive::Standard;
+use derive_getters::Getters;
+use serde::Serialize;
 use tracing::instrument;
 
 /// Named Belvedere pipeline claim that can be registered as an Amenable standard.
@@ -13,6 +17,32 @@ pub trait BelvederePipelineStandard {
 
     /// Auditor-facing meaning of the claim.
     const DESCRIPTION: &'static str;
+}
+
+/// Structured record for a named Belvedere pipeline claim.
+#[derive(Debug, Clone, PartialEq, Eq, Getters, Serialize)]
+pub struct BelvederePipelineClaim {
+    claim_id: String,
+    phase: String,
+    description: String,
+    standard_type: String,
+}
+
+impl BelvederePipelineClaim {
+    /// Build a claim record from a typed Belvedere pipeline standard.
+    #[instrument(level = "debug")]
+    #[must_use]
+    pub fn from_standard<S>() -> Self
+    where
+        S: BelvederePipelineStandard,
+    {
+        Self {
+            claim_id: S::CLAIM_ID.to_owned(),
+            phase: S::PHASE.to_owned(),
+            description: S::DESCRIPTION.to_owned(),
+            standard_type: std::any::type_name::<S>().to_owned(),
+        }
+    }
 }
 
 /// Input artifact fidelity standard ID.
@@ -37,6 +67,36 @@ pub const REPORT_REPRODUCIBILITY_STANDARD_ID: &str = "belvedere.standard.report_
 #[must_use]
 pub fn belvedere_pipeline_provenance() -> amenable::RustLanguageProvenance {
     amenable::RustLanguageProvenance::for_source("belvedere", "belvedere::contracts")
+}
+
+/// Complete catalog of Belvedere pipeline claims currently named as standards.
+#[instrument(level = "debug")]
+#[must_use]
+pub fn belvedere_pipeline_claims() -> Vec<BelvederePipelineClaim> {
+    vec![
+        BelvederePipelineClaim::from_standard::<InputFidelityStandard>(),
+        BelvederePipelineClaim::from_standard::<SchemaHonestyStandard>(),
+        BelvederePipelineClaim::from_standard::<LandscapeConstructionStandard>(),
+        BelvederePipelineClaim::from_standard::<GapSoundnessStandard>(),
+        BelvederePipelineClaim::from_standard::<ViewModelFidelityStandard>(),
+        BelvederePipelineClaim::from_standard::<UiProjectionFidelityStandard>(),
+        BelvederePipelineClaim::from_standard::<AccessibilityBaselineStandard>(),
+        BelvederePipelineClaim::from_standard::<ReportReproducibilityStandard>(),
+    ]
+}
+
+#[instrument(level = "debug", skip(standard_ids))]
+pub(crate) fn belvedere_pipeline_claims_for_standard_ids(
+    standard_ids: &[String],
+) -> Vec<BelvederePipelineClaim> {
+    let standards = standard_ids
+        .iter()
+        .map(String::as_str)
+        .collect::<BTreeSet<_>>();
+    belvedere_pipeline_claims()
+        .into_iter()
+        .filter(|claim| standards.contains(claim.claim_id.as_str()))
+        .collect()
 }
 
 /// Standard that input records are parsed without dropping identity or provenance.

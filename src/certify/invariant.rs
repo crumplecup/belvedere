@@ -30,6 +30,7 @@ pub(crate) struct RunInvariantEvidence<'evidence> {
     component_versions: &'evidence BTreeMap<String, String>,
     invocation_surface: &'evidence str,
     invocation_arguments: &'evidence [String],
+    pipeline_claim_ids: &'evidence [String],
     input_artifacts: RunInputArtifactEvidence<'evidence>,
     stage_certificates: RunStageCertificateEvidence<'evidence>,
 }
@@ -98,7 +99,7 @@ pub(crate) fn view_model_trace_invariant_checks(
         trace_source_counts,
         "view_model_trace_unique_source_records",
     );
-    let input_source_records = unique_input_source_records(source_record_ids);
+    let input_source_records = unique_string_count(source_record_ids);
     vec![
         BelvedereInvariantCheck::new(
             "view_model_trace_sources_complete".to_owned(),
@@ -134,7 +135,7 @@ pub(crate) fn ui_ir_trace_invariant_checks(
     let widgets_with_sources = count_value(trace_source_counts, "trace_widgets_with_sources");
     let source_links = count_value(trace_source_counts, "trace_source_links");
     let unique_source_records = count_value(trace_source_counts, "trace_unique_source_records");
-    let input_source_records = unique_input_source_records(source_record_ids);
+    let input_source_records = unique_string_count(source_record_ids);
     vec![
         BelvedereInvariantCheck::new(
             "ui_ir_trace_widgets_sourced".to_owned(),
@@ -194,6 +195,16 @@ pub(crate) fn run_invariant_checks(
             ),
         ),
         BelvedereInvariantCheck::new(
+            "run_pipeline_claims_recorded".to_owned(),
+            !evidence.pipeline_claim_ids.is_empty()
+                && evidence.pipeline_claim_ids.len()
+                    == unique_string_count(evidence.pipeline_claim_ids),
+            format!(
+                "{} unique pipeline claim records emitted",
+                evidence.pipeline_claim_ids.len()
+            ),
+        ),
+        BelvedereInvariantCheck::new(
             "run_stage_certificate_digests_match".to_owned(),
             !evidence.stage_certificates.ids.is_empty()
                 && evidence.stage_certificates.ids.len()
@@ -232,7 +243,7 @@ fn count_value(counts: &BTreeMap<String, usize>, key: &str) -> usize {
     counts.get(key).copied().unwrap_or_default()
 }
 
-#[instrument(level = "trace", skip(source_record_ids))]
-fn unique_input_source_records(source_record_ids: &[String]) -> usize {
-    source_record_ids.iter().collect::<BTreeSet<_>>().len()
+#[instrument(level = "trace", skip(values))]
+fn unique_string_count(values: &[String]) -> usize {
+    values.iter().collect::<BTreeSet<_>>().len()
 }
