@@ -82,6 +82,19 @@ fn ui_ir_projection_mints_elicit_ui_standards_and_tree_proofs() -> Result<()> {
             .map(belvedere::TraceWidgetRef::widget_id)
             .collect::<Vec<_>>()
     );
+    let trace_widget_ref_ids = projection
+        .trace_widgets()
+        .iter()
+        .map(|widget| widget.trace_ref_id().to_owned())
+        .collect::<Vec<_>>();
+    assert_eq!(receipt.trace_widget_ref_ids(), &trace_widget_ref_ids);
+    let mut unique_trace_widget_ref_ids = trace_widget_ref_ids.clone();
+    unique_trace_widget_ref_ids.sort();
+    unique_trace_widget_ref_ids.dedup();
+    assert_eq!(
+        unique_trace_widget_ref_ids.len(),
+        trace_widget_ref_ids.len()
+    );
     let section_ids = projection
         .sections()
         .iter()
@@ -375,6 +388,10 @@ fn ui_ir_projection_preserves_trace_widgets_for_auditor_deep_dives() -> Result<(
         })
         .ok_or_else(|| miette!("claim explorer item should have a traceable widget"))?;
     assert_eq!(decoded_claim.section_id(), UI_IR_SECTION_CLAIM_EXPLORER);
+    assert_eq!(
+        decoded_claim.trace_ref_id(),
+        "elicit_ui.trace_widget_ref:belvedere.ui.section.claim_explorer:button:belvedere::ingestion::DecodedRegistrySnapshot"
+    );
     assert!(decoded_claim.label().contains("derived claim"));
     assert!(decoded_claim.label().contains("1 direct basis"));
     assert!(decoded_claim.label().contains("1 verifier proof"));

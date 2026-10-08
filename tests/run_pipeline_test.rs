@@ -541,6 +541,13 @@ fn run_pipeline_uses_the_normal_amenable_artifact_path() -> Result<()> {
                 .contains(&format!("elicit_ui.trace_widget:{widget_id}")))
     );
     assert!(
+        report
+            .ui_ir_receipt()
+            .trace_widget_ref_ids()
+            .iter()
+            .all(|trace_ref_id| ui_stage.output_ids().contains(trace_ref_id))
+    );
+    assert!(
         ui_stage
             .invariant_checks()
             .iter()

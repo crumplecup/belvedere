@@ -375,17 +375,43 @@ pub(super) fn labeled_widget(
             widget: Some(element.id),
         })
         .map_err(UiIrError::elicit_ui)?;
+    let claim_id = trace.claim_id().to_owned();
+    let trace_ref_id = trace_widget_ref_id(section_id, role, &claim_id, trace_widgets);
     let trace_widget = TraceWidgetRefBuilder::default()
+        .trace_ref_id(trace_ref_id)
         .widget_id(element.id.0)
         .section_id(section_id)
         .role(role)
         .label(label)
-        .claim_id(trace.claim_id())
+        .claim_id(claim_id)
         .source_record_ids(trace.source_record_ids().to_vec())
         .build()
         .map_err(|error| UiIrError::construction("TraceWidgetRef", error))?;
     trace_widgets.push(trace_widget);
     Ok(element.id)
+}
+
+#[instrument(level = "trace", skip(trace_widgets))]
+fn trace_widget_ref_id(
+    section_id: &str,
+    role: &str,
+    claim_id: &str,
+    trace_widgets: &[TraceWidgetRef],
+) -> String {
+    let ordinal = trace_widgets
+        .iter()
+        .filter(|widget| {
+            widget.section_id() == section_id
+                && widget.role() == role
+                && widget.claim_id() == claim_id
+        })
+        .count();
+    let base = format!("elicit_ui.trace_widget_ref:{section_id}:{role}:{claim_id}");
+    if ordinal == 0 {
+        base
+    } else {
+        format!("{base}:{ordinal}")
+    }
 }
 
 #[instrument(level = "debug", skip(backend, content))]

@@ -62,6 +62,12 @@ pub(super) fn build_receipt(
                 .map(TraceWidgetRef::widget_id)
                 .collect::<Vec<_>>(),
         )
+        .trace_widget_ref_ids(
+            trace_widgets
+                .iter()
+                .map(|widget| widget.trace_ref_id().to_owned())
+                .collect::<Vec<_>>(),
+        )
         .role_counts(role_counts(trace_widgets))
         .section_widget_counts(section_widget_counts(sections))
         .section_population_counts(section_population_counts(sections))

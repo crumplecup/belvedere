@@ -281,6 +281,7 @@ impl BelvedereStageCertificate {
                 .iter()
                 .map(|widget_id| format!("elicit_ui.trace_widget:{widget_id}")),
         );
+        output_ids.extend(receipt.trace_widget_ref_ids().iter().cloned());
         Self::new(StageCertificateEvidence {
             stage: BelvederePipelineStage::UiIrProjection,
             contract: receipt.contract().to_owned(),
