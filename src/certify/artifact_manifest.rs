@@ -23,6 +23,7 @@ pub(crate) use receipts::{BelvedereDiffManifestReceipts, BelvedereSnapshotManife
 pub struct BelvedereArtifactManifest {
     schema_id: String,
     schema_version: u16,
+    id: String,
     run_certificate_id: String,
     run_certificate_digest: String,
     counts: BTreeMap<String, usize>,
@@ -36,4 +37,5 @@ pub struct BelvedereArtifactManifest {
     input_artifacts: Vec<BelvedereManifestInputArtifact>,
     stage_certificates: Vec<BelvedereManifestStageCertificate>,
     output_artifacts: Vec<BelvedereManifestOutputArtifact>,
+    digest: String,
 }

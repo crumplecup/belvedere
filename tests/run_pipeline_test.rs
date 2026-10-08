@@ -196,6 +196,19 @@ fn run_pipeline_uses_the_normal_amenable_artifact_path() -> Result<()> {
         *report.manifest().schema_version(),
         BELVEDERE_ARTIFACT_MANIFEST_SCHEMA_VERSION
     );
+    assert!(
+        report
+            .manifest()
+            .id()
+            .starts_with("belvedere.manifest.artifacts:")
+    );
+    assert_eq!(
+        report.manifest().id(),
+        &format!(
+            "belvedere.manifest.artifacts:{}",
+            report.manifest().digest()
+        )
+    );
     assert_eq!(report.manifest().input_artifacts().len(), 2);
     assert_eq!(report.manifest().stage_certificates().len(), 5);
     assert_eq!(report.manifest().output_artifacts().len(), 9);
@@ -832,6 +845,14 @@ fn run_certificate_is_reproducible_portable_evidence() -> Result<()> {
     .wrap_err("second fixture pipeline run should produce a certificate")?;
 
     assert_eq!(first.certificate().id(), second.certificate().id());
+    assert_eq!(first.manifest().id(), second.manifest().id());
+    assert_eq!(first.manifest().digest(), second.manifest().digest());
+    assert!(
+        first
+            .manifest()
+            .id()
+            .starts_with("belvedere.manifest.artifacts:")
+    );
     assert_eq!(
         first.certificate().invocation().surface(),
         BelvedereInvocationSurface::Library
@@ -1623,6 +1644,17 @@ fn assert_run_manifest(manifest: &Value) {
             .as_str()
             .is_some_and(|id| id.starts_with("belvedere.run:"))
     );
+    assert!(
+        manifest["id"]
+            .as_str()
+            .is_some_and(|id| id.starts_with("belvedere.manifest.artifacts:"))
+    );
+    assert_eq!(
+        manifest["id"].as_str().map(str::to_owned),
+        manifest["digest"]
+            .as_str()
+            .map(|digest| format!("belvedere.manifest.artifacts:{digest}"))
+    );
     assert_eq!(manifest["counts"]["input_artifacts"].as_u64(), Some(2));
     assert_eq!(manifest["counts"]["stage_certificates"].as_u64(), Some(5));
     assert_eq!(manifest["counts"]["output_artifacts"].as_u64(), Some(9));
@@ -1675,6 +1707,17 @@ fn assert_diff_manifest(manifest: &Value) {
     assert_eq!(
         manifest["schema_id"].as_str(),
         Some(BELVEDERE_ARTIFACT_MANIFEST_SCHEMA_ID)
+    );
+    assert!(
+        manifest["id"]
+            .as_str()
+            .is_some_and(|id| id.starts_with("belvedere.manifest.artifacts:"))
+    );
+    assert_eq!(
+        manifest["id"].as_str().map(str::to_owned),
+        manifest["digest"]
+            .as_str()
+            .map(|digest| format!("belvedere.manifest.artifacts:{digest}"))
     );
     assert_eq!(manifest["counts"]["input_artifacts"].as_u64(), Some(4));
     assert_eq!(manifest["counts"]["stage_certificates"].as_u64(), Some(11));

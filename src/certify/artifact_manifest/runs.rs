@@ -2,11 +2,13 @@
 
 use std::collections::BTreeMap;
 
+use sha2::{Digest as _, Sha256};
 use tracing::instrument;
 
 use crate::certify::{
     BELVEDERE_ARTIFACT_MANIFEST_SCHEMA_ID, BELVEDERE_ARTIFACT_MANIFEST_SCHEMA_VERSION,
-    BelvedereRunCertificate, IngestionReceipt, LandscapeReceipt, UiIrReceipt, ViewModelReceipt,
+    BelvedereInvariantCheck, BelvedereRunCertificate, IngestionReceipt, LandscapeReceipt,
+    UiIrReceipt, ViewModelReceipt, hex_digest, update_field,
 };
 
 use super::accounting::{
@@ -293,9 +295,26 @@ impl BelvedereArtifactManifest {
             &stage_certificates,
             &output_artifacts,
         );
+        let digest = manifest_digest(ManifestDigestEvidence {
+            run_certificate_id: certificate.id(),
+            run_certificate_digest: certificate.digest(),
+            counts: &counts,
+            input_role_counts: &input_role_counts,
+            stage_role_counts: &stage_role_counts,
+            stage_kind_counts: &stage_kind_counts,
+            output_role_counts: &output_role_counts,
+            output_kind_counts: &output_kind_counts,
+            output_source_stage_counts: &output_source_stage_counts,
+            invariant_checks: &invariant_checks,
+            input_artifacts: &input_artifacts,
+            stage_certificates: &stage_certificates,
+            output_artifacts: &output_artifacts,
+        });
+        let id = format!("belvedere.manifest.artifacts:{digest}");
         Self {
             schema_id: BELVEDERE_ARTIFACT_MANIFEST_SCHEMA_ID.to_owned(),
             schema_version: BELVEDERE_ARTIFACT_MANIFEST_SCHEMA_VERSION,
+            id,
             run_certificate_id: certificate.id().to_owned(),
             run_certificate_digest: certificate.digest().to_owned(),
             counts,
@@ -309,6 +328,78 @@ impl BelvedereArtifactManifest {
             input_artifacts,
             stage_certificates,
             output_artifacts,
+            digest,
         }
+    }
+}
+
+#[derive(Debug, Clone, Copy)]
+struct ManifestDigestEvidence<'evidence> {
+    run_certificate_id: &'evidence str,
+    run_certificate_digest: &'evidence str,
+    counts: &'evidence BTreeMap<String, usize>,
+    input_role_counts: &'evidence BTreeMap<String, usize>,
+    stage_role_counts: &'evidence BTreeMap<String, usize>,
+    stage_kind_counts: &'evidence BTreeMap<String, usize>,
+    output_role_counts: &'evidence BTreeMap<String, usize>,
+    output_kind_counts: &'evidence BTreeMap<String, usize>,
+    output_source_stage_counts: &'evidence BTreeMap<String, usize>,
+    invariant_checks: &'evidence [BelvedereInvariantCheck],
+    input_artifacts: &'evidence [BelvedereManifestInputArtifact],
+    stage_certificates: &'evidence [BelvedereManifestStageCertificate],
+    output_artifacts: &'evidence [BelvedereManifestOutputArtifact],
+}
+
+#[instrument(level = "debug", skip(evidence))]
+fn manifest_digest(evidence: ManifestDigestEvidence<'_>) -> String {
+    let mut hasher = Sha256::new();
+    update_field(&mut hasher, BELVEDERE_ARTIFACT_MANIFEST_SCHEMA_ID);
+    update_field(
+        &mut hasher,
+        &BELVEDERE_ARTIFACT_MANIFEST_SCHEMA_VERSION.to_string(),
+    );
+    update_field(&mut hasher, evidence.run_certificate_id);
+    update_field(&mut hasher, evidence.run_certificate_digest);
+    update_counts(&mut hasher, evidence.counts);
+    update_counts(&mut hasher, evidence.input_role_counts);
+    update_counts(&mut hasher, evidence.stage_role_counts);
+    update_counts(&mut hasher, evidence.stage_kind_counts);
+    update_counts(&mut hasher, evidence.output_role_counts);
+    update_counts(&mut hasher, evidence.output_kind_counts);
+    update_counts(&mut hasher, evidence.output_source_stage_counts);
+    for check in evidence.invariant_checks {
+        update_field(&mut hasher, check.name());
+        update_field(&mut hasher, &check.passed().to_string());
+        update_field(&mut hasher, check.detail());
+    }
+    for artifact in evidence.input_artifacts {
+        update_field(&mut hasher, artifact.role());
+        update_field(&mut hasher, artifact.artifact_id());
+        update_field(&mut hasher, artifact.digest());
+    }
+    for certificate in evidence.stage_certificates {
+        update_field(&mut hasher, certificate.role());
+        update_field(&mut hasher, certificate.stage());
+        update_field(&mut hasher, certificate.certificate_id());
+        update_field(&mut hasher, certificate.digest());
+        update_field(&mut hasher, certificate.contract());
+        update_field(&mut hasher, &certificate.output_count().to_string());
+    }
+    for artifact in evidence.output_artifacts {
+        update_field(&mut hasher, artifact.role());
+        update_field(&mut hasher, artifact.artifact_kind());
+        update_field(&mut hasher, artifact.source_stage_role());
+        update_field(&mut hasher, artifact.source_stage_certificate_id());
+        update_field(&mut hasher, artifact.source_stage_certificate_digest());
+        update_field(&mut hasher, &artifact.item_count().to_string());
+    }
+    hex_digest(hasher)
+}
+
+#[instrument(level = "trace", skip(hasher, counts))]
+fn update_counts(hasher: &mut Sha256, counts: &BTreeMap<String, usize>) {
+    for (name, count) in counts {
+        update_field(hasher, name);
+        update_field(hasher, &count.to_string());
     }
 }
