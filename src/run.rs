@@ -137,7 +137,12 @@ pub fn run_belvedere_pipeline(
     let (assessments, assessment_receipt) =
         AssessmentStreamIngestion.ingest(assessment_artifact)?;
     let (landscape, landscape_receipt) =
-        LandscapeModeling.model(LandscapeInput::new(registry, assessments))?;
+        LandscapeModeling.model(LandscapeInput::from_ingestion(
+            registry,
+            &registry_receipt,
+            assessments,
+            &assessment_receipt,
+        ))?;
     let (view_model, view_model_receipt) =
         AuditorNavigationProjection.project(ViewModelInput::new(landscape.clone()))?;
     let (projection, ui_ir_receipt) =
@@ -292,7 +297,12 @@ fn build_landscape_snapshot(
     let (assessments, assessment_receipt) =
         AssessmentStreamIngestion.ingest(assessment_artifact)?;
     let (landscape, landscape_receipt) =
-        LandscapeModeling.model(LandscapeInput::new(registry, assessments))?;
+        LandscapeModeling.model(LandscapeInput::from_ingestion(
+            registry,
+            &registry_receipt,
+            assessments,
+            &assessment_receipt,
+        ))?;
 
     Ok(LandscapeRunSnapshot {
         landscape,

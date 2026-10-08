@@ -130,6 +130,7 @@ impl BelvedereExchange<LandscapeModelingContract> for LandscapeModeling {
             .gap_kind_counts(gap_kind_counts(graph.gaps()))
             .assessment_recency_counts(assessment_recency_counts(graph.assessments()))
             .landscape_item_ids(landscape_item_ids)
+            .source_receipt_ids(input.source_receipt_ids().to_vec())
             .source_record_ids(graph.source_record_ids().to_vec())
             .warnings(Vec::new())
             .build()

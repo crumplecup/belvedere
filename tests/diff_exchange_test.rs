@@ -643,15 +643,20 @@ fn fixture_landscape(assessment_bytes: Vec<u8>) -> Result<belvedere::LandscapeGr
         assessment_bytes,
     );
 
-    let (registry, _registry_receipt) = RegistryDumpIngestion
+    let (registry, registry_receipt) = RegistryDumpIngestion
         .ingest(registry_artifact)
         .into_diagnostic()
         .wrap_err("registry fixture should satisfy ingestion contract")?;
-    let (assessments, _assessment_receipt) = AssessmentStreamIngestion
+    let (assessments, assessment_receipt) = AssessmentStreamIngestion
         .ingest(assessment_artifact)
         .into_diagnostic()
         .wrap_err("assessment fixture should satisfy ingestion contract")?;
-    let landscape_input = LandscapeInput::new(registry, assessments);
+    let landscape_input = LandscapeInput::from_ingestion(
+        registry,
+        &registry_receipt,
+        assessments,
+        &assessment_receipt,
+    );
     let (landscape, _landscape_receipt) = LandscapeModeling
         .model(landscape_input)
         .into_diagnostic()

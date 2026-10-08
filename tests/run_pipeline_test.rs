@@ -602,6 +602,10 @@ fn run_pipeline_uses_the_normal_amenable_artifact_path() -> Result<()> {
         Some(&report.landscape_receipt().landscape_item_ids().len())
     );
     assert_eq!(
+        landscape_stage.counts().get("source_receipts"),
+        Some(&report.landscape_receipt().source_receipt_ids().len())
+    );
+    assert_eq!(
         landscape_stage.counts().get("landscape_item_kind_claim"),
         Some(&report.landscape_receipt().claim_count())
     );
@@ -623,6 +627,10 @@ fn run_pipeline_uses_the_normal_amenable_artifact_path() -> Result<()> {
             .landscape_item_ids()
             .iter()
             .all(|landscape_item_id| landscape_stage.output_ids().contains(landscape_item_id))
+    );
+    assert_eq!(
+        landscape_stage.input_ids(),
+        report.landscape_receipt().source_receipt_ids()
     );
     let auditor_stage = report
         .certificate()
@@ -1175,6 +1183,7 @@ fn assert_landscape_receipt(receipt: &Value) {
         receipt["source_record_ids"].as_array().map(Vec::len),
         Some(7)
     );
+    assert_landscape_receipt_sources(receipt, 2);
 }
 
 fn assert_previous_landscape_receipt(receipt: &Value) {
@@ -1194,6 +1203,20 @@ fn assert_previous_landscape_receipt(receipt: &Value) {
         receipt["source_record_ids"].as_array().map(Vec::len),
         Some(5)
     );
+    assert_landscape_receipt_sources(receipt, 2);
+}
+
+fn assert_landscape_receipt_sources(receipt: &Value, expected_count: usize) {
+    assert_eq!(
+        receipt["source_receipt_ids"].as_array().map(Vec::len),
+        Some(expected_count)
+    );
+    assert!(receipt["source_receipt_ids"].as_array().is_some_and(|ids| {
+        ids.iter().all(|id| {
+            id.as_str()
+                .is_some_and(|id| id.starts_with("belvedere.receipt.ingestion:"))
+        })
+    }));
 }
 
 fn assert_landscape_graph(graph: &Value) {

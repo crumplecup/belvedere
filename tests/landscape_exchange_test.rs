@@ -68,6 +68,13 @@ fn landscape_modeling_maps_decoded_records_into_a_review_graph() -> Result<()> {
             .source_record_ids()
             .contains(&"kani_proof:belvedere::ingestion::record_identity_is_preserved".to_owned())
     );
+    assert_eq!(receipt.source_receipt_ids().len(), 2);
+    assert!(
+        receipt
+            .source_receipt_ids()
+            .iter()
+            .all(|id| id.starts_with("belvedere.receipt.ingestion:"))
+    );
     assert_eq!(receipt.landscape_item_ids().len(), 19);
     assert!(
         receipt
@@ -104,6 +111,10 @@ fn landscape_modeling_maps_decoded_records_into_a_review_graph() -> Result<()> {
         Some(&receipt.landscape_item_ids().len())
     );
     assert_eq!(
+        certificate.counts().get("source_receipts"),
+        Some(&receipt.source_receipt_ids().len())
+    );
+    assert_eq!(
         certificate.counts().get("landscape_item_kind_claim"),
         receipt.item_kind_counts().get("landscape_item_kind_claim")
     );
@@ -125,6 +136,7 @@ fn landscape_modeling_maps_decoded_records_into_a_review_graph() -> Result<()> {
             .iter()
             .all(|landscape_item_id| certificate.output_ids().contains(landscape_item_id))
     );
+    assert_eq!(certificate.input_ids(), receipt.source_receipt_ids());
 
     let decoded_claim = landscape
         .claims()
@@ -302,16 +314,21 @@ fn fixture_input_with_registry_and_assessments(
         assessment_bytes,
     );
 
-    let (registry, _registry_receipt) = RegistryDumpIngestion
+    let (registry, registry_receipt) = RegistryDumpIngestion
         .ingest(registry_artifact)
         .into_diagnostic()
         .wrap_err("registry fixture should satisfy ingestion contract")?;
-    let (assessments, _assessment_receipt) = AssessmentStreamIngestion
+    let (assessments, assessment_receipt) = AssessmentStreamIngestion
         .ingest(assessment_artifact)
         .into_diagnostic()
         .wrap_err("assessment fixture should satisfy ingestion contract")?;
 
-    Ok(LandscapeInput::new(registry, assessments))
+    Ok(LandscapeInput::from_ingestion(
+        registry,
+        &registry_receipt,
+        assessments,
+        &assessment_receipt,
+    ))
 }
 
 const STALE_ASSESSMENTS: &str = concat!(

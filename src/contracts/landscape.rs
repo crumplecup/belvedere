@@ -4,11 +4,12 @@ use std::collections::BTreeMap;
 
 use derive_builder::Builder;
 use derive_getters::Getters;
+use derive_new::new;
 use serde::Serialize;
 use tracing::instrument;
 
 use crate::{
-    certify::LandscapeReceipt,
+    certify::{IngestionReceipt, LandscapeReceipt},
     contracts::{
         BelvedereContract, DecodedAssessmentStream, DecodedRegistrySnapshot,
         GAP_SOUNDNESS_STANDARD_ID, LANDSCAPE_CONSTRUCTION_STANDARD_ID,
@@ -25,23 +26,36 @@ pub use claims::{
 pub use gaps::{LandscapeGap, LandscapeGapKind};
 
 /// Decoded evidence accepted by the landscape modeling exchange.
-#[derive(Debug, Clone, PartialEq)]
+#[derive(Debug, Clone, PartialEq, Getters, new)]
 pub struct LandscapeInput {
+    #[getter(skip)]
     registry: DecodedRegistrySnapshot,
+    #[getter(skip)]
     assessments: DecodedAssessmentStream,
+    source_receipt_ids: Vec<String>,
 }
 
 impl LandscapeInput {
-    /// Create landscape input from decoded ingestion outputs.
+    /// Create landscape input directly from ingestion exchange outputs.
     #[must_use]
-    pub const fn new(
+    #[instrument(
+        level = "debug",
+        skip(registry, registry_receipt, assessments, assessment_receipt)
+    )]
+    pub fn from_ingestion(
         registry: DecodedRegistrySnapshot,
+        registry_receipt: &IngestionReceipt,
         assessments: DecodedAssessmentStream,
+        assessment_receipt: &IngestionReceipt,
     ) -> Self {
-        Self {
+        Self::new(
             registry,
             assessments,
-        }
+            vec![
+                registry_receipt.receipt_id().to_owned(),
+                assessment_receipt.receipt_id().to_owned(),
+            ],
+        )
     }
 
     /// Decoded registry evidence.

@@ -134,6 +134,10 @@ impl BelvedereStageCertificate {
             ),
             ("proofs".to_owned(), receipt.proof_count()),
             ("roots".to_owned(), receipt.root_count()),
+            (
+                "source_receipts".to_owned(),
+                receipt.source_receipt_ids().len(),
+            ),
             ("warnings".to_owned(), receipt.warnings().len()),
         ]);
         counts.extend(receipt.item_kind_counts().clone());
@@ -150,7 +154,7 @@ impl BelvedereStageCertificate {
             standards: contract_standards::<LandscapeModelingContract>(),
             requires: contract_requirements::<LandscapeModelingContract>(),
             ensures: contract_guarantees::<LandscapeModelingContract>(),
-            input_ids: receipt.source_record_ids().clone(),
+            input_ids: receipt.source_receipt_ids().clone(),
             output_ids: receipt.landscape_item_ids().clone(),
             counts,
             additional_invariant_checks,
