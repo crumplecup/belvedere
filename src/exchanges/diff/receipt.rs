@@ -1,6 +1,6 @@
 //! Receipt count aggregation for landscape diffs.
 
-use std::collections::BTreeMap;
+use std::collections::{BTreeMap, BTreeSet};
 
 use tracing::instrument;
 
@@ -72,6 +72,42 @@ pub(super) fn trace_source_kind_counts(items: &[LandscapeDiffItem]) -> BTreeMap<
             .or_default() += 1;
     }
     counts
+}
+
+#[instrument(level = "debug", skip(items))]
+pub(super) fn trace_source_counts(items: &[LandscapeDiffItem]) -> BTreeMap<String, usize> {
+    let mut source_records = BTreeSet::new();
+    let mut items_with_sources = 0;
+    let mut source_links = 0;
+    for item in items {
+        if !item.trace().source_record_ids().is_empty() {
+            items_with_sources += 1;
+        }
+        source_links += item.trace().source_record_ids().len();
+        source_records.extend(item.trace().source_record_ids().iter().cloned());
+    }
+    BTreeMap::from([
+        ("diff_traceable_items".to_owned(), items.len()),
+        (
+            "diff_trace_items_with_sources".to_owned(),
+            items_with_sources,
+        ),
+        ("diff_trace_source_links".to_owned(), source_links),
+        (
+            "diff_trace_unique_source_records".to_owned(),
+            source_records.len(),
+        ),
+    ])
+}
+
+#[instrument(level = "debug", skip(items))]
+pub(super) fn trace_source_record_ids(items: &[LandscapeDiffItem]) -> Vec<String> {
+    items
+        .iter()
+        .flat_map(|item| item.trace().source_record_ids().iter().cloned())
+        .collect::<BTreeSet<_>>()
+        .into_iter()
+        .collect()
 }
 
 const fn change_kind_key(change_kind: LandscapeDiffChangeKind) -> &'static str {

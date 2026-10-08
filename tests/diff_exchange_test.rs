@@ -63,6 +63,14 @@ fn landscape_diff_surfaces_snapshot_changes_for_auditors() -> Result<()> {
         receipt.trace_source_kind_counts(),
         &trace_source_kind_counts(diff.items())
     );
+    assert_eq!(
+        receipt.trace_source_counts(),
+        &trace_source_counts(diff.items())
+    );
+    assert_eq!(
+        receipt.trace_source_record_ids(),
+        &trace_source_record_ids(diff.items())
+    );
     assert_eq!(receipt.diff_item_ids().len(), diff.items().len());
     assert!(
         diff.items()
@@ -109,6 +117,10 @@ fn landscape_diff_surfaces_snapshot_changes_for_auditors() -> Result<()> {
     assert_eq!(
         certificate.counts().get("diff_change_added_assessment"),
         Some(&2)
+    );
+    assert_eq!(
+        certificate.counts().get("diff_trace_source_links"),
+        receipt.trace_source_counts().get("diff_trace_source_links")
     );
     assert_eq!(
         certificate
@@ -375,6 +387,25 @@ fn landscape_diff_runner_uses_the_normal_artifact_path() -> Result<()> {
             .get("diff_trace_source_kind_assessment")
     );
     assert_eq!(
+        report
+            .diff_certificate()
+            .counts()
+            .get("diff_trace_source_links"),
+        report
+            .diff_receipt()
+            .trace_source_counts()
+            .get("diff_trace_source_links")
+    );
+    assert!(
+        report
+            .diff_certificate()
+            .invariant_checks()
+            .iter()
+            .any(
+                |check| check.name() == "landscape_diff_trace_sources_admissible" && check.passed()
+            )
+    );
+    assert_eq!(
         report.certificate().schema_id(),
         BELVEDERE_RUN_CERTIFICATE_SCHEMA_ID
     );
@@ -434,6 +465,42 @@ fn trace_source_kind_counts(items: &[belvedere::LandscapeDiffItem]) -> BTreeMap<
             .or_default() += 1;
     }
     counts
+}
+
+fn trace_source_counts(items: &[belvedere::LandscapeDiffItem]) -> BTreeMap<String, usize> {
+    let trace_source_record_ids = trace_source_record_ids(items);
+    let items_with_sources = items
+        .iter()
+        .filter(|item| !item.trace().source_record_ids().is_empty())
+        .count();
+    BTreeMap::from([
+        ("diff_traceable_items".to_owned(), items.len()),
+        (
+            "diff_trace_items_with_sources".to_owned(),
+            items_with_sources,
+        ),
+        (
+            "diff_trace_source_links".to_owned(),
+            items
+                .iter()
+                .map(|item| item.trace().source_record_ids().len())
+                .sum(),
+        ),
+        (
+            "diff_trace_unique_source_records".to_owned(),
+            trace_source_record_ids.len(),
+        ),
+    ])
+}
+
+fn trace_source_record_ids(items: &[belvedere::LandscapeDiffItem]) -> Vec<String> {
+    let mut source_record_ids = items
+        .iter()
+        .flat_map(|item| item.trace().source_record_ids().iter().cloned())
+        .collect::<Vec<_>>();
+    source_record_ids.sort();
+    source_record_ids.dedup();
+    source_record_ids
 }
 
 fn fixture_landscape(assessment_bytes: Vec<u8>) -> Result<belvedere::LandscapeGraph> {
