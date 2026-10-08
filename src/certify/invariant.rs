@@ -343,6 +343,43 @@ pub(crate) fn ui_ir_trace_invariant_checks(
     ]
 }
 
+#[instrument(level = "trace", skip(counts, output_kind_counts, output_ids))]
+pub(crate) fn ui_ir_output_invariant_checks(
+    counts: &BTreeMap<String, usize>,
+    output_kind_counts: &BTreeMap<String, usize>,
+    output_ids: &[String],
+) -> Vec<BelvedereInvariantCheck> {
+    let output_kind_total = output_kind_counts.values().sum::<usize>();
+    let minted_standards = count_value(output_kind_counts, "ui_ir_output_kind_minted_standard");
+    let sections = count_value(output_kind_counts, "ui_ir_output_kind_section");
+    let viewports = count_value(output_kind_counts, "ui_ir_output_kind_viewport");
+    let section_roots = count_value(output_kind_counts, "ui_ir_output_kind_section_root_widget");
+    let trace_widgets = count_value(output_kind_counts, "ui_ir_output_kind_trace_widget");
+    let trace_refs = count_value(output_kind_counts, "ui_ir_output_kind_trace_widget_ref");
+    vec![
+        BelvedereInvariantCheck::new(
+            "ui_ir_output_ids_classified".to_owned(),
+            output_kind_total == output_ids.len(),
+            format!(
+                "{output_kind_total} classified UI IR output IDs recorded for {} outputs",
+                output_ids.len()
+            ),
+        ),
+        BelvedereInvariantCheck::new(
+            "ui_ir_core_counts_match_outputs".to_owned(),
+            minted_standards == count_value(counts, "minted_standards")
+                && sections == count_value(counts, "sections")
+                && viewports == count_value(counts, "ui_ir_viewports_verified_total")
+                && section_roots == count_value(counts, "sections")
+                && trace_widgets == count_value(counts, "widgets")
+                && trace_refs == count_value(counts, "widgets"),
+            format!(
+                "minted={minted_standards}, sections={sections}, viewports={viewports}, section_roots={section_roots}, trace_widgets={trace_widgets}, trace_refs={trace_refs}"
+            ),
+        ),
+    ]
+}
+
 #[instrument(level = "trace", skip(evidence))]
 pub(crate) fn run_invariant_checks(
     evidence: RunInvariantEvidence<'_>,

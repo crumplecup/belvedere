@@ -556,6 +556,33 @@ fn run_pipeline_uses_the_normal_amenable_artifact_path() -> Result<()> {
         ui_stage.counts().get("ui_ir_viewports_verified_total"),
         Some(&3)
     );
+    assert_eq!(
+        ui_stage.counts().get("ui_ir_output_kind_minted_standard"),
+        Some(&report.projection().minted_standards().len())
+    );
+    assert_eq!(
+        ui_stage.counts().get("ui_ir_output_kind_section"),
+        Some(&report.projection().sections().len())
+    );
+    assert_eq!(
+        ui_stage.counts().get("ui_ir_output_kind_viewport"),
+        Some(&report.projection().viewport_verifications().len())
+    );
+    assert_eq!(
+        ui_stage
+            .counts()
+            .get("ui_ir_output_kind_section_root_widget"),
+        Some(&report.projection().sections().len())
+    );
+    assert_eq!(
+        ui_stage.counts().get("ui_ir_output_kind_trace_widget"),
+        Some(&report.projection().trace_widgets().len())
+    );
+    assert_eq!(
+        ui_stage.counts().get("ui_ir_output_kind_trace_widget_ref"),
+        Some(&report.projection().trace_widgets().len())
+    );
+    assert_eq!(ui_stage.output_ids(), report.ui_ir_receipt().output_ids());
     assert!(
         report
             .ui_ir_receipt()
@@ -613,6 +640,18 @@ fn run_pipeline_uses_the_normal_amenable_artifact_path() -> Result<()> {
             .invariant_checks()
             .iter()
             .any(|check| { check.name() == "ui_ir_input_sources_reachable" && check.passed() })
+    );
+    assert!(
+        ui_stage
+            .invariant_checks()
+            .iter()
+            .any(|check| { check.name() == "ui_ir_output_ids_classified" && check.passed() })
+    );
+    assert!(
+        ui_stage
+            .invariant_checks()
+            .iter()
+            .any(|check| { check.name() == "ui_ir_core_counts_match_outputs" && check.passed() })
     );
     assert!(
         report
@@ -1189,6 +1228,31 @@ fn assert_ui_ir_receipt(receipt: &Value) {
     assert_eq!(
         receipt["trace_source_counts"]["trace_unique_source_records"].as_u64(),
         Some(7)
+    );
+    assert_eq!(receipt["output_ids"].as_array().map(Vec::len), Some(153));
+    assert_eq!(
+        receipt["output_kind_counts"]["ui_ir_output_kind_minted_standard"].as_u64(),
+        Some(4)
+    );
+    assert_eq!(
+        receipt["output_kind_counts"]["ui_ir_output_kind_section"].as_u64(),
+        Some(13)
+    );
+    assert_eq!(
+        receipt["output_kind_counts"]["ui_ir_output_kind_viewport"].as_u64(),
+        Some(3)
+    );
+    assert_eq!(
+        receipt["output_kind_counts"]["ui_ir_output_kind_section_root_widget"].as_u64(),
+        Some(13)
+    );
+    assert_eq!(
+        receipt["output_kind_counts"]["ui_ir_output_kind_trace_widget"].as_u64(),
+        Some(60)
+    );
+    assert_eq!(
+        receipt["output_kind_counts"]["ui_ir_output_kind_trace_widget_ref"].as_u64(),
+        Some(60)
     );
     assert!(
         receipt["section_ids"]

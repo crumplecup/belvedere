@@ -95,6 +95,66 @@ fn ui_ir_projection_mints_elicit_ui_standards_and_tree_proofs() -> Result<()> {
         unique_trace_widget_ref_ids.len(),
         trace_widget_ref_ids.len()
     );
+    assert_eq!(
+        receipt.output_ids().len(),
+        projection.minted_standards().len()
+            + projection.sections().len()
+            + projection.viewport_verifications().len()
+            + projection.sections().len()
+            + projection.trace_widgets().len()
+            + projection.trace_widgets().len()
+    );
+    assert!(
+        receipt
+            .output_ids()
+            .contains(projection.minted_standards()[0].standard())
+    );
+    assert!(
+        receipt
+            .output_ids()
+            .contains(&UI_IR_SECTION_CLAIM_EXPLORER.to_owned())
+    );
+    assert!(
+        receipt
+            .output_ids()
+            .contains(&"elicit_ui.viewport:390x844".to_owned())
+    );
+    assert_eq!(
+        receipt
+            .output_kind_counts()
+            .get("ui_ir_output_kind_minted_standard"),
+        Some(&projection.minted_standards().len())
+    );
+    assert_eq!(
+        receipt
+            .output_kind_counts()
+            .get("ui_ir_output_kind_section"),
+        Some(&projection.sections().len())
+    );
+    assert_eq!(
+        receipt
+            .output_kind_counts()
+            .get("ui_ir_output_kind_viewport"),
+        Some(&projection.viewport_verifications().len())
+    );
+    assert_eq!(
+        receipt
+            .output_kind_counts()
+            .get("ui_ir_output_kind_section_root_widget"),
+        Some(&projection.sections().len())
+    );
+    assert_eq!(
+        receipt
+            .output_kind_counts()
+            .get("ui_ir_output_kind_trace_widget"),
+        Some(&projection.trace_widgets().len())
+    );
+    assert_eq!(
+        receipt
+            .output_kind_counts()
+            .get("ui_ir_output_kind_trace_widget_ref"),
+        Some(&projection.trace_widgets().len())
+    );
     let section_ids = projection
         .sections()
         .iter()

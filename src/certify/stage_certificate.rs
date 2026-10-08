@@ -12,9 +12,9 @@ use crate::{
         BELVEDERE_STAGE_CERTIFICATE_SCHEMA_ID, BELVEDERE_STAGE_CERTIFICATE_SCHEMA_VERSION,
         BelvedereInvariantCheck, IngestionReceipt, LandscapeDiffReceipt, LandscapeReceipt,
         UiIrReceipt, ViewModelReceipt, diff_trace_invariant_checks, hex_digest,
-        landscape_model_invariant_checks, stage_invariant_checks, ui_ir_trace_invariant_checks,
-        update_field, update_fields, view_model_item_invariant_checks,
-        view_model_trace_invariant_checks,
+        landscape_model_invariant_checks, stage_invariant_checks, ui_ir_output_invariant_checks,
+        ui_ir_trace_invariant_checks, update_field, update_fields,
+        view_model_item_invariant_checks, view_model_trace_invariant_checks,
     },
     contracts::{
         AssessmentStreamIngestionContract, AuditorNavigationContract, BelvedereContract,
@@ -289,27 +289,19 @@ impl BelvedereStageCertificate {
         counts.extend(receipt.trace_source_kind_counts().clone());
         counts.extend(receipt.minted_prop_counts().clone());
         counts.extend(receipt.proof_token_counts().clone());
-        let mut output_ids = receipt.minted_standards().clone();
-        output_ids.extend(receipt.section_ids().iter().cloned());
-        output_ids.extend(
-            receipt
-                .viewport_ids()
-                .iter()
-                .map(|viewport_id| format!("elicit_ui.viewport:{viewport_id}")),
+        counts.extend(receipt.output_kind_counts().clone());
+        let mut additional_invariant_checks = ui_ir_trace_invariant_checks(
+            receipt.counts().widget_count(),
+            receipt.counts().trace_ref_count(),
+            receipt.section_trace_counts(),
+            receipt.trace_source_counts(),
+            receipt.source_record_ids(),
         );
-        output_ids.extend(
-            receipt
-                .section_root_widget_ids()
-                .iter()
-                .map(|widget_id| format!("elicit_ui.section_root_widget:{widget_id}")),
-        );
-        output_ids.extend(
-            receipt
-                .trace_widget_ids()
-                .iter()
-                .map(|widget_id| format!("elicit_ui.trace_widget:{widget_id}")),
-        );
-        output_ids.extend(receipt.trace_widget_ref_ids().iter().cloned());
+        additional_invariant_checks.extend(ui_ir_output_invariant_checks(
+            &counts,
+            receipt.output_kind_counts(),
+            receipt.output_ids(),
+        ));
         Self::new(StageCertificateEvidence {
             stage: BelvederePipelineStage::UiIrProjection,
             contract: receipt.contract().to_owned(),
@@ -317,15 +309,9 @@ impl BelvedereStageCertificate {
             requires: contract_requirements::<ElicitUiProjectionContract>(),
             ensures: contract_guarantees::<ElicitUiProjectionContract>(),
             input_ids: receipt.source_record_ids().clone(),
-            output_ids,
+            output_ids: receipt.output_ids().clone(),
             counts,
-            additional_invariant_checks: ui_ir_trace_invariant_checks(
-                receipt.counts().widget_count(),
-                receipt.counts().trace_ref_count(),
-                receipt.section_trace_counts(),
-                receipt.trace_source_counts(),
-                receipt.source_record_ids(),
-            ),
+            additional_invariant_checks,
             warning_count: 0,
         })
     }
