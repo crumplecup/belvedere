@@ -168,6 +168,43 @@ fn run_pipeline_uses_the_normal_amenable_artifact_path() -> Result<()> {
     assert!(
         report
             .certificate()
+            .stage_certificates()
+            .iter()
+            .filter(|certificate| {
+                matches!(
+                    certificate.stage(),
+                    BelvederePipelineStage::RegistryIngestion
+                        | BelvederePipelineStage::AssessmentIngestion
+                )
+            })
+            .all(
+                |certificate| certificate.invariant_checks().iter().any(|check| {
+                    check.name() == "ingestion_source_record_ids_classified" && check.passed()
+                })
+            )
+    );
+    assert!(
+        report
+            .certificate()
+            .stage_certificates()
+            .iter()
+            .filter(|certificate| {
+                matches!(
+                    certificate.stage(),
+                    BelvederePipelineStage::RegistryIngestion
+                        | BelvederePipelineStage::AssessmentIngestion
+                )
+            })
+            .all(
+                |certificate| certificate.invariant_checks().iter().any(|check| {
+                    check.name() == "ingestion_decoded_counts_match_source_records"
+                        && check.passed()
+                })
+            )
+    );
+    assert!(
+        report
+            .certificate()
             .invariant_checks()
             .iter()
             .all(|check| check.passed())

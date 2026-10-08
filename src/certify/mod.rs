@@ -30,9 +30,9 @@ pub use diff::{LandscapeDiffReceipt, LandscapeDiffReceiptCounts};
 pub use invariant::BelvedereInvariantCheck;
 pub(crate) use invariant::{
     RunInputArtifactEvidence, RunInvariantEvidence, RunStageCertificateEvidence,
-    diff_item_invariant_checks, diff_trace_invariant_checks, landscape_model_invariant_checks,
-    run_invariant_checks, stage_invariant_checks, ui_ir_output_invariant_checks,
-    ui_ir_trace_invariant_checks, view_model_item_invariant_checks,
+    diff_item_invariant_checks, diff_trace_invariant_checks, ingestion_record_invariant_checks,
+    landscape_model_invariant_checks, run_invariant_checks, stage_invariant_checks,
+    ui_ir_output_invariant_checks, ui_ir_trace_invariant_checks, view_model_item_invariant_checks,
     view_model_trace_invariant_checks,
 };
 pub(crate) use landscape::LandscapeReceiptBuilder;

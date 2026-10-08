@@ -12,9 +12,10 @@ use crate::{
         BELVEDERE_STAGE_CERTIFICATE_SCHEMA_ID, BELVEDERE_STAGE_CERTIFICATE_SCHEMA_VERSION,
         BelvedereInvariantCheck, IngestionReceipt, LandscapeDiffReceipt, LandscapeReceipt,
         UiIrReceipt, ViewModelReceipt, diff_item_invariant_checks, diff_trace_invariant_checks,
-        hex_digest, landscape_model_invariant_checks, stage_invariant_checks,
-        ui_ir_output_invariant_checks, ui_ir_trace_invariant_checks, update_field, update_fields,
-        view_model_item_invariant_checks, view_model_trace_invariant_checks,
+        hex_digest, ingestion_record_invariant_checks, landscape_model_invariant_checks,
+        stage_invariant_checks, ui_ir_output_invariant_checks, ui_ir_trace_invariant_checks,
+        update_field, update_fields, view_model_item_invariant_checks,
+        view_model_trace_invariant_checks,
     },
     contracts::{
         AssessmentStreamIngestionContract, AuditorNavigationContract, BelvedereContract,
@@ -342,6 +343,11 @@ impl BelvedereStageCertificate {
             receipt.unsupported_fields().len(),
         );
         counts.insert("warnings".to_owned(), receipt.warnings().len());
+        let additional_invariant_checks = ingestion_record_invariant_checks(
+            receipt.decoded_counts(),
+            receipt.source_record_kind_counts(),
+            receipt.source_record_ids(),
+        );
         Self::new(StageCertificateEvidence {
             stage,
             contract: receipt.contract().to_owned(),
@@ -357,7 +363,7 @@ impl BelvedereStageCertificate {
             )],
             output_ids: receipt.source_record_ids().clone(),
             counts,
-            additional_invariant_checks: Vec::new(),
+            additional_invariant_checks,
             warning_count: receipt.warnings().len(),
         })
     }

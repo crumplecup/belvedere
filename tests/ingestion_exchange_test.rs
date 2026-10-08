@@ -107,6 +107,23 @@ fn registry_ingestion_preserves_record_identity_and_unknown_fields() -> Result<(
             .get("unsupported_field_record_evidence_links"),
         Some(&1)
     );
+    assert!(
+        certificate
+            .invariant_checks()
+            .iter()
+            .any(
+                |check| check.name() == "ingestion_source_record_ids_classified" && check.passed()
+            )
+    );
+    assert!(
+        certificate
+            .invariant_checks()
+            .iter()
+            .any(
+                |check| check.name() == "ingestion_decoded_counts_match_source_records"
+                    && check.passed()
+            )
+    );
     Ok(())
 }
 
@@ -188,6 +205,23 @@ fn assessment_ingestion_preserves_current_and_legacy_shapes() -> Result<()> {
             .counts()
             .get("unsupported_field_record_assessment_line"),
         Some(&1)
+    );
+    assert!(
+        certificate
+            .invariant_checks()
+            .iter()
+            .any(
+                |check| check.name() == "ingestion_source_record_ids_classified" && check.passed()
+            )
+    );
+    assert!(
+        certificate
+            .invariant_checks()
+            .iter()
+            .any(
+                |check| check.name() == "ingestion_decoded_counts_match_source_records"
+                    && check.passed()
+            )
     );
     Ok(())
 }
