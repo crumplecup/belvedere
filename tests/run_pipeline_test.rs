@@ -99,6 +99,41 @@ fn run_pipeline_uses_the_normal_amenable_artifact_path() -> Result<()> {
             .any(|artifact_id| artifact_id.starts_with("assessment:proof_assessments:"))
     );
     assert_eq!(report.certificate().stage_certificate_ids().len(), 5);
+    assert_eq!(
+        report
+            .certificate()
+            .stage_kind_counts()
+            .get("stage_registry_ingestion"),
+        Some(&1)
+    );
+    assert_eq!(
+        report
+            .certificate()
+            .stage_kind_counts()
+            .get("stage_assessment_ingestion"),
+        Some(&1)
+    );
+    assert_eq!(
+        report
+            .certificate()
+            .stage_kind_counts()
+            .get("stage_landscape_modeling"),
+        Some(&1)
+    );
+    assert_eq!(
+        report
+            .certificate()
+            .stage_kind_counts()
+            .get("stage_auditor_navigation"),
+        Some(&1)
+    );
+    assert_eq!(
+        report
+            .certificate()
+            .stage_kind_counts()
+            .get("stage_ui_ir_projection"),
+        Some(&1)
+    );
     assert_eq!(report.certificate().pipeline_claims().len(), 8);
     assert!(
         report
@@ -215,6 +250,13 @@ fn run_pipeline_uses_the_normal_amenable_artifact_path() -> Result<()> {
             .invariant_checks()
             .iter()
             .any(|check| check.name() == "run_stage_certificate_digests_match")
+    );
+    assert!(
+        report
+            .certificate()
+            .invariant_checks()
+            .iter()
+            .any(|check| check.name() == "run_stage_certificate_kinds_classified")
     );
     assert!(
         report
@@ -797,6 +839,8 @@ fn run_certificate_is_reproducible_portable_evidence() -> Result<()> {
     assert!(encoded.contains("the emitted tree is an elicit_ui VerifiedTree"));
     assert!(encoded.contains("contract_obligations_named"));
     assert!(encoded.contains("run_stage_certificate_digests_match"));
+    assert!(encoded.contains("run_stage_certificate_kinds_classified"));
+    assert!(encoded.contains("stage_kind_counts"));
     assert!(encoded.contains("warning_count_consistent"));
     Ok(())
 }

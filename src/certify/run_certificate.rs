@@ -89,6 +89,7 @@ pub struct BelvedereRunCertificate {
     stage_certificates: Vec<BelvedereStageCertificate>,
     stage_certificate_ids: Vec<String>,
     stage_certificate_digests: Vec<String>,
+    stage_kind_counts: BTreeMap<String, usize>,
     invariant_checks: Vec<BelvedereInvariantCheck>,
     digest: String,
 }
@@ -190,6 +191,7 @@ impl BelvedereRunCertificate {
             .iter()
             .map(|certificate| certificate.digest().to_owned())
             .collect::<Vec<_>>();
+        let stage_kind_counts = stage_kind_counts(&stage_certificates);
         let stage_certificate_digest_matches = stage_certificates
             .iter()
             .zip(&stage_certificate_digests)
@@ -210,6 +212,7 @@ impl BelvedereRunCertificate {
             RunStageCertificateEvidence::new(
                 &stage_certificate_ids,
                 &stage_certificate_digests,
+                &stage_kind_counts,
                 stage_certificate_digest_matches,
             ),
         ));
@@ -222,6 +225,7 @@ impl BelvedereRunCertificate {
             input_artifact_digests: &input_artifact_digests,
             stage_certificate_ids: &stage_certificate_ids,
             stage_certificate_digests: &stage_certificate_digests,
+            stage_kind_counts: &stage_kind_counts,
             invariant_checks: &invariant_checks,
         });
         let id = format!("belvedere.run:{digest}");
@@ -238,6 +242,7 @@ impl BelvedereRunCertificate {
             stage_certificates,
             stage_certificate_ids,
             stage_certificate_digests,
+            stage_kind_counts,
             invariant_checks,
             digest,
         }
@@ -254,6 +259,7 @@ struct RunDigestEvidence<'evidence> {
     input_artifact_digests: &'evidence [String],
     stage_certificate_ids: &'evidence [String],
     stage_certificate_digests: &'evidence [String],
+    stage_kind_counts: &'evidence BTreeMap<String, usize>,
     invariant_checks: &'evidence [BelvedereInvariantCheck],
 }
 
@@ -292,6 +298,10 @@ fn run_digest(evidence: RunDigestEvidence<'_>) -> String {
     update_fields(&mut hasher, evidence.input_artifact_digests);
     update_fields(&mut hasher, evidence.stage_certificate_ids);
     update_fields(&mut hasher, evidence.stage_certificate_digests);
+    for (stage, count) in evidence.stage_kind_counts {
+        update_field(&mut hasher, stage);
+        update_field(&mut hasher, &count.to_string());
+    }
     for check in evidence.invariant_checks {
         update_field(&mut hasher, check.name());
         update_field(&mut hasher, &check.passed().to_string());
@@ -312,6 +322,17 @@ fn pipeline_claims_for_stage_certificates(
     standard_ids.sort();
     standard_ids.dedup();
     belvedere_pipeline_claims_for_standard_ids(&standard_ids)
+}
+
+#[instrument(level = "debug", skip(stage_certificates))]
+fn stage_kind_counts(stage_certificates: &[BelvedereStageCertificate]) -> BTreeMap<String, usize> {
+    let mut counts = BTreeMap::new();
+    for certificate in stage_certificates {
+        *counts
+            .entry(format!("stage_{}", certificate.stage().as_str()))
+            .or_insert(0) += 1;
+    }
+    counts
 }
 
 #[instrument(level = "debug", skip(belvedere_version))]

@@ -30,6 +30,7 @@ pub(crate) struct RunInputArtifactEvidence<'evidence> {
 pub(crate) struct RunStageCertificateEvidence<'evidence> {
     ids: &'evidence [String],
     digests: &'evidence [String],
+    stage_kind_counts: &'evidence BTreeMap<String, usize>,
     digest_matches: bool,
 }
 
@@ -88,6 +89,26 @@ pub(crate) fn run_invariant_checks(
                 "{} stage IDs and {} stage digests recorded",
                 evidence.stage_certificates.ids.len(),
                 evidence.stage_certificates.digests.len()
+            ),
+        ),
+        BelvedereInvariantCheck::new(
+            "run_stage_certificate_kinds_classified".to_owned(),
+            !evidence.stage_certificates.stage_kind_counts.is_empty()
+                && evidence
+                    .stage_certificates
+                    .stage_kind_counts
+                    .values()
+                    .all(|count| *count > 0)
+                && evidence.stage_certificates.ids.len()
+                    == evidence
+                        .stage_certificates
+                        .stage_kind_counts
+                        .values()
+                        .sum::<usize>(),
+            format!(
+                "{} stage certificates classified into {} stage kinds",
+                evidence.stage_certificates.ids.len(),
+                evidence.stage_certificates.stage_kind_counts.len()
             ),
         ),
     ]
