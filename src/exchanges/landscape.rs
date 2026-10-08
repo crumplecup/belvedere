@@ -5,7 +5,10 @@ use std::collections::BTreeMap;
 use tracing::instrument;
 
 use crate::{
-    certify::{LandscapeReceipt, LandscapeReceiptBuilder, LandscapeReceiptCounts},
+    certify::{
+        LandscapeReceipt, LandscapeReceiptBuilder, LandscapeReceiptCounts,
+        LandscapeReceiptDigestEvidenceBuilder, landscape_receipt_identity,
+    },
     contracts::{
         BelvedereContract, ClaimEdge, KaniProofSummary, LandscapeAssessment, LandscapeClaim,
         LandscapeContractFragment, LandscapeGraph, LandscapeGraphBuilder, LandscapeInput,
@@ -123,16 +126,39 @@ impl BelvedereExchange<LandscapeModelingContract> for LandscapeModeling {
             graph.gaps().len(),
         );
         let landscape_item_ids = landscape_item_ids(&graph);
+        let item_kind_counts = landscape_item_kind_counts(&landscape_item_ids);
+        let gap_kind_counts = gap_kind_counts(graph.gaps());
+        let assessment_recency_counts = assessment_recency_counts(graph.assessments());
+        let source_receipt_ids = input.source_receipt_ids().to_vec();
+        let source_record_ids = graph.source_record_ids().to_vec();
+        let warnings = Vec::new();
+        let digest_evidence = LandscapeReceiptDigestEvidenceBuilder::default()
+            .contract(LandscapeModelingContract::NAME)
+            .counts(counts)
+            .item_kind_counts(&item_kind_counts)
+            .gap_kind_counts(&gap_kind_counts)
+            .assessment_recency_counts(&assessment_recency_counts)
+            .landscape_item_ids(&landscape_item_ids)
+            .source_receipt_ids(&source_receipt_ids)
+            .source_record_ids(&source_record_ids)
+            .warnings(&warnings)
+            .build()
+            .map_err(|error| {
+                BelvedereConstructionError::new("LandscapeReceiptDigestEvidence", error)
+            })?;
+        let (receipt_id, receipt_digest) = landscape_receipt_identity(digest_evidence);
         let receipt = LandscapeReceiptBuilder::default()
             .contract(LandscapeModelingContract::NAME)
             .counts(counts)
-            .item_kind_counts(landscape_item_kind_counts(&landscape_item_ids))
-            .gap_kind_counts(gap_kind_counts(graph.gaps()))
-            .assessment_recency_counts(assessment_recency_counts(graph.assessments()))
+            .receipt_id(receipt_id)
+            .receipt_digest(receipt_digest)
+            .item_kind_counts(item_kind_counts)
+            .gap_kind_counts(gap_kind_counts)
+            .assessment_recency_counts(assessment_recency_counts)
             .landscape_item_ids(landscape_item_ids)
-            .source_receipt_ids(input.source_receipt_ids().to_vec())
-            .source_record_ids(graph.source_record_ids().to_vec())
-            .warnings(Vec::new())
+            .source_receipt_ids(source_receipt_ids)
+            .source_record_ids(source_record_ids)
+            .warnings(warnings)
             .build()
             .map_err(|error| BelvedereConstructionError::new("LandscapeReceipt", error))?;
 

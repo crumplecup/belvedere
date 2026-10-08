@@ -35,8 +35,10 @@ pub(crate) use invariant::{
     ui_ir_output_invariant_checks, ui_ir_trace_invariant_checks, view_model_item_invariant_checks,
     view_model_trace_invariant_checks,
 };
-pub(crate) use landscape::LandscapeReceiptBuilder;
 pub use landscape::{LandscapeReceipt, LandscapeReceiptCounts};
+pub(crate) use landscape::{
+    LandscapeReceiptBuilder, LandscapeReceiptDigestEvidenceBuilder, landscape_receipt_identity,
+};
 pub use receipt::IngestionReceipt;
 pub use run_certificate::{
     BelvedereInvocationSurface, BelvedereRunCertificate, BelvedereRunInvocation,

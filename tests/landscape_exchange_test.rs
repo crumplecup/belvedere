@@ -68,6 +68,7 @@ fn landscape_modeling_maps_decoded_records_into_a_review_graph() -> Result<()> {
             .source_record_ids()
             .contains(&"kani_proof:belvedere::ingestion::record_identity_is_preserved".to_owned())
     );
+    assert_landscape_receipt_identity(&receipt);
     assert_eq!(receipt.source_receipt_ids().len(), 2);
     assert!(
         receipt
@@ -245,6 +246,18 @@ fn landscape_modeling_keeps_unverified_backend_runs_out_of_proof_coverage() -> R
         Some(&1)
     );
     Ok(())
+}
+
+fn assert_landscape_receipt_identity(receipt: &belvedere::LandscapeReceipt) {
+    assert!(
+        receipt
+            .receipt_id()
+            .starts_with("belvedere.receipt.landscape:")
+    );
+    assert_eq!(
+        receipt.receipt_id(),
+        &format!("belvedere.receipt.landscape:{}", receipt.receipt_digest())
+    );
 }
 
 #[test]

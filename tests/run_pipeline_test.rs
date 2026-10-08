@@ -1140,6 +1140,7 @@ fn diff_args_with_empty_previous_assessments(
 }
 
 fn assert_landscape_receipt(receipt: &Value) {
+    assert_landscape_receipt_identity(receipt);
     assert_eq!(
         receipt["contract"].as_str(),
         Some("belvedere.model.landscape")
@@ -1187,6 +1188,7 @@ fn assert_landscape_receipt(receipt: &Value) {
 }
 
 fn assert_previous_landscape_receipt(receipt: &Value) {
+    assert_landscape_receipt_identity(receipt);
     assert_eq!(
         receipt["contract"].as_str(),
         Some("belvedere.model.landscape")
@@ -1204,6 +1206,20 @@ fn assert_previous_landscape_receipt(receipt: &Value) {
         Some(5)
     );
     assert_landscape_receipt_sources(receipt, 2);
+}
+
+fn assert_landscape_receipt_identity(receipt: &Value) {
+    assert!(
+        receipt["receipt_id"]
+            .as_str()
+            .is_some_and(|id| id.starts_with("belvedere.receipt.landscape:"))
+    );
+    assert_eq!(
+        receipt["receipt_id"].as_str().map(str::to_owned),
+        receipt["receipt_digest"]
+            .as_str()
+            .map(|digest| format!("belvedere.receipt.landscape:{digest}"))
+    );
 }
 
 fn assert_landscape_receipt_sources(receipt: &Value, expected_count: usize) {

@@ -5,6 +5,13 @@ use std::collections::BTreeMap;
 use derive_builder::Builder;
 use derive_getters::Getters;
 use serde::Serialize;
+use sha2::{Digest as _, Sha256};
+use tracing::instrument;
+
+use crate::certify::{hex_digest, update_field, update_fields};
+
+const LANDSCAPE_RECEIPT_SCHEMA_ID: &str = "belvedere.receipts.landscape.v1";
+const LANDSCAPE_RECEIPT_ID_PREFIX: &str = "belvedere.receipt.landscape";
 
 /// Audit receipt emitted by a landscape modeling exchange.
 #[derive(Debug, Clone, PartialEq, Eq, Getters, Builder, Serialize)]
@@ -13,6 +20,8 @@ pub struct LandscapeReceipt {
     contract: String,
     #[getter(skip)]
     counts: LandscapeReceiptCounts,
+    receipt_id: String,
+    receipt_digest: String,
     item_kind_counts: BTreeMap<String, usize>,
     gap_kind_counts: BTreeMap<String, usize>,
     assessment_recency_counts: BTreeMap<String, usize>,
@@ -64,6 +73,40 @@ impl LandscapeReceipt {
     pub const fn counts(&self) -> LandscapeReceiptCounts {
         self.counts
     }
+}
+
+/// Evidence used to identify a landscape receipt.
+#[derive(Debug, Clone, Copy, Builder)]
+#[builder(vis = "pub(crate)")]
+pub(crate) struct LandscapeReceiptDigestEvidence<'evidence> {
+    /// Exchange contract that emitted the receipt.
+    contract: &'evidence str,
+    /// Modeled landscape counts.
+    counts: LandscapeReceiptCounts,
+    /// Counts grouped by emitted landscape item kind.
+    item_kind_counts: &'evidence BTreeMap<String, usize>,
+    /// Counts grouped by conservative gap kind.
+    gap_kind_counts: &'evidence BTreeMap<String, usize>,
+    /// Counts grouped by assessment recency.
+    assessment_recency_counts: &'evidence BTreeMap<String, usize>,
+    /// Stable landscape item IDs emitted by the exchange.
+    landscape_item_ids: &'evidence [String],
+    /// Upstream ingestion receipt IDs used as input evidence.
+    source_receipt_ids: &'evidence [String],
+    /// Source record IDs represented by the landscape.
+    source_record_ids: &'evidence [String],
+    /// Recoverable warnings emitted by the exchange.
+    warnings: &'evidence [String],
+}
+
+/// Build the stable identifier and digest for a landscape receipt.
+#[instrument(level = "debug", skip(evidence))]
+pub(crate) fn landscape_receipt_identity(
+    evidence: LandscapeReceiptDigestEvidence<'_>,
+) -> (String, String) {
+    let receipt_digest = landscape_receipt_digest(evidence);
+    let receipt_id = format!("{LANDSCAPE_RECEIPT_ID_PREFIX}:{receipt_digest}");
+    (receipt_id, receipt_digest)
 }
 
 /// Counts emitted by a landscape modeling receipt.
@@ -132,5 +175,34 @@ impl LandscapeReceiptCounts {
     #[must_use]
     pub const fn gap_count(self) -> usize {
         self.gap_count
+    }
+}
+
+#[instrument(level = "debug", skip(evidence))]
+fn landscape_receipt_digest(evidence: LandscapeReceiptDigestEvidence<'_>) -> String {
+    let mut hasher = Sha256::new();
+    update_field(&mut hasher, LANDSCAPE_RECEIPT_SCHEMA_ID);
+    update_field(&mut hasher, evidence.contract);
+    update_field(&mut hasher, &evidence.counts.claim_count().to_string());
+    update_field(&mut hasher, &evidence.counts.edge_count().to_string());
+    update_field(&mut hasher, &evidence.counts.root_count().to_string());
+    update_field(&mut hasher, &evidence.counts.proof_count().to_string());
+    update_field(&mut hasher, &evidence.counts.assessment_count().to_string());
+    update_field(&mut hasher, &evidence.counts.gap_count().to_string());
+    update_counts(&mut hasher, evidence.item_kind_counts);
+    update_counts(&mut hasher, evidence.gap_kind_counts);
+    update_counts(&mut hasher, evidence.assessment_recency_counts);
+    update_fields(&mut hasher, evidence.landscape_item_ids);
+    update_fields(&mut hasher, evidence.source_receipt_ids);
+    update_fields(&mut hasher, evidence.source_record_ids);
+    update_fields(&mut hasher, evidence.warnings);
+    hex_digest(hasher)
+}
+
+#[instrument(level = "trace", skip(hasher, counts))]
+fn update_counts(hasher: &mut Sha256, counts: &BTreeMap<String, usize>) {
+    for (name, count) in counts {
+        update_field(hasher, name);
+        update_field(hasher, &count.to_string());
     }
 }
