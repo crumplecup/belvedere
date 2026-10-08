@@ -1008,6 +1008,7 @@ fn cli_help_is_a_successful_public_output_contract() -> Result<()> {
 }
 
 fn assert_registry_ingestion_receipt(receipt: &Value) {
+    assert_ingestion_receipt_identity(receipt);
     assert_eq!(
         receipt["contract"].as_str(),
         Some("belvedere.ingest.registry_dump")
@@ -1047,6 +1048,7 @@ fn assert_registry_ingestion_receipt(receipt: &Value) {
 }
 
 fn assert_assessment_ingestion_receipt(receipt: &Value) {
+    assert_ingestion_receipt_identity(receipt);
     assert_eq!(
         receipt["contract"].as_str(),
         Some("belvedere.ingest.proof_assessments")
@@ -1072,6 +1074,7 @@ fn assert_assessment_ingestion_receipt(receipt: &Value) {
 }
 
 fn assert_empty_assessment_ingestion_receipt(receipt: &Value) {
+    assert_ingestion_receipt_identity(receipt);
     assert_eq!(
         receipt["contract"].as_str(),
         Some("belvedere.ingest.proof_assessments")
@@ -1091,6 +1094,20 @@ fn assert_empty_assessment_ingestion_receipt(receipt: &Value) {
     assert_eq!(
         receipt["source_record_ids"].as_array().map(Vec::len),
         Some(0)
+    );
+}
+
+fn assert_ingestion_receipt_identity(receipt: &Value) {
+    assert!(
+        receipt["receipt_id"]
+            .as_str()
+            .is_some_and(|id| id.starts_with("belvedere.receipt.ingestion:"))
+    );
+    assert_eq!(
+        receipt["receipt_id"].as_str().map(str::to_owned),
+        receipt["receipt_digest"]
+            .as_str()
+            .map(|digest| format!("belvedere.receipt.ingestion:{digest}"))
     );
 }
 

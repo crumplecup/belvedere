@@ -44,6 +44,7 @@ fn registry_ingestion_preserves_record_identity_and_unknown_fields() -> Result<(
         receipt.format(),
         AcceptedAmenableArtifactFormat::RegistryDumpJson
     );
+    assert_ingestion_receipt_identity(&receipt);
     assert_eq!(receipt.decoded_counts()["evidence_links"], 1);
     assert_eq!(
         receipt
@@ -164,6 +165,7 @@ fn assessment_ingestion_preserves_current_and_legacy_shapes() -> Result<()> {
     assert_eq!(legacy.source_line(), 2);
 
     assert_eq!(receipt.decoded_counts()["assessments"], 2);
+    assert_ingestion_receipt_identity(&receipt);
     assert_eq!(
         receipt
             .source_record_kind_counts()
@@ -224,6 +226,18 @@ fn assessment_ingestion_preserves_current_and_legacy_shapes() -> Result<()> {
             )
     );
     Ok(())
+}
+
+fn assert_ingestion_receipt_identity(receipt: &belvedere::IngestionReceipt) {
+    assert!(
+        receipt
+            .receipt_id()
+            .starts_with("belvedere.receipt.ingestion:")
+    );
+    assert_eq!(
+        receipt.receipt_id(),
+        &format!("belvedere.receipt.ingestion:{}", receipt.receipt_digest())
+    );
 }
 
 #[test]
