@@ -968,6 +968,21 @@ fn assert_landscape_diff_receipt(receipt: &Value) {
         receipt["trace_source_kind_counts"]["diff_trace_source_kind_assessment"].as_u64(),
         Some(5)
     );
+    assert_eq!(
+        receipt["trace_source_counts"]["diff_trace_source_links"].as_u64(),
+        Some(8)
+    );
+    assert_eq!(
+        receipt["trace_source_counts"]["diff_trace_unique_source_records"].as_u64(),
+        Some(3)
+    );
+    assert!(
+        receipt["trace_source_record_ids"]
+            .as_array()
+            .is_some_and(|ids| ids
+                .iter()
+                .any(|id| id.as_str() == Some("assessment:assess-belvedere-ingestion-1")))
+    );
     assert_eq!(receipt["diff_item_ids"].as_array().map(Vec::len), Some(6));
     assert!(receipt["diff_item_ids"].as_array().is_some_and(|ids| {
         ids.iter().any(|id| {
@@ -2322,6 +2337,14 @@ fn cli_can_emit_the_landscape_diff_certificate_as_json() -> Result<()> {
         Some("belvedere.diff.landscape")
     );
     assert_eq!(certificate["counts"]["total_items"].as_u64(), Some(6));
+    assert_eq!(
+        certificate["counts"]["diff_trace_source_links"].as_u64(),
+        Some(8)
+    );
+    assert_eq!(
+        certificate["counts"]["diff_trace_unique_source_records"].as_u64(),
+        Some(3)
+    );
     assert!(
         certificate["invariant_checks"]
             .as_array()
@@ -2417,6 +2440,17 @@ fn cli_can_emit_the_landscape_diff_run_certificate_as_json() -> Result<()> {
                         && stage_certificate["contract"].as_str()
                             == Some("belvedere.diff.landscape")
                         && stage_certificate["counts"]["total_items"].as_u64() == Some(6)
+                        && stage_certificate["counts"]["diff_trace_source_links"].as_u64()
+                            == Some(8)
+                        && stage_certificate["invariant_checks"]
+                            .as_array()
+                            .is_some_and(|checks| {
+                                checks.iter().any(|check| {
+                                    check["name"].as_str()
+                                        == Some("landscape_diff_trace_sources_admissible")
+                                        && check["passed"].as_bool() == Some(true)
+                                })
+                            })
                 })
             )
     );
