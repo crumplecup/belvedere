@@ -14,6 +14,7 @@ pub(crate) struct RunInvariantEvidence<'evidence> {
     invocation_surface: &'evidence str,
     invocation_arguments: &'evidence [String],
     pipeline_claim_ids: &'evidence [String],
+    pipeline_claim_phase_counts: &'evidence BTreeMap<String, usize>,
     input_artifacts: RunInputArtifactEvidence<'evidence>,
     stage_certificates: RunStageCertificateEvidence<'evidence>,
 }
@@ -77,6 +78,21 @@ pub(crate) fn run_invariant_checks(
             format!(
                 "{} unique pipeline claim records emitted",
                 evidence.pipeline_claim_ids.len()
+            ),
+        ),
+        BelvedereInvariantCheck::new(
+            "run_pipeline_claim_phases_classified".to_owned(),
+            !evidence.pipeline_claim_phase_counts.is_empty()
+                && evidence
+                    .pipeline_claim_phase_counts
+                    .values()
+                    .all(|count| *count > 0)
+                && evidence.pipeline_claim_ids.len()
+                    == evidence.pipeline_claim_phase_counts.values().sum::<usize>(),
+            format!(
+                "{} pipeline claims classified into {} phases",
+                evidence.pipeline_claim_ids.len(),
+                evidence.pipeline_claim_phase_counts.len()
             ),
         ),
         BelvedereInvariantCheck::new(

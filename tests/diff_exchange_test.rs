@@ -477,6 +477,41 @@ fn landscape_diff_runner_uses_the_normal_artifact_path() -> Result<()> {
             .get("stage_landscape_diff"),
         Some(&1)
     );
+    assert_eq!(
+        report
+            .certificate()
+            .pipeline_claim_phase_counts()
+            .get("phase_ingestion"),
+        Some(&2)
+    );
+    assert_eq!(
+        report
+            .certificate()
+            .pipeline_claim_phase_counts()
+            .get("phase_landscape"),
+        Some(&2)
+    );
+    assert_eq!(
+        report
+            .certificate()
+            .pipeline_claim_phase_counts()
+            .get("phase_view_model"),
+        Some(&1)
+    );
+    assert_eq!(
+        report
+            .certificate()
+            .pipeline_claim_phase_counts()
+            .get("phase_ui_ir"),
+        Some(&2)
+    );
+    assert_eq!(
+        report
+            .certificate()
+            .pipeline_claim_phase_counts()
+            .get("phase_run"),
+        Some(&1)
+    );
     assert!(
         report
             .manifest()

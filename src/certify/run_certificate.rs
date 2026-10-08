@@ -84,6 +84,7 @@ pub struct BelvedereRunCertificate {
     component_versions: BTreeMap<String, String>,
     invocation: BelvedereRunInvocation,
     pipeline_claims: Vec<BelvederePipelineClaim>,
+    pipeline_claim_phase_counts: BTreeMap<String, usize>,
     input_artifact_ids: Vec<String>,
     input_artifact_digests: Vec<String>,
     stage_certificates: Vec<BelvedereStageCertificate>,
@@ -201,6 +202,7 @@ impl BelvedereRunCertificate {
             .iter()
             .map(|claim| claim.claim_id().to_owned())
             .collect::<Vec<_>>();
+        let pipeline_claim_phase_counts = pipeline_claim_phase_counts(&pipeline_claims);
         let belvedere_version = env!("CARGO_PKG_VERSION").to_owned();
         let component_versions = component_versions(&belvedere_version);
         let invariant_checks = run_invariant_checks(RunInvariantEvidence::new(
@@ -208,6 +210,7 @@ impl BelvedereRunCertificate {
             invocation.surface().as_str(),
             invocation.arguments(),
             &pipeline_claim_ids,
+            &pipeline_claim_phase_counts,
             RunInputArtifactEvidence::new(&input_artifact_ids, &input_artifact_digests),
             RunStageCertificateEvidence::new(
                 &stage_certificate_ids,
@@ -221,6 +224,7 @@ impl BelvedereRunCertificate {
             component_versions: &component_versions,
             invocation: &invocation,
             pipeline_claims: &pipeline_claims,
+            pipeline_claim_phase_counts: &pipeline_claim_phase_counts,
             input_artifact_ids: &input_artifact_ids,
             input_artifact_digests: &input_artifact_digests,
             stage_certificate_ids: &stage_certificate_ids,
@@ -237,6 +241,7 @@ impl BelvedereRunCertificate {
             component_versions,
             invocation,
             pipeline_claims,
+            pipeline_claim_phase_counts,
             input_artifact_ids,
             input_artifact_digests,
             stage_certificates,
@@ -255,6 +260,7 @@ struct RunDigestEvidence<'evidence> {
     component_versions: &'evidence BTreeMap<String, String>,
     invocation: &'evidence BelvedereRunInvocation,
     pipeline_claims: &'evidence [BelvederePipelineClaim],
+    pipeline_claim_phase_counts: &'evidence BTreeMap<String, usize>,
     input_artifact_ids: &'evidence [String],
     input_artifact_digests: &'evidence [String],
     stage_certificate_ids: &'evidence [String],
@@ -294,6 +300,10 @@ fn run_digest(evidence: RunDigestEvidence<'_>) -> String {
         update_field(&mut hasher, claim.description());
         update_field(&mut hasher, claim.standard_type());
     }
+    for (phase, count) in evidence.pipeline_claim_phase_counts {
+        update_field(&mut hasher, phase);
+        update_field(&mut hasher, &count.to_string());
+    }
     update_fields(&mut hasher, evidence.input_artifact_ids);
     update_fields(&mut hasher, evidence.input_artifact_digests);
     update_fields(&mut hasher, evidence.stage_certificate_ids);
@@ -322,6 +332,19 @@ fn pipeline_claims_for_stage_certificates(
     standard_ids.sort();
     standard_ids.dedup();
     belvedere_pipeline_claims_for_standard_ids(&standard_ids)
+}
+
+#[instrument(level = "debug", skip(pipeline_claims))]
+fn pipeline_claim_phase_counts(
+    pipeline_claims: &[BelvederePipelineClaim],
+) -> BTreeMap<String, usize> {
+    let mut counts = BTreeMap::new();
+    for claim in pipeline_claims {
+        *counts
+            .entry(format!("phase_{}", claim.phase()))
+            .or_insert(0) += 1;
+    }
+    counts
 }
 
 #[instrument(level = "debug", skip(stage_certificates))]

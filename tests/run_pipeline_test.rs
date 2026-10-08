@@ -135,6 +135,41 @@ fn run_pipeline_uses_the_normal_amenable_artifact_path() -> Result<()> {
         Some(&1)
     );
     assert_eq!(report.certificate().pipeline_claims().len(), 8);
+    assert_eq!(
+        report
+            .certificate()
+            .pipeline_claim_phase_counts()
+            .get("phase_ingestion"),
+        Some(&2)
+    );
+    assert_eq!(
+        report
+            .certificate()
+            .pipeline_claim_phase_counts()
+            .get("phase_landscape"),
+        Some(&2)
+    );
+    assert_eq!(
+        report
+            .certificate()
+            .pipeline_claim_phase_counts()
+            .get("phase_view_model"),
+        Some(&1)
+    );
+    assert_eq!(
+        report
+            .certificate()
+            .pipeline_claim_phase_counts()
+            .get("phase_ui_ir"),
+        Some(&2)
+    );
+    assert_eq!(
+        report
+            .certificate()
+            .pipeline_claim_phase_counts()
+            .get("phase_run"),
+        Some(&1)
+    );
     assert!(
         report
             .certificate()
@@ -292,6 +327,13 @@ fn run_pipeline_uses_the_normal_amenable_artifact_path() -> Result<()> {
             .invariant_checks()
             .iter()
             .any(|check| check.name() == "run_pipeline_claims_recorded" && check.passed())
+    );
+    assert!(
+        report
+            .certificate()
+            .invariant_checks()
+            .iter()
+            .any(|check| check.name() == "run_pipeline_claim_phases_classified" && check.passed())
     );
     assert!(
         report
@@ -868,6 +910,8 @@ fn run_certificate_is_reproducible_portable_evidence() -> Result<()> {
     assert!(encoded.contains("contract_obligations_named"));
     assert!(encoded.contains("run_stage_certificate_digests_match"));
     assert!(encoded.contains("run_stage_certificate_kinds_classified"));
+    assert!(encoded.contains("run_pipeline_claim_phases_classified"));
+    assert!(encoded.contains("pipeline_claim_phase_counts"));
     assert!(encoded.contains("stage_kind_counts"));
     assert!(encoded.contains("warning_count_consistent"));
     Ok(())
@@ -1734,6 +1778,26 @@ fn cli_can_emit_the_run_certificate_as_json() -> Result<()> {
     assert_eq!(
         certificate["pipeline_claims"].as_array().map(Vec::len),
         Some(8)
+    );
+    assert_eq!(
+        certificate["pipeline_claim_phase_counts"]["phase_ingestion"].as_u64(),
+        Some(2)
+    );
+    assert_eq!(
+        certificate["pipeline_claim_phase_counts"]["phase_landscape"].as_u64(),
+        Some(2)
+    );
+    assert_eq!(
+        certificate["pipeline_claim_phase_counts"]["phase_view_model"].as_u64(),
+        Some(1)
+    );
+    assert_eq!(
+        certificate["pipeline_claim_phase_counts"]["phase_ui_ir"].as_u64(),
+        Some(2)
+    );
+    assert_eq!(
+        certificate["pipeline_claim_phase_counts"]["phase_run"].as_u64(),
+        Some(1)
     );
     assert!(
         certificate["pipeline_claims"]
