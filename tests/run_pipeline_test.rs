@@ -438,6 +438,17 @@ fn run_pipeline_uses_the_normal_amenable_artifact_path() -> Result<()> {
             .iter()
             .all(|view_item_id| auditor_stage.output_ids().contains(view_item_id))
     );
+    assert!(
+        auditor_stage
+            .invariant_checks()
+            .iter()
+            .any(|check| { check.name() == "view_model_trace_sources_complete" && check.passed() })
+    );
+    assert!(
+        auditor_stage.invariant_checks().iter().any(|check| {
+            check.name() == "view_model_input_sources_reachable" && check.passed()
+        })
+    );
     let ui_stage = report
         .certificate()
         .stage_certificates()
@@ -501,6 +512,18 @@ fn run_pipeline_uses_the_normal_amenable_artifact_path() -> Result<()> {
             .all(|widget_id| ui_stage
                 .output_ids()
                 .contains(&format!("elicit_ui.trace_widget:{widget_id}")))
+    );
+    assert!(
+        ui_stage
+            .invariant_checks()
+            .iter()
+            .any(|check| { check.name() == "ui_ir_trace_widgets_sourced" && check.passed() })
+    );
+    assert!(
+        ui_stage
+            .invariant_checks()
+            .iter()
+            .any(|check| { check.name() == "ui_ir_input_sources_reachable" && check.passed() })
     );
     assert!(
         report

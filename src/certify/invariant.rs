@@ -1,6 +1,6 @@
 //! Invariant check evidence embedded in stage certificates.
 
-use std::collections::BTreeMap;
+use std::collections::{BTreeMap, BTreeSet};
 
 use derive_getters::Getters;
 use derive_new::new;
@@ -85,6 +85,79 @@ pub(crate) fn stage_invariant_checks(
     ]
 }
 
+#[instrument(level = "trace", skip(trace_source_counts, source_record_ids))]
+pub(crate) fn view_model_trace_invariant_checks(
+    trace_source_counts: &BTreeMap<String, usize>,
+    source_record_ids: &[String],
+) -> Vec<BelvedereInvariantCheck> {
+    let traceable_items = count_value(trace_source_counts, "view_model_traceable_items");
+    let items_with_sources =
+        count_value(trace_source_counts, "view_model_trace_items_with_sources");
+    let source_links = count_value(trace_source_counts, "view_model_trace_source_links");
+    let unique_source_records = count_value(
+        trace_source_counts,
+        "view_model_trace_unique_source_records",
+    );
+    let input_source_records = unique_input_source_records(source_record_ids);
+    vec![
+        BelvedereInvariantCheck::new(
+            "view_model_trace_sources_complete".to_owned(),
+            traceable_items > 0 && traceable_items == items_with_sources,
+            format!(
+                "{items_with_sources} of {traceable_items} traceable view-model items carry source links"
+            ),
+        ),
+        BelvedereInvariantCheck::new(
+            "view_model_trace_links_preserved".to_owned(),
+            source_links >= items_with_sources,
+            format!(
+                "{source_links} source links recorded across {items_with_sources} sourced view-model items"
+            ),
+        ),
+        BelvedereInvariantCheck::new(
+            "view_model_input_sources_reachable".to_owned(),
+            input_source_records > 0 && unique_source_records == input_source_records,
+            format!(
+                "{unique_source_records} of {input_source_records} input source records reachable from view-model traces"
+            ),
+        ),
+    ]
+}
+
+#[instrument(level = "trace", skip(trace_source_counts, source_record_ids))]
+pub(crate) fn ui_ir_trace_invariant_checks(
+    trace_widget_count: usize,
+    trace_ref_count: usize,
+    trace_source_counts: &BTreeMap<String, usize>,
+    source_record_ids: &[String],
+) -> Vec<BelvedereInvariantCheck> {
+    let widgets_with_sources = count_value(trace_source_counts, "trace_widgets_with_sources");
+    let source_links = count_value(trace_source_counts, "trace_source_links");
+    let unique_source_records = count_value(trace_source_counts, "trace_unique_source_records");
+    let input_source_records = unique_input_source_records(source_record_ids);
+    vec![
+        BelvedereInvariantCheck::new(
+            "ui_ir_trace_widgets_sourced".to_owned(),
+            trace_widget_count > 0 && widgets_with_sources == trace_widget_count,
+            format!(
+                "{widgets_with_sources} of {trace_widget_count} trace widgets carry source links"
+            ),
+        ),
+        BelvedereInvariantCheck::new(
+            "ui_ir_trace_refs_preserved".to_owned(),
+            source_links == trace_ref_count,
+            format!("{source_links} source links recorded for {trace_ref_count} trace references"),
+        ),
+        BelvedereInvariantCheck::new(
+            "ui_ir_input_sources_reachable".to_owned(),
+            input_source_records > 0 && unique_source_records == input_source_records,
+            format!(
+                "{unique_source_records} of {input_source_records} input source records reachable from UI IR traces"
+            ),
+        ),
+    ]
+}
+
 #[instrument(level = "trace", skip(evidence))]
 pub(crate) fn run_invariant_checks(
     evidence: RunInvariantEvidence<'_>,
@@ -152,4 +225,14 @@ fn warning_count_detail(counts: &BTreeMap<String, usize>, warning_count: usize) 
             .map(|count| count.to_string())
             .unwrap_or_else(|| "not_recorded".to_owned())
     )
+}
+
+#[instrument(level = "trace", skip(counts))]
+fn count_value(counts: &BTreeMap<String, usize>, key: &str) -> usize {
+    counts.get(key).copied().unwrap_or_default()
+}
+
+#[instrument(level = "trace", skip(source_record_ids))]
+fn unique_input_source_records(source_record_ids: &[String]) -> usize {
+    source_record_ids.iter().collect::<BTreeSet<_>>().len()
 }

@@ -11,8 +11,9 @@ use crate::{
     certify::{
         BELVEDERE_STAGE_CERTIFICATE_SCHEMA_ID, BELVEDERE_STAGE_CERTIFICATE_SCHEMA_VERSION,
         BelvedereInvariantCheck, IngestionReceipt, LandscapeDiffReceipt, LandscapeReceipt,
-        UiIrReceipt, ViewModelReceipt, hex_digest, stage_invariant_checks, update_field,
-        update_fields,
+        UiIrReceipt, ViewModelReceipt, hex_digest, stage_invariant_checks,
+        ui_ir_trace_invariant_checks, update_field, update_fields,
+        view_model_trace_invariant_checks,
     },
     contracts::{
         AssessmentStreamIngestionContract, AuditorNavigationContract, BelvedereContract,
@@ -91,6 +92,7 @@ struct StageCertificateEvidence {
     input_ids: Vec<String>,
     output_ids: Vec<String>,
     counts: BTreeMap<String, usize>,
+    additional_invariant_checks: Vec<BelvedereInvariantCheck>,
     warning_count: usize,
 }
 
@@ -143,6 +145,7 @@ impl BelvedereStageCertificate {
             input_ids: receipt.source_record_ids().clone(),
             output_ids: receipt.landscape_item_ids().clone(),
             counts,
+            additional_invariant_checks: Vec::new(),
             warning_count: receipt.warnings().len(),
         })
     }
@@ -170,6 +173,7 @@ impl BelvedereStageCertificate {
             input_ids: receipt.source_record_ids().clone(),
             output_ids: receipt.diff_item_ids().clone(),
             counts,
+            additional_invariant_checks: Vec::new(),
             warning_count: receipt.warnings().len(),
         })
     }
@@ -226,6 +230,10 @@ impl BelvedereStageCertificate {
             input_ids: receipt.source_record_ids().clone(),
             output_ids: receipt.view_item_ids().clone(),
             counts,
+            additional_invariant_checks: view_model_trace_invariant_checks(
+                receipt.trace_source_counts(),
+                receipt.source_record_ids(),
+            ),
             warning_count: receipt.warnings().len(),
         })
     }
@@ -282,6 +290,12 @@ impl BelvedereStageCertificate {
             input_ids: receipt.source_record_ids().clone(),
             output_ids,
             counts,
+            additional_invariant_checks: ui_ir_trace_invariant_checks(
+                receipt.counts().widget_count(),
+                receipt.counts().trace_ref_count(),
+                receipt.trace_source_counts(),
+                receipt.source_record_ids(),
+            ),
             warning_count: 0,
         })
     }
@@ -320,19 +334,21 @@ impl BelvedereStageCertificate {
             )],
             output_ids: receipt.source_record_ids().clone(),
             counts,
+            additional_invariant_checks: Vec::new(),
             warning_count: receipt.warnings().len(),
         })
     }
 
     #[instrument(level = "debug", skip(evidence))]
     fn new(evidence: StageCertificateEvidence) -> Self {
-        let invariant_checks = stage_invariant_checks(
+        let mut invariant_checks = stage_invariant_checks(
             &evidence.requires,
             &evidence.ensures,
             &evidence.input_ids,
             &evidence.counts,
             evidence.warning_count,
         );
+        invariant_checks.extend(evidence.additional_invariant_checks.iter().cloned());
         let digest = stage_digest(&evidence, &invariant_checks);
         let id = format!("belvedere.stage.{}:{digest}", evidence.stage);
         Self {
