@@ -1,7 +1,7 @@
 use belvedere::{
     ArtifactKind, AssessmentStreamIngestion, BelvederePipelineStage, BelvedereStageCertificate,
-    LandscapeGapKind, LandscapeInput, LandscapeModeling, RawAmenableArtifact, Recommendation,
-    RegistryDumpIngestion,
+    LandscapeGapKind, LandscapeInput, LandscapeModeling, ProofExecutionStatus, RawAmenableArtifact,
+    Recommendation, RegistryDumpIngestion,
 };
 use miette::{IntoDiagnostic, Result, WrapErr, miette};
 
@@ -112,6 +112,12 @@ fn landscape_modeling_maps_decoded_records_into_a_review_graph() -> Result<()> {
     assert!(proof_claim.proofs().contains("kani"));
     assert_eq!(proof_claim.kani_proofs()[0].package(), "belvedere");
     assert_eq!(
+        proof_claim.kani_proofs()[0].status(),
+        ProofExecutionStatus::Verified
+    );
+    assert_eq!(proof_claim.kani_proofs()[0].scope(), "bounded harness");
+    assert!(proof_claim.kani_proofs()[0].provides_coverage());
+    assert_eq!(
         proof_claim.assessment_ids(),
         &["assess-belvedere-ingestion-1".to_owned()]
     );
@@ -149,6 +155,47 @@ fn landscape_modeling_surfaces_conservative_gaps() -> Result<()> {
         gap.claim_id() == "belvedere::ingestion::DecodedRegistrySnapshot"
             && gap.kind() == LandscapeGapKind::TrustedOrOpaqueWitnessSupport
     }));
+    Ok(())
+}
+
+#[test]
+fn landscape_modeling_keeps_unverified_backend_runs_out_of_proof_coverage() -> Result<()> {
+    belvedere::init_tracing();
+
+    let (landscape, receipt) = LandscapeModeling
+        .model(fixture_input_with_registry_and_assessments(
+            TIMED_OUT_PROOF_REGISTRY.as_bytes().to_vec(),
+            Vec::new(),
+        )?)
+        .into_diagnostic()
+        .wrap_err("landscape modeling should surface unresolved proof execution")?;
+
+    let claim = landscape
+        .claims()
+        .get("belvedere::proofs::timed_out_case")
+        .ok_or_else(|| miette!("timed-out proof record should become a claim"))?;
+    assert!(claim.proofs().is_empty());
+    assert_eq!(
+        claim.kani_proofs()[0].status(),
+        ProofExecutionStatus::TimedOut
+    );
+    assert_eq!(claim.kani_proofs()[0].scope(), "bounded unwinding 8");
+    assert!(!claim.kani_proofs()[0].provides_coverage());
+    assert!(landscape.gaps().iter().any(|gap| {
+        gap.claim_id() == "belvedere::proofs::timed_out_case"
+            && gap.kind() == LandscapeGapKind::MissingProof
+    }));
+    assert!(landscape.gaps().iter().any(|gap| {
+        gap.claim_id() == "belvedere::proofs::timed_out_case"
+            && gap.kind() == LandscapeGapKind::ProofExecutionUnresolved
+            && gap.detail().contains("solver timeout")
+    }));
+    assert_eq!(
+        receipt
+            .gap_kind_counts()
+            .get("landscape_gap_kind_ProofExecutionUnresolved"),
+        Some(&1)
+    );
     Ok(())
 }
 
@@ -198,10 +245,20 @@ fn fixture_input() -> Result<LandscapeInput> {
 }
 
 fn fixture_input_with_assessments(assessment_bytes: Vec<u8>) -> Result<LandscapeInput> {
+    fixture_input_with_registry_and_assessments(
+        include_bytes!("fixtures/registry_dump.json").to_vec(),
+        assessment_bytes,
+    )
+}
+
+fn fixture_input_with_registry_and_assessments(
+    registry_bytes: Vec<u8>,
+    assessment_bytes: Vec<u8>,
+) -> Result<LandscapeInput> {
     let registry_artifact = RawAmenableArtifact::new(
         "tests/fixtures/registry_dump.json",
         ArtifactKind::RegistryDump,
-        include_bytes!("fixtures/registry_dump.json").to_vec(),
+        registry_bytes,
     );
     let assessment_artifact = RawAmenableArtifact::new(
         "tests/fixtures/proof_assessments.jsonl",
@@ -231,3 +288,20 @@ const STALE_ASSESSMENTS: &str = concat!(
     r#""recommendation":"accept","resolution_path":"keep_current_proof","comment":"Latest review supersedes the earlier strengthening request."}"#,
     "\n",
 );
+
+const TIMED_OUT_PROOF_REGISTRY: &str = r#"{
+  "evidence_links": [],
+  "proof_records": [],
+  "contract_records": [],
+  "witness_export_records": [],
+  "kani_proofs": [
+    {
+      "id": "belvedere::proofs::timed_out_case",
+      "harness": "verify_timed_out_case",
+      "package": "belvedere",
+      "status": "timed_out",
+      "scope": "bounded unwinding 8",
+      "failure_reason": "solver timeout"
+    }
+  ]
+}"#;

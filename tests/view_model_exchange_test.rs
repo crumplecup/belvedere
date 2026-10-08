@@ -486,6 +486,22 @@ fn view_model_projection_builds_auditor_navigation_evidence() -> Result<()> {
             .filter_ids()
             .contains(&"belvedere.filter.recommendation:Strengthen".to_owned())
     );
+    let proof_detail = model
+        .claim_details()
+        .iter()
+        .find(|item| item.claim_id() == "belvedere::ingestion::record_identity_is_preserved")
+        .ok_or_else(|| miette!("Kani proof claim should have a detail item"))?;
+    assert!(proof_detail.proof_statuses().iter().any(|status| {
+        status.contains("status verified") && status.contains("scope bounded harness")
+    }));
+    let proof_chain = model
+        .proof_chains()
+        .iter()
+        .find(|item| item.claim_id() == "belvedere::ingestion::record_identity_is_preserved")
+        .ok_or_else(|| miette!("Kani proof claim should have a proof-chain item"))?;
+    assert!(proof_chain.proof_statuses().iter().any(|status| {
+        status.contains("status verified") && status.contains("scope bounded harness")
+    }));
 
     let decoded_chain = model
         .proof_chains()

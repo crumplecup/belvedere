@@ -102,13 +102,14 @@ pub(super) fn claim_detail_widget(
     let roots = list_label(item.root_ids(), "no modeled roots");
     let verifiers = list_label(item.verifiers(), "no verifier proofs");
     let contracts = list_label(item.contract_fragments(), "no contract fragments");
+    let proof_statuses = list_label(item.proof_statuses(), "no proof execution statuses");
     let assessments = list_label(item.assessment_ids(), "no assessments");
     let gaps = list_label(item.gap_summaries(), "no gaps");
     labeled_widget(
         backend,
         "button",
         format!(
-            "Claim detail {} is a {role}; direct bases {bases}; resolved roots {roots}; verifier proofs {verifiers}; contracts {contracts}; assessments {assessments}; gaps {gaps}; review state {}; next action: {}; {}",
+            "Claim detail {} is a {role}; direct bases {bases}; resolved roots {roots}; verifier proofs {verifiers}; proof statuses {proof_statuses}; contracts {contracts}; assessments {assessments}; gaps {gaps}; review state {}; next action: {}; {}",
             item.claim_id(),
             item.review_state(),
             item.next_action(),
@@ -141,13 +142,14 @@ pub(super) fn proof_chain_widget(
     let roots = list_label(item.root_ids(), "no modeled roots");
     let bases = list_label(item.basis_ids(), "no direct bases");
     let verifiers = list_label(item.verifiers(), "no verifier proofs");
+    let proof_statuses = list_label(item.proof_statuses(), "no proof execution statuses");
     let backend_coverage = chain_backend_coverage_label(item);
     let topology = item.topology();
     labeled_widget(
         backend,
         "button",
         format!(
-            "Proof chain {} is {}; next action: {}; reaches roots {roots} through direct bases {bases}; verifier proofs {verifiers}; chain backend coverage {backend_coverage}; topology {}, {}, {}, {}; subject {}",
+            "Proof chain {} is {}; next action: {}; reaches roots {roots} through direct bases {bases}; verifier proofs {verifiers}; proof statuses {proof_statuses}; chain backend coverage {backend_coverage}; topology {}, {}, {}, {}; subject {}",
             item.claim_id(),
             item.review_state(),
             item.next_action(),

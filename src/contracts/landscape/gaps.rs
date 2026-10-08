@@ -37,4 +37,6 @@ pub enum LandscapeGapKind {
     RetirementRecommended,
     /// Witness support includes trusted or opaque support.
     TrustedOrOpaqueWitnessSupport,
+    /// A registered proof did not complete as verified coverage.
+    ProofExecutionUnresolved,
 }

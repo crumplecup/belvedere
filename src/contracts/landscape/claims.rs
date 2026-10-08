@@ -8,7 +8,8 @@ use serde::Serialize;
 use tracing::instrument;
 
 use crate::contracts::{
-    AssessmentRecord, Recommendation, ResolutionPath, Rubric, WitnessExportRecord,
+    AssessmentRecord, KaniProofRecord, ProofExecutionStatus, Recommendation, ResolutionPath,
+    Rubric, WitnessExportRecord,
 };
 
 /// A claim, proof harness, root, or evidence node in the defensive landscape.
@@ -179,14 +180,57 @@ impl WitnessSurfaceSummary {
 }
 
 /// Kani proof registration attached to a claim.
-#[derive(Debug, Clone, PartialEq, Eq, Getters, new, Serialize)]
+#[derive(Debug, Clone, PartialEq, Eq, Getters, Serialize)]
 pub struct KaniProofSummary {
-    #[new(into)]
     id: String,
-    #[new(into)]
     harness: String,
-    #[new(into)]
     package: String,
+    #[getter(skip)]
+    status: ProofExecutionStatus,
+    scope: String,
+    #[getter(skip)]
+    failure_reason: Option<String>,
+}
+
+impl KaniProofSummary {
+    /// Create a proof summary from a decoded Kani proof record.
+    #[must_use]
+    #[instrument(level = "debug", skip(record))]
+    pub fn from_record(record: &KaniProofRecord) -> Self {
+        Self {
+            id: record.id().to_owned(),
+            harness: record.harness().to_owned(),
+            package: record.package().to_owned(),
+            status: record.status(),
+            scope: record.scope().unwrap_or("unspecified scope").to_owned(),
+            failure_reason: record.failure_reason().map(ToOwned::to_owned),
+        }
+    }
+
+    /// Execution status reported for this proof.
+    #[must_use]
+    pub const fn status(&self) -> ProofExecutionStatus {
+        self.status
+    }
+
+    /// Whether this proof provides modeled backend coverage.
+    #[must_use]
+    pub const fn provides_coverage(&self) -> bool {
+        self.status.provides_coverage()
+    }
+
+    /// Human-readable status label.
+    #[must_use]
+    pub const fn status_label(&self) -> &'static str {
+        self.status.label()
+    }
+
+    /// Failure reason, if the backend reported one.
+    #[must_use]
+    #[instrument(level = "trace", skip(self))]
+    pub fn failure_reason(&self) -> Option<&str> {
+        self.failure_reason.as_deref()
+    }
 }
 
 /// Normalized assessment event attached to a claim or proof.

@@ -17,9 +17,9 @@ pub use diff::{
 pub use ingestion::{
     AcceptedAmenableArtifactFormat, ArtifactKind, AssessmentRecord,
     AssessmentStreamIngestionContract, ContractRecordRecord, DecodedAssessmentStream,
-    DecodedRegistrySnapshot, EvidenceLinkRecord, KaniProofRecord, ProofRecordRecord,
-    RawAmenableArtifact, Recommendation, RegistryDumpIngestionContract, ResolutionPath, Rubric,
-    UnsupportedField, WitnessExportRecord,
+    DecodedRegistrySnapshot, EvidenceLinkRecord, KaniProofRecord, ProofExecutionStatus,
+    ProofRecordRecord, RawAmenableArtifact, Recommendation, RegistryDumpIngestionContract,
+    ResolutionPath, Rubric, UnsupportedField, WitnessExportRecord,
 };
 pub(crate) use landscape::LandscapeGraphBuilder;
 pub use landscape::{

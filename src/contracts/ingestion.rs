@@ -24,7 +24,7 @@ pub use assessment::{
 };
 pub use registry::{
     ContractRecordRecord, DecodedRegistrySnapshot, EvidenceLinkRecord, KaniProofRecord,
-    ProofRecordRecord, WitnessExportRecord,
+    ProofExecutionStatus, ProofRecordRecord, WitnessExportRecord,
 };
 pub use unsupported::UnsupportedField;
 

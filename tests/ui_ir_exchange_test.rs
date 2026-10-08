@@ -398,6 +398,11 @@ fn ui_ir_projection_preserves_trace_widgets_for_auditor_deep_dives() -> Result<(
             .contains("resolved roots belvedere::ingestion::RawAmenableArtifact")
     );
     assert!(decoded_detail.label().contains("verifier proofs kani"));
+    assert!(
+        decoded_detail
+            .label()
+            .contains("proof statuses no proof execution statuses")
+    );
     assert!(decoded_detail.label().contains("kani ensures"));
     assert!(
         decoded_detail
@@ -413,6 +418,21 @@ fn ui_ir_projection_preserves_trace_widgets_for_auditor_deep_dives() -> Result<(
     assert_eq!(
         decoded_detail.source_record_ids(),
         decoded_claim.source_record_ids()
+    );
+    let proof_detail = projection
+        .trace_widgets()
+        .iter()
+        .find(|widget| {
+            widget.claim_id() == "belvedere::ingestion::record_identity_is_preserved"
+                && widget
+                    .label()
+                    .starts_with("Claim detail belvedere::ingestion::record_identity_is_preserved")
+        })
+        .ok_or_else(|| miette!("proof claim detail item should have a traceable widget"))?;
+    assert!(
+        proof_detail
+            .label()
+            .contains("status verified scope bounded harness")
     );
 
     let gap_widget = projection
@@ -493,6 +513,11 @@ fn ui_ir_projection_preserves_trace_widgets_for_auditor_deep_dives() -> Result<(
     assert!(
         chain_widget
             .label()
+            .contains("proof statuses no proof execution statuses")
+    );
+    assert!(
+        chain_widget
+            .label()
             .contains("chain backend coverage kani incomplete (1 covered, 1 missing)")
     );
     assert!(
@@ -506,6 +531,21 @@ fn ui_ir_projection_preserves_trace_widgets_for_auditor_deep_dives() -> Result<(
     assert!(chain_widget.label().contains("3 chain gaps"));
     assert!(chain_widget.label().contains("2 gaps"));
     assert!(!chain_widget.source_record_ids().is_empty());
+    let proof_chain_widget = projection
+        .trace_widgets()
+        .iter()
+        .find(|widget| {
+            widget.claim_id() == "belvedere::ingestion::record_identity_is_preserved"
+                && widget
+                    .label()
+                    .starts_with("Proof chain belvedere::ingestion::record_identity_is_preserved")
+        })
+        .ok_or_else(|| miette!("proof claim chain should have a traceable widget"))?;
+    assert!(
+        proof_chain_widget
+            .label()
+            .contains("status verified scope bounded harness")
+    );
     let workflow_widget = projection
         .trace_widgets()
         .iter()

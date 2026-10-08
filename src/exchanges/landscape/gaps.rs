@@ -32,7 +32,7 @@ pub(super) fn model_gaps(
 
     let mut gaps = Vec::new();
     for claim in claims.values() {
-        if claim.proofs().is_empty() && claim.kani_proofs().is_empty() {
+        if claim.proofs().is_empty() {
             gaps.push(LandscapeGap::new(
                 claim.id(),
                 LandscapeGapKind::MissingProof,
@@ -66,6 +66,27 @@ pub(super) fn model_gaps(
                     ),
                 ));
             }
+        }
+
+        for proof in claim
+            .kani_proofs()
+            .iter()
+            .filter(|proof| !proof.provides_coverage())
+        {
+            let reason = proof.failure_reason().map_or_else(
+                || "no backend reason reported".to_owned(),
+                ToOwned::to_owned,
+            );
+            gaps.push(LandscapeGap::new(
+                claim.id(),
+                LandscapeGapKind::ProofExecutionUnresolved,
+                format!(
+                    "Kani proof {} is {} in scope {}: {reason}",
+                    proof.harness(),
+                    proof.status_label(),
+                    proof.scope()
+                ),
+            ));
         }
     }
     gaps

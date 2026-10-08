@@ -1,7 +1,8 @@
 use belvedere::{
     AcceptedAmenableArtifactFormat, ArtifactKind, AssessmentStreamIngestion,
-    BelvedereStageCertificate, INPUT_FIDELITY_STANDARD_ID, RawAmenableArtifact, Recommendation,
-    RegistryDumpIngestion, ResolutionPath, SCHEMA_HONESTY_STANDARD_ID,
+    BelvedereStageCertificate, INPUT_FIDELITY_STANDARD_ID, ProofExecutionStatus,
+    RawAmenableArtifact, Recommendation, RegistryDumpIngestion, ResolutionPath,
+    SCHEMA_HONESTY_STANDARD_ID,
 };
 use miette::{IntoDiagnostic, Result, WrapErr, miette};
 
@@ -32,6 +33,12 @@ fn registry_ingestion_preserves_record_identity_and_unknown_fields() -> Result<(
         snapshot.kani_proofs()[0].id(),
         "belvedere::ingestion::record_identity_is_preserved"
     );
+    assert_eq!(
+        snapshot.kani_proofs()[0].status(),
+        ProofExecutionStatus::Verified
+    );
+    assert_eq!(snapshot.kani_proofs()[0].scope(), Some("bounded harness"));
+    assert_eq!(snapshot.kani_proofs()[0].failure_reason(), None);
 
     assert_eq!(
         receipt.format(),

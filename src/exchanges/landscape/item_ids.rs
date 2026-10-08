@@ -103,5 +103,6 @@ fn gap_kind_id(kind: LandscapeGapKind) -> &'static str {
         LandscapeGapKind::ReplacementRecommended => "replacement_recommended",
         LandscapeGapKind::RetirementRecommended => "retirement_recommended",
         LandscapeGapKind::TrustedOrOpaqueWitnessSupport => "trusted_or_opaque_witness_support",
+        LandscapeGapKind::ProofExecutionUnresolved => "proof_execution_unresolved",
     }
 }

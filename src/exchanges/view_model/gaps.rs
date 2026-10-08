@@ -36,6 +36,7 @@ pub(super) fn project_gaps(
 fn gap_severity(kind: LandscapeGapKind) -> GapSeverity {
     match kind {
         LandscapeGapKind::MissingProof
+        | LandscapeGapKind::ProofExecutionUnresolved
         | LandscapeGapKind::ReplacementRecommended
         | LandscapeGapKind::RetirementRecommended => GapSeverity::Blocking,
         LandscapeGapKind::TrustedOrOpaqueWitnessSupport => GapSeverity::Elevated,
@@ -47,7 +48,9 @@ fn gap_severity(kind: LandscapeGapKind) -> GapSeverity {
 pub(super) fn gap_queue_lane(kind: LandscapeGapKind) -> &'static str {
     match kind {
         LandscapeGapKind::MissingAssessment => "assessment",
-        LandscapeGapKind::MissingProof => "proof_coverage",
+        LandscapeGapKind::MissingProof | LandscapeGapKind::ProofExecutionUnresolved => {
+            "proof_coverage"
+        }
         LandscapeGapKind::ReplacementRecommended => "replacement",
         LandscapeGapKind::RetirementRecommended => "retirement",
         LandscapeGapKind::TrustedOrOpaqueWitnessSupport => "witness_review",
@@ -58,6 +61,7 @@ pub(super) fn gap_queue_lane(kind: LandscapeGapKind) -> &'static str {
 fn gap_action(kind: LandscapeGapKind) -> &'static str {
     match kind {
         LandscapeGapKind::MissingProof => "establish modeled proof coverage",
+        LandscapeGapKind::ProofExecutionUnresolved => "resolve proof execution status",
         LandscapeGapKind::MissingAssessment => "assess proof coverage",
         LandscapeGapKind::ReplacementRecommended => "replace proof or model",
         LandscapeGapKind::RetirementRecommended => "retire claim or dependency",

@@ -89,9 +89,11 @@ impl BelvedereExchange<LandscapeModelingContract> for LandscapeModeling {
 
         for record in input.registry().kani_proofs() {
             ensure_claim(&mut claims, record.id());
-            let proof = KaniProofSummary::new(record.id(), record.harness(), record.package());
+            let proof = KaniProofSummary::from_record(record);
             let claim = claim_mut(&mut claims, record.id());
-            claim.add_verifier("kani");
+            if proof.provides_coverage() {
+                claim.add_verifier("kani");
+            }
             claim.add_kani_proof(proof);
         }
 

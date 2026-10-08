@@ -62,6 +62,7 @@ pub(super) fn project_claim_details(
                 .root_ids(chain_roots(claim.id(), claims))
                 .verifiers(claim.proofs().iter().cloned().collect::<Vec<_>>())
                 .contract_fragments(contract_fragment_labels(claim))
+                .proof_statuses(proof_status_labels(claim))
                 .assessment_ids(claim.assessment_ids().to_vec())
                 .gap_summaries(claim_gap_summaries(claim.id(), gaps))
                 .review_state(chain_review_state(claim.id(), gaps))
@@ -70,6 +71,27 @@ pub(super) fn project_claim_details(
                 .trace(trace)
                 .build()
                 .map_err(|error| BelvedereConstructionError::new("ClaimDetailItem", error))
+        })
+        .collect()
+}
+
+#[instrument(level = "trace", skip(claim))]
+fn proof_status_labels(claim: &LandscapeClaim) -> Vec<String> {
+    claim
+        .kani_proofs()
+        .iter()
+        .map(|proof| {
+            let reason = proof
+                .failure_reason()
+                .map_or_else(String::new, |reason| format!(" reason {reason}"));
+            format!(
+                "kani {} package {} harness {} status {} scope {}{reason}",
+                proof.id(),
+                proof.package(),
+                proof.harness(),
+                proof.status_label(),
+                proof.scope()
+            )
         })
         .collect()
 }
@@ -129,6 +151,9 @@ fn claim_filter_ids(
     }
     for proof in claim.kani_proofs() {
         insert_filter_id(&mut ids, "package", proof.package());
+        if !proof.provides_coverage() {
+            insert_filter_id(&mut ids, "proof_status", proof.status_label());
+        }
     }
     for assessment_id in claim.assessment_ids() {
         if let Some(assessment) = assessments_by_id.get(assessment_id.as_str()) {
@@ -178,6 +203,7 @@ pub(super) fn project_proof_chains(
                 .basis_ids(claim.bases().iter().cloned().collect::<Vec<_>>())
                 .root_ids(chain_roots(claim.id(), claims))
                 .verifiers(claim.proofs().iter().cloned().collect::<Vec<_>>())
+                .proof_statuses(proof_status_labels(claim))
                 .backend_coverage(backend_coverage)
                 .topology(chain_topology(&traversal, claims, gaps))
                 .review_state(review_state)

@@ -24,6 +24,7 @@ pub(super) fn project_filter_facets<'a>(
     let mut verifier_counts = BTreeMap::new();
     let mut support_kind_counts = BTreeMap::new();
     let mut package_counts = BTreeMap::new();
+    let mut proof_status_counts = BTreeMap::new();
     for claim in claims {
         let family = claim_family(claim.id());
         increment_count(&mut claim_family_counts, &family);
@@ -35,6 +36,9 @@ pub(super) fn project_filter_facets<'a>(
         }
         for proof in claim.kani_proofs() {
             increment_count(&mut package_counts, proof.package());
+            if !proof.provides_coverage() {
+                increment_count(&mut proof_status_counts, proof.status_label());
+            }
         }
     }
 
@@ -85,6 +89,13 @@ pub(super) fn project_filter_facets<'a>(
         "package",
         "Package",
         package_counts,
+        source_record_ids,
+        &mut facets,
+    )?;
+    push_facets(
+        "proof_status",
+        "Proof status",
+        proof_status_counts,
         source_record_ids,
         &mut facets,
     )?;

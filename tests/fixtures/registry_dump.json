@@ -41,7 +41,9 @@
     {
       "id": "belvedere::ingestion::record_identity_is_preserved",
       "harness": "verify_record_identity_is_preserved",
-      "package": "belvedere"
+      "package": "belvedere",
+      "status": "verified",
+      "scope": "bounded harness"
     }
   ],
   "next_schema_hint": "also preserved"

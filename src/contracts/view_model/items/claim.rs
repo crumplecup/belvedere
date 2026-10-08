@@ -132,6 +132,7 @@ pub struct ClaimDetailItem {
     root_ids: Vec<String>,
     verifiers: Vec<String>,
     contract_fragments: Vec<String>,
+    proof_statuses: Vec<String>,
     assessment_ids: Vec<String>,
     gap_summaries: Vec<String>,
     review_state: String,
@@ -170,6 +171,7 @@ pub struct ProofChainItem {
     basis_ids: Vec<String>,
     root_ids: Vec<String>,
     verifiers: Vec<String>,
+    proof_statuses: Vec<String>,
     backend_coverage: Vec<ProofChainBackendCoverage>,
     #[getter(skip)]
     topology: ProofChainTopology,

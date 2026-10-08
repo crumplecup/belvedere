@@ -218,8 +218,77 @@ pub struct KaniProofRecord {
     id: String,
     harness: String,
     package: String,
+    #[serde(default = "default_proof_execution_status")]
+    #[getter(skip)]
+    status: ProofExecutionStatus,
+    #[serde(default)]
+    #[getter(skip)]
+    scope: Option<String>,
+    #[serde(default)]
+    #[getter(skip)]
+    failure_reason: Option<String>,
     #[serde(flatten)]
     extra: BTreeMap<String, serde_json::Value>,
 }
 
-impl KaniProofRecord {}
+impl KaniProofRecord {
+    /// Execution status reported for this proof.
+    #[must_use]
+    pub const fn status(&self) -> ProofExecutionStatus {
+        self.status
+    }
+
+    /// Scope label reported for this proof, if present.
+    #[must_use]
+    #[instrument(level = "trace", skip(self))]
+    pub fn scope(&self) -> Option<&str> {
+        self.scope.as_deref()
+    }
+
+    /// Failure or timeout reason reported for this proof, if present.
+    #[must_use]
+    #[instrument(level = "trace", skip(self))]
+    pub fn failure_reason(&self) -> Option<&str> {
+        self.failure_reason.as_deref()
+    }
+}
+
+/// Proof execution status preserved from backend records.
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Deserialize, serde::Serialize)]
+#[serde(rename_all = "snake_case")]
+pub enum ProofExecutionStatus {
+    /// Backend reported the proof as verified.
+    Verified,
+    /// Backend reported a failing proof.
+    Failed,
+    /// Backend did not complete within its configured limit.
+    TimedOut,
+    /// Backend skipped the proof intentionally.
+    Skipped,
+    /// Backend status is unknown to Belvedere.
+    Unknown,
+}
+
+impl ProofExecutionStatus {
+    /// Human-readable status label.
+    #[must_use]
+    pub const fn label(self) -> &'static str {
+        match self {
+            Self::Verified => "verified",
+            Self::Failed => "failed",
+            Self::TimedOut => "timed out",
+            Self::Skipped => "skipped",
+            Self::Unknown => "unknown",
+        }
+    }
+
+    /// Whether this status provides modeled proof coverage.
+    #[must_use]
+    pub const fn provides_coverage(self) -> bool {
+        matches!(self, Self::Verified)
+    }
+}
+
+const fn default_proof_execution_status() -> ProofExecutionStatus {
+    ProofExecutionStatus::Verified
+}
