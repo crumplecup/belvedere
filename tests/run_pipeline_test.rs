@@ -660,6 +660,11 @@ fn run_pipeline_uses_the_normal_amenable_artifact_path() -> Result<()> {
         auditor_stage.counts().get("view_model_item_kind_gap"),
         Some(&report.view_model_receipt().counts().gap_items())
     );
+    assert_eq!(auditor_stage.counts().get("source_landscapes"), Some(&1));
+    assert_eq!(
+        auditor_stage.input_ids(),
+        &vec![report.landscape_receipt().receipt_id().to_owned()]
+    );
     assert!(
         report
             .view_model_receipt()
@@ -1340,6 +1345,7 @@ fn assert_auditor_navigation_receipt(receipt: &Value) {
         receipt["contract"].as_str(),
         Some("belvedere.view_model.auditor_navigation")
     );
+    assert_auditor_navigation_receipt_source(receipt);
     assert_eq!(receipt["counts"]["claim_cards"].as_u64(), Some(4));
     assert_eq!(receipt["counts"]["claim_detail_items"].as_u64(), Some(4));
     assert_eq!(
@@ -1411,6 +1417,7 @@ fn assert_previous_auditor_navigation_receipt(receipt: &Value) {
         receipt["contract"].as_str(),
         Some("belvedere.view_model.auditor_navigation")
     );
+    assert_auditor_navigation_receipt_source(receipt);
     assert_eq!(receipt["counts"]["claim_cards"].as_u64(), Some(3));
     assert_eq!(receipt["counts"]["claim_detail_items"].as_u64(), Some(3));
     assert_eq!(receipt["counts"]["assessment_items"].as_u64(), Some(0));
@@ -1446,6 +1453,14 @@ fn assert_previous_auditor_navigation_receipt(receipt: &Value) {
     assert_eq!(
         receipt["source_record_ids"].as_array().map(Vec::len),
         Some(5)
+    );
+}
+
+fn assert_auditor_navigation_receipt_source(receipt: &Value) {
+    assert!(
+        receipt["source_landscape_receipt_id"]
+            .as_str()
+            .is_some_and(|id| id.starts_with("belvedere.receipt.landscape:"))
     );
 }
 

@@ -23,6 +23,7 @@ pub struct ViewModelReceipt {
     trace_kind_counts: BTreeMap<String, usize>,
     trace_source_counts: BTreeMap<String, usize>,
     item_kind_counts: BTreeMap<String, usize>,
+    source_landscape_receipt_id: String,
     view_item_ids: Vec<String>,
     source_record_ids: Vec<String>,
     warnings: Vec<String>,

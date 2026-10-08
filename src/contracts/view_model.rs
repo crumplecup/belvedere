@@ -2,11 +2,12 @@
 
 use derive_builder::Builder;
 use derive_getters::Getters;
+use derive_new::new;
 use serde::Serialize;
 use tracing::instrument;
 
 use crate::{
-    certify::ViewModelReceipt,
+    certify::{LandscapeReceipt, ViewModelReceipt},
     contracts::{BelvedereContract, LandscapeGraph, VIEW_MODEL_FIDELITY_STANDARD_ID},
 };
 
@@ -28,16 +29,19 @@ pub(crate) use items::{
 pub use trace::TraceRef;
 
 /// Landscape evidence accepted by the view-model exchange.
-#[derive(Debug, Clone, PartialEq, Eq)]
+#[derive(Debug, Clone, PartialEq, Eq, Getters, new)]
 pub struct ViewModelInput {
+    #[getter(skip)]
     landscape: LandscapeGraph,
+    source_landscape_receipt_id: String,
 }
 
 impl ViewModelInput {
-    /// Create view-model input from a landscape graph.
+    /// Create view-model input directly from landscape exchange outputs.
     #[must_use]
-    pub const fn new(landscape: LandscapeGraph) -> Self {
-        Self { landscape }
+    #[instrument(level = "debug", skip(landscape, landscape_receipt))]
+    pub fn from_landscape(landscape: LandscapeGraph, landscape_receipt: &LandscapeReceipt) -> Self {
+        Self::new(landscape, landscape_receipt.receipt_id().to_owned())
     }
 
     /// Landscape evidence to project.
@@ -208,6 +212,7 @@ impl BelvedereContract for AuditorNavigationContract {
     fn requires() -> &'static [&'static str] {
         &[
             "landscape graph was produced by the landscape modeling exchange",
+            "source landscape receipt identity is available",
             "claims, assessments, witness surfaces, roots, and gaps are traceable",
         ]
     }

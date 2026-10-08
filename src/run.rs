@@ -143,8 +143,9 @@ pub fn run_belvedere_pipeline(
             assessments,
             &assessment_receipt,
         ))?;
-    let (view_model, view_model_receipt) =
-        AuditorNavigationProjection.project(ViewModelInput::new(landscape.clone()))?;
+    let (view_model, view_model_receipt) = AuditorNavigationProjection.project(
+        ViewModelInput::from_landscape(landscape.clone(), &landscape_receipt),
+    )?;
     let (projection, ui_ir_receipt) =
         ElicitUiProjection.project(UiIrInput::new(view_model.clone()))?;
     let certificate = BelvedereRunCertificate::from_receipts_with_invocation(
@@ -200,8 +201,9 @@ pub fn run_belvedere_landscape_diff(
     )?;
     let input_artifact_ids = diff_input_artifact_ids(&previous, &current);
     let input_artifact_digests = diff_input_artifact_digests(&previous, &current);
-    let (previous_view_model, previous_view_model_receipt) =
-        AuditorNavigationProjection.project(ViewModelInput::new(previous.landscape.clone()))?;
+    let (previous_view_model, previous_view_model_receipt) = AuditorNavigationProjection.project(
+        ViewModelInput::from_landscape(previous.landscape.clone(), &previous.landscape_receipt),
+    )?;
     let (previous_projection, previous_ui_ir_receipt) =
         ElicitUiProjection.project(UiIrInput::new(previous_view_model.clone()))?;
     let previous_stage_certificates = auditor_stage_certificates(
@@ -209,8 +211,9 @@ pub fn run_belvedere_landscape_diff(
         &previous_view_model_receipt,
         &previous_ui_ir_receipt,
     );
-    let (current_view_model, current_view_model_receipt) =
-        AuditorNavigationProjection.project(ViewModelInput::new(current.landscape.clone()))?;
+    let (current_view_model, current_view_model_receipt) = AuditorNavigationProjection.project(
+        ViewModelInput::from_landscape(current.landscape.clone(), &current.landscape_receipt),
+    )?;
     let (current_projection, current_ui_ir_receipt) =
         ElicitUiProjection.project(UiIrInput::new(current_view_model.clone()))?;
     let current_stage_certificates = auditor_stage_certificates(

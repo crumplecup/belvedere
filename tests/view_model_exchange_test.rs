@@ -34,6 +34,11 @@ fn view_model_projection_builds_auditor_navigation_evidence() -> Result<()> {
     assert_eq!(receipt.counts().witness_items(), 1);
     assert_eq!(receipt.counts().root_items(), 3);
     assert_eq!(receipt.counts().source_items(), 7);
+    assert!(
+        receipt
+            .source_landscape_receipt_id()
+            .starts_with("belvedere.receipt.landscape:")
+    );
     assert_eq!(
         receipt.lane_counts().get("assessment_queue_lane_accepted"),
         Some(&1)
@@ -1078,12 +1083,15 @@ fn fixture_input_with_assessments(assessment_bytes: Vec<u8>) -> Result<ViewModel
         assessments,
         &assessment_receipt,
     );
-    let (landscape, _landscape_receipt) = LandscapeModeling
+    let (landscape, landscape_receipt) = LandscapeModeling
         .model(landscape_input)
         .into_diagnostic()
         .wrap_err("landscape modeling is conservative and infallible")?;
 
-    Ok(ViewModelInput::new(landscape))
+    Ok(ViewModelInput::from_landscape(
+        landscape,
+        &landscape_receipt,
+    ))
 }
 
 const STALE_ASSESSMENTS: &str = concat!(

@@ -881,12 +881,15 @@ fn fixture_input_with_assessments(assessment_bytes: Vec<u8>) -> Result<UiIrInput
         assessments,
         &assessment_receipt,
     );
-    let (landscape, _landscape_receipt) = LandscapeModeling
+    let (landscape, landscape_receipt) = LandscapeModeling
         .model(landscape_input)
         .into_diagnostic()
         .wrap_err("landscape modeling is conservative and infallible")?;
     let (model, _view_receipt) = AuditorNavigationProjection
-        .project(ViewModelInput::new(landscape))
+        .project(ViewModelInput::from_landscape(
+            landscape,
+            &landscape_receipt,
+        ))
         .into_diagnostic()
         .wrap_err("view-model projection is trace-preserving and infallible")?;
 

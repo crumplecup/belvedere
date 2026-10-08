@@ -224,6 +224,7 @@ impl BelvedereExchange<AuditorNavigationContract> for AuditorNavigationProjectio
             .trace_kind_counts(receipt_trace_kind_counts)
             .trace_source_counts(receipt_trace_source_counts)
             .item_kind_counts(receipt_item_kind_counts)
+            .source_landscape_receipt_id(input.source_landscape_receipt_id().to_owned())
             .view_item_ids(receipt_view_item_ids)
             .source_record_ids(source_record_ids)
             .warnings(Vec::new())
