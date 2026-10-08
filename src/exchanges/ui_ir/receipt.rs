@@ -151,36 +151,49 @@ fn section_trace_counts(
     trace_widgets: &[TraceWidgetRef],
 ) -> BTreeMap<String, usize> {
     let mut counts = BTreeMap::new();
-    let mut offset = 0;
-    let mut sections_with_source_widgets = 0;
-    let mut source_links_total = 0;
+    let known_section_ids = sections
+        .iter()
+        .map(|section| section.id().to_owned())
+        .collect::<BTreeSet<_>>();
+    let mut source_widgets_by_section = BTreeMap::new();
+    let mut source_links_by_section = BTreeMap::new();
 
     for section in sections {
-        let section_widgets = trace_widgets
-            .iter()
-            .skip(offset)
-            .take(section.widget_count());
-        let mut source_widgets = 0;
-        let mut source_links = 0;
-        for widget in section_widgets {
-            if !widget.source_record_ids().is_empty() {
-                source_widgets += 1;
-            }
-            source_links += widget.source_record_ids().len();
+        source_widgets_by_section.insert(section.id().to_owned(), 0);
+        source_links_by_section.insert(section.id().to_owned(), 0);
+    }
+
+    let mut unassigned_trace_widgets = 0;
+    for widget in trace_widgets {
+        if !known_section_ids.contains(widget.section_id().as_str()) {
+            unassigned_trace_widgets += 1;
+            continue;
         }
-        if source_widgets > 0 {
-            sections_with_source_widgets += 1;
+        if !widget.source_record_ids().is_empty() {
+            *source_widgets_by_section
+                .entry(widget.section_id().to_owned())
+                .or_default() += 1;
         }
-        source_links_total += source_links;
+        *source_links_by_section
+            .entry(widget.section_id().to_owned())
+            .or_default() += widget.source_record_ids().len();
+    }
+
+    let sections_with_source_widgets = source_widgets_by_section
+        .values()
+        .filter(|source_widgets| **source_widgets > 0)
+        .count();
+    let source_links_total = source_links_by_section.values().sum();
+
+    for section in sections {
         counts.insert(
             format!("ui_ir_section_trace_widgets:{}", section.id()),
-            source_widgets,
+            *source_widgets_by_section.get(section.id()).unwrap_or(&0),
         );
         counts.insert(
             format!("ui_ir_section_trace_source_links:{}", section.id()),
-            source_links,
+            *source_links_by_section.get(section.id()).unwrap_or(&0),
         );
-        offset += section.widget_count();
     }
 
     counts.insert(
@@ -197,7 +210,7 @@ fn section_trace_counts(
     );
     counts.insert(
         "ui_ir_section_unassigned_trace_widgets".to_owned(),
-        trace_widgets.len().saturating_sub(offset),
+        unassigned_trace_widgets,
     );
     counts
 }

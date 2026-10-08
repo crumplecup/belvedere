@@ -19,11 +19,13 @@ const ROOT_CONTAINER: ContainerId = ContainerId(0);
 #[instrument(level = "debug", skip(backend, item, trace_widgets))]
 pub(super) fn filter_widget(
     backend: &AccessKitUiBackend,
+    section_id: &'static str,
     item: &AuditorFilterFacet,
     trace_widgets: &mut Vec<TraceWidgetRef>,
 ) -> Result<WidgetId, UiIrError> {
     labeled_widget(
         backend,
+        section_id,
         "checkbox",
         format!("Filter {} selects {} items", item.label(), item.count()),
         item.trace().clone(),
@@ -34,12 +36,14 @@ pub(super) fn filter_widget(
 #[instrument(level = "debug", skip(backend, item, trace_widgets))]
 pub(super) fn backend_coverage_widget(
     backend: &AccessKitUiBackend,
+    section_id: &'static str,
     item: &BackendCoverageItem,
     trace_widgets: &mut Vec<TraceWidgetRef>,
 ) -> Result<WidgetId, UiIrError> {
     let status = if item.covered() { "covered" } else { "missing" };
     labeled_widget(
         backend,
+        section_id,
         "status",
         format!(
             "Backend coverage {} for {} is {status}",
@@ -54,6 +58,7 @@ pub(super) fn backend_coverage_widget(
 #[instrument(level = "debug", skip(backend, item, trace_widgets))]
 pub(super) fn claim_widget(
     backend: &AccessKitUiBackend,
+    section_id: &'static str,
     item: &ClaimExplorerItem,
     trace_widgets: &mut Vec<TraceWidgetRef>,
 ) -> Result<WidgetId, UiIrError> {
@@ -61,6 +66,7 @@ pub(super) fn claim_widget(
     let filters = list_label(item.filter_ids(), "no filters");
     labeled_widget(
         backend,
+        section_id,
         "button",
         format!(
             "Claim {} is a {role}; {}, {}, {}, {}, {}; filters {filters}",
@@ -94,6 +100,7 @@ pub(super) fn count_label(count: usize, singular: &str, plural: &str) -> String 
 #[instrument(level = "debug", skip(backend, item, trace_widgets))]
 pub(super) fn claim_detail_widget(
     backend: &AccessKitUiBackend,
+    section_id: &'static str,
     item: &ClaimDetailItem,
     trace_widgets: &mut Vec<TraceWidgetRef>,
 ) -> Result<WidgetId, UiIrError> {
@@ -107,6 +114,7 @@ pub(super) fn claim_detail_widget(
     let gaps = list_label(item.gap_summaries(), "no gaps");
     labeled_widget(
         backend,
+        section_id,
         "button",
         format!(
             "Claim detail {} is a {role}; direct bases {bases}; resolved roots {roots}; verifier proofs {verifiers}; proof statuses {proof_statuses}; contracts {contracts}; assessments {assessments}; gaps {gaps}; review state {}; next action: {}; {}",
@@ -136,6 +144,7 @@ fn claim_detail_role_label(item: &ClaimDetailItem) -> &'static str {
 #[instrument(level = "debug", skip(backend, item, trace_widgets))]
 pub(super) fn proof_chain_widget(
     backend: &AccessKitUiBackend,
+    section_id: &'static str,
     item: &ProofChainItem,
     trace_widgets: &mut Vec<TraceWidgetRef>,
 ) -> Result<WidgetId, UiIrError> {
@@ -147,6 +156,7 @@ pub(super) fn proof_chain_widget(
     let topology = item.topology();
     labeled_widget(
         backend,
+        section_id,
         "button",
         format!(
             "Proof chain {} is {}; next action: {}; reaches roots {roots} through direct bases {bases}; verifier proofs {verifiers}; proof statuses {proof_statuses}; chain backend coverage {backend_coverage}; topology {}, {}, {}, {}; subject {}",
@@ -205,12 +215,14 @@ pub(super) fn list_label(values: &[String], empty: &str) -> String {
 #[instrument(level = "debug", skip(backend, item, trace_widgets))]
 pub(super) fn review_workflow_widget(
     backend: &AccessKitUiBackend,
+    section_id: &'static str,
     item: &ReviewWorkflowItem,
     trace_widgets: &mut Vec<TraceWidgetRef>,
 ) -> Result<WidgetId, UiIrError> {
     let gap_ids = list_label(item.gap_ids(), "no linked gaps");
     labeled_widget(
         backend,
+        section_id,
         "button",
         format!(
             "Review task {} for {} lane {} priority {}; linked gaps {gap_ids}; action: {}; rationale: {}; {}",
@@ -230,11 +242,13 @@ pub(super) fn review_workflow_widget(
 #[instrument(level = "debug", skip(backend, item, trace_widgets))]
 pub(super) fn witness_widget(
     backend: &AccessKitUiBackend,
+    section_id: &'static str,
     item: &WitnessSurfaceItem,
     trace_widgets: &mut Vec<TraceWidgetRef>,
 ) -> Result<WidgetId, UiIrError> {
     labeled_widget(
         backend,
+        section_id,
         "button",
         format!(
             "Witness {} {} for {} has {} trivial, {} checked, {} trusted, {} opaque supports",
@@ -254,6 +268,7 @@ pub(super) fn witness_widget(
 #[instrument(level = "debug", skip(backend, item, trace_widgets))]
 pub(super) fn provenance_root_widget(
     backend: &AccessKitUiBackend,
+    section_id: &'static str,
     item: &ProvenanceRootItem,
     trace_widgets: &mut Vec<TraceWidgetRef>,
 ) -> Result<WidgetId, UiIrError> {
@@ -262,6 +277,7 @@ pub(super) fn provenance_root_widget(
     let gaps = list_label(item.gap_summaries(), "no gaps");
     labeled_widget(
         backend,
+        section_id,
         "link",
         format!(
             "Provenance root {} is {}; verifier proofs {verifiers}; assessments {assessments}; gaps {gaps}; next action: {}; {}, {}, {}, {}",
@@ -285,11 +301,13 @@ pub(super) fn provenance_root_widget(
 #[instrument(level = "debug", skip(backend, item, trace_widgets))]
 pub(super) fn gap_widget(
     backend: &AccessKitUiBackend,
+    section_id: &'static str,
     item: &GapItem,
     trace_widgets: &mut Vec<TraceWidgetRef>,
 ) -> Result<WidgetId, UiIrError> {
     labeled_widget(
         backend,
+        section_id,
         "button",
         format!(
             "Gap {:?} for {} in {} lane is {} priority; next action: {}; detail: {}",
@@ -308,11 +326,13 @@ pub(super) fn gap_widget(
 #[instrument(level = "debug", skip(backend, item, trace_widgets))]
 pub(super) fn source_navigation_widget(
     backend: &AccessKitUiBackend,
+    section_id: &'static str,
     item: &SourceNavigationItem,
     trace_widgets: &mut Vec<TraceWidgetRef>,
 ) -> Result<WidgetId, UiIrError> {
     labeled_widget(
         backend,
+        section_id,
         "link",
         format!(
             "{} opens {} {} target {}",
@@ -329,6 +349,7 @@ pub(super) fn source_navigation_widget(
 #[instrument(level = "debug", skip(backend, trace, trace_widgets))]
 pub(super) fn labeled_widget(
     backend: &AccessKitUiBackend,
+    section_id: &'static str,
     role: &str,
     label: String,
     trace: TraceRef,
@@ -356,6 +377,7 @@ pub(super) fn labeled_widget(
         .map_err(UiIrError::elicit_ui)?;
     let trace_widget = TraceWidgetRefBuilder::default()
         .widget_id(element.id.0)
+        .section_id(section_id)
         .role(role)
         .label(label)
         .claim_id(trace.claim_id())

@@ -15,6 +15,7 @@ use super::{
 #[instrument(level = "debug", skip(backend, item, trace_widgets))]
 pub(super) fn assessment_widget(
     backend: &AccessKitUiBackend,
+    section_id: &'static str,
     item: &AssessmentQueueItem,
     trace_widgets: &mut Vec<TraceWidgetRef>,
 ) -> Result<WidgetId, UiIrError> {
@@ -23,6 +24,7 @@ pub(super) fn assessment_widget(
     let weaknesses = weak_dimensions_label(item);
     labeled_widget(
         backend,
+        section_id,
         "button",
         format!(
             "Assessment {} ({recency}) lane {} recommends {:?} for {}; resolution: {resolution}; {weaknesses}",
@@ -39,6 +41,7 @@ pub(super) fn assessment_widget(
 #[instrument(level = "debug", skip(backend, item, trace_widgets))]
 pub(super) fn assessment_history_widget(
     backend: &AccessKitUiBackend,
+    section_id: &'static str,
     item: &AssessmentHistoryItem,
     trace_widgets: &mut Vec<TraceWidgetRef>,
 ) -> Result<WidgetId, UiIrError> {
@@ -48,6 +51,7 @@ pub(super) fn assessment_history_widget(
     let weaknesses = list_label(item.weak_dimensions(), "no weak dimensions");
     labeled_widget(
         backend,
+        section_id,
         "button",
         format!(
             "Assessment history for {} current {} has {}; reviewers {}; recommendations {}; weak dimensions {}; resolution: {}; latest timestamp {}; comment: {}; {}, {}",
@@ -75,6 +79,7 @@ pub(super) fn assessment_history_widget(
 #[instrument(level = "debug", skip(backend, item, trace_widgets))]
 pub(super) fn assessment_work_widget(
     backend: &AccessKitUiBackend,
+    section_id: &'static str,
     item: &AssessmentWorkItem,
     trace_widgets: &mut Vec<TraceWidgetRef>,
 ) -> Result<WidgetId, UiIrError> {
@@ -85,6 +90,7 @@ pub(super) fn assessment_work_widget(
     };
     labeled_widget(
         backend,
+        section_id,
         "button",
         format!(
             "Assessment work {} lane {} for {} ({priority}); resolution: {}; reason: {}",

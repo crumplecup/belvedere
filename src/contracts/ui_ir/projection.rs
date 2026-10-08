@@ -143,6 +143,7 @@ impl UiViewportVerification {
 pub struct TraceWidgetRef {
     #[getter(skip)]
     widget_id: u64,
+    section_id: String,
     role: String,
     label: String,
     claim_id: String,

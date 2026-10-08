@@ -82,6 +82,25 @@ fn ui_ir_projection_mints_elicit_ui_standards_and_tree_proofs() -> Result<()> {
             .map(belvedere::TraceWidgetRef::widget_id)
             .collect::<Vec<_>>()
     );
+    let section_ids = projection
+        .sections()
+        .iter()
+        .map(|section| section.id().as_str())
+        .collect::<Vec<_>>();
+    assert!(
+        projection
+            .trace_widgets()
+            .iter()
+            .all(|widget| section_ids.contains(&widget.section_id().as_str()))
+    );
+    assert!(
+        projection
+            .trace_widgets()
+            .iter()
+            .any(
+                |widget| widget.section_id() == UI_IR_SECTION_OVERVIEW && widget.role() == "region"
+            )
+    );
     assert!(
         projection
             .minted_standards()
@@ -355,6 +374,7 @@ fn ui_ir_projection_preserves_trace_widgets_for_auditor_deep_dives() -> Result<(
                     .starts_with("Claim belvedere::ingestion::DecodedRegistrySnapshot")
         })
         .ok_or_else(|| miette!("claim explorer item should have a traceable widget"))?;
+    assert_eq!(decoded_claim.section_id(), UI_IR_SECTION_CLAIM_EXPLORER);
     assert!(decoded_claim.label().contains("derived claim"));
     assert!(decoded_claim.label().contains("1 direct basis"));
     assert!(decoded_claim.label().contains("1 verifier proof"));
@@ -386,6 +406,7 @@ fn ui_ir_projection_preserves_trace_widgets_for_auditor_deep_dives() -> Result<(
                     .starts_with("Claim detail belvedere::ingestion::DecodedRegistrySnapshot")
         })
         .ok_or_else(|| miette!("claim detail item should have a traceable widget"))?;
+    assert_eq!(decoded_detail.section_id(), UI_IR_SECTION_CLAIM_DETAIL);
     assert!(decoded_detail.label().contains("derived claim"));
     assert!(
         decoded_detail
@@ -444,6 +465,7 @@ fn ui_ir_projection_preserves_trace_widgets_for_auditor_deep_dives() -> Result<(
             )
         })
         .ok_or_else(|| miette!("gap queue should have traceable widgets"))?;
+    assert_eq!(gap_widget.section_id(), belvedere::UI_IR_SECTION_GAP_QUEUE);
     assert!(!gap_widget.source_record_ids().is_empty());
     let filter_widget = projection
         .trace_widgets()

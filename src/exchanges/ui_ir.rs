@@ -129,6 +129,7 @@ fn overview_section(
 ) -> Result<UiIrSection, UiIrError> {
     let overview = labeled_widget(
         backend,
+        UI_IR_SECTION_OVERVIEW,
         "region",
         format!(
             "Overview: {} claims, {} proofs, {} assessments ({} current, {} superseded), {} gaps, {} high-priority gaps",
@@ -155,7 +156,7 @@ fn filter_section(
     let widgets = model
         .filter_facets()
         .iter()
-        .map(|item| filter_widget(backend, item, trace_widgets))
+        .map(|item| filter_widget(backend, UI_IR_SECTION_FILTERS, item, trace_widgets))
         .collect::<Result<Vec<_>, _>>()?;
     section(backend, UI_IR_SECTION_FILTERS, "filters", widgets)
 }
@@ -169,7 +170,9 @@ fn backend_coverage_section(
     let widgets = model
         .backend_coverage()
         .iter()
-        .map(|item| backend_coverage_widget(backend, item, trace_widgets))
+        .map(|item| {
+            backend_coverage_widget(backend, UI_IR_SECTION_BACKEND_COVERAGE, item, trace_widgets)
+        })
         .collect::<Result<Vec<_>, _>>()?;
     section(
         backend,
@@ -188,7 +191,7 @@ fn claim_explorer_section(
     let widgets = model
         .claim_explorer()
         .iter()
-        .map(|item| claim_widget(backend, item, trace_widgets))
+        .map(|item| claim_widget(backend, UI_IR_SECTION_CLAIM_EXPLORER, item, trace_widgets))
         .collect::<Result<Vec<_>, _>>()?;
     section(
         backend,
@@ -207,7 +210,7 @@ fn claim_detail_section(
     let widgets = model
         .claim_details()
         .iter()
-        .map(|item| claim_detail_widget(backend, item, trace_widgets))
+        .map(|item| claim_detail_widget(backend, UI_IR_SECTION_CLAIM_DETAIL, item, trace_widgets))
         .collect::<Result<Vec<_>, _>>()?;
     section(backend, UI_IR_SECTION_CLAIM_DETAIL, "claim detail", widgets)
 }
@@ -221,7 +224,7 @@ fn proof_chains_section(
     let widgets = model
         .proof_chains()
         .iter()
-        .map(|item| proof_chain_widget(backend, item, trace_widgets))
+        .map(|item| proof_chain_widget(backend, UI_IR_SECTION_PROOF_CHAINS, item, trace_widgets))
         .collect::<Result<Vec<_>, _>>()?;
     section(backend, UI_IR_SECTION_PROOF_CHAINS, "proof chains", widgets)
 }
@@ -235,7 +238,9 @@ fn review_workflow_section(
     let widgets = model
         .review_workflow()
         .iter()
-        .map(|item| review_workflow_widget(backend, item, trace_widgets))
+        .map(|item| {
+            review_workflow_widget(backend, UI_IR_SECTION_REVIEW_WORKFLOW, item, trace_widgets)
+        })
         .collect::<Result<Vec<_>, _>>()?;
     section(
         backend,
@@ -254,7 +259,14 @@ fn assessment_history_section(
     let widgets = model
         .assessment_history()
         .iter()
-        .map(|item| assessment_history_widget(backend, item, trace_widgets))
+        .map(|item| {
+            assessment_history_widget(
+                backend,
+                UI_IR_SECTION_ASSESSMENT_HISTORY,
+                item,
+                trace_widgets,
+            )
+        })
         .collect::<Result<Vec<_>, _>>()?;
     section(
         backend,
@@ -273,12 +285,14 @@ fn assessment_queue_section(
     let assessment_widgets = model
         .assessment_queue()
         .iter()
-        .map(|item| assessment_widget(backend, item, trace_widgets))
+        .map(|item| assessment_widget(backend, UI_IR_SECTION_ASSESSMENT_QUEUE, item, trace_widgets))
         .collect::<Result<Vec<_>, _>>()?;
     let assessment_work_widgets = model
         .assessment_work()
         .iter()
-        .map(|item| assessment_work_widget(backend, item, trace_widgets))
+        .map(|item| {
+            assessment_work_widget(backend, UI_IR_SECTION_ASSESSMENT_QUEUE, item, trace_widgets)
+        })
         .collect::<Result<Vec<_>, _>>()?;
     let widgets = assessment_widgets
         .into_iter()
@@ -301,7 +315,7 @@ fn witness_surface_section(
     let widgets = model
         .witness_surface()
         .iter()
-        .map(|item| witness_widget(backend, item, trace_widgets))
+        .map(|item| witness_widget(backend, UI_IR_SECTION_WITNESS_SURFACE, item, trace_widgets))
         .collect::<Result<Vec<_>, _>>()?;
     section(
         backend,
@@ -320,7 +334,9 @@ fn provenance_roots_section(
     let widgets = model
         .provenance_roots()
         .iter()
-        .map(|item| provenance_root_widget(backend, item, trace_widgets))
+        .map(|item| {
+            provenance_root_widget(backend, UI_IR_SECTION_PROVENANCE_ROOTS, item, trace_widgets)
+        })
         .collect::<Result<Vec<_>, _>>()?;
     section(
         backend,
@@ -339,7 +355,7 @@ fn gap_queue_section(
     let widgets = model
         .gaps()
         .iter()
-        .map(|item| gap_widget(backend, item, trace_widgets))
+        .map(|item| gap_widget(backend, UI_IR_SECTION_GAP_QUEUE, item, trace_widgets))
         .collect::<Result<Vec<_>, _>>()?;
     section(backend, UI_IR_SECTION_GAP_QUEUE, "gap queue", widgets)
 }
@@ -353,7 +369,14 @@ fn source_navigation_section(
     let widgets = model
         .source_navigation()
         .iter()
-        .map(|item| source_navigation_widget(backend, item, trace_widgets))
+        .map(|item| {
+            source_navigation_widget(
+                backend,
+                UI_IR_SECTION_SOURCE_NAVIGATION,
+                item,
+                trace_widgets,
+            )
+        })
         .collect::<Result<Vec<_>, _>>()?;
     section(
         backend,
