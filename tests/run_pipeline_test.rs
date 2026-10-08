@@ -550,6 +550,18 @@ fn run_pipeline_uses_the_normal_amenable_artifact_path() -> Result<()> {
         ui_stage
             .invariant_checks()
             .iter()
+            .any(|check| { check.name() == "ui_ir_trace_widgets_sectioned" && check.passed() })
+    );
+    assert!(
+        ui_stage
+            .invariant_checks()
+            .iter()
+            .any(|check| { check.name() == "ui_ir_sections_traceable" && check.passed() })
+    );
+    assert!(
+        ui_stage
+            .invariant_checks()
+            .iter()
             .any(|check| { check.name() == "ui_ir_input_sources_reachable" && check.passed() })
     );
     assert!(

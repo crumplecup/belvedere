@@ -125,13 +125,29 @@ pub(crate) fn view_model_trace_invariant_checks(
     ]
 }
 
-#[instrument(level = "trace", skip(trace_source_counts, source_record_ids))]
+#[instrument(
+    level = "trace",
+    skip(section_trace_counts, trace_source_counts, source_record_ids)
+)]
 pub(crate) fn ui_ir_trace_invariant_checks(
     trace_widget_count: usize,
     trace_ref_count: usize,
+    section_trace_counts: &BTreeMap<String, usize>,
     trace_source_counts: &BTreeMap<String, usize>,
     source_record_ids: &[String],
 ) -> Vec<BelvedereInvariantCheck> {
+    let unassigned_trace_widgets = count_value(
+        section_trace_counts,
+        "ui_ir_section_unassigned_trace_widgets",
+    );
+    let sections_without_source_widgets = count_value(
+        section_trace_counts,
+        "ui_ir_sections_without_source_widgets",
+    );
+    let section_source_links_total = count_value(
+        section_trace_counts,
+        "ui_ir_section_trace_source_links_total",
+    );
     let widgets_with_sources = count_value(trace_source_counts, "trace_widgets_with_sources");
     let source_links = count_value(trace_source_counts, "trace_source_links");
     let unique_source_records = count_value(trace_source_counts, "trace_unique_source_records");
@@ -148,6 +164,18 @@ pub(crate) fn ui_ir_trace_invariant_checks(
             "ui_ir_trace_refs_preserved".to_owned(),
             source_links == trace_ref_count,
             format!("{source_links} source links recorded for {trace_ref_count} trace references"),
+        ),
+        BelvedereInvariantCheck::new(
+            "ui_ir_trace_widgets_sectioned".to_owned(),
+            unassigned_trace_widgets == 0 && section_source_links_total == trace_ref_count,
+            format!(
+                "{unassigned_trace_widgets} unassigned trace widgets; {section_source_links_total} section source links recorded for {trace_ref_count} trace references"
+            ),
+        ),
+        BelvedereInvariantCheck::new(
+            "ui_ir_sections_traceable".to_owned(),
+            trace_widget_count > 0 && sections_without_source_widgets == 0,
+            format!("{sections_without_source_widgets} UI IR sections lack sourced widgets"),
         ),
         BelvedereInvariantCheck::new(
             "ui_ir_input_sources_reachable".to_owned(),
