@@ -202,6 +202,18 @@ fn view_model_projection_builds_auditor_navigation_evidence() -> Result<()> {
     assert_eq!(
         receipt
             .review_workflow_counts()
+            .get("review_workflow_task_gap_links"),
+        Some(&4)
+    );
+    assert_eq!(
+        receipt
+            .review_workflow_counts()
+            .get("review_workflow_tasks_with_gaps"),
+        Some(&3)
+    );
+    assert_eq!(
+        receipt
+            .review_workflow_counts()
             .get("review_workflow_assessment_work_total"),
         Some(&2)
     );
@@ -518,6 +530,22 @@ fn view_model_projection_builds_auditor_navigation_evidence() -> Result<()> {
         decoded_chain.next_action(),
         "review trusted or opaque witness support"
     );
+    let decoded_task = model
+        .review_workflow()
+        .iter()
+        .find(|item| item.claim_id() == "belvedere::ingestion::DecodedRegistrySnapshot")
+        .ok_or_else(|| miette!("decoded registry claim should have a workflow task"))?;
+    assert!(
+        decoded_task.gap_ids().contains(
+            &"view_model.gap:belvedere::ingestion::DecodedRegistrySnapshot:missing_assessment"
+                .to_owned()
+        )
+    );
+    assert!(decoded_task.gap_ids().contains(
+        &"view_model.gap:belvedere::ingestion::DecodedRegistrySnapshot:trusted_or_opaque_witness_support"
+            .to_owned()
+    ));
+    assert_eq!(decoded_task.gap_ids().len(), 2);
     assert_eq!(decoded_chain.topology().transitive_claim_count(), 2);
     assert_eq!(decoded_chain.topology().max_depth(), 1);
     assert_eq!(decoded_chain.topology().branching_claim_count(), 0);

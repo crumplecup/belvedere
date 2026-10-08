@@ -2,9 +2,7 @@
 
 use tracing::instrument;
 
-use crate::contracts::{
-    AuditorNavigationModel, BackendCoverageItem, GapItem, LandscapeGapKind, WitnessSurfaceItem,
-};
+use crate::contracts::{AuditorNavigationModel, BackendCoverageItem, WitnessSurfaceItem};
 
 #[instrument(level = "debug", skip(model))]
 pub(super) fn view_item_ids(model: &AuditorNavigationModel) -> Vec<String> {
@@ -66,7 +64,7 @@ pub(super) fn view_item_ids(model: &AuditorNavigationModel) -> Vec<String> {
             .iter()
             .map(|item| format!("view_model.provenance_root:{}", item.claim_id())),
     );
-    ids.extend(model.gaps().iter().map(gap_id));
+    ids.extend(model.gaps().iter().map(|item| item.gap_id().to_owned()));
     ids.extend(
         model
             .source_navigation()
@@ -93,25 +91,4 @@ fn witness_id(item: &WitnessSurfaceItem) -> String {
         item.verifier(),
         item.destination_module()
     )
-}
-
-#[instrument(level = "trace", skip(item))]
-fn gap_id(item: &GapItem) -> String {
-    format!(
-        "view_model.gap:{}:{}",
-        item.claim_id(),
-        gap_kind_id(item.kind())
-    )
-}
-
-#[instrument(level = "debug", skip(kind))]
-fn gap_kind_id(kind: LandscapeGapKind) -> &'static str {
-    match kind {
-        LandscapeGapKind::MissingProof => "missing_proof",
-        LandscapeGapKind::MissingAssessment => "missing_assessment",
-        LandscapeGapKind::ReplacementRecommended => "replacement_recommended",
-        LandscapeGapKind::RetirementRecommended => "retirement_recommended",
-        LandscapeGapKind::TrustedOrOpaqueWitnessSupport => "trusted_or_opaque_witness_support",
-        LandscapeGapKind::ProofExecutionUnresolved => "proof_execution_unresolved",
-    }
 }

@@ -18,6 +18,7 @@ pub(super) fn project_gaps(
         .map(|gap| {
             let severity = gap_severity(gap.kind());
             GapItemBuilder::default()
+                .gap_id(stable_gap_id(gap.claim_id(), gap.kind()))
                 .claim_id(gap.claim_id())
                 .kind(gap.kind())
                 .severity(severity)
@@ -30,6 +31,23 @@ pub(super) fn project_gaps(
                 .map_err(|error| BelvedereConstructionError::new("GapItem", error))
         })
         .collect()
+}
+
+#[instrument(level = "debug", skip(kind))]
+fn stable_gap_id(claim_id: &str, kind: LandscapeGapKind) -> String {
+    format!("view_model.gap:{claim_id}:{}", gap_kind_id(kind))
+}
+
+#[instrument(level = "debug", skip(kind))]
+fn gap_kind_id(kind: LandscapeGapKind) -> &'static str {
+    match kind {
+        LandscapeGapKind::MissingProof => "missing_proof",
+        LandscapeGapKind::MissingAssessment => "missing_assessment",
+        LandscapeGapKind::ReplacementRecommended => "replacement_recommended",
+        LandscapeGapKind::RetirementRecommended => "retirement_recommended",
+        LandscapeGapKind::TrustedOrOpaqueWitnessSupport => "trusted_or_opaque_witness_support",
+        LandscapeGapKind::ProofExecutionUnresolved => "proof_execution_unresolved",
+    }
 }
 
 #[instrument(level = "debug", skip(kind))]

@@ -6,7 +6,7 @@ use tracing::instrument;
 
 use crate::{
     contracts::{
-        GapItem, ProofChainItem, ReviewWorkflowItem, ReviewWorkflowItemBuilder,
+        AssessmentWorkItem, GapItem, ProofChainItem, ReviewWorkflowItem, ReviewWorkflowItemBuilder,
         ReviewWorkflowPriority,
     },
     error::BelvedereConstructionError,
@@ -26,10 +26,12 @@ pub(super) fn project_review_workflow(
                 .map_or(&[][..], Vec::as_slice);
             let priority = workflow_priority(chain.review_state());
             let lane = workflow_lane(chain, claim_gaps);
+            let gap_ids = workflow_gap_ids(claim_gaps);
             ReviewWorkflowItemBuilder::default()
                 .task_id(format!("belvedere.review:{}:{lane}", chain.claim_id()))
                 .claim_id(chain.claim_id())
                 .lane(lane)
+                .gap_ids(gap_ids)
                 .action(chain.next_action())
                 .rationale(workflow_rationale(chain, claim_gaps))
                 .priority(priority)
@@ -39,6 +41,100 @@ pub(super) fn project_review_workflow(
                 .map_err(|error| BelvedereConstructionError::new("ReviewWorkflowItem", error))
         })
         .collect()
+}
+
+#[instrument(
+    level = "debug",
+    skip(proof_chains, review_workflow, assessment_work, gaps)
+)]
+pub(super) fn review_workflow_counts(
+    proof_chains: &[ProofChainItem],
+    review_workflow: &[ReviewWorkflowItem],
+    assessment_work: &[AssessmentWorkItem],
+    gaps: &[GapItem],
+) -> BTreeMap<String, usize> {
+    let mut counts = BTreeMap::new();
+    for item in proof_chains {
+        *counts
+            .entry(format!(
+                "review_workflow_proof_chain_state_{}",
+                item.review_state()
+            ))
+            .or_default() += 1;
+    }
+
+    counts.insert(
+        "review_workflow_task_total".to_owned(),
+        review_workflow.len(),
+    );
+    for item in review_workflow {
+        *counts
+            .entry(format!(
+                "review_workflow_task_priority_{}",
+                item.priority().label()
+            ))
+            .or_default() += 1;
+        *counts
+            .entry(format!("review_workflow_task_lane_{}", item.lane()))
+            .or_default() += 1;
+    }
+    counts.insert(
+        "review_workflow_task_gap_links".to_owned(),
+        review_workflow
+            .iter()
+            .map(|item| item.gap_ids().len())
+            .sum(),
+    );
+    counts.insert(
+        "review_workflow_tasks_with_gaps".to_owned(),
+        review_workflow
+            .iter()
+            .filter(|item| !item.gap_ids().is_empty())
+            .count(),
+    );
+
+    counts.insert(
+        "review_workflow_assessment_work_total".to_owned(),
+        assessment_work.len(),
+    );
+    counts.insert(
+        "review_workflow_assessment_work_high_priority".to_owned(),
+        assessment_work
+            .iter()
+            .filter(|item| item.high_priority())
+            .count(),
+    );
+    counts.insert(
+        "review_workflow_assessment_work_standard_priority".to_owned(),
+        assessment_work
+            .iter()
+            .filter(|item| !item.high_priority())
+            .count(),
+    );
+
+    for item in gaps {
+        *counts
+            .entry(format!(
+                "review_workflow_gap_severity_{}",
+                item.severity().label()
+            ))
+            .or_default() += 1;
+    }
+    counts.insert(
+        "review_workflow_gap_high_priority".to_owned(),
+        gaps.iter().filter(|item| item.high_priority()).count(),
+    );
+    counts
+}
+
+#[instrument(level = "trace", skip(gaps))]
+fn workflow_gap_ids(gaps: &[&GapItem]) -> Vec<String> {
+    let mut gap_ids = gaps
+        .iter()
+        .map(|gap| gap.gap_id().to_owned())
+        .collect::<Vec<_>>();
+    gap_ids.sort();
+    gap_ids
 }
 
 #[instrument(level = "debug", skip(gaps))]

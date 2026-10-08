@@ -10,8 +10,8 @@ use crate::{
         AssessmentQueueItem, AssessmentRecencySummary, AssessmentWorkItem, AuditorFilterFacet,
         AuditorNavigationContract, AuditorNavigationModel, AuditorNavigationModelBuilder,
         BelvedereContract, GapItem, LandscapeAssessment, OverviewView, ProofChainItem,
-        ProvenanceRootItem, ProvenanceRootItemBuilder, ReviewWorkflowItem, SourceNavigationItem,
-        TraceRef, ViewModelInput,
+        ProvenanceRootItem, ProvenanceRootItemBuilder, SourceNavigationItem, TraceRef,
+        ViewModelInput,
     },
     error::{BelvedereConstructionError, BelvedereError},
     exchanges::BelvedereExchange,
@@ -37,7 +37,7 @@ use sources::project_source_navigation;
 use traces::trace;
 use view_ids::view_item_ids;
 use witness::project_witness_surface;
-use workflow::project_review_workflow;
+use workflow::{project_review_workflow, review_workflow_counts};
 
 /// Exchange from a landscape graph into UI-neutral auditor navigation evidence.
 #[derive(Debug, Clone, Copy, Default)]
@@ -375,76 +375,6 @@ fn proof_chain_topology_counts(proof_chains: &[ProofChainItem]) -> BTreeMap<Stri
         ("proof_chain_branching_claims".to_owned(), branching_claims),
         ("proof_chain_chain_gaps".to_owned(), chain_gaps),
     ])
-}
-
-#[instrument(
-    level = "debug",
-    skip(proof_chains, review_workflow, assessment_work, gaps)
-)]
-fn review_workflow_counts(
-    proof_chains: &[ProofChainItem],
-    review_workflow: &[ReviewWorkflowItem],
-    assessment_work: &[AssessmentWorkItem],
-    gaps: &[GapItem],
-) -> BTreeMap<String, usize> {
-    let mut counts = BTreeMap::new();
-    for item in proof_chains {
-        *counts
-            .entry(format!(
-                "review_workflow_proof_chain_state_{}",
-                item.review_state()
-            ))
-            .or_default() += 1;
-    }
-
-    counts.insert(
-        "review_workflow_task_total".to_owned(),
-        review_workflow.len(),
-    );
-    for item in review_workflow {
-        *counts
-            .entry(format!(
-                "review_workflow_task_priority_{}",
-                item.priority().label()
-            ))
-            .or_default() += 1;
-        *counts
-            .entry(format!("review_workflow_task_lane_{}", item.lane()))
-            .or_default() += 1;
-    }
-
-    counts.insert(
-        "review_workflow_assessment_work_total".to_owned(),
-        assessment_work.len(),
-    );
-    counts.insert(
-        "review_workflow_assessment_work_high_priority".to_owned(),
-        assessment_work
-            .iter()
-            .filter(|item| item.high_priority())
-            .count(),
-    );
-    counts.insert(
-        "review_workflow_assessment_work_standard_priority".to_owned(),
-        assessment_work
-            .iter()
-            .filter(|item| !item.high_priority())
-            .count(),
-    );
-
-    for item in gaps {
-        *counts
-            .entry(format!(
-                "review_workflow_gap_severity_{}",
-                item.severity().label()
-            ))
-            .or_default() += 1;
-    }
-    counts.insert(
-        "review_workflow_gap_high_priority".to_owned(),
-        gaps.iter().filter(|item| item.high_priority()).count(),
-    );
-    counts
 }
 
 #[instrument(level = "trace", skip(claim))]

@@ -208,11 +208,12 @@ pub(super) fn review_workflow_widget(
     item: &ReviewWorkflowItem,
     trace_widgets: &mut Vec<TraceWidgetRef>,
 ) -> Result<WidgetId, UiIrError> {
+    let gap_ids = list_label(item.gap_ids(), "no linked gaps");
     labeled_widget(
         backend,
         "button",
         format!(
-            "Review task {} for {} lane {} priority {}; action: {}; rationale: {}; {}",
+            "Review task {} for {} lane {} priority {}; linked gaps {gap_ids}; action: {}; rationale: {}; {}",
             item.task_id(),
             item.claim_id(),
             item.lane(),

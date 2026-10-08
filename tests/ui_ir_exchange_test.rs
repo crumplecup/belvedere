@@ -560,6 +560,9 @@ fn ui_ir_projection_preserves_trace_widgets_for_auditor_deep_dives() -> Result<(
             .label()
             .contains("lane elevated:witness-review priority elevated")
     );
+    assert!(workflow_widget.label().contains(
+        "linked gaps view_model.gap:belvedere::ingestion::DecodedRegistrySnapshot:missing_assessment, view_model.gap:belvedere::ingestion::DecodedRegistrySnapshot:trusted_or_opaque_witness_support"
+    ));
     assert!(
         workflow_widget
             .label()

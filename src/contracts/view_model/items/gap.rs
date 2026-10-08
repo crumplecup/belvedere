@@ -40,6 +40,7 @@ impl GapSeverity {
 #[derive(Debug, Clone, PartialEq, Eq, Getters, Builder, Serialize)]
 #[builder(vis = "pub(crate)", setter(into))]
 pub struct GapItem {
+    gap_id: String,
     claim_id: String,
     #[getter(skip)]
     kind: LandscapeGapKind,

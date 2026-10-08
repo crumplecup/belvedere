@@ -37,6 +37,7 @@ pub struct ReviewWorkflowItem {
     task_id: String,
     claim_id: String,
     lane: String,
+    gap_ids: Vec<String>,
     action: String,
     rationale: String,
     #[getter(skip)]
