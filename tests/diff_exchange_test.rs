@@ -479,6 +479,34 @@ fn landscape_diff_runner_uses_the_normal_artifact_path() -> Result<()> {
     );
     assert!(
         report
+            .manifest()
+            .invariant_checks()
+            .iter()
+            .all(|check| check.passed())
+    );
+    assert_eq!(
+        report
+            .manifest()
+            .stage_kind_counts()
+            .get("manifest_stage_kind_registry_ingestion"),
+        Some(&2)
+    );
+    assert_eq!(
+        report
+            .manifest()
+            .stage_kind_counts()
+            .get("manifest_stage_kind_landscape_diff"),
+        Some(&1)
+    );
+    assert_eq!(
+        report
+            .manifest()
+            .output_kind_counts()
+            .get("manifest_output_kind_landscape_diff_receipt"),
+        Some(&1)
+    );
+    assert!(
+        report
             .certificate()
             .input_artifact_ids()
             .iter()

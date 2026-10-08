@@ -164,6 +164,34 @@ fn run_pipeline_uses_the_normal_amenable_artifact_path() -> Result<()> {
     assert_eq!(report.manifest().input_artifacts().len(), 2);
     assert_eq!(report.manifest().stage_certificates().len(), 5);
     assert_eq!(report.manifest().output_artifacts().len(), 9);
+    assert!(
+        report
+            .manifest()
+            .invariant_checks()
+            .iter()
+            .all(|check| check.passed())
+    );
+    assert_eq!(
+        report
+            .manifest()
+            .input_role_counts()
+            .get("manifest_input_role_registry"),
+        Some(&1)
+    );
+    assert_eq!(
+        report
+            .manifest()
+            .stage_kind_counts()
+            .get("manifest_stage_kind_ui_ir_projection"),
+        Some(&1)
+    );
+    assert_eq!(
+        report
+            .manifest()
+            .output_kind_counts()
+            .get("manifest_output_kind_ui_ir_receipt"),
+        Some(&1)
+    );
     assert_eq!(
         report.manifest().run_certificate_id(),
         report.certificate().id()
@@ -1555,6 +1583,26 @@ fn assert_run_manifest(manifest: &Value) {
     assert_eq!(manifest["counts"]["stage_certificates"].as_u64(), Some(5));
     assert_eq!(manifest["counts"]["output_artifacts"].as_u64(), Some(9));
     assert_eq!(
+        manifest["input_role_counts"]["manifest_input_role_registry"].as_u64(),
+        Some(1)
+    );
+    assert_eq!(
+        manifest["stage_kind_counts"]["manifest_stage_kind_ui_ir_projection"].as_u64(),
+        Some(1)
+    );
+    assert_eq!(
+        manifest["output_kind_counts"]["manifest_output_kind_ui_ir_receipt"].as_u64(),
+        Some(1)
+    );
+    assert!(
+        manifest["invariant_checks"]
+            .as_array()
+            .is_some_and(|checks| checks.iter().any(|check| {
+                check["name"].as_str() == Some("artifact_manifest_output_sources_accounted")
+                    && check["passed"].as_bool() == Some(true)
+            }))
+    );
+    assert_eq!(
         manifest["input_artifacts"].as_array().map(Vec::len),
         Some(2)
     );
@@ -1587,6 +1635,25 @@ fn assert_diff_manifest(manifest: &Value) {
     assert_eq!(manifest["counts"]["input_artifacts"].as_u64(), Some(4));
     assert_eq!(manifest["counts"]["stage_certificates"].as_u64(), Some(11));
     assert_eq!(manifest["counts"]["output_artifacts"].as_u64(), Some(20));
+    assert_eq!(
+        manifest["stage_kind_counts"]["manifest_stage_kind_registry_ingestion"].as_u64(),
+        Some(2)
+    );
+    assert_eq!(
+        manifest["stage_kind_counts"]["manifest_stage_kind_landscape_diff"].as_u64(),
+        Some(1)
+    );
+    assert_eq!(
+        manifest["output_kind_counts"]["manifest_output_kind_landscape_diff_receipt"].as_u64(),
+        Some(1)
+    );
+    assert!(
+        manifest["invariant_checks"]
+            .as_array()
+            .is_some_and(|checks| checks
+                .iter()
+                .all(|check| check["passed"].as_bool() == Some(true)))
+    );
     assert_eq!(
         manifest["stage_certificates"].as_array().map(Vec::len),
         Some(11)

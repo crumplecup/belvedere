@@ -9,6 +9,10 @@ use crate::certify::{
     BelvedereRunCertificate, IngestionReceipt, LandscapeReceipt, UiIrReceipt, ViewModelReceipt,
 };
 
+use super::accounting::{
+    input_role_counts, manifest_invariant_checks, output_kind_counts, output_role_counts,
+    output_source_stage_counts, stage_kind_counts, stage_role_counts,
+};
 use super::indexed_artifacts::{
     diff_stage_roles, manifest_inputs, manifest_stage_certificates, normal_stage_roles,
     output_artifact, run_certificate_output,
@@ -277,12 +281,31 @@ impl BelvedereArtifactManifest {
             ("output_artifacts".to_owned(), output_artifacts.len()),
             ("stage_certificates".to_owned(), stage_certificates.len()),
         ]);
+        let input_role_counts = input_role_counts(&input_artifacts);
+        let stage_role_counts = stage_role_counts(&stage_certificates);
+        let stage_kind_counts = stage_kind_counts(&stage_certificates);
+        let output_role_counts = output_role_counts(&output_artifacts);
+        let output_kind_counts = output_kind_counts(&output_artifacts);
+        let output_source_stage_counts = output_source_stage_counts(&output_artifacts);
+        let invariant_checks = manifest_invariant_checks(
+            &counts,
+            &input_artifacts,
+            &stage_certificates,
+            &output_artifacts,
+        );
         Self {
             schema_id: BELVEDERE_ARTIFACT_MANIFEST_SCHEMA_ID.to_owned(),
             schema_version: BELVEDERE_ARTIFACT_MANIFEST_SCHEMA_VERSION,
             run_certificate_id: certificate.id().to_owned(),
             run_certificate_digest: certificate.digest().to_owned(),
             counts,
+            input_role_counts,
+            stage_role_counts,
+            stage_kind_counts,
+            output_role_counts,
+            output_kind_counts,
+            output_source_stage_counts,
+            invariant_checks,
             input_artifacts,
             stage_certificates,
             output_artifacts,
