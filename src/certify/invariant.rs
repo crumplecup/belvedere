@@ -281,6 +281,35 @@ pub(crate) fn diff_trace_invariant_checks(
     ]
 }
 
+#[instrument(level = "trace", skip(counts, item_kind_counts, diff_item_ids))]
+pub(crate) fn diff_item_invariant_checks(
+    counts: &BTreeMap<String, usize>,
+    item_kind_counts: &BTreeMap<String, usize>,
+    diff_item_ids: &[String],
+) -> Vec<BelvedereInvariantCheck> {
+    let item_kind_total = item_kind_counts.values().sum::<usize>();
+    let added_items = count_value(item_kind_counts, "diff_item_kind_added");
+    let changed_items = count_value(item_kind_counts, "diff_item_kind_changed");
+    let removed_items = count_value(item_kind_counts, "diff_item_kind_removed");
+    vec![
+        BelvedereInvariantCheck::new(
+            "landscape_diff_item_ids_classified".to_owned(),
+            item_kind_total == diff_item_ids.len(),
+            format!(
+                "{item_kind_total} classified diff item IDs recorded for {} outputs",
+                diff_item_ids.len()
+            ),
+        ),
+        BelvedereInvariantCheck::new(
+            "landscape_diff_core_counts_match_items".to_owned(),
+            added_items == count_value(counts, "added_items")
+                && changed_items == count_value(counts, "changed_items")
+                && removed_items == count_value(counts, "removed_items"),
+            format!("added={added_items}, changed={changed_items}, removed={removed_items}"),
+        ),
+    ]
+}
+
 #[instrument(
     level = "trace",
     skip(section_trace_counts, trace_source_counts, source_record_ids)

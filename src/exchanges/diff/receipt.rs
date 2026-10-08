@@ -32,6 +32,20 @@ pub(super) fn diff_item_ids(items: &[LandscapeDiffItem]) -> Vec<String> {
 }
 
 #[instrument(level = "debug", skip(items))]
+pub(super) fn item_kind_counts(items: &[LandscapeDiffItem]) -> BTreeMap<String, usize> {
+    let mut counts = BTreeMap::new();
+    for item in items {
+        *counts
+            .entry(format!(
+                "diff_item_kind_{}",
+                change_kind_key(item.change_kind())
+            ))
+            .or_default() += 1;
+    }
+    counts
+}
+
+#[instrument(level = "debug", skip(items))]
 pub(super) fn subject_kind_counts(items: &[LandscapeDiffItem]) -> BTreeMap<String, usize> {
     let mut counts = BTreeMap::new();
     for item in items {

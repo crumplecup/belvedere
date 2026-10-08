@@ -13,6 +13,7 @@ pub struct LandscapeDiffReceipt {
     contract: String,
     #[getter(skip)]
     counts: LandscapeDiffReceiptCounts,
+    item_kind_counts: BTreeMap<String, usize>,
     subject_kind_counts: BTreeMap<String, usize>,
     change_subject_counts: BTreeMap<String, usize>,
     trace_source_counts: BTreeMap<String, usize>,

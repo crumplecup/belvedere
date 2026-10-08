@@ -11,9 +11,9 @@ use crate::{
     certify::{
         BELVEDERE_STAGE_CERTIFICATE_SCHEMA_ID, BELVEDERE_STAGE_CERTIFICATE_SCHEMA_VERSION,
         BelvedereInvariantCheck, IngestionReceipt, LandscapeDiffReceipt, LandscapeReceipt,
-        UiIrReceipt, ViewModelReceipt, diff_trace_invariant_checks, hex_digest,
-        landscape_model_invariant_checks, stage_invariant_checks, ui_ir_output_invariant_checks,
-        ui_ir_trace_invariant_checks, update_field, update_fields,
+        UiIrReceipt, ViewModelReceipt, diff_item_invariant_checks, diff_trace_invariant_checks,
+        hex_digest, landscape_model_invariant_checks, stage_invariant_checks,
+        ui_ir_output_invariant_checks, ui_ir_trace_invariant_checks, update_field, update_fields,
         view_model_item_invariant_checks, view_model_trace_invariant_checks,
     },
     contracts::{
@@ -168,10 +168,22 @@ impl BelvedereStageCertificate {
             ("total_items".to_owned(), receipt.counts().total_items()),
             ("warnings".to_owned(), receipt.warnings().len()),
         ]);
+        counts.extend(receipt.item_kind_counts().clone());
         counts.extend(receipt.subject_kind_counts().clone());
         counts.extend(receipt.change_subject_counts().clone());
         counts.extend(receipt.trace_source_counts().clone());
         counts.extend(receipt.trace_source_kind_counts().clone());
+        let mut additional_invariant_checks = diff_trace_invariant_checks(
+            receipt.counts().total_items(),
+            receipt.trace_source_counts(),
+            receipt.source_record_ids(),
+            receipt.trace_source_record_ids(),
+        );
+        additional_invariant_checks.extend(diff_item_invariant_checks(
+            &counts,
+            receipt.item_kind_counts(),
+            receipt.diff_item_ids(),
+        ));
         Self::new(StageCertificateEvidence {
             stage: BelvederePipelineStage::LandscapeDiff,
             contract: receipt.contract().to_owned(),
@@ -181,12 +193,7 @@ impl BelvedereStageCertificate {
             input_ids: receipt.source_record_ids().clone(),
             output_ids: receipt.diff_item_ids().clone(),
             counts,
-            additional_invariant_checks: diff_trace_invariant_checks(
-                receipt.counts().total_items(),
-                receipt.trace_source_counts(),
-                receipt.source_record_ids(),
-                receipt.trace_source_record_ids(),
-            ),
+            additional_invariant_checks,
             warning_count: receipt.warnings().len(),
         })
     }

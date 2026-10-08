@@ -1059,6 +1059,18 @@ fn assert_landscape_diff_receipt(receipt: &Value) {
         Some(2)
     );
     assert_eq!(
+        receipt["item_kind_counts"]["diff_item_kind_added"].as_u64(),
+        Some(4)
+    );
+    assert_eq!(
+        receipt["item_kind_counts"]["diff_item_kind_changed"].as_u64(),
+        Some(1)
+    );
+    assert_eq!(
+        receipt["item_kind_counts"]["diff_item_kind_removed"].as_u64(),
+        Some(1)
+    );
+    assert_eq!(
         receipt["change_subject_counts"]["diff_change_added_assessment"].as_u64(),
         Some(2)
     );
@@ -2481,6 +2493,18 @@ fn cli_can_emit_the_landscape_diff_certificate_as_json() -> Result<()> {
     );
     assert_eq!(certificate["counts"]["total_items"].as_u64(), Some(6));
     assert_eq!(
+        certificate["counts"]["diff_item_kind_added"].as_u64(),
+        Some(4)
+    );
+    assert_eq!(
+        certificate["counts"]["diff_item_kind_changed"].as_u64(),
+        Some(1)
+    );
+    assert_eq!(
+        certificate["counts"]["diff_item_kind_removed"].as_u64(),
+        Some(1)
+    );
+    assert_eq!(
         certificate["counts"]["diff_trace_source_links"].as_u64(),
         Some(8)
     );
@@ -2583,6 +2607,7 @@ fn cli_can_emit_the_landscape_diff_run_certificate_as_json() -> Result<()> {
                         && stage_certificate["contract"].as_str()
                             == Some("belvedere.diff.landscape")
                         && stage_certificate["counts"]["total_items"].as_u64() == Some(6)
+                        && stage_certificate["counts"]["diff_item_kind_added"].as_u64() == Some(4)
                         && stage_certificate["counts"]["diff_trace_source_links"].as_u64()
                             == Some(8)
                         && stage_certificate["invariant_checks"]

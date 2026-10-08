@@ -38,6 +38,18 @@ fn landscape_diff_surfaces_snapshot_changes_for_auditors() -> Result<()> {
         Some(&2)
     );
     assert_eq!(
+        receipt.item_kind_counts().get("diff_item_kind_added"),
+        Some(&4)
+    );
+    assert_eq!(
+        receipt.item_kind_counts().get("diff_item_kind_changed"),
+        Some(&1)
+    );
+    assert_eq!(
+        receipt.item_kind_counts().get("diff_item_kind_removed"),
+        Some(&1)
+    );
+    assert_eq!(
         receipt
             .change_subject_counts()
             .get("diff_change_added_assessment"),
@@ -107,6 +119,9 @@ fn landscape_diff_surfaces_snapshot_changes_for_auditors() -> Result<()> {
         certificate.counts().get("total_items"),
         Some(&diff.items().len())
     );
+    assert_eq!(certificate.counts().get("diff_item_kind_added"), Some(&4));
+    assert_eq!(certificate.counts().get("diff_item_kind_changed"), Some(&1));
+    assert_eq!(certificate.counts().get("diff_item_kind_removed"), Some(&1));
     assert!(
         receipt
             .diff_item_ids()
@@ -136,6 +151,14 @@ fn landscape_diff_surfaces_snapshot_changes_for_auditors() -> Result<()> {
             .iter()
             .all(|check| check.passed())
     );
+    assert!(
+        certificate.invariant_checks().iter().any(|check| {
+            check.name() == "landscape_diff_item_ids_classified" && check.passed()
+        })
+    );
+    assert!(certificate.invariant_checks().iter().any(|check| {
+        check.name() == "landscape_diff_core_counts_match_items" && check.passed()
+    }));
 
     let assessment = diff
         .items()
