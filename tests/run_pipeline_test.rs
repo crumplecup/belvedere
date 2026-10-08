@@ -1345,6 +1345,7 @@ fn assert_auditor_navigation_receipt(receipt: &Value) {
         receipt["contract"].as_str(),
         Some("belvedere.view_model.auditor_navigation")
     );
+    assert_view_model_receipt_identity(receipt);
     assert_auditor_navigation_receipt_source(receipt);
     assert_eq!(receipt["counts"]["claim_cards"].as_u64(), Some(4));
     assert_eq!(receipt["counts"]["claim_detail_items"].as_u64(), Some(4));
@@ -1417,6 +1418,7 @@ fn assert_previous_auditor_navigation_receipt(receipt: &Value) {
         receipt["contract"].as_str(),
         Some("belvedere.view_model.auditor_navigation")
     );
+    assert_view_model_receipt_identity(receipt);
     assert_auditor_navigation_receipt_source(receipt);
     assert_eq!(receipt["counts"]["claim_cards"].as_u64(), Some(3));
     assert_eq!(receipt["counts"]["claim_detail_items"].as_u64(), Some(3));
@@ -1453,6 +1455,20 @@ fn assert_previous_auditor_navigation_receipt(receipt: &Value) {
     assert_eq!(
         receipt["source_record_ids"].as_array().map(Vec::len),
         Some(5)
+    );
+}
+
+fn assert_view_model_receipt_identity(receipt: &Value) {
+    assert!(
+        receipt["receipt_id"]
+            .as_str()
+            .is_some_and(|id| id.starts_with("belvedere.receipt.view_model:"))
+    );
+    assert_eq!(
+        receipt["receipt_id"].as_str().map(str::to_owned),
+        receipt["receipt_digest"]
+            .as_str()
+            .map(|digest| format!("belvedere.receipt.view_model:{digest}"))
     );
 }
 

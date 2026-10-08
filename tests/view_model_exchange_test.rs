@@ -34,6 +34,7 @@ fn view_model_projection_builds_auditor_navigation_evidence() -> Result<()> {
     assert_eq!(receipt.counts().witness_items(), 1);
     assert_eq!(receipt.counts().root_items(), 3);
     assert_eq!(receipt.counts().source_items(), 7);
+    assert_view_model_receipt_identity(&receipt);
     assert!(
         receipt
             .source_landscape_receipt_id()
@@ -1092,6 +1093,18 @@ fn fixture_input_with_assessments(assessment_bytes: Vec<u8>) -> Result<ViewModel
         landscape,
         &landscape_receipt,
     ))
+}
+
+fn assert_view_model_receipt_identity(receipt: &belvedere::ViewModelReceipt) {
+    assert!(
+        receipt
+            .receipt_id()
+            .starts_with("belvedere.receipt.view_model:")
+    );
+    assert_eq!(
+        receipt.receipt_id(),
+        &format!("belvedere.receipt.view_model:{}", receipt.receipt_digest())
+    );
 }
 
 const STALE_ASSESSMENTS: &str = concat!(

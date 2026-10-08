@@ -5,7 +5,10 @@ use std::collections::{BTreeMap, BTreeSet};
 use tracing::instrument;
 
 use crate::{
-    certify::{ViewModelReceipt, ViewModelReceiptBuilder, ViewModelReceiptCountsBuilder},
+    certify::{
+        ViewModelReceipt, ViewModelReceiptBuilder, ViewModelReceiptCountsBuilder,
+        ViewModelReceiptDigestEvidenceBuilder, view_model_receipt_identity,
+    },
     contracts::{
         AssessmentQueueItem, AssessmentRecencySummary, AssessmentWorkItem, AuditorFilterFacet,
         AuditorNavigationContract, AuditorNavigationModel, AuditorNavigationModelBuilder,
@@ -211,9 +214,34 @@ impl BelvedereExchange<AuditorNavigationContract> for AuditorNavigationProjectio
             .map_err(|error| BelvedereConstructionError::new("AuditorNavigationModel", error))?;
         let receipt_view_item_ids = view_item_ids(&model);
         let receipt_item_kind_counts = view_item_kind_counts(&receipt_view_item_ids);
+        let receipt_warnings = Vec::new();
+        let digest_evidence = ViewModelReceiptDigestEvidenceBuilder::default()
+            .contract(AuditorNavigationContract::NAME)
+            .counts(counts)
+            .lane_counts(&receipt_lane_counts)
+            .facet_group_counts(&receipt_facet_group_counts)
+            .source_artifact_counts(&receipt_source_artifact_counts)
+            .source_kind_counts(&receipt_source_kind_counts)
+            .proof_chain_topology_counts(&receipt_proof_chain_topology_counts)
+            .provenance_root_kind_counts(&receipt_provenance_root_kind_counts)
+            .review_workflow_counts(&receipt_review_workflow_counts)
+            .trace_kind_counts(&receipt_trace_kind_counts)
+            .trace_source_counts(&receipt_trace_source_counts)
+            .item_kind_counts(&receipt_item_kind_counts)
+            .source_landscape_receipt_id(input.source_landscape_receipt_id())
+            .view_item_ids(&receipt_view_item_ids)
+            .source_record_ids(&source_record_ids)
+            .warnings(&receipt_warnings)
+            .build()
+            .map_err(|error| {
+                BelvedereConstructionError::new("ViewModelReceiptDigestEvidence", error)
+            })?;
+        let (receipt_id, receipt_digest) = view_model_receipt_identity(digest_evidence);
         let receipt = ViewModelReceiptBuilder::default()
             .contract(AuditorNavigationContract::NAME)
             .counts(counts)
+            .receipt_id(receipt_id)
+            .receipt_digest(receipt_digest)
             .lane_counts(receipt_lane_counts)
             .facet_group_counts(receipt_facet_group_counts)
             .source_artifact_counts(receipt_source_artifact_counts)
@@ -227,7 +255,7 @@ impl BelvedereExchange<AuditorNavigationContract> for AuditorNavigationProjectio
             .source_landscape_receipt_id(input.source_landscape_receipt_id().to_owned())
             .view_item_ids(receipt_view_item_ids)
             .source_record_ids(source_record_ids)
-            .warnings(Vec::new())
+            .warnings(receipt_warnings)
             .build()
             .map_err(|error| BelvedereConstructionError::new("ViewModelReceipt", error))?;
 
