@@ -35,7 +35,7 @@ use facets::project_filter_facets;
 use gaps::project_gaps;
 use sources::project_source_navigation;
 use traces::trace;
-use view_ids::view_item_ids;
+use view_ids::{view_item_ids, view_item_kind_counts};
 use witness::project_witness_surface;
 use workflow::{project_review_workflow, review_workflow_counts};
 
@@ -210,6 +210,7 @@ impl BelvedereExchange<AuditorNavigationContract> for AuditorNavigationProjectio
             .build()
             .map_err(|error| BelvedereConstructionError::new("AuditorNavigationModel", error))?;
         let receipt_view_item_ids = view_item_ids(&model);
+        let receipt_item_kind_counts = view_item_kind_counts(&receipt_view_item_ids);
         let receipt = ViewModelReceiptBuilder::default()
             .contract(AuditorNavigationContract::NAME)
             .counts(counts)
@@ -222,6 +223,7 @@ impl BelvedereExchange<AuditorNavigationContract> for AuditorNavigationProjectio
             .review_workflow_counts(receipt_review_workflow_counts)
             .trace_kind_counts(receipt_trace_kind_counts)
             .trace_source_counts(receipt_trace_source_counts)
+            .item_kind_counts(receipt_item_kind_counts)
             .view_item_ids(receipt_view_item_ids)
             .source_record_ids(source_record_ids)
             .warnings(Vec::new())

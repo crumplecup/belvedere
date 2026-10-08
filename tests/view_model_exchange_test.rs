@@ -331,6 +331,32 @@ fn view_model_projection_builds_auditor_navigation_evidence() -> Result<()> {
             .get("view_model_trace_unique_source_records"),
         Some(&7)
     );
+    assert_eq!(
+        receipt
+            .item_kind_counts()
+            .get("view_model_item_kind_overview"),
+        Some(&1)
+    );
+    assert_eq!(
+        receipt.item_kind_counts().get("view_model_item_kind_claim"),
+        Some(&4)
+    );
+    assert_eq!(
+        receipt
+            .item_kind_counts()
+            .get("view_model_item_kind_backend_coverage"),
+        Some(&12)
+    );
+    assert_eq!(
+        receipt.item_kind_counts().get("view_model_item_kind_gap"),
+        Some(&4)
+    );
+    assert_eq!(
+        receipt
+            .item_kind_counts()
+            .get("view_model_item_kind_source"),
+        Some(&7)
+    );
     assert_eq!(receipt.view_item_ids().len(), 60);
     assert!(
         receipt

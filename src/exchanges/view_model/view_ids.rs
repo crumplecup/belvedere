@@ -1,5 +1,7 @@
 //! Stable output IDs emitted by the auditor navigation view model.
 
+use std::collections::BTreeMap;
+
 use tracing::instrument;
 
 use crate::contracts::{AuditorNavigationModel, BackendCoverageItem, WitnessSurfaceItem};
@@ -72,6 +74,23 @@ pub(super) fn view_item_ids(model: &AuditorNavigationModel) -> Vec<String> {
             .map(|item| format!("view_model.source:{}", item.source_record_id())),
     );
     ids
+}
+
+#[instrument(level = "debug", skip(item_ids))]
+pub(super) fn view_item_kind_counts(item_ids: &[String]) -> BTreeMap<String, usize> {
+    let mut counts = BTreeMap::new();
+    for item_id in item_ids {
+        let Some(suffix) = item_id.strip_prefix("view_model.") else {
+            continue;
+        };
+        let kind = suffix
+            .split_once(':')
+            .map_or(suffix, |(kind, _identity)| kind);
+        *counts
+            .entry(format!("view_model_item_kind_{kind}"))
+            .or_default() += 1;
+    }
+    counts
 }
 
 #[instrument(level = "trace", skip(item))]

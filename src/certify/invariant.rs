@@ -125,6 +125,70 @@ pub(crate) fn view_model_trace_invariant_checks(
     ]
 }
 
+#[instrument(level = "trace", skip(counts, item_kind_counts, view_item_ids))]
+pub(crate) fn view_model_item_invariant_checks(
+    counts: &BTreeMap<String, usize>,
+    item_kind_counts: &BTreeMap<String, usize>,
+    view_item_ids: &[String],
+) -> Vec<BelvedereInvariantCheck> {
+    let item_kind_total = item_kind_counts.values().sum::<usize>();
+    vec![
+        BelvedereInvariantCheck::new(
+            "view_model_item_ids_classified".to_owned(),
+            item_kind_total == view_item_ids.len(),
+            format!(
+                "{item_kind_total} classified view-model item IDs recorded for {} outputs",
+                view_item_ids.len()
+            ),
+        ),
+        BelvedereInvariantCheck::new(
+            "view_model_core_counts_match_items".to_owned(),
+            count_value(item_kind_counts, "view_model_item_kind_claim")
+                == count_value(counts, "claim_cards")
+                && count_value(item_kind_counts, "view_model_item_kind_claim_detail")
+                    == count_value(counts, "claim_detail_items")
+                && count_value(item_kind_counts, "view_model_item_kind_filter_facet")
+                    == count_value(counts, "filter_facets")
+                && count_value(item_kind_counts, "view_model_item_kind_backend_coverage")
+                    == count_value(counts, "backend_coverage_items")
+                && count_value(item_kind_counts, "view_model_item_kind_proof_chain")
+                    == count_value(counts, "proof_chain_items")
+                && count_value(item_kind_counts, "view_model_item_kind_review_task")
+                    == count_value(counts, "review_workflow_items")
+                && count_value(item_kind_counts, "view_model_item_kind_assessment_history")
+                    == count_value(counts, "assessment_history_items")
+                && count_value(item_kind_counts, "view_model_item_kind_assessment_queue")
+                    == count_value(counts, "assessment_items")
+                && count_value(item_kind_counts, "view_model_item_kind_assessment_work")
+                    == count_value(counts, "assessment_work_items")
+                && count_value(item_kind_counts, "view_model_item_kind_witness")
+                    == count_value(counts, "witness_items")
+                && count_value(item_kind_counts, "view_model_item_kind_provenance_root")
+                    == count_value(counts, "root_items")
+                && count_value(item_kind_counts, "view_model_item_kind_gap")
+                    == count_value(counts, "gap_items")
+                && count_value(item_kind_counts, "view_model_item_kind_source")
+                    == count_value(counts, "source_items"),
+            format!(
+                "claims={}, details={}, facets={}, coverage={}, chains={}, tasks={}, history={}, queue={}, work={}, witnesses={}, roots={}, gaps={}, sources={}",
+                count_value(item_kind_counts, "view_model_item_kind_claim"),
+                count_value(item_kind_counts, "view_model_item_kind_claim_detail"),
+                count_value(item_kind_counts, "view_model_item_kind_filter_facet"),
+                count_value(item_kind_counts, "view_model_item_kind_backend_coverage"),
+                count_value(item_kind_counts, "view_model_item_kind_proof_chain"),
+                count_value(item_kind_counts, "view_model_item_kind_review_task"),
+                count_value(item_kind_counts, "view_model_item_kind_assessment_history"),
+                count_value(item_kind_counts, "view_model_item_kind_assessment_queue"),
+                count_value(item_kind_counts, "view_model_item_kind_assessment_work"),
+                count_value(item_kind_counts, "view_model_item_kind_witness"),
+                count_value(item_kind_counts, "view_model_item_kind_provenance_root"),
+                count_value(item_kind_counts, "view_model_item_kind_gap"),
+                count_value(item_kind_counts, "view_model_item_kind_source")
+            ),
+        ),
+    ]
+}
+
 #[instrument(level = "trace", skip(counts, item_kind_counts, landscape_item_ids))]
 pub(crate) fn landscape_model_invariant_checks(
     counts: &BTreeMap<String, usize>,

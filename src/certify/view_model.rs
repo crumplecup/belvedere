@@ -22,6 +22,7 @@ pub struct ViewModelReceipt {
     review_workflow_counts: BTreeMap<String, usize>,
     trace_kind_counts: BTreeMap<String, usize>,
     trace_source_counts: BTreeMap<String, usize>,
+    item_kind_counts: BTreeMap<String, usize>,
     view_item_ids: Vec<String>,
     source_record_ids: Vec<String>,
     warnings: Vec<String>,

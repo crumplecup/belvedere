@@ -13,7 +13,8 @@ use crate::{
         BelvedereInvariantCheck, IngestionReceipt, LandscapeDiffReceipt, LandscapeReceipt,
         UiIrReceipt, ViewModelReceipt, diff_trace_invariant_checks, hex_digest,
         landscape_model_invariant_checks, stage_invariant_checks, ui_ir_trace_invariant_checks,
-        update_field, update_fields, view_model_trace_invariant_checks,
+        update_field, update_fields, view_model_item_invariant_checks,
+        view_model_trace_invariant_checks,
     },
     contracts::{
         AssessmentStreamIngestionContract, AuditorNavigationContract, BelvedereContract,
@@ -208,6 +209,10 @@ impl BelvedereStageCertificate {
                 receipt.counts().assessment_work_items(),
             ),
             ("claim_cards".to_owned(), receipt.counts().claim_cards()),
+            (
+                "claim_detail_items".to_owned(),
+                receipt.counts().claim_detail_items(),
+            ),
             ("filter_facets".to_owned(), receipt.counts().filter_facets()),
             (
                 "backend_coverage_items".to_owned(),
@@ -217,6 +222,10 @@ impl BelvedereStageCertificate {
             (
                 "proof_chain_items".to_owned(),
                 receipt.counts().proof_chain_items(),
+            ),
+            (
+                "review_workflow_items".to_owned(),
+                receipt.counts().review_workflow_items(),
             ),
             ("root_items".to_owned(), receipt.counts().root_items()),
             ("source_items".to_owned(), receipt.counts().source_items()),
@@ -233,6 +242,16 @@ impl BelvedereStageCertificate {
         counts.extend(receipt.review_workflow_counts().clone());
         counts.extend(receipt.trace_kind_counts().clone());
         counts.extend(receipt.trace_source_counts().clone());
+        counts.extend(receipt.item_kind_counts().clone());
+        let mut additional_invariant_checks = view_model_trace_invariant_checks(
+            receipt.trace_source_counts(),
+            receipt.source_record_ids(),
+        );
+        additional_invariant_checks.extend(view_model_item_invariant_checks(
+            &counts,
+            receipt.item_kind_counts(),
+            receipt.view_item_ids(),
+        ));
         Self::new(StageCertificateEvidence {
             stage: BelvederePipelineStage::AuditorNavigation,
             contract: receipt.contract().to_owned(),
@@ -242,10 +261,7 @@ impl BelvedereStageCertificate {
             input_ids: receipt.source_record_ids().clone(),
             output_ids: receipt.view_item_ids().clone(),
             counts,
-            additional_invariant_checks: view_model_trace_invariant_checks(
-                receipt.trace_source_counts(),
-                receipt.source_record_ids(),
-            ),
+            additional_invariant_checks,
             warning_count: receipt.warnings().len(),
         })
     }

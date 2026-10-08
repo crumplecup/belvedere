@@ -474,6 +474,22 @@ fn run_pipeline_uses_the_normal_amenable_artifact_path() -> Result<()> {
         auditor_stage.counts().get("view_model_items"),
         Some(&report.view_model_receipt().view_item_ids().len())
     );
+    assert_eq!(
+        auditor_stage.counts().get("view_model_item_kind_claim"),
+        Some(&report.view_model_receipt().counts().claim_cards())
+    );
+    assert_eq!(
+        auditor_stage.counts().get("claim_detail_items"),
+        Some(&report.view_model_receipt().counts().claim_detail_items())
+    );
+    assert_eq!(
+        auditor_stage.counts().get("review_workflow_items"),
+        Some(&report.view_model_receipt().counts().review_workflow_items())
+    );
+    assert_eq!(
+        auditor_stage.counts().get("view_model_item_kind_gap"),
+        Some(&report.view_model_receipt().counts().gap_items())
+    );
     assert!(
         report
             .view_model_receipt()
@@ -486,6 +502,17 @@ fn run_pipeline_uses_the_normal_amenable_artifact_path() -> Result<()> {
             .invariant_checks()
             .iter()
             .any(|check| { check.name() == "view_model_trace_sources_complete" && check.passed() })
+    );
+    assert!(
+        auditor_stage
+            .invariant_checks()
+            .iter()
+            .any(|check| { check.name() == "view_model_item_ids_classified" && check.passed() })
+    );
+    assert!(
+        auditor_stage.invariant_checks().iter().any(|check| {
+            check.name() == "view_model_core_counts_match_items" && check.passed()
+        })
     );
     assert!(
         auditor_stage.invariant_checks().iter().any(|check| {
@@ -1056,6 +1083,26 @@ fn assert_auditor_navigation_receipt(receipt: &Value) {
     );
     assert_eq!(
         receipt["trace_source_counts"]["view_model_trace_unique_source_records"].as_u64(),
+        Some(7)
+    );
+    assert_eq!(
+        receipt["item_kind_counts"]["view_model_item_kind_overview"].as_u64(),
+        Some(1)
+    );
+    assert_eq!(
+        receipt["item_kind_counts"]["view_model_item_kind_claim"].as_u64(),
+        Some(4)
+    );
+    assert_eq!(
+        receipt["item_kind_counts"]["view_model_item_kind_backend_coverage"].as_u64(),
+        Some(12)
+    );
+    assert_eq!(
+        receipt["item_kind_counts"]["view_model_item_kind_gap"].as_u64(),
+        Some(4)
+    );
+    assert_eq!(
+        receipt["item_kind_counts"]["view_model_item_kind_source"].as_u64(),
         Some(7)
     );
     assert_eq!(receipt["view_item_ids"].as_array().map(Vec::len), Some(60));
