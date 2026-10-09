@@ -44,8 +44,10 @@ pub use run_certificate::{
     BelvedereInvocationSurface, BelvedereRunCertificate, BelvedereRunInvocation,
 };
 pub use stage_certificate::{BelvederePipelineStage, BelvedereStageCertificate};
-pub(crate) use ui_ir::UiIrReceiptBuilder;
 pub use ui_ir::{UiIrReceipt, UiIrReceiptCounts};
+pub(crate) use ui_ir::{
+    UiIrReceiptBuilder, UiIrReceiptDigestEvidenceBuilder, ui_ir_receipt_identity,
+};
 pub use view_model::{ViewModelReceipt, ViewModelReceiptCounts};
 pub(crate) use view_model::{
     ViewModelReceiptBuilder, ViewModelReceiptCountsBuilder, ViewModelReceiptDigestEvidenceBuilder,

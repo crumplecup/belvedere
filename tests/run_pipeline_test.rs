@@ -1490,6 +1490,7 @@ fn assert_ui_ir_receipt(receipt: &Value) {
         receipt["contract"].as_str(),
         Some("belvedere.ui_ir.elicit_ui_projection")
     );
+    assert_ui_ir_receipt_identity(receipt);
     assert_ui_ir_receipt_source(receipt);
     assert_eq!(receipt["counts"]["section_count"].as_u64(), Some(13));
     assert_eq!(
@@ -1570,11 +1571,26 @@ fn assert_ui_ir_receipt_source(receipt: &Value) {
     );
 }
 
+fn assert_ui_ir_receipt_identity(receipt: &Value) {
+    assert!(
+        receipt["receipt_id"]
+            .as_str()
+            .is_some_and(|id| id.starts_with("belvedere.receipt.ui_ir:"))
+    );
+    assert_eq!(
+        receipt["receipt_id"].as_str().map(str::to_owned),
+        receipt["receipt_digest"]
+            .as_str()
+            .map(|digest| format!("belvedere.receipt.ui_ir:{digest}"))
+    );
+}
+
 fn assert_previous_ui_ir_receipt(receipt: &Value) {
     assert_eq!(
         receipt["contract"].as_str(),
         Some("belvedere.ui_ir.elicit_ui_projection")
     );
+    assert_ui_ir_receipt_identity(receipt);
     assert_eq!(receipt["counts"]["section_count"].as_u64(), Some(13));
     assert_eq!(receipt["counts"]["widget_count"].as_u64(), Some(44));
     assert_eq!(

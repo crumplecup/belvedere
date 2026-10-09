@@ -25,6 +25,7 @@ fn ui_ir_projection_mints_elicit_ui_standards_and_tree_proofs() -> Result<()> {
             .source_view_model_receipt_id()
             .starts_with("belvedere.receipt.view_model:")
     );
+    assert_ui_ir_receipt_identity(&receipt);
     assert!(
         projection
             .sections()
@@ -899,6 +900,14 @@ fn fixture_input_with_assessments(assessment_bytes: Vec<u8>) -> Result<UiIrInput
         .wrap_err("view-model projection is trace-preserving and infallible")?;
 
     Ok(UiIrInput::from_view_model(model, &view_receipt))
+}
+
+fn assert_ui_ir_receipt_identity(receipt: &belvedere::UiIrReceipt) {
+    assert!(receipt.receipt_id().starts_with("belvedere.receipt.ui_ir:"));
+    assert_eq!(
+        receipt.receipt_id(),
+        &format!("belvedere.receipt.ui_ir:{}", receipt.receipt_digest())
+    );
 }
 
 fn assert_filter_widget(

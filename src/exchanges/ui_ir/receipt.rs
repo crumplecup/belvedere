@@ -5,7 +5,10 @@ use std::collections::{BTreeMap, BTreeSet};
 use tracing::instrument;
 
 use crate::{
-    certify::{UiIrReceipt, UiIrReceiptBuilder, UiIrReceiptCounts},
+    certify::{
+        UiIrReceipt, UiIrReceiptBuilder, UiIrReceiptCounts, UiIrReceiptDigestEvidenceBuilder,
+        ui_ir_receipt_identity,
+    },
     contracts::{
         AuditorNavigationModel, BelvedereContract, ElicitUiProjectionContract, TraceWidgetRef,
         UiIrSection, UiStandardMint, UiViewportVerification,
@@ -40,61 +43,95 @@ pub(super) fn build_receipt(
         minted_standards,
     );
     let receipt_output_kind_counts = output_kind_counts(&receipt_output_ids);
+    let receipt_counts = UiIrReceiptCounts::new(
+        sections.len(),
+        trace_widgets.len(),
+        trace_widgets
+            .iter()
+            .map(|widget| widget.source_record_ids().len())
+            .sum(),
+        tree.nodes().len(),
+    );
+    let receipt_source_record_ids = model.source_record_ids().to_vec();
+    let receipt_section_ids = sections
+        .iter()
+        .map(|section| section.id().to_owned())
+        .collect::<Vec<_>>();
+    let receipt_section_root_widget_ids = sections
+        .iter()
+        .map(UiIrSection::root_widget_id)
+        .collect::<Vec<_>>();
+    let receipt_trace_widget_ids = trace_widgets
+        .iter()
+        .map(TraceWidgetRef::widget_id)
+        .collect::<Vec<_>>();
+    let receipt_trace_widget_ref_ids = trace_widgets
+        .iter()
+        .map(|widget| widget.trace_ref_id().to_owned())
+        .collect::<Vec<_>>();
+    let receipt_role_counts = role_counts(trace_widgets);
+    let receipt_section_widget_counts = section_widget_counts(sections);
+    let receipt_section_population_counts = section_population_counts(sections);
+    let receipt_section_trace_counts = section_trace_counts(sections, trace_widgets);
+    let receipt_viewport_ids = viewport_ids(viewport_verifications);
+    let receipt_viewport_verification_counts = viewport_verification_counts(viewport_verifications);
+    let receipt_trace_source_counts = trace_source_counts(trace_widgets);
+    let receipt_trace_source_kind_counts = trace_source_kind_counts(trace_widgets);
+    let receipt_minted_prop_counts = minted_prop_counts(minted_standards);
+    let receipt_proof_token_counts = proof_token_counts(viewport_verifications);
+    let receipt_minted_standards = minted_standards
+        .iter()
+        .map(|standard| standard.standard().to_owned())
+        .collect::<Vec<_>>();
+    let digest_evidence = UiIrReceiptDigestEvidenceBuilder::default()
+        .contract(ElicitUiProjectionContract::NAME)
+        .counts(receipt_counts)
+        .source_view_model_receipt_id(source_view_model_receipt_id)
+        .source_record_ids(&receipt_source_record_ids)
+        .section_ids(&receipt_section_ids)
+        .section_root_widget_ids(&receipt_section_root_widget_ids)
+        .trace_widget_ids(&receipt_trace_widget_ids)
+        .trace_widget_ref_ids(&receipt_trace_widget_ref_ids)
+        .output_ids(&receipt_output_ids)
+        .output_kind_counts(&receipt_output_kind_counts)
+        .role_counts(&receipt_role_counts)
+        .section_widget_counts(&receipt_section_widget_counts)
+        .section_population_counts(&receipt_section_population_counts)
+        .section_trace_counts(&receipt_section_trace_counts)
+        .viewport_ids(&receipt_viewport_ids)
+        .viewport_verification_counts(&receipt_viewport_verification_counts)
+        .trace_source_counts(&receipt_trace_source_counts)
+        .trace_source_kind_counts(&receipt_trace_source_kind_counts)
+        .minted_prop_counts(&receipt_minted_prop_counts)
+        .proof_token_counts(&receipt_proof_token_counts)
+        .minted_standards(&receipt_minted_standards)
+        .build()
+        .map_err(|error| UiIrError::construction("UiIrReceiptDigestEvidence", error))?;
+    let (receipt_id, receipt_digest) = ui_ir_receipt_identity(digest_evidence);
     UiIrReceiptBuilder::default()
         .contract(ElicitUiProjectionContract::NAME)
-        .counts(UiIrReceiptCounts::new(
-            sections.len(),
-            trace_widgets.len(),
-            trace_widgets
-                .iter()
-                .map(|widget| widget.source_record_ids().len())
-                .sum(),
-            tree.nodes().len(),
-        ))
+        .counts(receipt_counts)
+        .receipt_id(receipt_id)
+        .receipt_digest(receipt_digest)
         .source_view_model_receipt_id(source_view_model_receipt_id)
-        .source_record_ids(model.source_record_ids().to_vec())
-        .section_ids(
-            sections
-                .iter()
-                .map(|section| section.id().to_owned())
-                .collect::<Vec<_>>(),
-        )
-        .section_root_widget_ids(
-            sections
-                .iter()
-                .map(UiIrSection::root_widget_id)
-                .collect::<Vec<_>>(),
-        )
-        .trace_widget_ids(
-            trace_widgets
-                .iter()
-                .map(TraceWidgetRef::widget_id)
-                .collect::<Vec<_>>(),
-        )
-        .trace_widget_ref_ids(
-            trace_widgets
-                .iter()
-                .map(|widget| widget.trace_ref_id().to_owned())
-                .collect::<Vec<_>>(),
-        )
+        .source_record_ids(receipt_source_record_ids)
+        .section_ids(receipt_section_ids)
+        .section_root_widget_ids(receipt_section_root_widget_ids)
+        .trace_widget_ids(receipt_trace_widget_ids)
+        .trace_widget_ref_ids(receipt_trace_widget_ref_ids)
         .output_ids(receipt_output_ids)
         .output_kind_counts(receipt_output_kind_counts)
-        .role_counts(role_counts(trace_widgets))
-        .section_widget_counts(section_widget_counts(sections))
-        .section_population_counts(section_population_counts(sections))
-        .section_trace_counts(section_trace_counts(sections, trace_widgets))
-        .viewport_ids(viewport_ids(viewport_verifications))
-        .viewport_verification_counts(viewport_verification_counts(viewport_verifications))
-        .trace_source_counts(trace_source_counts(trace_widgets))
-        .trace_source_kind_counts(trace_source_kind_counts(trace_widgets))
-        .minted_prop_counts(minted_prop_counts(minted_standards))
-        .proof_token_counts(proof_token_counts(viewport_verifications))
-        .minted_standards(
-            minted_standards
-                .iter()
-                .map(|standard| standard.standard().to_owned())
-                .collect::<Vec<_>>(),
-        )
+        .role_counts(receipt_role_counts)
+        .section_widget_counts(receipt_section_widget_counts)
+        .section_population_counts(receipt_section_population_counts)
+        .section_trace_counts(receipt_section_trace_counts)
+        .viewport_ids(receipt_viewport_ids)
+        .viewport_verification_counts(receipt_viewport_verification_counts)
+        .trace_source_counts(receipt_trace_source_counts)
+        .trace_source_kind_counts(receipt_trace_source_kind_counts)
+        .minted_prop_counts(receipt_minted_prop_counts)
+        .proof_token_counts(receipt_proof_token_counts)
+        .minted_standards(receipt_minted_standards)
         .build()
         .map_err(|error| UiIrError::construction("UiIrReceipt", error))
 }
