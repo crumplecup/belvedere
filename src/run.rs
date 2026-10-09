@@ -146,8 +146,10 @@ pub fn run_belvedere_pipeline(
     let (view_model, view_model_receipt) = AuditorNavigationProjection.project(
         ViewModelInput::from_landscape(landscape.clone(), &landscape_receipt),
     )?;
-    let (projection, ui_ir_receipt) =
-        ElicitUiProjection.project(UiIrInput::new(view_model.clone()))?;
+    let (projection, ui_ir_receipt) = ElicitUiProjection.project(UiIrInput::from_view_model(
+        view_model.clone(),
+        &view_model_receipt,
+    ))?;
     let certificate = BelvedereRunCertificate::from_receipts_with_invocation(
         input.invocation().clone(),
         &registry_receipt,
@@ -204,8 +206,9 @@ pub fn run_belvedere_landscape_diff(
     let (previous_view_model, previous_view_model_receipt) = AuditorNavigationProjection.project(
         ViewModelInput::from_landscape(previous.landscape.clone(), &previous.landscape_receipt),
     )?;
-    let (previous_projection, previous_ui_ir_receipt) =
-        ElicitUiProjection.project(UiIrInput::new(previous_view_model.clone()))?;
+    let (previous_projection, previous_ui_ir_receipt) = ElicitUiProjection.project(
+        UiIrInput::from_view_model(previous_view_model.clone(), &previous_view_model_receipt),
+    )?;
     let previous_stage_certificates = auditor_stage_certificates(
         &previous,
         &previous_view_model_receipt,
@@ -214,8 +217,9 @@ pub fn run_belvedere_landscape_diff(
     let (current_view_model, current_view_model_receipt) = AuditorNavigationProjection.project(
         ViewModelInput::from_landscape(current.landscape.clone(), &current.landscape_receipt),
     )?;
-    let (current_projection, current_ui_ir_receipt) =
-        ElicitUiProjection.project(UiIrInput::new(current_view_model.clone()))?;
+    let (current_projection, current_ui_ir_receipt) = ElicitUiProjection.project(
+        UiIrInput::from_view_model(current_view_model.clone(), &current_view_model_receipt),
+    )?;
     let current_stage_certificates = auditor_stage_certificates(
         &current,
         &current_view_model_receipt,

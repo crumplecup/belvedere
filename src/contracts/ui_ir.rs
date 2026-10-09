@@ -1,9 +1,11 @@
 //! `elicit_ui` IR contracts and Amenable standard adapters.
 
+use derive_getters::Getters;
+use derive_new::new;
 use tracing::instrument;
 
 use crate::{
-    certify::UiIrReceipt,
+    certify::{UiIrReceipt, ViewModelReceipt},
     contracts::{
         ACCESSIBILITY_BASELINE_STANDARD_ID, AuditorNavigationModel, BelvedereContract,
         UI_PROJECTION_FIDELITY_STANDARD_ID,
@@ -28,16 +30,22 @@ pub use standards::{
 };
 
 /// Input accepted by the UI IR projection exchange.
-#[derive(Debug, Clone, PartialEq, Eq)]
+#[derive(Debug, Clone, PartialEq, Eq, Getters, new)]
 pub struct UiIrInput {
+    #[getter(skip)]
     model: AuditorNavigationModel,
+    source_view_model_receipt_id: String,
 }
 
 impl UiIrInput {
-    /// Create UI IR input from auditor navigation evidence.
+    /// Create UI IR input directly from view-model exchange outputs.
     #[must_use]
-    pub const fn new(model: AuditorNavigationModel) -> Self {
-        Self { model }
+    #[instrument(level = "debug", skip(model, view_model_receipt))]
+    pub fn from_view_model(
+        model: AuditorNavigationModel,
+        view_model_receipt: &ViewModelReceipt,
+    ) -> Self {
+        Self::new(model, view_model_receipt.receipt_id().to_owned())
     }
 
     /// Auditor navigation evidence to project.
@@ -68,6 +76,7 @@ impl BelvedereContract for ElicitUiProjectionContract {
     fn requires() -> &'static [&'static str] {
         &[
             "auditor navigation evidence was produced by the view-model exchange",
+            "source view-model receipt identity is available",
             "visible auditor items retain claim IDs and source record IDs",
             "elicit_ui props are minted into explicit Amenable standards at the boundary",
         ]

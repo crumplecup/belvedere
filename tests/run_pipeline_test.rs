@@ -757,6 +757,11 @@ fn run_pipeline_uses_the_normal_amenable_artifact_path() -> Result<()> {
         ui_stage.counts().get("ui_ir_output_kind_trace_widget_ref"),
         Some(&report.projection().trace_widgets().len())
     );
+    assert_eq!(ui_stage.counts().get("source_view_models"), Some(&1));
+    assert_eq!(
+        ui_stage.input_ids(),
+        &vec![report.view_model_receipt().receipt_id().to_owned()]
+    );
     assert_eq!(ui_stage.output_ids(), report.ui_ir_receipt().output_ids());
     assert!(
         report
@@ -1485,6 +1490,7 @@ fn assert_ui_ir_receipt(receipt: &Value) {
         receipt["contract"].as_str(),
         Some("belvedere.ui_ir.elicit_ui_projection")
     );
+    assert_ui_ir_receipt_source(receipt);
     assert_eq!(receipt["counts"]["section_count"].as_u64(), Some(13));
     assert_eq!(
         receipt["section_widget_counts"][UI_IR_SECTION_ASSESSMENT_HISTORY].as_u64(),
@@ -1553,6 +1559,14 @@ fn assert_ui_ir_receipt(receipt: &Value) {
                     .iter()
                     .any(|section_id| section_id.as_str() == Some(UI_IR_SECTION_ASSESSMENT_HISTORY))
             })
+    );
+}
+
+fn assert_ui_ir_receipt_source(receipt: &Value) {
+    assert!(
+        receipt["source_view_model_receipt_id"]
+            .as_str()
+            .is_some_and(|id| id.starts_with("belvedere.receipt.view_model:"))
     );
 }
 

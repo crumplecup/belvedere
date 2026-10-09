@@ -26,6 +26,7 @@ use crate::{
 )]
 pub(super) fn build_receipt(
     model: &AuditorNavigationModel,
+    source_view_model_receipt_id: &str,
     sections: &[UiIrSection],
     trace_widgets: &[TraceWidgetRef],
     tree: &elicit_ui::VerifiedTree,
@@ -50,6 +51,7 @@ pub(super) fn build_receipt(
                 .sum(),
             tree.nodes().len(),
         ))
+        .source_view_model_receipt_id(source_view_model_receipt_id)
         .source_record_ids(model.source_record_ids().to_vec())
         .section_ids(
             sections

@@ -78,6 +78,7 @@ impl BelvedereExchange<ElicitUiProjectionContract> for ElicitUiProjection {
         let minted_standards = minted_standards();
         let receipt = build_receipt(
             model,
+            input.source_view_model_receipt_id(),
             &sections,
             &trace_widgets,
             &tree,

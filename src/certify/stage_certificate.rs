@@ -303,6 +303,7 @@ impl BelvedereStageCertificate {
         counts.extend(receipt.minted_prop_counts().clone());
         counts.extend(receipt.proof_token_counts().clone());
         counts.extend(receipt.output_kind_counts().clone());
+        counts.insert("source_view_models".to_owned(), 1);
         let mut additional_invariant_checks = ui_ir_trace_invariant_checks(
             receipt.counts().widget_count(),
             receipt.counts().trace_ref_count(),
@@ -321,7 +322,7 @@ impl BelvedereStageCertificate {
             standards: contract_standards::<ElicitUiProjectionContract>(),
             requires: contract_requirements::<ElicitUiProjectionContract>(),
             ensures: contract_guarantees::<ElicitUiProjectionContract>(),
-            input_ids: receipt.source_record_ids().clone(),
+            input_ids: vec![receipt.source_view_model_receipt_id().to_owned()],
             output_ids: receipt.output_ids().clone(),
             counts,
             additional_invariant_checks,

@@ -13,6 +13,7 @@ pub struct UiIrReceipt {
     contract: String,
     #[getter(skip)]
     counts: UiIrReceiptCounts,
+    source_view_model_receipt_id: String,
     source_record_ids: Vec<String>,
     section_ids: Vec<String>,
     section_root_widget_ids: Vec<u64>,

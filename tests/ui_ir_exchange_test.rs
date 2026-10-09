@@ -21,6 +21,11 @@ fn ui_ir_projection_mints_elicit_ui_standards_and_tree_proofs() -> Result<()> {
 
     assert_eq!(projection.sections().len(), 13);
     assert!(
+        receipt
+            .source_view_model_receipt_id()
+            .starts_with("belvedere.receipt.view_model:")
+    );
+    assert!(
         projection
             .sections()
             .iter()
@@ -885,7 +890,7 @@ fn fixture_input_with_assessments(assessment_bytes: Vec<u8>) -> Result<UiIrInput
         .model(landscape_input)
         .into_diagnostic()
         .wrap_err("landscape modeling is conservative and infallible")?;
-    let (model, _view_receipt) = AuditorNavigationProjection
+    let (model, view_receipt) = AuditorNavigationProjection
         .project(ViewModelInput::from_landscape(
             landscape,
             &landscape_receipt,
@@ -893,7 +898,7 @@ fn fixture_input_with_assessments(assessment_bytes: Vec<u8>) -> Result<UiIrInput
         .into_diagnostic()
         .wrap_err("view-model projection is trace-preserving and infallible")?;
 
-    Ok(UiIrInput::new(model))
+    Ok(UiIrInput::from_view_model(model, &view_receipt))
 }
 
 fn assert_filter_widget(
