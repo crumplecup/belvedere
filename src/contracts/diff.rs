@@ -8,7 +8,7 @@ use tracing::instrument;
 use crate::{
     certify::{LandscapeDiffReceipt, LandscapeReceipt},
     contracts::{
-        BelvedereContract, LANDSCAPE_CONSTRUCTION_STANDARD_ID, LandscapeGraph,
+        BelvedereContract, LANDSCAPE_DIFF_FIDELITY_STANDARD_ID, LandscapeGraph,
         REPORT_REPRODUCIBILITY_STANDARD_ID, TraceRef,
     },
 };
@@ -157,7 +157,7 @@ impl BelvedereContract for LandscapeDiffContract {
     #[instrument(level = "trace")]
     fn standard_ids() -> &'static [&'static str] {
         &[
-            LANDSCAPE_CONSTRUCTION_STANDARD_ID,
+            LANDSCAPE_DIFF_FIDELITY_STANDARD_ID,
             REPORT_REPRODUCIBILITY_STANDARD_ID,
         ]
     }

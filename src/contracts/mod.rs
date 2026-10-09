@@ -5,6 +5,7 @@ mod contract;
 mod diff;
 mod ingestion;
 mod landscape;
+mod pipeline_claim;
 mod standards;
 mod ui_ir;
 mod view_model;
@@ -27,14 +28,15 @@ pub use landscape::{
     LandscapeGap, LandscapeGapKind, LandscapeGraph, LandscapeInput, LandscapeModelingContract,
     WitnessSurfaceSummary,
 };
+pub use pipeline_claim::{BelvederePipelineClaim, BelvederePipelineStandard};
 pub(crate) use standards::belvedere_pipeline_claims_for_standard_ids;
 pub use standards::{
-    ACCESSIBILITY_BASELINE_STANDARD_ID, AccessibilityBaselineStandard, BelvederePipelineClaim,
-    BelvederePipelineStandard, GAP_SOUNDNESS_STANDARD_ID, GapSoundnessStandard,
-    INPUT_FIDELITY_STANDARD_ID, InputFidelityStandard, LANDSCAPE_CONSTRUCTION_STANDARD_ID,
-    LandscapeConstructionStandard, REPORT_REPRODUCIBILITY_STANDARD_ID,
-    ReportReproducibilityStandard, SCHEMA_HONESTY_STANDARD_ID, SchemaHonestyStandard,
-    UI_PROJECTION_FIDELITY_STANDARD_ID, UiProjectionFidelityStandard,
+    ACCESSIBILITY_BASELINE_STANDARD_ID, AccessibilityBaselineStandard, GAP_SOUNDNESS_STANDARD_ID,
+    GapSoundnessStandard, INPUT_FIDELITY_STANDARD_ID, InputFidelityStandard,
+    LANDSCAPE_CONSTRUCTION_STANDARD_ID, LANDSCAPE_DIFF_FIDELITY_STANDARD_ID,
+    LandscapeConstructionStandard, LandscapeDiffFidelityStandard,
+    REPORT_REPRODUCIBILITY_STANDARD_ID, ReportReproducibilityStandard, SCHEMA_HONESTY_STANDARD_ID,
+    SchemaHonestyStandard, UI_PROJECTION_FIDELITY_STANDARD_ID, UiProjectionFidelityStandard,
     VIEW_MODEL_FIDELITY_STANDARD_ID, ViewModelFidelityStandard, belvedere_pipeline_claims,
     belvedere_pipeline_provenance,
 };

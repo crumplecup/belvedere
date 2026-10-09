@@ -3,7 +3,7 @@ use std::{collections::BTreeMap, fs, process};
 use belvedere::{
     ArtifactKind, AssessmentStreamIngestion, BELVEDERE_RUN_CERTIFICATE_SCHEMA_ID,
     BelvedereLandscapeDiffRunInput, BelvederePipelineStage, BelvedereRunInput,
-    BelvedereStageCertificate, LANDSCAPE_CONSTRUCTION_STANDARD_ID, LandscapeDiffChangeKind,
+    BelvedereStageCertificate, LANDSCAPE_DIFF_FIDELITY_STANDARD_ID, LandscapeDiffChangeKind,
     LandscapeDiffInput, LandscapeDiffing, LandscapeInput, LandscapeModeling,
     REPORT_REPRODUCIBILITY_STANDARD_ID, RawAmenableArtifact, RegistryDumpIngestion,
     run_belvedere_landscape_diff,
@@ -116,7 +116,7 @@ fn landscape_diff_surfaces_snapshot_changes_for_auditors() -> Result<()> {
     assert!(
         certificate
             .standards()
-            .contains(&LANDSCAPE_CONSTRUCTION_STANDARD_ID.to_owned())
+            .contains(&LANDSCAPE_DIFF_FIDELITY_STANDARD_ID.to_owned())
     );
     assert!(
         certificate
@@ -548,6 +548,13 @@ fn landscape_diff_runner_uses_the_normal_artifact_path() -> Result<()> {
             .pipeline_claim_phase_counts()
             .get("phase_landscape"),
         Some(&2)
+    );
+    assert_eq!(
+        report
+            .certificate()
+            .pipeline_claim_phase_counts()
+            .get("phase_landscape_diff"),
+        Some(&1)
     );
     assert_eq!(
         report

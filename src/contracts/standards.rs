@@ -3,47 +3,9 @@
 use std::collections::BTreeSet;
 
 use amenable_derive::Standard;
-use derive_getters::Getters;
-use serde::Serialize;
 use tracing::instrument;
 
-/// Named Belvedere pipeline claim that can be registered as an Amenable standard.
-pub trait BelvederePipelineStandard {
-    /// Stable claim identifier used in certificates and assessments.
-    const CLAIM_ID: &'static str;
-
-    /// Pipeline phase that owns this claim.
-    const PHASE: &'static str;
-
-    /// Auditor-facing meaning of the claim.
-    const DESCRIPTION: &'static str;
-}
-
-/// Structured record for a named Belvedere pipeline claim.
-#[derive(Debug, Clone, PartialEq, Eq, Getters, Serialize)]
-pub struct BelvederePipelineClaim {
-    claim_id: String,
-    phase: String,
-    description: String,
-    standard_type: String,
-}
-
-impl BelvederePipelineClaim {
-    /// Build a claim record from a typed Belvedere pipeline standard.
-    #[instrument(level = "debug")]
-    #[must_use]
-    pub fn from_standard<S>() -> Self
-    where
-        S: BelvederePipelineStandard,
-    {
-        Self {
-            claim_id: S::CLAIM_ID.to_owned(),
-            phase: S::PHASE.to_owned(),
-            description: S::DESCRIPTION.to_owned(),
-            standard_type: std::any::type_name::<S>().to_owned(),
-        }
-    }
-}
+use crate::contracts::pipeline_claim::{BelvederePipelineClaim, BelvederePipelineStandard};
 
 /// Input artifact fidelity standard ID.
 pub const INPUT_FIDELITY_STANDARD_ID: &str = "belvedere.standard.input_fidelity";
@@ -53,6 +15,8 @@ pub const SCHEMA_HONESTY_STANDARD_ID: &str = "belvedere.standard.schema_honesty"
 pub const LANDSCAPE_CONSTRUCTION_STANDARD_ID: &str = "belvedere.standard.landscape_construction";
 /// Gap soundness standard ID.
 pub const GAP_SOUNDNESS_STANDARD_ID: &str = "belvedere.standard.gap_soundness";
+/// Landscape diff fidelity standard ID.
+pub const LANDSCAPE_DIFF_FIDELITY_STANDARD_ID: &str = "belvedere.standard.landscape_diff_fidelity";
 /// View-model fidelity standard ID.
 pub const VIEW_MODEL_FIDELITY_STANDARD_ID: &str = "belvedere.standard.view_model_fidelity";
 /// UI projection fidelity standard ID.
@@ -78,6 +42,7 @@ pub fn belvedere_pipeline_claims() -> Vec<BelvederePipelineClaim> {
         BelvederePipelineClaim::from_standard::<SchemaHonestyStandard>(),
         BelvederePipelineClaim::from_standard::<LandscapeConstructionStandard>(),
         BelvederePipelineClaim::from_standard::<GapSoundnessStandard>(),
+        BelvederePipelineClaim::from_standard::<LandscapeDiffFidelityStandard>(),
         BelvederePipelineClaim::from_standard::<ViewModelFidelityStandard>(),
         BelvederePipelineClaim::from_standard::<UiProjectionFidelityStandard>(),
         BelvederePipelineClaim::from_standard::<AccessibilityBaselineStandard>(),
@@ -95,7 +60,7 @@ pub(crate) fn belvedere_pipeline_claims_for_standard_ids(
         .collect::<BTreeSet<_>>();
     belvedere_pipeline_claims()
         .into_iter()
-        .filter(|claim| standards.contains(claim.claim_id.as_str()))
+        .filter(|claim| standards.contains(claim.claim_id().as_str()))
         .collect()
 }
 
@@ -160,6 +125,22 @@ impl BelvederePipelineStandard for GapSoundnessStandard {
     const PHASE: &'static str = "landscape";
     const DESCRIPTION: &'static str =
         "Belvedere may over-report uncertainty but must not hide missing proof evidence";
+}
+
+/// Standard that landscape snapshot diffs preserve source traceability.
+#[derive(Debug, Clone, Copy, Default, PartialEq, Eq, Hash, Standard)]
+#[standard(
+    basis = "Self",
+    provenance = "crate::contracts::belvedere_pipeline_provenance()",
+    provenance_type = "amenable::RustLanguageProvenance"
+)]
+pub struct LandscapeDiffFidelityStandard;
+
+impl BelvederePipelineStandard for LandscapeDiffFidelityStandard {
+    const CLAIM_ID: &'static str = LANDSCAPE_DIFF_FIDELITY_STANDARD_ID;
+    const PHASE: &'static str = "landscape_diff";
+    const DESCRIPTION: &'static str =
+        "landscape snapshot comparisons preserve changed subjects and source receipt evidence";
 }
 
 /// Standard that auditor view models retain traceable visible items.
