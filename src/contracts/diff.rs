@@ -90,6 +90,9 @@ pub struct LandscapeDiffItem {
     item_id: String,
     #[getter(skip)]
     change_kind: LandscapeDiffChangeKind,
+    #[getter(skip)]
+    #[serde(flatten)]
+    review_guidance: LandscapeDiffReviewGuidance,
     #[new(into)]
     subject_kind: String,
     #[new(into)]
@@ -105,6 +108,18 @@ impl LandscapeDiffItem {
     #[must_use]
     pub const fn change_kind(&self) -> LandscapeDiffChangeKind {
         self.change_kind
+    }
+
+    /// Auditor review priority for this changed item.
+    #[must_use]
+    pub const fn review_priority(&self) -> LandscapeDiffReviewPriority {
+        self.review_guidance.review_priority()
+    }
+
+    /// Recommended auditor action for this changed item.
+    #[must_use]
+    pub const fn review_action(&self) -> LandscapeDiffReviewAction {
+        self.review_guidance.review_action()
     }
 
     /// Source trace for the changed subject.
@@ -124,6 +139,63 @@ pub enum LandscapeDiffChangeKind {
     Removed,
     /// Item exists in both snapshots but its modeled evidence changed.
     Changed,
+}
+
+/// Auditor guidance attached to a landscape diff item.
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, new)]
+pub struct LandscapeDiffReviewGuidance {
+    review_priority: LandscapeDiffReviewPriority,
+    review_action: LandscapeDiffReviewAction,
+}
+
+impl LandscapeDiffReviewGuidance {
+    /// Auditor review priority.
+    #[must_use]
+    pub const fn review_priority(self) -> LandscapeDiffReviewPriority {
+        self.review_priority
+    }
+
+    /// Recommended auditor action.
+    #[must_use]
+    pub const fn review_action(self) -> LandscapeDiffReviewAction {
+        self.review_action
+    }
+}
+
+/// Auditor triage priority for a landscape diff item.
+#[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash, Serialize)]
+#[serde(rename_all = "snake_case")]
+pub enum LandscapeDiffReviewPriority {
+    /// Change may affect certification reliance and should be reviewed first.
+    Blocking,
+    /// Change deserves focused review before accepting the current snapshot.
+    Review,
+    /// Change is useful context but is not expected to block certification.
+    Informational,
+}
+
+/// Stable auditor action category for a landscape diff item.
+#[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash, Serialize)]
+#[serde(rename_all = "snake_case")]
+pub enum LandscapeDiffReviewAction {
+    /// Review evidence for a newly modeled claim.
+    ReviewNewClaim,
+    /// Compare changed evidence for an existing claim.
+    CompareClaimEvidence,
+    /// Confirm a removed claim was intentionally scoped away.
+    ConfirmClaimRemoval,
+    /// Review a newly attached assessment.
+    ReviewNewAssessment,
+    /// Compare changed reviewer evidence for an existing assessment.
+    CompareAssessmentEvidence,
+    /// Confirm a removed assessment does not reopen certification risk.
+    ConfirmAssessmentRemoval,
+    /// Triage a newly modeled certification gap.
+    TriageNewGap,
+    /// Reassess a changed certification gap.
+    ReassessChangedGap,
+    /// Verify a removed gap remains covered by current evidence.
+    VerifyResolvedGap,
 }
 
 /// Landscape snapshot diff contract.
@@ -150,6 +222,7 @@ impl BelvedereContract for LandscapeDiffContract {
             "claim additions, removals, and modeled evidence changes are surfaced deterministically",
             "assessment additions, removals, and reviewer evidence changes are surfaced deterministically",
             "gap additions, removals, and detail changes are surfaced deterministically",
+            "each diff item receives a deterministic auditor review priority and action category",
             "each diff item preserves the source identities available from the compared snapshots",
         ]
     }

@@ -4,9 +4,9 @@ use belvedere::{
     ArtifactKind, AssessmentStreamIngestion, BELVEDERE_RUN_CERTIFICATE_SCHEMA_ID,
     BelvedereLandscapeDiffRunInput, BelvederePipelineStage, BelvedereRunInput,
     BelvedereStageCertificate, LANDSCAPE_DIFF_FIDELITY_STANDARD_ID, LandscapeDiffChangeKind,
-    LandscapeDiffInput, LandscapeDiffing, LandscapeInput, LandscapeModeling,
-    REPORT_REPRODUCIBILITY_STANDARD_ID, RawAmenableArtifact, RegistryDumpIngestion,
-    run_belvedere_landscape_diff,
+    LandscapeDiffInput, LandscapeDiffReviewAction, LandscapeDiffReviewPriority, LandscapeDiffing,
+    LandscapeInput, LandscapeModeling, REPORT_REPRODUCIBILITY_STANDARD_ID, RawAmenableArtifact,
+    RegistryDumpIngestion, run_belvedere_landscape_diff,
 };
 use miette::{IntoDiagnostic, Result, WrapErr, miette};
 
@@ -72,6 +72,42 @@ fn landscape_diff_surfaces_snapshot_changes_for_auditors() -> Result<()> {
         receipt
             .change_subject_counts()
             .get("diff_change_removed_gap"),
+        Some(&1)
+    );
+    assert_eq!(
+        receipt
+            .review_priority_counts()
+            .get("diff_review_priority_blocking"),
+        Some(&1)
+    );
+    assert_eq!(
+        receipt
+            .review_priority_counts()
+            .get("diff_review_priority_informational"),
+        Some(&1)
+    );
+    assert_eq!(
+        receipt
+            .review_priority_counts()
+            .get("diff_review_priority_review"),
+        Some(&4)
+    );
+    assert_eq!(
+        receipt
+            .review_action_counts()
+            .get("diff_review_action_review_new_assessment"),
+        Some(&2)
+    );
+    assert_eq!(
+        receipt
+            .review_action_counts()
+            .get("diff_review_action_triage_new_gap"),
+        Some(&1)
+    );
+    assert_eq!(
+        receipt
+            .review_action_counts()
+            .get("diff_review_action_verify_resolved_gap"),
         Some(&1)
     );
     assert_eq!(
@@ -142,6 +178,16 @@ fn landscape_diff_surfaces_snapshot_changes_for_auditors() -> Result<()> {
         Some(&2)
     );
     assert_eq!(
+        certificate.counts().get("diff_review_priority_blocking"),
+        Some(&1)
+    );
+    assert_eq!(
+        certificate
+            .counts()
+            .get("diff_review_action_review_new_assessment"),
+        Some(&2)
+    );
+    assert_eq!(
         certificate.counts().get("diff_trace_source_links"),
         receipt.trace_source_counts().get("diff_trace_source_links")
     );
@@ -167,6 +213,12 @@ fn landscape_diff_surfaces_snapshot_changes_for_auditors() -> Result<()> {
     assert!(certificate.invariant_checks().iter().any(|check| {
         check.name() == "landscape_diff_core_counts_match_items" && check.passed()
     }));
+    assert!(certificate.invariant_checks().iter().any(|check| {
+        check.name() == "landscape_diff_review_priorities_classified" && check.passed()
+    }));
+    assert!(certificate.invariant_checks().iter().any(|check| {
+        check.name() == "landscape_diff_review_actions_classified" && check.passed()
+    }));
 
     let assessment = diff
         .items()
@@ -176,6 +228,14 @@ fn landscape_diff_surfaces_snapshot_changes_for_auditors() -> Result<()> {
         })
         .ok_or_else(|| miette!("new assessment should be diff evidence"))?;
     assert_eq!(assessment.change_kind(), LandscapeDiffChangeKind::Added);
+    assert_eq!(
+        assessment.review_priority(),
+        LandscapeDiffReviewPriority::Review
+    );
+    assert_eq!(
+        assessment.review_action(),
+        LandscapeDiffReviewAction::ReviewNewAssessment
+    );
     assert_eq!(assessment.subject_kind(), "assessment");
     assert_eq!(assessment.subject_id(), "assess-belvedere-ingestion-1");
     assert!(assessment.summary().contains("recommendation Strengthen"));
@@ -206,6 +266,11 @@ fn landscape_diff_surfaces_snapshot_changes_for_auditors() -> Result<()> {
         })
         .ok_or_else(|| miette!("assessment attachment should change proof claim evidence"))?;
     assert_eq!(claim.change_kind(), LandscapeDiffChangeKind::Changed);
+    assert_eq!(claim.review_priority(), LandscapeDiffReviewPriority::Review);
+    assert_eq!(
+        claim.review_action(),
+        LandscapeDiffReviewAction::CompareClaimEvidence
+    );
     assert!(
         claim
             .summary()
@@ -240,6 +305,14 @@ fn landscape_diff_surfaces_snapshot_changes_for_auditors() -> Result<()> {
         .ok_or_else(|| miette!("resolved missing-assessment gap should be removed"))?;
     assert_eq!(removed_gap.change_kind(), LandscapeDiffChangeKind::Removed);
     assert_eq!(
+        removed_gap.review_priority(),
+        LandscapeDiffReviewPriority::Informational
+    );
+    assert_eq!(
+        removed_gap.review_action(),
+        LandscapeDiffReviewAction::VerifyResolvedGap
+    );
+    assert_eq!(
         removed_gap.trace().claim_id(),
         "belvedere::ingestion::record_identity_is_preserved"
     );
@@ -257,6 +330,10 @@ fn landscape_diff_surfaces_snapshot_changes_for_auditors() -> Result<()> {
         })
         .ok_or_else(|| miette!("assessment-only proof claim should be added"))?;
     assert!(unsupported_claim.summary().contains("added claim"));
+    assert_eq!(
+        unsupported_claim.review_action(),
+        LandscapeDiffReviewAction::ReviewNewClaim
+    );
     assert_eq!(
         unsupported_claim.trace().source_record_ids(),
         &[
@@ -456,6 +533,20 @@ fn landscape_diff_runner_uses_the_normal_artifact_path() -> Result<()> {
             .counts()
             .get("diff_change_added_assessment"),
         Some(&2)
+    );
+    assert_eq!(
+        report
+            .diff_certificate()
+            .counts()
+            .get("diff_review_priority_review"),
+        Some(&4)
+    );
+    assert_eq!(
+        report
+            .diff_certificate()
+            .counts()
+            .get("diff_review_action_triage_new_gap"),
+        Some(&1)
     );
     assert_eq!(
         report

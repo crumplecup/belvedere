@@ -11,9 +11,9 @@ use crate::{
     certify::{
         BELVEDERE_STAGE_CERTIFICATE_SCHEMA_ID, BELVEDERE_STAGE_CERTIFICATE_SCHEMA_VERSION,
         BelvedereInvariantCheck, IngestionReceipt, LandscapeDiffReceipt, LandscapeReceipt,
-        UiIrReceipt, ViewModelReceipt, diff_item_invariant_checks, diff_trace_invariant_checks,
-        hex_digest, ingestion_record_invariant_checks, landscape_model_invariant_checks,
-        stage_invariant_checks, ui_ir_output_invariant_checks,
+        UiIrReceipt, ViewModelReceipt, diff_item_invariant_checks, diff_review_invariant_checks,
+        diff_trace_invariant_checks, hex_digest, ingestion_record_invariant_checks,
+        landscape_model_invariant_checks, stage_invariant_checks, ui_ir_output_invariant_checks,
         ui_ir_source_locator_invariant_checks, ui_ir_trace_invariant_checks, update_field,
         update_fields, view_model_item_invariant_checks,
         view_model_source_navigation_invariant_checks, view_model_trace_invariant_checks,
@@ -184,6 +184,8 @@ impl BelvedereStageCertificate {
         counts.extend(receipt.item_kind_counts().clone());
         counts.extend(receipt.subject_kind_counts().clone());
         counts.extend(receipt.change_subject_counts().clone());
+        counts.extend(receipt.review_priority_counts().clone());
+        counts.extend(receipt.review_action_counts().clone());
         counts.extend(receipt.trace_source_counts().clone());
         counts.extend(receipt.trace_source_kind_counts().clone());
         let mut additional_invariant_checks = diff_trace_invariant_checks(
@@ -196,6 +198,11 @@ impl BelvedereStageCertificate {
             &counts,
             receipt.item_kind_counts(),
             receipt.diff_item_ids(),
+        ));
+        additional_invariant_checks.extend(diff_review_invariant_checks(
+            receipt.diff_item_ids(),
+            receipt.review_priority_counts(),
+            receipt.review_action_counts(),
         ));
         let input_ids = if receipt.source_landscape_receipt_ids().is_empty() {
             receipt.source_record_ids().clone()

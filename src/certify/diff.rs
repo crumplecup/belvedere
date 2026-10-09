@@ -25,6 +25,8 @@ pub struct LandscapeDiffReceipt {
     item_kind_counts: BTreeMap<String, usize>,
     subject_kind_counts: BTreeMap<String, usize>,
     change_subject_counts: BTreeMap<String, usize>,
+    review_priority_counts: BTreeMap<String, usize>,
+    review_action_counts: BTreeMap<String, usize>,
     trace_source_counts: BTreeMap<String, usize>,
     trace_source_kind_counts: BTreeMap<String, usize>,
     trace_source_record_ids: Vec<String>,
@@ -57,6 +59,10 @@ pub(crate) struct LandscapeDiffReceiptDigestEvidence<'evidence> {
     subject_kind_counts: &'evidence BTreeMap<String, usize>,
     /// Counts grouped by combined change and subject kind.
     change_subject_counts: &'evidence BTreeMap<String, usize>,
+    /// Counts grouped by auditor review priority.
+    review_priority_counts: &'evidence BTreeMap<String, usize>,
+    /// Counts grouped by auditor review action.
+    review_action_counts: &'evidence BTreeMap<String, usize>,
     /// Counts grouped by trace source coverage.
     trace_source_counts: &'evidence BTreeMap<String, usize>,
     /// Counts grouped by trace source record kind.
@@ -140,6 +146,8 @@ fn landscape_diff_receipt_digest(evidence: LandscapeDiffReceiptDigestEvidence<'_
     update_counts(&mut hasher, evidence.item_kind_counts);
     update_counts(&mut hasher, evidence.subject_kind_counts);
     update_counts(&mut hasher, evidence.change_subject_counts);
+    update_counts(&mut hasher, evidence.review_priority_counts);
+    update_counts(&mut hasher, evidence.review_action_counts);
     update_counts(&mut hasher, evidence.trace_source_counts);
     update_counts(&mut hasher, evidence.trace_source_kind_counts);
     update_fields(&mut hasher, evidence.trace_source_record_ids);

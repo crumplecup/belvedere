@@ -72,6 +72,34 @@ pub(super) fn change_subject_counts(items: &[LandscapeDiffItem]) -> BTreeMap<Str
 }
 
 #[instrument(level = "debug", skip(items))]
+pub(super) fn review_priority_counts(items: &[LandscapeDiffItem]) -> BTreeMap<String, usize> {
+    let mut counts = BTreeMap::new();
+    for item in items {
+        *counts
+            .entry(format!(
+                "diff_review_priority_{}",
+                review_priority_key(item.review_priority())
+            ))
+            .or_default() += 1;
+    }
+    counts
+}
+
+#[instrument(level = "debug", skip(items))]
+pub(super) fn review_action_counts(items: &[LandscapeDiffItem]) -> BTreeMap<String, usize> {
+    let mut counts = BTreeMap::new();
+    for item in items {
+        *counts
+            .entry(format!(
+                "diff_review_action_{}",
+                review_action_key(item.review_action())
+            ))
+            .or_default() += 1;
+    }
+    counts
+}
+
+#[instrument(level = "debug", skip(items))]
 pub(super) fn trace_source_kind_counts(items: &[LandscapeDiffItem]) -> BTreeMap<String, usize> {
     let mut counts = BTreeMap::new();
     for source_record_id in items
@@ -129,5 +157,37 @@ const fn change_kind_key(change_kind: LandscapeDiffChangeKind) -> &'static str {
         LandscapeDiffChangeKind::Added => "added",
         LandscapeDiffChangeKind::Removed => "removed",
         LandscapeDiffChangeKind::Changed => "changed",
+    }
+}
+
+const fn review_priority_key(
+    review_priority: crate::contracts::LandscapeDiffReviewPriority,
+) -> &'static str {
+    match review_priority {
+        crate::contracts::LandscapeDiffReviewPriority::Blocking => "blocking",
+        crate::contracts::LandscapeDiffReviewPriority::Review => "review",
+        crate::contracts::LandscapeDiffReviewPriority::Informational => "informational",
+    }
+}
+
+const fn review_action_key(
+    review_action: crate::contracts::LandscapeDiffReviewAction,
+) -> &'static str {
+    match review_action {
+        crate::contracts::LandscapeDiffReviewAction::ReviewNewClaim => "review_new_claim",
+        crate::contracts::LandscapeDiffReviewAction::CompareClaimEvidence => {
+            "compare_claim_evidence"
+        }
+        crate::contracts::LandscapeDiffReviewAction::ConfirmClaimRemoval => "confirm_claim_removal",
+        crate::contracts::LandscapeDiffReviewAction::ReviewNewAssessment => "review_new_assessment",
+        crate::contracts::LandscapeDiffReviewAction::CompareAssessmentEvidence => {
+            "compare_assessment_evidence"
+        }
+        crate::contracts::LandscapeDiffReviewAction::ConfirmAssessmentRemoval => {
+            "confirm_assessment_removal"
+        }
+        crate::contracts::LandscapeDiffReviewAction::TriageNewGap => "triage_new_gap",
+        crate::contracts::LandscapeDiffReviewAction::ReassessChangedGap => "reassess_changed_gap",
+        crate::contracts::LandscapeDiffReviewAction::VerifyResolvedGap => "verify_resolved_gap",
     }
 }

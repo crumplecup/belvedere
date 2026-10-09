@@ -3,9 +3,14 @@
 use tracing::instrument;
 
 use crate::contracts::{
-    LandscapeAssessment, LandscapeClaim, LandscapeDiffChangeKind, LandscapeDiffItem, LandscapeGap,
-    TraceRef,
+    LandscapeAssessment, LandscapeClaim, LandscapeDiffChangeKind, LandscapeDiffItem,
+    LandscapeDiffReviewAction, LandscapeDiffReviewGuidance, LandscapeDiffReviewPriority,
+    LandscapeGap, TraceRef,
 };
+
+const SUBJECT_CLAIM: &str = "claim";
+const SUBJECT_ASSESSMENT: &str = "assessment";
+const SUBJECT_GAP: &str = "gap";
 
 #[instrument(level = "debug", skip(items, change_kind))]
 pub(super) fn push_claim_item(
@@ -16,9 +21,13 @@ pub(super) fn push_claim_item(
     source_record_ids: Vec<String>,
 ) {
     items.push(LandscapeDiffItem::new(
-        diff_item_id(change_kind, "claim", claim_id),
+        diff_item_id(change_kind, SUBJECT_CLAIM, claim_id),
         change_kind,
-        "claim",
+        LandscapeDiffReviewGuidance::new(
+            claim_review_priority(change_kind),
+            claim_review_action(change_kind),
+        ),
+        SUBJECT_CLAIM,
         claim_id,
         summary,
         TraceRef::new(claim_id, source_record_ids),
@@ -40,9 +49,13 @@ pub(super) fn push_assessment_item(
         assessment.recommendation()
     );
     items.push(LandscapeDiffItem::new(
-        diff_item_id(change_kind, "assessment", assessment.id()),
+        diff_item_id(change_kind, SUBJECT_ASSESSMENT, assessment.id()),
         change_kind,
-        "assessment",
+        LandscapeDiffReviewGuidance::new(
+            assessment_review_priority(change_kind),
+            assessment_review_action(change_kind),
+        ),
+        SUBJECT_ASSESSMENT,
         assessment.id(),
         summary,
         TraceRef::new(assessment.proof_id(), source_record_ids),
@@ -60,9 +73,13 @@ pub(super) fn push_gap_item(
 ) {
     let summary = format!("{action} {:?} for {}", gap.kind(), gap.claim_id());
     items.push(LandscapeDiffItem::new(
-        diff_item_id(change_kind, "gap", gap_key),
+        diff_item_id(change_kind, SUBJECT_GAP, gap_key),
         change_kind,
-        "gap",
+        LandscapeDiffReviewGuidance::new(
+            gap_review_priority(change_kind),
+            gap_review_action(change_kind),
+        ),
+        SUBJECT_GAP,
         gap.claim_id(),
         summary,
         TraceRef::new(gap.claim_id(), source_record_ids),
@@ -101,4 +118,61 @@ fn diff_item_id(
     subject_id: &str,
 ) -> String {
     format!("belvedere.diff.{change_kind:?}.{subject_kind}:{subject_id}")
+}
+
+#[instrument(level = "trace", skip(change_kind))]
+fn claim_review_priority(change_kind: LandscapeDiffChangeKind) -> LandscapeDiffReviewPriority {
+    match change_kind {
+        LandscapeDiffChangeKind::Added | LandscapeDiffChangeKind::Changed => {
+            LandscapeDiffReviewPriority::Review
+        }
+        LandscapeDiffChangeKind::Removed => LandscapeDiffReviewPriority::Blocking,
+    }
+}
+
+#[instrument(level = "trace", skip(change_kind))]
+fn assessment_review_priority(change_kind: LandscapeDiffChangeKind) -> LandscapeDiffReviewPriority {
+    match change_kind {
+        LandscapeDiffChangeKind::Added | LandscapeDiffChangeKind::Changed => {
+            LandscapeDiffReviewPriority::Review
+        }
+        LandscapeDiffChangeKind::Removed => LandscapeDiffReviewPriority::Blocking,
+    }
+}
+
+#[instrument(level = "trace", skip(change_kind))]
+fn gap_review_priority(change_kind: LandscapeDiffChangeKind) -> LandscapeDiffReviewPriority {
+    match change_kind {
+        LandscapeDiffChangeKind::Added | LandscapeDiffChangeKind::Changed => {
+            LandscapeDiffReviewPriority::Blocking
+        }
+        LandscapeDiffChangeKind::Removed => LandscapeDiffReviewPriority::Informational,
+    }
+}
+
+#[instrument(level = "trace", skip(change_kind))]
+fn claim_review_action(change_kind: LandscapeDiffChangeKind) -> LandscapeDiffReviewAction {
+    match change_kind {
+        LandscapeDiffChangeKind::Added => LandscapeDiffReviewAction::ReviewNewClaim,
+        LandscapeDiffChangeKind::Changed => LandscapeDiffReviewAction::CompareClaimEvidence,
+        LandscapeDiffChangeKind::Removed => LandscapeDiffReviewAction::ConfirmClaimRemoval,
+    }
+}
+
+#[instrument(level = "trace", skip(change_kind))]
+fn assessment_review_action(change_kind: LandscapeDiffChangeKind) -> LandscapeDiffReviewAction {
+    match change_kind {
+        LandscapeDiffChangeKind::Added => LandscapeDiffReviewAction::ReviewNewAssessment,
+        LandscapeDiffChangeKind::Changed => LandscapeDiffReviewAction::CompareAssessmentEvidence,
+        LandscapeDiffChangeKind::Removed => LandscapeDiffReviewAction::ConfirmAssessmentRemoval,
+    }
+}
+
+#[instrument(level = "trace", skip(change_kind))]
+fn gap_review_action(change_kind: LandscapeDiffChangeKind) -> LandscapeDiffReviewAction {
+    match change_kind {
+        LandscapeDiffChangeKind::Added => LandscapeDiffReviewAction::TriageNewGap,
+        LandscapeDiffChangeKind::Changed => LandscapeDiffReviewAction::ReassessChangedGap,
+        LandscapeDiffChangeKind::Removed => LandscapeDiffReviewAction::VerifyResolvedGap,
+    }
 }

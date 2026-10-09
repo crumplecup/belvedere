@@ -80,3 +80,34 @@ pub(crate) fn diff_item_invariant_checks(
         ),
     ]
 }
+
+#[instrument(
+    level = "trace",
+    skip(diff_item_ids, review_priority_counts, review_action_counts)
+)]
+pub(crate) fn diff_review_invariant_checks(
+    diff_item_ids: &[String],
+    review_priority_counts: &BTreeMap<String, usize>,
+    review_action_counts: &BTreeMap<String, usize>,
+) -> Vec<BelvedereInvariantCheck> {
+    let priority_total = review_priority_counts.values().sum::<usize>();
+    let action_total = review_action_counts.values().sum::<usize>();
+    vec![
+        BelvedereInvariantCheck::new(
+            "landscape_diff_review_priorities_classified".to_owned(),
+            priority_total == diff_item_ids.len(),
+            format!(
+                "{priority_total} review priorities recorded for {} diff items",
+                diff_item_ids.len()
+            ),
+        ),
+        BelvedereInvariantCheck::new(
+            "landscape_diff_review_actions_classified".to_owned(),
+            action_total == diff_item_ids.len(),
+            format!(
+                "{action_total} review actions recorded for {} diff items",
+                diff_item_ids.len()
+            ),
+        ),
+    ]
+}

@@ -18,8 +18,9 @@ use crate::{
 };
 use changes::{diff_items, merged_source_record_ids};
 use receipt::{
-    change_subject_counts, diff_counts, diff_item_ids, item_kind_counts, subject_kind_counts,
-    trace_source_counts, trace_source_kind_counts, trace_source_record_ids,
+    change_subject_counts, diff_counts, diff_item_ids, item_kind_counts, review_action_counts,
+    review_priority_counts, subject_kind_counts, trace_source_counts, trace_source_kind_counts,
+    trace_source_record_ids,
 };
 
 /// Exchange from two landscape snapshots into deterministic diff evidence.
@@ -59,6 +60,8 @@ impl BelvedereExchange<LandscapeDiffContract> for LandscapeDiffing {
         let receipt_item_kind_counts = item_kind_counts(diff.items());
         let receipt_subject_kind_counts = subject_kind_counts(diff.items());
         let receipt_change_subject_counts = change_subject_counts(diff.items());
+        let receipt_review_priority_counts = review_priority_counts(diff.items());
+        let receipt_review_action_counts = review_action_counts(diff.items());
         let receipt_trace_source_counts = trace_source_counts(diff.items());
         let receipt_trace_source_kind_counts = trace_source_kind_counts(diff.items());
         let receipt_trace_source_record_ids = trace_source_record_ids(diff.items());
@@ -72,6 +75,8 @@ impl BelvedereExchange<LandscapeDiffContract> for LandscapeDiffing {
             .item_kind_counts(&receipt_item_kind_counts)
             .subject_kind_counts(&receipt_subject_kind_counts)
             .change_subject_counts(&receipt_change_subject_counts)
+            .review_priority_counts(&receipt_review_priority_counts)
+            .review_action_counts(&receipt_review_action_counts)
             .trace_source_counts(&receipt_trace_source_counts)
             .trace_source_kind_counts(&receipt_trace_source_kind_counts)
             .trace_source_record_ids(&receipt_trace_source_record_ids)
@@ -93,6 +98,8 @@ impl BelvedereExchange<LandscapeDiffContract> for LandscapeDiffing {
             .item_kind_counts(receipt_item_kind_counts)
             .subject_kind_counts(receipt_subject_kind_counts)
             .change_subject_counts(receipt_change_subject_counts)
+            .review_priority_counts(receipt_review_priority_counts)
+            .review_action_counts(receipt_review_action_counts)
             .trace_source_counts(receipt_trace_source_counts)
             .trace_source_kind_counts(receipt_trace_source_kind_counts)
             .trace_source_record_ids(receipt_trace_source_record_ids)

@@ -1379,6 +1379,22 @@ fn assert_landscape_diff_receipt(receipt: &Value) {
         Some(2)
     );
     assert_eq!(
+        receipt["review_priority_counts"]["diff_review_priority_review"].as_u64(),
+        Some(4)
+    );
+    assert_eq!(
+        receipt["review_priority_counts"]["diff_review_priority_blocking"].as_u64(),
+        Some(1)
+    );
+    assert_eq!(
+        receipt["review_action_counts"]["diff_review_action_review_new_assessment"].as_u64(),
+        Some(2)
+    );
+    assert_eq!(
+        receipt["review_action_counts"]["diff_review_action_triage_new_gap"].as_u64(),
+        Some(1)
+    );
+    assert_eq!(
         receipt["trace_source_kind_counts"]["diff_trace_source_kind_assessment"].as_u64(),
         Some(5)
     );
@@ -3089,6 +3105,14 @@ fn cli_can_emit_the_landscape_diff_certificate_as_json() -> Result<()> {
     );
     assert_eq!(
         certificate["counts"]["diff_item_kind_removed"].as_u64(),
+        Some(1)
+    );
+    assert_eq!(
+        certificate["counts"]["diff_review_priority_review"].as_u64(),
+        Some(4)
+    );
+    assert_eq!(
+        certificate["counts"]["diff_review_action_triage_new_gap"].as_u64(),
         Some(1)
     );
     assert_eq!(
@@ -4975,6 +4999,8 @@ fn cli_can_emit_the_landscape_diff_as_json() -> Result<()> {
     assert!(diff["items"].as_array().is_some_and(|items| {
         items.iter().any(|item| {
             item["change_kind"].as_str() == Some("added")
+                && item["review_priority"].as_str() == Some("review")
+                && item["review_action"].as_str() == Some("review_new_assessment")
                 && item["subject_kind"].as_str() == Some("assessment")
                 && item["trace"]["source_record_ids"]
                     .as_array()

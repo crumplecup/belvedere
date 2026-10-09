@@ -13,7 +13,8 @@ mod view_model;
 pub use contract::BelvedereContract;
 pub use diff::{
     LandscapeDiff, LandscapeDiffChangeKind, LandscapeDiffContract, LandscapeDiffInput,
-    LandscapeDiffItem,
+    LandscapeDiffItem, LandscapeDiffReviewAction, LandscapeDiffReviewGuidance,
+    LandscapeDiffReviewPriority,
 };
 pub use ingestion::{
     AcceptedAmenableArtifactFormat, ArtifactKind, AssessmentRecord,
