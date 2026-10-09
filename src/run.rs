@@ -228,10 +228,13 @@ pub fn run_belvedere_landscape_diff(
 
     let previous_landscape = previous.landscape.clone();
     let current_landscape = current.landscape.clone();
-    let (diff, diff_receipt) = LandscapeDiffing.diff(LandscapeDiffInput::new(
-        previous.landscape,
-        current.landscape,
-    ))?;
+    let (diff, diff_receipt) =
+        LandscapeDiffing.diff(LandscapeDiffInput::from_landscape_receipts(
+            previous.landscape,
+            &previous.landscape_receipt,
+            current.landscape,
+            &current.landscape_receipt,
+        ))?;
     let diff_certificate = BelvedereStageCertificate::landscape_diff(&diff_receipt);
     let certificate = BelvedereRunCertificate::from_stage_certificates(
         invocation,

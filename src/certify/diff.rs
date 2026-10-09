@@ -29,6 +29,8 @@ pub struct LandscapeDiffReceipt {
     trace_source_kind_counts: BTreeMap<String, usize>,
     trace_source_record_ids: Vec<String>,
     diff_item_ids: Vec<String>,
+    source_landscape_receipt_ids: Vec<String>,
+    source_landscape_receipt_digests: Vec<String>,
     source_record_ids: Vec<String>,
     warnings: Vec<String>,
 }
@@ -63,6 +65,10 @@ pub(crate) struct LandscapeDiffReceiptDigestEvidence<'evidence> {
     trace_source_record_ids: &'evidence [String],
     /// Stable diff item IDs emitted by the exchange.
     diff_item_ids: &'evidence [String],
+    /// Source landscape receipt IDs compared by the exchange.
+    source_landscape_receipt_ids: &'evidence [String],
+    /// Source landscape receipt digests compared by the exchange.
+    source_landscape_receipt_digests: &'evidence [String],
     /// Source record IDs represented by the diff input snapshots.
     source_record_ids: &'evidence [String],
     /// Recoverable warnings emitted by the exchange.
@@ -138,6 +144,8 @@ fn landscape_diff_receipt_digest(evidence: LandscapeDiffReceiptDigestEvidence<'_
     update_counts(&mut hasher, evidence.trace_source_kind_counts);
     update_fields(&mut hasher, evidence.trace_source_record_ids);
     update_fields(&mut hasher, evidence.diff_item_ids);
+    update_fields(&mut hasher, evidence.source_landscape_receipt_ids);
+    update_fields(&mut hasher, evidence.source_landscape_receipt_digests);
     update_fields(&mut hasher, evidence.source_record_ids);
     update_fields(&mut hasher, evidence.warnings);
     hex_digest(hasher)

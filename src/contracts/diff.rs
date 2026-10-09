@@ -6,7 +6,7 @@ use serde::Serialize;
 use tracing::instrument;
 
 use crate::{
-    certify::LandscapeDiffReceipt,
+    certify::{LandscapeDiffReceipt, LandscapeReceipt},
     contracts::{
         BelvedereContract, LANDSCAPE_CONSTRUCTION_STANDARD_ID, LandscapeGraph,
         REPORT_REPRODUCIBILITY_STANDARD_ID, TraceRef,
@@ -14,17 +14,53 @@ use crate::{
 };
 
 /// Two landscape snapshots accepted by the landscape diff exchange.
-#[derive(Debug, Clone, PartialEq, Eq)]
+#[derive(Debug, Clone, PartialEq, Eq, Getters)]
 pub struct LandscapeDiffInput {
+    #[getter(skip)]
     previous: LandscapeGraph,
+    #[getter(skip)]
     current: LandscapeGraph,
+    source_landscape_receipt_ids: Vec<String>,
+    source_landscape_receipt_digests: Vec<String>,
 }
 
 impl LandscapeDiffInput {
     /// Create a diff input from an earlier and later landscape snapshot.
     #[must_use]
-    pub const fn new(previous: LandscapeGraph, current: LandscapeGraph) -> Self {
-        Self { previous, current }
+    #[instrument(level = "debug", skip(previous, current))]
+    pub fn new(previous: LandscapeGraph, current: LandscapeGraph) -> Self {
+        Self {
+            previous,
+            current,
+            source_landscape_receipt_ids: Vec::new(),
+            source_landscape_receipt_digests: Vec::new(),
+        }
+    }
+
+    /// Create a diff input from landscapes and their modeling receipts.
+    #[must_use]
+    #[instrument(
+        level = "debug",
+        skip(previous, previous_receipt, current, current_receipt)
+    )]
+    pub fn from_landscape_receipts(
+        previous: LandscapeGraph,
+        previous_receipt: &LandscapeReceipt,
+        current: LandscapeGraph,
+        current_receipt: &LandscapeReceipt,
+    ) -> Self {
+        Self {
+            previous,
+            current,
+            source_landscape_receipt_ids: vec![
+                previous_receipt.receipt_id().to_owned(),
+                current_receipt.receipt_id().to_owned(),
+            ],
+            source_landscape_receipt_digests: vec![
+                previous_receipt.receipt_digest().to_owned(),
+                current_receipt.receipt_digest().to_owned(),
+            ],
+        }
     }
 
     /// Earlier landscape snapshot.

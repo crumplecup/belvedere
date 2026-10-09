@@ -1377,6 +1377,30 @@ fn assert_landscape_diff_receipt(receipt: &Value) {
         })
     }));
     assert_eq!(
+        receipt["source_landscape_receipt_ids"]
+            .as_array()
+            .map(Vec::len),
+        Some(2)
+    );
+    assert!(
+        receipt["source_landscape_receipt_ids"]
+            .as_array()
+            .is_some_and(|ids| ids.iter().all(|id| id
+                .as_str()
+                .is_some_and(|id| id.starts_with("belvedere.receipt.landscape:"))))
+    );
+    assert_eq!(
+        receipt["source_landscape_receipt_digests"]
+            .as_array()
+            .map(Vec::len),
+        Some(2)
+    );
+    assert!(
+        receipt["source_landscape_receipt_digests"]
+            .as_array()
+            .is_some_and(|digests| digests.iter().all(is_hex_digest))
+    );
+    assert_eq!(
         receipt["source_record_ids"].as_array().map(Vec::len),
         Some(7)
     );
@@ -3103,6 +3127,13 @@ fn cli_can_emit_the_landscape_diff_run_certificate_as_json() -> Result<()> {
                         && stage_certificate["counts"]["diff_item_kind_added"].as_u64() == Some(4)
                         && stage_certificate["counts"]["diff_trace_source_links"].as_u64()
                             == Some(8)
+                        && stage_certificate["counts"]["source_landscape_receipts"].as_u64()
+                            == Some(2)
+                        && stage_certificate["input_digests"]
+                            .as_array()
+                            .is_some_and(|digests| {
+                                digests.len() == 2 && digests.iter().all(is_hex_digest)
+                            })
                         && stage_certificate["invariant_checks"]
                             .as_array()
                             .is_some_and(|checks| {

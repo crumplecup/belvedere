@@ -63,6 +63,8 @@ impl BelvedereExchange<LandscapeDiffContract> for LandscapeDiffing {
         let receipt_trace_source_kind_counts = trace_source_kind_counts(diff.items());
         let receipt_trace_source_record_ids = trace_source_record_ids(diff.items());
         let receipt_diff_item_ids = diff_item_ids(diff.items());
+        let source_landscape_receipt_ids = input.source_landscape_receipt_ids().to_vec();
+        let source_landscape_receipt_digests = input.source_landscape_receipt_digests().to_vec();
         let receipt_warnings = Vec::new();
         let identity_evidence = LandscapeDiffReceiptDigestEvidenceBuilder::default()
             .contract(LandscapeDiffContract::NAME)
@@ -74,6 +76,8 @@ impl BelvedereExchange<LandscapeDiffContract> for LandscapeDiffing {
             .trace_source_kind_counts(&receipt_trace_source_kind_counts)
             .trace_source_record_ids(&receipt_trace_source_record_ids)
             .diff_item_ids(&receipt_diff_item_ids)
+            .source_landscape_receipt_ids(&source_landscape_receipt_ids)
+            .source_landscape_receipt_digests(&source_landscape_receipt_digests)
             .source_record_ids(&source_record_ids)
             .warnings(&receipt_warnings)
             .build()
@@ -93,6 +97,8 @@ impl BelvedereExchange<LandscapeDiffContract> for LandscapeDiffing {
             .trace_source_kind_counts(receipt_trace_source_kind_counts)
             .trace_source_record_ids(receipt_trace_source_record_ids)
             .diff_item_ids(receipt_diff_item_ids)
+            .source_landscape_receipt_ids(source_landscape_receipt_ids)
+            .source_landscape_receipt_digests(source_landscape_receipt_digests)
             .source_record_ids(source_record_ids)
             .warnings(receipt_warnings)
             .build()

@@ -174,6 +174,10 @@ impl BelvedereStageCertificate {
             ("changed_items".to_owned(), receipt.counts().changed_items()),
             ("removed_items".to_owned(), receipt.counts().removed_items()),
             ("total_items".to_owned(), receipt.counts().total_items()),
+            (
+                "source_landscape_receipts".to_owned(),
+                receipt.source_landscape_receipt_ids().len(),
+            ),
             ("warnings".to_owned(), receipt.warnings().len()),
         ]);
         counts.extend(receipt.item_kind_counts().clone());
@@ -192,14 +196,20 @@ impl BelvedereStageCertificate {
             receipt.item_kind_counts(),
             receipt.diff_item_ids(),
         ));
+        let input_ids = if receipt.source_landscape_receipt_ids().is_empty() {
+            receipt.source_record_ids().clone()
+        } else {
+            receipt.source_landscape_receipt_ids().clone()
+        };
+        let input_digests = receipt.source_landscape_receipt_digests().clone();
         Self::new(StageCertificateEvidence {
             stage: BelvederePipelineStage::LandscapeDiff,
             contract: receipt.contract().to_owned(),
             standards: contract_standards::<LandscapeDiffContract>(),
             requires: contract_requirements::<LandscapeDiffContract>(),
             ensures: contract_guarantees::<LandscapeDiffContract>(),
-            input_ids: receipt.source_record_ids().clone(),
-            input_digests: Vec::new(),
+            input_ids,
+            input_digests,
             output_ids: receipt.diff_item_ids().clone(),
             counts,
             additional_invariant_checks,

@@ -26,6 +26,8 @@ fn landscape_diff_surfaces_snapshot_changes_for_auditors() -> Result<()> {
     assert_eq!(receipt.counts().changed_items(), 1);
     assert_eq!(receipt.counts().total_items(), diff.items().len());
     assert_landscape_diff_receipt_identity(&receipt);
+    assert!(receipt.source_landscape_receipt_ids().is_empty());
+    assert!(receipt.source_landscape_receipt_digests().is_empty());
     assert_eq!(
         receipt.subject_kind_counts().get("diff_subject_claim"),
         Some(&2)
@@ -107,6 +109,10 @@ fn landscape_diff_surfaces_snapshot_changes_for_auditors() -> Result<()> {
     assert_eq!(certificate.stage(), BelvederePipelineStage::LandscapeDiff);
     assert_eq!(certificate.contract(), "belvedere.diff.landscape");
     assert!(certificate.input_digests().is_empty());
+    assert_eq!(
+        certificate.counts().get("source_landscape_receipts"),
+        Some(&0)
+    );
     assert!(
         certificate
             .standards()
@@ -401,6 +407,41 @@ fn landscape_diff_runner_uses_the_normal_artifact_path() -> Result<()> {
                 .diff_certificate()
                 .output_ids()
                 .contains(diff_item_id))
+    );
+    assert_eq!(
+        report.diff_receipt().source_landscape_receipt_ids(),
+        &vec![
+            report.previous_landscape_receipt().receipt_id().to_owned(),
+            report.current_landscape_receipt().receipt_id().to_owned()
+        ]
+    );
+    assert_eq!(
+        report.diff_receipt().source_landscape_receipt_digests(),
+        &vec![
+            report
+                .previous_landscape_receipt()
+                .receipt_digest()
+                .to_owned(),
+            report
+                .current_landscape_receipt()
+                .receipt_digest()
+                .to_owned()
+        ]
+    );
+    assert_eq!(
+        report.diff_certificate().input_ids(),
+        report.diff_receipt().source_landscape_receipt_ids()
+    );
+    assert_eq!(
+        report.diff_certificate().input_digests(),
+        report.diff_receipt().source_landscape_receipt_digests()
+    );
+    assert_eq!(
+        report
+            .diff_certificate()
+            .counts()
+            .get("source_landscape_receipts"),
+        Some(&2)
     );
     assert_eq!(
         report
