@@ -133,6 +133,14 @@ pub(super) fn manifest_invariant_checks(
             output_sources_accounted(stage_certificates, output_artifacts),
             format!("{} output source links checked", output_artifacts.len()),
         ),
+        BelvedereInvariantCheck::new(
+            "artifact_manifest_output_artifacts_identified".to_owned(),
+            output_artifacts_identified(output_artifacts),
+            format!(
+                "{} output artifact identities checked",
+                output_artifacts.len()
+            ),
+        ),
     ]
 }
 
@@ -168,6 +176,20 @@ fn output_sources_accounted(
                 && artifact.source_stage_certificate_id() == certificate.certificate_id()
                 && artifact.source_stage_certificate_digest() == certificate.digest()
         })
+    })
+}
+
+#[instrument(level = "debug", skip(output_artifacts))]
+fn output_artifacts_identified(output_artifacts: &[BelvedereManifestOutputArtifact]) -> bool {
+    output_artifacts.iter().all(|artifact| {
+        artifact
+            .artifact_id()
+            .starts_with("belvedere.manifest.output_artifact:")
+            && artifact.artifact_id()
+                == &format!(
+                    "belvedere.manifest.output_artifact:{}",
+                    artifact.artifact_digest()
+                )
     })
 }
 

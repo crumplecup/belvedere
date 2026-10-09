@@ -244,15 +244,19 @@ fn run_pipeline_uses_the_normal_amenable_artifact_path() -> Result<()> {
         report.manifest().run_certificate_id(),
         report.certificate().id()
     );
-    assert!(
-        report
-            .manifest()
-            .output_artifacts()
-            .iter()
-            .any(|artifact| artifact.role() == "ui_ir_projection"
-                && artifact.source_stage_role() == "ui_ir_projection"
-                && *artifact.item_count() == report.ui_ir_receipt().trace_widget_ids().len())
-    );
+    assert!(report.manifest().output_artifacts().iter().any(|artifact| {
+        artifact.role() == "ui_ir_projection"
+            && artifact.source_stage_role() == "ui_ir_projection"
+            && artifact
+                .artifact_id()
+                .starts_with("belvedere.manifest.output_artifact:")
+            && artifact.artifact_id()
+                == &format!(
+                    "belvedere.manifest.output_artifact:{}",
+                    artifact.artifact_digest()
+                )
+            && *artifact.item_count() == report.ui_ir_receipt().trace_widget_ids().len()
+    }));
     assert!(
         report
             .certificate()
@@ -1829,6 +1833,13 @@ fn assert_run_manifest(manifest: &Value) {
                 artifacts.iter().any(|artifact| {
                     artifact["role"].as_str() == Some("ui_ir_projection")
                         && artifact["artifact_kind"].as_str() == Some("elicit_ui_projection")
+                        && artifact["artifact_id"]
+                            .as_str()
+                            .is_some_and(|id| id.starts_with("belvedere.manifest.output_artifact:"))
+                        && artifact["artifact_id"].as_str().map(str::to_owned)
+                            == artifact["artifact_digest"].as_str().map(|digest| {
+                                format!("belvedere.manifest.output_artifact:{digest}")
+                            })
                         && artifact["source_stage_role"].as_str() == Some("ui_ir_projection")
                 })
             })
@@ -1892,6 +1903,13 @@ fn assert_diff_manifest(manifest: &Value) {
                 artifacts.iter().any(|artifact| {
                     artifact["role"].as_str() == Some("landscape_diff")
                         && artifact["artifact_kind"].as_str() == Some("landscape_diff")
+                        && artifact["artifact_id"]
+                            .as_str()
+                            .is_some_and(|id| id.starts_with("belvedere.manifest.output_artifact:"))
+                        && artifact["artifact_id"].as_str().map(str::to_owned)
+                            == artifact["artifact_digest"].as_str().map(|digest| {
+                                format!("belvedere.manifest.output_artifact:{digest}")
+                            })
                         && artifact["item_count"].as_u64() == Some(6)
                 })
             })

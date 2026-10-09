@@ -388,6 +388,8 @@ fn manifest_digest(evidence: ManifestDigestEvidence<'_>) -> String {
     for artifact in evidence.output_artifacts {
         update_field(&mut hasher, artifact.role());
         update_field(&mut hasher, artifact.artifact_kind());
+        update_field(&mut hasher, artifact.artifact_id());
+        update_field(&mut hasher, artifact.artifact_digest());
         update_field(&mut hasher, artifact.source_stage_role());
         update_field(&mut hasher, artifact.source_stage_certificate_id());
         update_field(&mut hasher, artifact.source_stage_certificate_digest());

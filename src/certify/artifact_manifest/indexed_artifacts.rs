@@ -2,9 +2,13 @@
 
 use derive_getters::Getters;
 use serde::Serialize;
+use sha2::{Digest as _, Sha256};
 use tracing::instrument;
 
-use crate::certify::{BelvederePipelineStage, BelvedereRunCertificate};
+use crate::certify::{BelvederePipelineStage, BelvedereRunCertificate, hex_digest, update_field};
+
+const MANIFEST_OUTPUT_ARTIFACT_SCHEMA_ID: &str = "belvedere.manifest.output_artifact.v1";
+const MANIFEST_OUTPUT_ARTIFACT_ID_PREFIX: &str = "belvedere.manifest.output_artifact";
 
 /// Input artifact indexed by a Belvedere artifact manifest.
 #[derive(Debug, Clone, PartialEq, Eq, Getters, Serialize)]
@@ -51,10 +55,81 @@ impl BelvedereManifestStageCertificate {
 pub struct BelvedereManifestOutputArtifact {
     role: String,
     artifact_kind: String,
+    artifact_id: String,
+    artifact_digest: String,
     source_stage_role: String,
     source_stage_certificate_id: String,
     source_stage_certificate_digest: String,
     item_count: usize,
+}
+
+impl BelvedereManifestOutputArtifact {
+    #[instrument(
+        level = "trace",
+        skip(
+            role,
+            artifact_kind,
+            source_stage_role,
+            source_stage_certificate_id,
+            source_stage_certificate_digest
+        )
+    )]
+    fn new(
+        role: impl Into<String>,
+        artifact_kind: impl Into<String>,
+        source_stage_role: impl Into<String>,
+        source_stage_certificate_id: impl Into<String>,
+        source_stage_certificate_digest: impl Into<String>,
+        item_count: usize,
+    ) -> Self {
+        let role = role.into();
+        let artifact_kind = artifact_kind.into();
+        let source_stage_role = source_stage_role.into();
+        let source_stage_certificate_id = source_stage_certificate_id.into();
+        let source_stage_certificate_digest = source_stage_certificate_digest.into();
+        let artifact_digest = manifest_output_artifact_digest(OutputArtifactDigestEvidence {
+            role: &role,
+            artifact_kind: &artifact_kind,
+            source_stage_role: &source_stage_role,
+            source_stage_certificate_id: &source_stage_certificate_id,
+            source_stage_certificate_digest: &source_stage_certificate_digest,
+            item_count,
+        });
+        let artifact_id = format!("{MANIFEST_OUTPUT_ARTIFACT_ID_PREFIX}:{artifact_digest}");
+        Self {
+            role,
+            artifact_kind,
+            artifact_id,
+            artifact_digest,
+            source_stage_role,
+            source_stage_certificate_id,
+            source_stage_certificate_digest,
+            item_count,
+        }
+    }
+}
+
+#[derive(Debug, Clone, Copy)]
+struct OutputArtifactDigestEvidence<'evidence> {
+    role: &'evidence str,
+    artifact_kind: &'evidence str,
+    source_stage_role: &'evidence str,
+    source_stage_certificate_id: &'evidence str,
+    source_stage_certificate_digest: &'evidence str,
+    item_count: usize,
+}
+
+#[instrument(level = "trace", skip(evidence))]
+fn manifest_output_artifact_digest(evidence: OutputArtifactDigestEvidence<'_>) -> String {
+    let mut hasher = Sha256::new();
+    update_field(&mut hasher, MANIFEST_OUTPUT_ARTIFACT_SCHEMA_ID);
+    update_field(&mut hasher, evidence.role);
+    update_field(&mut hasher, evidence.artifact_kind);
+    update_field(&mut hasher, evidence.source_stage_role);
+    update_field(&mut hasher, evidence.source_stage_certificate_id);
+    update_field(&mut hasher, evidence.source_stage_certificate_digest);
+    update_field(&mut hasher, &evidence.item_count.to_string());
+    hex_digest(hasher)
 }
 
 #[instrument(level = "trace", skip(certificate))]
@@ -132,14 +207,14 @@ pub(super) fn diff_stage_roles() -> [&'static str; 11] {
 pub(super) fn run_certificate_output(
     certificate: &BelvedereRunCertificate,
 ) -> BelvedereManifestOutputArtifact {
-    BelvedereManifestOutputArtifact {
-        role: "run_certificate".to_owned(),
-        artifact_kind: "run_certificate".to_owned(),
-        source_stage_role: "run_certificate".to_owned(),
-        source_stage_certificate_id: certificate.id().to_owned(),
-        source_stage_certificate_digest: certificate.digest().to_owned(),
-        item_count: certificate.stage_certificates().len(),
-    }
+    BelvedereManifestOutputArtifact::new(
+        "run_certificate",
+        "run_certificate",
+        "run_certificate",
+        certificate.id(),
+        certificate.digest(),
+        certificate.stage_certificates().len(),
+    )
 }
 
 #[instrument(level = "trace", skip(role, artifact_kind, stage_certificates))]
@@ -151,22 +226,22 @@ pub(super) fn output_artifact(
     stage_certificates: &[BelvedereManifestStageCertificate],
 ) -> BelvedereManifestOutputArtifact {
     if let Some(stage_certificate) = stage_certificates.get(source_stage_index) {
-        return BelvedereManifestOutputArtifact {
-            role: role.to_owned(),
-            artifact_kind: artifact_kind.to_owned(),
-            source_stage_role: stage_certificate.role().to_owned(),
-            source_stage_certificate_id: stage_certificate.certificate_id().to_owned(),
-            source_stage_certificate_digest: stage_certificate.digest().to_owned(),
+        return BelvedereManifestOutputArtifact::new(
+            role,
+            artifact_kind,
+            stage_certificate.role(),
+            stage_certificate.certificate_id(),
+            stage_certificate.digest(),
             item_count,
-        };
+        );
     }
 
-    BelvedereManifestOutputArtifact {
-        role: role.to_owned(),
-        artifact_kind: artifact_kind.to_owned(),
-        source_stage_role: "unknown".to_owned(),
-        source_stage_certificate_id: "unknown".to_owned(),
-        source_stage_certificate_digest: "unknown".to_owned(),
+    BelvedereManifestOutputArtifact::new(
+        role,
+        artifact_kind,
+        "unknown",
+        "unknown",
+        "unknown",
         item_count,
-    }
+    )
 }
