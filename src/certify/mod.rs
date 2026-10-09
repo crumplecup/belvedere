@@ -25,8 +25,11 @@ pub use certificate_schema::{
     BELVEDERE_RUN_CERTIFICATE_SCHEMA_ID, BELVEDERE_RUN_CERTIFICATE_SCHEMA_VERSION,
     BELVEDERE_STAGE_CERTIFICATE_SCHEMA_ID, BELVEDERE_STAGE_CERTIFICATE_SCHEMA_VERSION,
 };
-pub(crate) use diff::LandscapeDiffReceiptBuilder;
 pub use diff::{LandscapeDiffReceipt, LandscapeDiffReceiptCounts};
+pub(crate) use diff::{
+    LandscapeDiffReceiptBuilder, LandscapeDiffReceiptDigestEvidenceBuilder,
+    landscape_diff_receipt_identity,
+};
 pub use invariant::BelvedereInvariantCheck;
 pub(crate) use invariant::{
     RunInputArtifactEvidence, RunInvariantEvidence, RunStageCertificateEvidence,

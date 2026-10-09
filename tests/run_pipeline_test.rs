@@ -1291,6 +1291,7 @@ fn assert_landscape_diff_receipt(receipt: &Value) {
         receipt["contract"].as_str(),
         Some("belvedere.diff.landscape")
     );
+    assert_landscape_diff_receipt_identity(receipt);
     assert_eq!(receipt["counts"]["added_items"].as_u64(), Some(4));
     assert_eq!(receipt["counts"]["removed_items"].as_u64(), Some(1));
     assert_eq!(receipt["counts"]["changed_items"].as_u64(), Some(1));
@@ -1342,6 +1343,20 @@ fn assert_landscape_diff_receipt(receipt: &Value) {
     assert_eq!(
         receipt["source_record_ids"].as_array().map(Vec::len),
         Some(7)
+    );
+}
+
+fn assert_landscape_diff_receipt_identity(receipt: &Value) {
+    assert!(
+        receipt["receipt_id"]
+            .as_str()
+            .is_some_and(|id| id.starts_with("belvedere.receipt.landscape_diff:"))
+    );
+    assert_eq!(
+        receipt["receipt_id"].as_str().map(str::to_owned),
+        receipt["receipt_digest"]
+            .as_str()
+            .map(|digest| format!("belvedere.receipt.landscape_diff:{digest}"))
     );
 }
 

@@ -25,6 +25,7 @@ fn landscape_diff_surfaces_snapshot_changes_for_auditors() -> Result<()> {
     assert_eq!(receipt.counts().removed_items(), 1);
     assert_eq!(receipt.counts().changed_items(), 1);
     assert_eq!(receipt.counts().total_items(), diff.items().len());
+    assert_landscape_diff_receipt_identity(&receipt);
     assert_eq!(
         receipt.subject_kind_counts().get("diff_subject_claim"),
         Some(&2)
@@ -262,6 +263,21 @@ fn landscape_diff_surfaces_snapshot_changes_for_auditors() -> Result<()> {
             && item.summary().contains("added gap MissingProof")
     }));
     Ok(())
+}
+
+fn assert_landscape_diff_receipt_identity(receipt: &belvedere::LandscapeDiffReceipt) {
+    assert!(
+        receipt
+            .receipt_id()
+            .starts_with("belvedere.receipt.landscape_diff:")
+    );
+    assert_eq!(
+        receipt.receipt_id(),
+        &format!(
+            "belvedere.receipt.landscape_diff:{}",
+            receipt.receipt_digest()
+        )
+    );
 }
 
 #[test]
