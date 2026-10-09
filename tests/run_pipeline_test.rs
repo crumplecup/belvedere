@@ -256,6 +256,8 @@ fn run_pipeline_uses_the_normal_amenable_artifact_path() -> Result<()> {
     assert!(report.manifest().output_artifacts().iter().any(|artifact| {
         artifact.role() == "ui_ir_projection"
             && artifact.source_stage_role() == "ui_ir_projection"
+            && artifact.evidence_id() == report.ui_ir_receipt().receipt_id()
+            && artifact.evidence_digest() == report.ui_ir_receipt().receipt_digest()
             && artifact
                 .artifact_id()
                 .starts_with("belvedere.manifest.output_artifact:")
@@ -1858,6 +1860,14 @@ fn assert_run_manifest(manifest: &Value) {
                     && check["passed"].as_bool() == Some(true)
             }))
     );
+    assert!(
+        manifest["invariant_checks"]
+            .as_array()
+            .is_some_and(|checks| checks.iter().any(|check| {
+                check["name"].as_str() == Some("artifact_manifest_output_evidence_identified")
+                    && check["passed"].as_bool() == Some(true)
+            }))
+    );
     assert_eq!(
         manifest["input_artifacts"].as_array().map(Vec::len),
         Some(2)
@@ -1884,6 +1894,10 @@ fn assert_run_manifest(manifest: &Value) {
                             == artifact["artifact_digest"].as_str().map(|digest| {
                                 format!("belvedere.manifest.output_artifact:{digest}")
                             })
+                        && artifact["evidence_id"]
+                            .as_str()
+                            .is_some_and(|id| id.starts_with("belvedere.receipt.ui_ir:"))
+                        && is_hex_digest(&artifact["evidence_digest"])
                         && artifact["source_stage_role"].as_str() == Some("ui_ir_projection")
                 })
             })
@@ -1954,6 +1968,10 @@ fn assert_diff_manifest(manifest: &Value) {
                             == artifact["artifact_digest"].as_str().map(|digest| {
                                 format!("belvedere.manifest.output_artifact:{digest}")
                             })
+                        && artifact["evidence_id"]
+                            .as_str()
+                            .is_some_and(|id| id.starts_with("belvedere.receipt.landscape_diff:"))
+                        && is_hex_digest(&artifact["evidence_digest"])
                         && artifact["item_count"].as_u64() == Some(6)
                 })
             })

@@ -141,6 +141,14 @@ pub(super) fn manifest_invariant_checks(
                 output_artifacts.len()
             ),
         ),
+        BelvedereInvariantCheck::new(
+            "artifact_manifest_output_evidence_identified".to_owned(),
+            output_evidence_identified(output_artifacts),
+            format!(
+                "{} output evidence identities checked",
+                output_artifacts.len()
+            ),
+        ),
     ]
 }
 
@@ -191,6 +199,18 @@ fn output_artifacts_identified(output_artifacts: &[BelvedereManifestOutputArtifa
                     artifact.artifact_digest()
                 )
     })
+}
+
+#[instrument(level = "debug", skip(output_artifacts))]
+fn output_evidence_identified(output_artifacts: &[BelvedereManifestOutputArtifact]) -> bool {
+    output_artifacts.iter().all(|artifact| {
+        !artifact.evidence_id().is_empty() && is_hex_digest(artifact.evidence_digest())
+    })
+}
+
+#[instrument(level = "trace", skip(value))]
+fn is_hex_digest(value: &str) -> bool {
+    value.len() == 64 && value.bytes().all(|byte| byte.is_ascii_hexdigit())
 }
 
 #[instrument(level = "debug")]

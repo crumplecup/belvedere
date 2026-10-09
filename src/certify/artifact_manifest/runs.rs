@@ -17,7 +17,7 @@ use super::accounting::{
 };
 use super::indexed_artifacts::{
     diff_stage_roles, manifest_inputs, manifest_stage_certificates, normal_stage_roles,
-    output_artifact, run_certificate_output,
+    output_artifact, run_certificate_output, stage_certificate_output,
 };
 use super::{
     BelvedereArtifactManifest, BelvedereDiffManifestReceipts, BelvedereManifestInputArtifact,
@@ -53,6 +53,8 @@ impl BelvedereArtifactManifest {
             output_artifact(
                 "registry_receipt",
                 "ingestion_receipt",
+                registry_receipt.receipt_id(),
+                registry_receipt.receipt_digest(),
                 0,
                 registry_receipt.source_record_ids().len(),
                 &stage_certificates,
@@ -60,6 +62,8 @@ impl BelvedereArtifactManifest {
             output_artifact(
                 "assessment_receipt",
                 "ingestion_receipt",
+                assessment_receipt.receipt_id(),
+                assessment_receipt.receipt_digest(),
                 1,
                 assessment_receipt.source_record_ids().len(),
                 &stage_certificates,
@@ -67,6 +71,8 @@ impl BelvedereArtifactManifest {
             output_artifact(
                 "landscape_graph",
                 "landscape_graph",
+                landscape_receipt.receipt_id(),
+                landscape_receipt.receipt_digest(),
                 2,
                 landscape_receipt.landscape_item_ids().len(),
                 &stage_certificates,
@@ -74,6 +80,8 @@ impl BelvedereArtifactManifest {
             output_artifact(
                 "landscape_receipt",
                 "landscape_receipt",
+                landscape_receipt.receipt_id(),
+                landscape_receipt.receipt_digest(),
                 2,
                 landscape_receipt.landscape_item_ids().len(),
                 &stage_certificates,
@@ -81,6 +89,8 @@ impl BelvedereArtifactManifest {
             output_artifact(
                 "view_model",
                 "auditor_navigation_model",
+                view_model_receipt.receipt_id(),
+                view_model_receipt.receipt_digest(),
                 3,
                 view_model_receipt.view_item_ids().len(),
                 &stage_certificates,
@@ -88,6 +98,8 @@ impl BelvedereArtifactManifest {
             output_artifact(
                 "view_model_receipt",
                 "view_model_receipt",
+                view_model_receipt.receipt_id(),
+                view_model_receipt.receipt_digest(),
                 3,
                 view_model_receipt.view_item_ids().len(),
                 &stage_certificates,
@@ -95,6 +107,8 @@ impl BelvedereArtifactManifest {
             output_artifact(
                 "ui_ir_projection",
                 "elicit_ui_projection",
+                ui_ir_receipt.receipt_id(),
+                ui_ir_receipt.receipt_digest(),
                 4,
                 ui_ir_receipt.trace_widget_ids().len(),
                 &stage_certificates,
@@ -102,6 +116,8 @@ impl BelvedereArtifactManifest {
             output_artifact(
                 "ui_ir_receipt",
                 "ui_ir_receipt",
+                ui_ir_receipt.receipt_id(),
+                ui_ir_receipt.receipt_digest(),
                 4,
                 ui_ir_receipt.trace_widget_ids().len(),
                 &stage_certificates,
@@ -126,7 +142,7 @@ impl BelvedereArtifactManifest {
         let stage_certificates = manifest_stage_certificates(certificate, &diff_stage_roles());
         let output_artifacts = vec![
             run_certificate_output(certificate),
-            output_artifact(
+            stage_certificate_output(
                 "diff_certificate",
                 "stage_certificate",
                 10,
@@ -136,6 +152,8 @@ impl BelvedereArtifactManifest {
             output_artifact(
                 "previous_registry_receipt",
                 "ingestion_receipt",
+                receipts.previous().registry().receipt_id(),
+                receipts.previous().registry().receipt_digest(),
                 0,
                 receipts.previous().registry().source_record_ids().len(),
                 &stage_certificates,
@@ -143,6 +161,8 @@ impl BelvedereArtifactManifest {
             output_artifact(
                 "previous_assessment_receipt",
                 "ingestion_receipt",
+                receipts.previous().assessment().receipt_id(),
+                receipts.previous().assessment().receipt_digest(),
                 1,
                 receipts.previous().assessment().source_record_ids().len(),
                 &stage_certificates,
@@ -150,6 +170,8 @@ impl BelvedereArtifactManifest {
             output_artifact(
                 "previous_landscape_graph",
                 "landscape_graph",
+                receipts.previous().landscape().receipt_id(),
+                receipts.previous().landscape().receipt_digest(),
                 2,
                 receipts.previous().landscape().landscape_item_ids().len(),
                 &stage_certificates,
@@ -157,6 +179,8 @@ impl BelvedereArtifactManifest {
             output_artifact(
                 "previous_landscape_receipt",
                 "landscape_receipt",
+                receipts.previous().landscape().receipt_id(),
+                receipts.previous().landscape().receipt_digest(),
                 2,
                 receipts.previous().landscape().landscape_item_ids().len(),
                 &stage_certificates,
@@ -164,6 +188,8 @@ impl BelvedereArtifactManifest {
             output_artifact(
                 "previous_view_model",
                 "auditor_navigation_model",
+                receipts.previous().view_model().receipt_id(),
+                receipts.previous().view_model().receipt_digest(),
                 3,
                 receipts.previous().view_model().view_item_ids().len(),
                 &stage_certificates,
@@ -171,6 +197,8 @@ impl BelvedereArtifactManifest {
             output_artifact(
                 "previous_view_model_receipt",
                 "view_model_receipt",
+                receipts.previous().view_model().receipt_id(),
+                receipts.previous().view_model().receipt_digest(),
                 3,
                 receipts.previous().view_model().view_item_ids().len(),
                 &stage_certificates,
@@ -178,6 +206,8 @@ impl BelvedereArtifactManifest {
             output_artifact(
                 "previous_ui_ir_projection",
                 "elicit_ui_projection",
+                receipts.previous().ui_ir().receipt_id(),
+                receipts.previous().ui_ir().receipt_digest(),
                 4,
                 receipts.previous().ui_ir().trace_widget_ids().len(),
                 &stage_certificates,
@@ -185,6 +215,8 @@ impl BelvedereArtifactManifest {
             output_artifact(
                 "previous_ui_ir_receipt",
                 "ui_ir_receipt",
+                receipts.previous().ui_ir().receipt_id(),
+                receipts.previous().ui_ir().receipt_digest(),
                 4,
                 receipts.previous().ui_ir().trace_widget_ids().len(),
                 &stage_certificates,
@@ -192,6 +224,8 @@ impl BelvedereArtifactManifest {
             output_artifact(
                 "current_registry_receipt",
                 "ingestion_receipt",
+                receipts.current().registry().receipt_id(),
+                receipts.current().registry().receipt_digest(),
                 5,
                 receipts.current().registry().source_record_ids().len(),
                 &stage_certificates,
@@ -199,6 +233,8 @@ impl BelvedereArtifactManifest {
             output_artifact(
                 "current_assessment_receipt",
                 "ingestion_receipt",
+                receipts.current().assessment().receipt_id(),
+                receipts.current().assessment().receipt_digest(),
                 6,
                 receipts.current().assessment().source_record_ids().len(),
                 &stage_certificates,
@@ -206,6 +242,8 @@ impl BelvedereArtifactManifest {
             output_artifact(
                 "current_landscape_graph",
                 "landscape_graph",
+                receipts.current().landscape().receipt_id(),
+                receipts.current().landscape().receipt_digest(),
                 7,
                 receipts.current().landscape().landscape_item_ids().len(),
                 &stage_certificates,
@@ -213,6 +251,8 @@ impl BelvedereArtifactManifest {
             output_artifact(
                 "current_landscape_receipt",
                 "landscape_receipt",
+                receipts.current().landscape().receipt_id(),
+                receipts.current().landscape().receipt_digest(),
                 7,
                 receipts.current().landscape().landscape_item_ids().len(),
                 &stage_certificates,
@@ -220,6 +260,8 @@ impl BelvedereArtifactManifest {
             output_artifact(
                 "current_view_model",
                 "auditor_navigation_model",
+                receipts.current().view_model().receipt_id(),
+                receipts.current().view_model().receipt_digest(),
                 8,
                 receipts.current().view_model().view_item_ids().len(),
                 &stage_certificates,
@@ -227,6 +269,8 @@ impl BelvedereArtifactManifest {
             output_artifact(
                 "current_view_model_receipt",
                 "view_model_receipt",
+                receipts.current().view_model().receipt_id(),
+                receipts.current().view_model().receipt_digest(),
                 8,
                 receipts.current().view_model().view_item_ids().len(),
                 &stage_certificates,
@@ -234,6 +278,8 @@ impl BelvedereArtifactManifest {
             output_artifact(
                 "current_ui_ir_projection",
                 "elicit_ui_projection",
+                receipts.current().ui_ir().receipt_id(),
+                receipts.current().ui_ir().receipt_digest(),
                 9,
                 receipts.current().ui_ir().trace_widget_ids().len(),
                 &stage_certificates,
@@ -241,6 +287,8 @@ impl BelvedereArtifactManifest {
             output_artifact(
                 "current_ui_ir_receipt",
                 "ui_ir_receipt",
+                receipts.current().ui_ir().receipt_id(),
+                receipts.current().ui_ir().receipt_digest(),
                 9,
                 receipts.current().ui_ir().trace_widget_ids().len(),
                 &stage_certificates,
@@ -248,6 +296,8 @@ impl BelvedereArtifactManifest {
             output_artifact(
                 "landscape_diff",
                 "landscape_diff",
+                receipts.diff().receipt_id(),
+                receipts.diff().receipt_digest(),
                 10,
                 receipts.diff().diff_item_ids().len(),
                 &stage_certificates,
@@ -255,6 +305,8 @@ impl BelvedereArtifactManifest {
             output_artifact(
                 "landscape_diff_receipt",
                 "landscape_diff_receipt",
+                receipts.diff().receipt_id(),
+                receipts.diff().receipt_digest(),
                 10,
                 receipts.diff().diff_item_ids().len(),
                 &stage_certificates,
@@ -390,6 +442,8 @@ fn manifest_digest(evidence: ManifestDigestEvidence<'_>) -> String {
         update_field(&mut hasher, artifact.artifact_kind());
         update_field(&mut hasher, artifact.artifact_id());
         update_field(&mut hasher, artifact.artifact_digest());
+        update_field(&mut hasher, artifact.evidence_id());
+        update_field(&mut hasher, artifact.evidence_digest());
         update_field(&mut hasher, artifact.source_stage_role());
         update_field(&mut hasher, artifact.source_stage_certificate_id());
         update_field(&mut hasher, artifact.source_stage_certificate_digest());
