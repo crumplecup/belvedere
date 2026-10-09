@@ -106,6 +106,7 @@ fn landscape_diff_surfaces_snapshot_changes_for_auditors() -> Result<()> {
     let certificate = BelvedereStageCertificate::landscape_diff(&receipt);
     assert_eq!(certificate.stage(), BelvederePipelineStage::LandscapeDiff);
     assert_eq!(certificate.contract(), "belvedere.diff.landscape");
+    assert!(certificate.input_digests().is_empty());
     assert!(
         certificate
             .standards()

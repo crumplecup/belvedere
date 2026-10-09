@@ -647,6 +647,10 @@ fn run_pipeline_uses_the_normal_amenable_artifact_path() -> Result<()> {
         landscape_stage.input_ids(),
         report.landscape_receipt().source_receipt_ids()
     );
+    assert_eq!(
+        landscape_stage.input_digests(),
+        report.landscape_receipt().source_receipt_digests()
+    );
     let auditor_stage = report
         .certificate()
         .stage_certificates()
@@ -679,6 +683,10 @@ fn run_pipeline_uses_the_normal_amenable_artifact_path() -> Result<()> {
     assert_eq!(
         auditor_stage.input_ids(),
         &vec![report.landscape_receipt().receipt_id().to_owned()]
+    );
+    assert_eq!(
+        auditor_stage.input_digests(),
+        &vec![report.landscape_receipt().receipt_digest().to_owned()]
     );
     assert!(
         report
@@ -776,6 +784,10 @@ fn run_pipeline_uses_the_normal_amenable_artifact_path() -> Result<()> {
     assert_eq!(
         ui_stage.input_ids(),
         &vec![report.view_model_receipt().receipt_id().to_owned()]
+    );
+    assert_eq!(
+        ui_stage.input_digests(),
+        &vec![report.view_model_receipt().receipt_digest().to_owned()]
     );
     assert_eq!(ui_stage.output_ids(), report.ui_ir_receipt().output_ids());
     assert!(
@@ -2119,6 +2131,9 @@ fn cli_can_emit_the_run_certificate_as_json() -> Result<()> {
                         && stage_certificate["ensures"]
                             .as_array()
                             .is_some_and(|guarantees| !guarantees.is_empty())
+                        && stage_certificate["input_digests"]
+                            .as_array()
+                            .is_some_and(|digests| digests.iter().all(is_hex_digest))
                         && stage_certificate["invariant_checks"]
                             .as_array()
                             .is_some_and(|checks| {

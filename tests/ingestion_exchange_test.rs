@@ -88,6 +88,10 @@ fn registry_ingestion_preserves_record_identity_and_unknown_fields() -> Result<(
     );
 
     let certificate = BelvedereStageCertificate::registry_ingestion(&receipt);
+    assert_eq!(
+        certificate.input_digests(),
+        &vec![receipt.digest().to_owned()]
+    );
     assert!(
         certificate
             .standards()
@@ -188,6 +192,10 @@ fn assessment_ingestion_preserves_current_and_legacy_shapes() -> Result<()> {
     );
 
     let certificate = BelvedereStageCertificate::assessment_ingestion(&receipt);
+    assert_eq!(
+        certificate.input_digests(),
+        &vec![receipt.digest().to_owned()]
+    );
     assert!(
         certificate
             .standards()

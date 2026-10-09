@@ -77,6 +77,7 @@ pub struct BelvedereStageCertificate {
     requires: Vec<String>,
     ensures: Vec<String>,
     input_ids: Vec<String>,
+    input_digests: Vec<String>,
     output_ids: Vec<String>,
     counts: BTreeMap<String, usize>,
     invariant_checks: Vec<BelvedereInvariantCheck>,
@@ -92,6 +93,7 @@ struct StageCertificateEvidence {
     requires: Vec<String>,
     ensures: Vec<String>,
     input_ids: Vec<String>,
+    input_digests: Vec<String>,
     output_ids: Vec<String>,
     counts: BTreeMap<String, usize>,
     additional_invariant_checks: Vec<BelvedereInvariantCheck>,
@@ -155,6 +157,7 @@ impl BelvedereStageCertificate {
             requires: contract_requirements::<LandscapeModelingContract>(),
             ensures: contract_guarantees::<LandscapeModelingContract>(),
             input_ids: receipt.source_receipt_ids().clone(),
+            input_digests: receipt.source_receipt_digests().clone(),
             output_ids: receipt.landscape_item_ids().clone(),
             counts,
             additional_invariant_checks,
@@ -196,6 +199,7 @@ impl BelvedereStageCertificate {
             requires: contract_requirements::<LandscapeDiffContract>(),
             ensures: contract_guarantees::<LandscapeDiffContract>(),
             input_ids: receipt.source_record_ids().clone(),
+            input_digests: Vec::new(),
             output_ids: receipt.diff_item_ids().clone(),
             counts,
             additional_invariant_checks,
@@ -272,6 +276,7 @@ impl BelvedereStageCertificate {
             requires: contract_requirements::<AuditorNavigationContract>(),
             ensures: contract_guarantees::<AuditorNavigationContract>(),
             input_ids: vec![receipt.source_landscape_receipt_id().to_owned()],
+            input_digests: vec![receipt.source_landscape_receipt_digest().to_owned()],
             output_ids: receipt.view_item_ids().clone(),
             counts,
             additional_invariant_checks,
@@ -323,6 +328,7 @@ impl BelvedereStageCertificate {
             requires: contract_requirements::<ElicitUiProjectionContract>(),
             ensures: contract_guarantees::<ElicitUiProjectionContract>(),
             input_ids: vec![receipt.source_view_model_receipt_id().to_owned()],
+            input_digests: vec![receipt.source_view_model_receipt_digest().to_owned()],
             output_ids: receipt.output_ids().clone(),
             counts,
             additional_invariant_checks,
@@ -367,6 +373,7 @@ impl BelvedereStageCertificate {
                 receipt.path().display(),
                 receipt.digest()
             )],
+            input_digests: vec![receipt.digest().to_owned()],
             output_ids: receipt.source_record_ids().clone(),
             counts,
             additional_invariant_checks,
@@ -396,6 +403,7 @@ impl BelvedereStageCertificate {
             requires: evidence.requires,
             ensures: evidence.ensures,
             input_ids: evidence.input_ids,
+            input_digests: evidence.input_digests,
             output_ids: evidence.output_ids,
             counts: evidence.counts,
             invariant_checks,
@@ -422,6 +430,7 @@ fn stage_digest(
     update_fields(&mut hasher, &evidence.requires);
     update_fields(&mut hasher, &evidence.ensures);
     update_fields(&mut hasher, &evidence.input_ids);
+    update_fields(&mut hasher, &evidence.input_digests);
     update_fields(&mut hasher, &evidence.output_ids);
     for (name, count) in &evidence.counts {
         update_field(&mut hasher, name);

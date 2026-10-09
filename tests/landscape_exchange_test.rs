@@ -150,6 +150,10 @@ fn landscape_modeling_maps_decoded_records_into_a_review_graph() -> Result<()> {
             .all(|landscape_item_id| certificate.output_ids().contains(landscape_item_id))
     );
     assert_eq!(certificate.input_ids(), receipt.source_receipt_ids());
+    assert_eq!(
+        certificate.input_digests(),
+        receipt.source_receipt_digests()
+    );
 
     let decoded_claim = landscape
         .claims()
