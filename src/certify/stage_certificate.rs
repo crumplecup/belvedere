@@ -15,7 +15,7 @@ use crate::{
         hex_digest, ingestion_record_invariant_checks, landscape_model_invariant_checks,
         stage_invariant_checks, ui_ir_output_invariant_checks, ui_ir_trace_invariant_checks,
         update_field, update_fields, view_model_item_invariant_checks,
-        view_model_trace_invariant_checks,
+        view_model_source_navigation_invariant_checks, view_model_trace_invariant_checks,
     },
     contracts::{
         AssessmentStreamIngestionContract, AuditorNavigationContract, BelvedereContract,
@@ -264,6 +264,7 @@ impl BelvedereStageCertificate {
         counts.extend(receipt.facet_group_counts().clone());
         counts.extend(receipt.source_artifact_counts().clone());
         counts.extend(receipt.source_kind_counts().clone());
+        counts.extend(receipt.source_locator_counts().clone());
         counts.extend(receipt.proof_chain_topology_counts().clone());
         counts.extend(receipt.provenance_root_kind_counts().clone());
         counts.extend(receipt.review_workflow_counts().clone());
@@ -278,6 +279,10 @@ impl BelvedereStageCertificate {
             &counts,
             receipt.item_kind_counts(),
             receipt.view_item_ids(),
+        ));
+        additional_invariant_checks.extend(view_model_source_navigation_invariant_checks(
+            receipt.source_locator_counts(),
+            receipt.source_record_ids(),
         ));
         Self::new(StageCertificateEvidence {
             stage: BelvederePipelineStage::AuditorNavigation,

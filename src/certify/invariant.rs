@@ -15,7 +15,7 @@ mod ui_ir;
 pub(crate) use diff::{diff_item_invariant_checks, diff_trace_invariant_checks};
 pub(crate) use model::{
     landscape_model_invariant_checks, view_model_item_invariant_checks,
-    view_model_trace_invariant_checks,
+    view_model_source_navigation_invariant_checks, view_model_trace_invariant_checks,
 };
 pub(crate) use run::{
     RunInputArtifactEvidence, RunInvariantEvidence, RunStageCertificateEvidence,

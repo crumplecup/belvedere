@@ -119,6 +119,22 @@ fn view_model_projection_builds_auditor_navigation_evidence() -> Result<()> {
             .get("source_kind_witness_export"),
         Some(&1)
     );
+    assert_eq!(
+        receipt.source_locator_counts().get("source_locator_items"),
+        Some(&7)
+    );
+    assert_eq!(
+        receipt
+            .source_locator_counts()
+            .get("source_locator_registry_dump"),
+        Some(&5)
+    );
+    assert_eq!(
+        receipt
+            .source_locator_counts()
+            .get("source_locator_proof_assessments"),
+        Some(&2)
+    );
     let total_transitive_claims: usize = model
         .proof_chains()
         .iter()
@@ -730,6 +746,10 @@ fn view_model_projection_builds_source_navigation_items() -> Result<()> {
         proof_record.target(),
         "belvedere::ingestion::DecodedRegistrySnapshot@kani"
     );
+    assert_eq!(
+        proof_record.source_locator(),
+        "registry_dump.proof_records[evidence=belvedere::ingestion::DecodedRegistrySnapshot, verifier=kani]"
+    );
     assert_eq!(proof_record.trace().source_record_ids().len(), 1);
     assert!(
         proof_record.trace().source_record_ids().contains(
@@ -747,6 +767,10 @@ fn view_model_projection_builds_source_navigation_items() -> Result<()> {
         ArtifactKind::ProofAssessments
     );
     assert_eq!(assessment_source.source_kind(), "assessment");
+    assert_eq!(
+        assessment_source.source_locator(),
+        "assessment_jsonl.assessment_id=assess-belvedere-ingestion-1"
+    );
 
     let kani_proof = model
         .source_navigation()
@@ -760,6 +784,10 @@ fn view_model_projection_builds_source_navigation_items() -> Result<()> {
     assert_eq!(
         kani_proof.target(),
         "belvedere::ingestion::record_identity_is_preserved"
+    );
+    assert_eq!(
+        kani_proof.source_locator(),
+        "registry_dump.kani_proofs[id=belvedere::ingestion::record_identity_is_preserved]"
     );
     Ok(())
 }

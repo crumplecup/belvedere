@@ -64,6 +64,7 @@ pub struct SourceNavigationItem {
     artifact_kind: ArtifactKind,
     source_kind: String,
     target: String,
+    source_locator: String,
     label: String,
     #[getter(skip)]
     trace: TraceRef,

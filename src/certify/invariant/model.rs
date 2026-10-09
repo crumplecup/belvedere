@@ -109,6 +109,25 @@ pub(crate) fn view_model_item_invariant_checks(
     ]
 }
 
+#[instrument(level = "trace", skip(source_locator_counts, source_record_ids))]
+pub(crate) fn view_model_source_navigation_invariant_checks(
+    source_locator_counts: &BTreeMap<String, usize>,
+    source_record_ids: &[String],
+) -> Vec<BelvedereInvariantCheck> {
+    let located_sources = count_value(source_locator_counts, "source_locator_items");
+    let registry_sources = count_value(source_locator_counts, "source_locator_registry_dump");
+    let assessment_sources = count_value(source_locator_counts, "source_locator_proof_assessments");
+    let input_source_records = source_record_ids.len();
+    vec![BelvedereInvariantCheck::new(
+        "view_model_source_locators_complete".to_owned(),
+        located_sources == input_source_records
+            && registry_sources + assessment_sources == located_sources,
+        format!(
+            "{located_sources} locator hints recorded for {input_source_records} source records"
+        ),
+    )]
+}
+
 #[instrument(level = "trace", skip(counts, item_kind_counts, landscape_item_ids))]
 pub(crate) fn landscape_model_invariant_checks(
     counts: &BTreeMap<String, usize>,

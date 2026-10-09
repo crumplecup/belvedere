@@ -681,6 +681,10 @@ fn run_pipeline_uses_the_normal_amenable_artifact_path() -> Result<()> {
     );
     assert_eq!(auditor_stage.counts().get("source_landscapes"), Some(&1));
     assert_eq!(
+        auditor_stage.counts().get("source_locator_items"),
+        Some(&report.view_model_receipt().source_record_ids().len())
+    );
+    assert_eq!(
         auditor_stage.input_ids(),
         &vec![report.landscape_receipt().receipt_id().to_owned()]
     );
@@ -715,6 +719,11 @@ fn run_pipeline_uses_the_normal_amenable_artifact_path() -> Result<()> {
     assert!(
         auditor_stage.invariant_checks().iter().any(|check| {
             check.name() == "view_model_input_sources_reachable" && check.passed()
+        })
+    );
+    assert!(
+        auditor_stage.invariant_checks().iter().any(|check| {
+            check.name() == "view_model_source_locators_complete" && check.passed()
         })
     );
     let ui_stage = report
@@ -1434,6 +1443,18 @@ fn assert_auditor_navigation_receipt(receipt: &Value) {
         Some(2)
     );
     assert_eq!(
+        receipt["source_locator_counts"]["source_locator_items"].as_u64(),
+        Some(7)
+    );
+    assert_eq!(
+        receipt["source_locator_counts"]["source_locator_registry_dump"].as_u64(),
+        Some(5)
+    );
+    assert_eq!(
+        receipt["source_locator_counts"]["source_locator_proof_assessments"].as_u64(),
+        Some(2)
+    );
+    assert_eq!(
         receipt["trace_kind_counts"]["view_model_trace_kind_backend_coverage_item"].as_u64(),
         Some(12)
     );
@@ -1733,6 +1754,16 @@ fn assert_auditor_navigation_model(model: &Value) {
         Some(2)
     );
     assert_eq!(model["source_record_ids"].as_array().map(Vec::len), Some(7));
+    assert!(model["source_navigation"].as_array().is_some_and(|items| {
+        items.iter().any(|item| {
+            item["source_record_id"].as_str()
+                == Some("proof_record:belvedere::ingestion::DecodedRegistrySnapshot@kani")
+                && item["source_locator"].as_str()
+                    == Some(
+                        "registry_dump.proof_records[evidence=belvedere::ingestion::DecodedRegistrySnapshot, verifier=kani]",
+                    )
+        })
+    }));
     assert!(model["claim_explorer"].as_array().is_some_and(|items| {
         items.iter().any(|item| {
             item["claim_id"].as_str() == Some("belvedere::ingestion::DecodedRegistrySnapshot")

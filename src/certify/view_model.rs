@@ -26,6 +26,7 @@ pub struct ViewModelReceipt {
     facet_group_counts: BTreeMap<String, usize>,
     source_artifact_counts: BTreeMap<String, usize>,
     source_kind_counts: BTreeMap<String, usize>,
+    source_locator_counts: BTreeMap<String, usize>,
     proof_chain_topology_counts: BTreeMap<String, usize>,
     provenance_root_kind_counts: BTreeMap<String, usize>,
     review_workflow_counts: BTreeMap<String, usize>,
@@ -64,6 +65,8 @@ pub(crate) struct ViewModelReceiptDigestEvidence<'evidence> {
     source_artifact_counts: &'evidence BTreeMap<String, usize>,
     /// Counts grouped by source kind.
     source_kind_counts: &'evidence BTreeMap<String, usize>,
+    /// Counts grouped by source locator availability.
+    source_locator_counts: &'evidence BTreeMap<String, usize>,
     /// Counts grouped by proof-chain topology.
     proof_chain_topology_counts: &'evidence BTreeMap<String, usize>,
     /// Counts grouped by provenance root kind.
@@ -239,6 +242,7 @@ fn view_model_receipt_digest(evidence: ViewModelReceiptDigestEvidence<'_>) -> St
     update_counts(&mut hasher, evidence.facet_group_counts);
     update_counts(&mut hasher, evidence.source_artifact_counts);
     update_counts(&mut hasher, evidence.source_kind_counts);
+    update_counts(&mut hasher, evidence.source_locator_counts);
     update_counts(&mut hasher, evidence.proof_chain_topology_counts);
     update_counts(&mut hasher, evidence.provenance_root_kind_counts);
     update_counts(&mut hasher, evidence.review_workflow_counts);

@@ -10,11 +10,11 @@ use crate::{
         ViewModelReceiptDigestEvidenceBuilder, view_model_receipt_identity,
     },
     contracts::{
-        AssessmentQueueItem, AssessmentRecencySummary, AssessmentWorkItem, AuditorFilterFacet,
-        AuditorNavigationContract, AuditorNavigationModel, AuditorNavigationModelBuilder,
-        BelvedereContract, GapItem, LandscapeAssessment, OverviewView, ProofChainItem,
-        ProvenanceRootItem, ProvenanceRootItemBuilder, SourceNavigationItem, TraceRef,
-        ViewModelInput,
+        ArtifactKind, AssessmentQueueItem, AssessmentRecencySummary, AssessmentWorkItem,
+        AuditorFilterFacet, AuditorNavigationContract, AuditorNavigationModel,
+        AuditorNavigationModelBuilder, BelvedereContract, GapItem, LandscapeAssessment,
+        OverviewView, ProofChainItem, ProvenanceRootItem, ProvenanceRootItemBuilder,
+        SourceNavigationItem, TraceRef, ViewModelInput,
     },
     error::{BelvedereConstructionError, BelvedereError},
     exchanges::BelvedereExchange,
@@ -111,35 +111,14 @@ impl BelvedereExchange<AuditorNavigationContract> for AuditorNavigationProjectio
         let witness_surface =
             project_witness_surface(landscape.claims().values(), &source_record_ids)?;
 
-        let provenance_roots: Vec<ProvenanceRootItem> = landscape
-            .root_claim_ids()
-            .into_iter()
-            .filter_map(|claim_id| landscape.claims().get(claim_id))
-            .map(|claim| {
-                let trace = trace(claim.id(), &source_record_ids);
-                let gap_summaries = provenance_gap_summaries(claim.id(), &gaps);
-                ProvenanceRootItemBuilder::default()
-                    .claim_id(claim.id())
-                    .root_kind(provenance_root_kind(claim))
-                    .verifiers(claim.proofs().iter().cloned().collect::<Vec<_>>())
-                    .assessment_ids(claim.assessment_ids().to_vec())
-                    .gap_summaries(gap_summaries.clone())
-                    .next_action(provenance_next_action(claim.id(), &gaps))
-                    .verifier_count(claim.proofs().len())
-                    .assessment_count(claim.assessment_ids().len())
-                    .gap_count(gap_summaries.len())
-                    .source_record_count(trace.source_record_ids().len())
-                    .trace(trace)
-                    .build()
-                    .map_err(|error| BelvedereConstructionError::new("ProvenanceRootItem", error))
-            })
-            .collect::<Result<_, _>>()?;
+        let provenance_roots = project_provenance_roots(landscape, &gaps, &source_record_ids)?;
 
         let source_navigation = project_source_navigation(&source_record_ids)?;
         let receipt_lane_counts = lane_counts(&assessment_queue, &assessment_work, &gaps);
         let receipt_facet_group_counts = facet_group_counts(&filter_facets);
         let receipt_source_artifact_counts = source_artifact_counts(&source_navigation);
         let receipt_source_kind_counts = source_kind_counts(&source_navigation);
+        let receipt_source_locator_counts = source_locator_counts(&source_navigation);
         let receipt_proof_chain_topology_counts = proof_chain_topology_counts(&proof_chains);
         let receipt_provenance_root_kind_counts = provenance_root_kind_counts(&provenance_roots);
         let receipt_review_workflow_counts =
@@ -226,6 +205,7 @@ impl BelvedereExchange<AuditorNavigationContract> for AuditorNavigationProjectio
             .facet_group_counts(&receipt_facet_group_counts)
             .source_artifact_counts(&receipt_source_artifact_counts)
             .source_kind_counts(&receipt_source_kind_counts)
+            .source_locator_counts(&receipt_source_locator_counts)
             .proof_chain_topology_counts(&receipt_proof_chain_topology_counts)
             .provenance_root_kind_counts(&receipt_provenance_root_kind_counts)
             .review_workflow_counts(&receipt_review_workflow_counts)
@@ -252,6 +232,7 @@ impl BelvedereExchange<AuditorNavigationContract> for AuditorNavigationProjectio
             .facet_group_counts(receipt_facet_group_counts)
             .source_artifact_counts(receipt_source_artifact_counts)
             .source_kind_counts(receipt_source_kind_counts)
+            .source_locator_counts(receipt_source_locator_counts)
             .proof_chain_topology_counts(receipt_proof_chain_topology_counts)
             .provenance_root_kind_counts(receipt_provenance_root_kind_counts)
             .review_workflow_counts(receipt_review_workflow_counts)
@@ -283,6 +264,37 @@ fn assessment_recency_summary(assessments: &[LandscapeAssessment]) -> Assessment
             .filter(|assessment| !assessment.current())
             .count(),
     )
+}
+
+#[instrument(level = "debug", skip(landscape, gaps, source_record_ids))]
+fn project_provenance_roots(
+    landscape: &crate::contracts::LandscapeGraph,
+    gaps: &[GapItem],
+    source_record_ids: &[String],
+) -> Result<Vec<ProvenanceRootItem>, BelvedereConstructionError> {
+    landscape
+        .root_claim_ids()
+        .into_iter()
+        .filter_map(|claim_id| landscape.claims().get(claim_id))
+        .map(|claim| {
+            let trace = trace(claim.id(), source_record_ids);
+            let gap_summaries = provenance_gap_summaries(claim.id(), gaps);
+            ProvenanceRootItemBuilder::default()
+                .claim_id(claim.id())
+                .root_kind(provenance_root_kind(claim))
+                .verifiers(claim.proofs().iter().cloned().collect::<Vec<_>>())
+                .assessment_ids(claim.assessment_ids().to_vec())
+                .gap_summaries(gap_summaries.clone())
+                .next_action(provenance_next_action(claim.id(), gaps))
+                .verifier_count(claim.proofs().len())
+                .assessment_count(claim.assessment_ids().len())
+                .gap_count(gap_summaries.len())
+                .source_record_count(trace.source_record_ids().len())
+                .trace(trace)
+                .build()
+                .map_err(|error| BelvedereConstructionError::new("ProvenanceRootItem", error))
+        })
+        .collect()
 }
 
 #[instrument(level = "debug", skip(assessment_queue, assessment_work, gaps))]
@@ -340,6 +352,32 @@ fn source_kind_counts(source_navigation: &[SourceNavigationItem]) -> BTreeMap<St
             .or_default() += 1;
     }
     counts
+}
+
+#[instrument(level = "debug", skip(source_navigation))]
+fn source_locator_counts(source_navigation: &[SourceNavigationItem]) -> BTreeMap<String, usize> {
+    let located = source_navigation
+        .iter()
+        .filter(|item| !item.source_locator().is_empty())
+        .count();
+    let registry = source_navigation
+        .iter()
+        .filter(|item| {
+            item.artifact_kind() == ArtifactKind::RegistryDump && !item.source_locator().is_empty()
+        })
+        .count();
+    let assessments = source_navigation
+        .iter()
+        .filter(|item| {
+            item.artifact_kind() == ArtifactKind::ProofAssessments
+                && !item.source_locator().is_empty()
+        })
+        .count();
+    BTreeMap::from([
+        ("source_locator_items".to_owned(), located),
+        ("source_locator_registry_dump".to_owned(), registry),
+        ("source_locator_proof_assessments".to_owned(), assessments),
+    ])
 }
 
 #[instrument(level = "debug", skip(families))]
