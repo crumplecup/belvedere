@@ -69,6 +69,10 @@ pub(super) fn build_receipt(
         .iter()
         .map(|widget| widget.trace_ref_id().to_owned())
         .collect::<Vec<_>>();
+    let receipt_trace_widget_digests = trace_widgets
+        .iter()
+        .map(|widget| widget.trace_widget_digest().to_owned())
+        .collect::<Vec<_>>();
     let receipt_role_counts = role_counts(trace_widgets);
     let receipt_section_widget_counts = section_widget_counts(sections);
     let receipt_section_population_counts = section_population_counts(sections);
@@ -92,6 +96,7 @@ pub(super) fn build_receipt(
         .section_root_widget_ids(&receipt_section_root_widget_ids)
         .trace_widget_ids(&receipt_trace_widget_ids)
         .trace_widget_ref_ids(&receipt_trace_widget_ref_ids)
+        .trace_widget_digests(&receipt_trace_widget_digests)
         .output_ids(&receipt_output_ids)
         .output_kind_counts(&receipt_output_kind_counts)
         .role_counts(&receipt_role_counts)
@@ -119,6 +124,7 @@ pub(super) fn build_receipt(
         .section_root_widget_ids(receipt_section_root_widget_ids)
         .trace_widget_ids(receipt_trace_widget_ids)
         .trace_widget_ref_ids(receipt_trace_widget_ref_ids)
+        .trace_widget_digests(receipt_trace_widget_digests)
         .output_ids(receipt_output_ids)
         .output_kind_counts(receipt_output_kind_counts)
         .role_counts(receipt_role_counts)

@@ -94,6 +94,18 @@ fn ui_ir_projection_mints_elicit_ui_standards_and_tree_proofs() -> Result<()> {
         .map(|widget| widget.trace_ref_id().to_owned())
         .collect::<Vec<_>>();
     assert_eq!(receipt.trace_widget_ref_ids(), &trace_widget_ref_ids);
+    let trace_widget_digests = projection
+        .trace_widgets()
+        .iter()
+        .map(|widget| widget.trace_widget_digest().to_owned())
+        .collect::<Vec<_>>();
+    assert_eq!(receipt.trace_widget_digests(), &trace_widget_digests);
+    assert!(
+        projection
+            .trace_widgets()
+            .iter()
+            .all(|widget| is_hex_digest(widget.trace_widget_digest()))
+    );
     let mut unique_trace_widget_ref_ids = trace_widget_ref_ids.clone();
     unique_trace_widget_ref_ids.sort();
     unique_trace_widget_ref_ids.dedup();
@@ -432,6 +444,10 @@ fn trace_source_kind_counts(
             .or_default() += 1;
     }
     counts
+}
+
+fn is_hex_digest(value: &str) -> bool {
+    value.len() == 64 && value.bytes().all(|byte| byte.is_ascii_hexdigit())
 }
 
 #[test]

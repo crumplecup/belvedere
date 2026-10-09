@@ -4,17 +4,22 @@ use elicit_ui::{
     AccessKitUiBackend, ContainerId, ContrastDescriptor, LabelDescriptor, SrgbColor,
     UiLayoutManager, WcagContrastFactory, WcagLabelFactory, WidgetId,
 };
+use sha2::{Digest as _, Sha256};
 use tracing::instrument;
 
-use crate::contracts::{
-    AuditorFilterFacet, BackendCoverageItem, ClaimDetailItem, ClaimExplorerItem, GapItem,
-    ProofChainItem, ProvenanceRootItem, ReviewWorkflowItem, SourceNavigationItem, TraceRef,
-    TraceWidgetRef, TraceWidgetRefBuilder, UiIrSection, WitnessSurfaceItem,
+use crate::{
+    certify::{hex_digest, update_field, update_fields},
+    contracts::{
+        AuditorFilterFacet, BackendCoverageItem, ClaimDetailItem, ClaimExplorerItem, GapItem,
+        ProofChainItem, ProvenanceRootItem, ReviewWorkflowItem, SourceNavigationItem, TraceRef,
+        TraceWidgetRef, TraceWidgetRefBuilder, UiIrSection, WitnessSurfaceItem,
+    },
 };
 
 use super::{UiIrError, accessibility::establish_interactive_proofs};
 
 const ROOT_CONTAINER: ContainerId = ContainerId(0);
+const TRACE_WIDGET_SCHEMA_ID: &str = "belvedere.ui_ir.trace_widget.v1";
 
 #[instrument(level = "debug", skip(backend, item, trace_widgets))]
 pub(super) fn filter_widget(
@@ -377,18 +382,54 @@ pub(super) fn labeled_widget(
         .map_err(UiIrError::elicit_ui)?;
     let claim_id = trace.claim_id().to_owned();
     let trace_ref_id = trace_widget_ref_id(section_id, role, &claim_id, trace_widgets);
+    let source_record_ids = trace.source_record_ids().to_vec();
+    let trace_widget_digest = trace_widget_digest(
+        &trace_ref_id,
+        element.id.0,
+        section_id,
+        role,
+        &label,
+        &claim_id,
+        &source_record_ids,
+    );
     let trace_widget = TraceWidgetRefBuilder::default()
         .trace_ref_id(trace_ref_id)
+        .trace_widget_digest(trace_widget_digest)
         .widget_id(element.id.0)
         .section_id(section_id)
         .role(role)
         .label(label)
         .claim_id(claim_id)
-        .source_record_ids(trace.source_record_ids().to_vec())
+        .source_record_ids(source_record_ids)
         .build()
         .map_err(|error| UiIrError::construction("TraceWidgetRef", error))?;
     trace_widgets.push(trace_widget);
     Ok(element.id)
+}
+
+#[instrument(
+    level = "trace",
+    skip(trace_ref_id, section_id, role, label, claim_id, source_record_ids)
+)]
+fn trace_widget_digest(
+    trace_ref_id: &str,
+    widget_id: u64,
+    section_id: &str,
+    role: &str,
+    label: &str,
+    claim_id: &str,
+    source_record_ids: &[String],
+) -> String {
+    let mut hasher = Sha256::new();
+    update_field(&mut hasher, TRACE_WIDGET_SCHEMA_ID);
+    update_field(&mut hasher, trace_ref_id);
+    update_field(&mut hasher, &widget_id.to_string());
+    update_field(&mut hasher, section_id);
+    update_field(&mut hasher, role);
+    update_field(&mut hasher, label);
+    update_field(&mut hasher, claim_id);
+    update_fields(&mut hasher, source_record_ids);
+    hex_digest(hasher)
 }
 
 #[instrument(level = "trace", skip(trace_widgets))]

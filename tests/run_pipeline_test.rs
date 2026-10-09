@@ -1574,6 +1574,11 @@ fn assert_ui_ir_receipt(receipt: &Value) {
         Some(60)
     );
     assert!(
+        receipt["trace_widget_digests"]
+            .as_array()
+            .is_some_and(|digests| { digests.len() == 60 && digests.iter().all(is_hex_digest) })
+    );
+    assert!(
         receipt["section_ids"]
             .as_array()
             .is_some_and(|section_ids| {
@@ -1720,6 +1725,13 @@ fn assert_ui_ir_projection(projection: &Value) {
         projection["trace_widgets"].as_array().map(Vec::len),
         Some(60)
     );
+    assert!(
+        projection["trace_widgets"]
+            .as_array()
+            .is_some_and(|widgets| widgets
+                .iter()
+                .all(|widget| is_hex_digest(&widget["trace_widget_digest"])))
+    );
     assert_eq!(
         projection["viewport_verifications"]
             .as_array()
@@ -1761,6 +1773,13 @@ fn assert_previous_ui_ir_projection(projection: &Value) {
     assert_eq!(
         projection["trace_widgets"].as_array().map(Vec::len),
         Some(44)
+    );
+    assert!(
+        projection["trace_widgets"]
+            .as_array()
+            .is_some_and(|widgets| widgets
+                .iter()
+                .all(|widget| is_hex_digest(&widget["trace_widget_digest"])))
     );
     assert_eq!(
         projection["viewport_verifications"]

@@ -142,6 +142,7 @@ impl UiViewportVerification {
 #[builder(vis = "pub(crate)", setter(into))]
 pub struct TraceWidgetRef {
     trace_ref_id: String,
+    trace_widget_digest: String,
     #[getter(skip)]
     widget_id: u64,
     section_id: String,

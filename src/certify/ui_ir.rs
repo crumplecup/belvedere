@@ -28,6 +28,7 @@ pub struct UiIrReceipt {
     section_root_widget_ids: Vec<u64>,
     trace_widget_ids: Vec<u64>,
     trace_widget_ref_ids: Vec<String>,
+    trace_widget_digests: Vec<String>,
     output_ids: Vec<String>,
     output_kind_counts: BTreeMap<String, usize>,
     role_counts: BTreeMap<String, usize>,
@@ -71,6 +72,8 @@ pub(crate) struct UiIrReceiptDigestEvidence<'evidence> {
     trace_widget_ids: &'evidence [u64],
     /// Stable trace widget reference IDs emitted by the projection.
     trace_widget_ref_ids: &'evidence [String],
+    /// Stable trace widget digests emitted by the projection.
+    trace_widget_digests: &'evidence [String],
     /// Stable output IDs emitted by the projection.
     output_ids: &'evidence [String],
     /// Counts grouped by UI IR output kind.
@@ -173,6 +176,7 @@ fn ui_ir_receipt_digest(evidence: UiIrReceiptDigestEvidence<'_>) -> String {
     update_u64_fields(&mut hasher, evidence.section_root_widget_ids);
     update_u64_fields(&mut hasher, evidence.trace_widget_ids);
     update_fields(&mut hasher, evidence.trace_widget_ref_ids);
+    update_fields(&mut hasher, evidence.trace_widget_digests);
     update_fields(&mut hasher, evidence.output_ids);
     update_counts(&mut hasher, evidence.output_kind_counts);
     update_counts(&mut hasher, evidence.role_counts);
