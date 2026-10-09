@@ -21,7 +21,10 @@ pub(crate) use run::{
     RunInputArtifactEvidence, RunInvariantEvidence, RunStageCertificateEvidence,
     run_invariant_checks,
 };
-pub(crate) use ui_ir::{ui_ir_output_invariant_checks, ui_ir_trace_invariant_checks};
+pub(crate) use ui_ir::{
+    ui_ir_output_invariant_checks, ui_ir_source_locator_invariant_checks,
+    ui_ir_trace_invariant_checks,
+};
 
 /// Named invariant result included in a stage certificate.
 #[derive(Debug, Clone, PartialEq, Eq, Getters, Serialize, new)]

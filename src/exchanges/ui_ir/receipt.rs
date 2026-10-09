@@ -83,6 +83,7 @@ pub(super) fn build_receipt(
     let receipt_viewport_verification_counts = viewport_verification_counts(viewport_verifications);
     let receipt_trace_source_counts = trace_source_counts(trace_widgets);
     let receipt_trace_source_kind_counts = trace_source_kind_counts(trace_widgets);
+    let receipt_source_locator_counts = source_locator_counts(model, trace_widgets);
     let receipt_minted_prop_counts = minted_prop_counts(minted_standards);
     let receipt_proof_token_counts = proof_token_counts(viewport_verifications);
     let receipt_minted_standards = minted_standards
@@ -110,6 +111,7 @@ pub(super) fn build_receipt(
         .viewport_verification_counts(&receipt_viewport_verification_counts)
         .trace_source_counts(&receipt_trace_source_counts)
         .trace_source_kind_counts(&receipt_trace_source_kind_counts)
+        .source_locator_counts(&receipt_source_locator_counts)
         .minted_prop_counts(&receipt_minted_prop_counts)
         .proof_token_counts(&receipt_proof_token_counts)
         .minted_standards(&receipt_minted_standards)
@@ -139,6 +141,7 @@ pub(super) fn build_receipt(
         .viewport_verification_counts(receipt_viewport_verification_counts)
         .trace_source_counts(receipt_trace_source_counts)
         .trace_source_kind_counts(receipt_trace_source_kind_counts)
+        .source_locator_counts(receipt_source_locator_counts)
         .minted_prop_counts(receipt_minted_prop_counts)
         .proof_token_counts(receipt_proof_token_counts)
         .minted_standards(receipt_minted_standards)
@@ -417,4 +420,41 @@ fn trace_source_kind_counts(trace_widgets: &[TraceWidgetRef]) -> BTreeMap<String
             .or_default() += 1;
     }
     counts
+}
+
+#[instrument(level = "debug", skip(model, trace_widgets))]
+fn source_locator_counts(
+    model: &AuditorNavigationModel,
+    trace_widgets: &[TraceWidgetRef],
+) -> BTreeMap<String, usize> {
+    let source_navigation_items = model.source_navigation().len();
+    let located_items = model
+        .source_navigation()
+        .iter()
+        .filter(|item| !item.source_locator().is_empty())
+        .count();
+    let located_source_record_ids = model
+        .source_navigation()
+        .iter()
+        .filter(|item| !item.source_locator().is_empty())
+        .map(|item| item.source_record_id().to_owned())
+        .collect::<BTreeSet<_>>();
+    let located_widgets = trace_widgets
+        .iter()
+        .filter(|widget| {
+            widget.section_id() == crate::contracts::UI_IR_SECTION_SOURCE_NAVIGATION
+                && widget
+                    .source_record_ids()
+                    .iter()
+                    .any(|source_record_id| located_source_record_ids.contains(source_record_id))
+        })
+        .count();
+    BTreeMap::from([
+        (
+            "ui_ir_source_navigation_items".to_owned(),
+            source_navigation_items,
+        ),
+        ("ui_ir_source_locator_items".to_owned(), located_items),
+        ("ui_ir_source_locator_widgets".to_owned(), located_widgets),
+    ])
 }

@@ -421,6 +421,24 @@ fn ui_ir_projection_mints_elicit_ui_standards_and_tree_proofs() -> Result<()> {
     );
     assert_eq!(
         receipt
+            .source_locator_counts()
+            .get("ui_ir_source_navigation_items"),
+        Some(&7)
+    );
+    assert_eq!(
+        receipt
+            .source_locator_counts()
+            .get("ui_ir_source_locator_items"),
+        Some(&7)
+    );
+    assert_eq!(
+        receipt
+            .source_locator_counts()
+            .get("ui_ir_source_locator_widgets"),
+        Some(&7)
+    );
+    assert_eq!(
+        receipt
             .section_trace_counts()
             .get("ui_ir_section_trace_source_links_total"),
         receipt.trace_source_counts().get("trace_source_links")
@@ -819,13 +837,13 @@ fn ui_ir_projection_preserves_trace_widgets_for_auditor_deep_dives() -> Result<(
         .iter()
         .find(|widget| {
             widget.label()
-                == "Kani proof belvedere::ingestion::record_identity_is_preserved opens registry_dump kani_proof target belvedere::ingestion::record_identity_is_preserved"
+                == "Kani proof belvedere::ingestion::record_identity_is_preserved opens registry_dump kani_proof target belvedere::ingestion::record_identity_is_preserved locator registry_dump.kani_proofs[id=belvedere::ingestion::record_identity_is_preserved]"
         })
         .ok_or_else(|| miette!("Kani proof source navigation should be projected"))?;
     assert_eq!(proof_source_widget.source_record_ids().len(), 1);
     assert!(projection.trace_widgets().iter().any(|widget| {
         widget.label()
-            == "Assessment assess-belvedere-ingestion-1 opens proof_assessments assessment target assess-belvedere-ingestion-1"
+            == "Assessment assess-belvedere-ingestion-1 opens proof_assessments assessment target assess-belvedere-ingestion-1 locator assessment_jsonl.assessment_id=assess-belvedere-ingestion-1"
     }));
     let preserved_trace_refs = projection
         .trace_widgets()

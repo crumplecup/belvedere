@@ -68,6 +68,24 @@ pub(crate) fn ui_ir_trace_invariant_checks(
     ]
 }
 
+#[instrument(level = "trace", skip(source_locator_counts))]
+pub(crate) fn ui_ir_source_locator_invariant_checks(
+    source_locator_counts: &BTreeMap<String, usize>,
+) -> Vec<BelvedereInvariantCheck> {
+    let navigation_items = count_value(source_locator_counts, "ui_ir_source_navigation_items");
+    let located_items = count_value(source_locator_counts, "ui_ir_source_locator_items");
+    let located_widgets = count_value(source_locator_counts, "ui_ir_source_locator_widgets");
+    vec![BelvedereInvariantCheck::new(
+        "ui_ir_source_locators_preserved".to_owned(),
+        navigation_items > 0
+            && located_items == navigation_items
+            && located_widgets == navigation_items,
+        format!(
+            "{located_widgets} locator widgets emitted for {located_items} located source navigation items"
+        ),
+    )]
+}
+
 #[instrument(level = "trace", skip(counts, output_kind_counts, output_ids))]
 pub(crate) fn ui_ir_output_invariant_checks(
     counts: &BTreeMap<String, usize>,

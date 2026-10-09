@@ -760,6 +760,18 @@ fn run_pipeline_uses_the_normal_amenable_artifact_path() -> Result<()> {
         Some(&7)
     );
     assert_eq!(
+        ui_stage.counts().get("ui_ir_source_navigation_items"),
+        Some(&7)
+    );
+    assert_eq!(
+        ui_stage.counts().get("ui_ir_source_locator_items"),
+        Some(&7)
+    );
+    assert_eq!(
+        ui_stage.counts().get("ui_ir_source_locator_widgets"),
+        Some(&7)
+    );
+    assert_eq!(
         ui_stage.counts().get("ui_ir_viewports_verified_total"),
         Some(&3)
     );
@@ -868,6 +880,12 @@ fn run_pipeline_uses_the_normal_amenable_artifact_path() -> Result<()> {
             .invariant_checks()
             .iter()
             .any(|check| { check.name() == "ui_ir_core_counts_match_outputs" && check.passed() })
+    );
+    assert!(
+        ui_stage
+            .invariant_checks()
+            .iter()
+            .any(|check| { check.name() == "ui_ir_source_locators_preserved" && check.passed() })
     );
     assert!(
         report
@@ -1617,6 +1635,18 @@ fn assert_ui_ir_receipt(receipt: &Value) {
         receipt["trace_source_counts"]["trace_unique_source_records"].as_u64(),
         Some(7)
     );
+    assert_eq!(
+        receipt["source_locator_counts"]["ui_ir_source_navigation_items"].as_u64(),
+        Some(7)
+    );
+    assert_eq!(
+        receipt["source_locator_counts"]["ui_ir_source_locator_items"].as_u64(),
+        Some(7)
+    );
+    assert_eq!(
+        receipt["source_locator_counts"]["ui_ir_source_locator_widgets"].as_u64(),
+        Some(7)
+    );
     assert_eq!(receipt["output_ids"].as_array().map(Vec::len), Some(153));
     assert_eq!(
         receipt["output_kind_counts"]["ui_ir_output_kind_minted_standard"].as_u64(),
@@ -1812,6 +1842,15 @@ fn assert_ui_ir_projection(projection: &Value) {
                 .iter()
                 .all(|widget| is_hex_digest(&widget["trace_widget_digest"])))
     );
+    assert!(projection["trace_widgets"].as_array().is_some_and(|widgets| {
+        widgets.iter().any(|widget| {
+            widget["label"].as_str().is_some_and(|label| {
+                label.contains(
+                    "locator registry_dump.proof_records[evidence=belvedere::ingestion::DecodedRegistrySnapshot, verifier=kani]",
+                )
+            })
+        })
+    }));
     assert_eq!(
         projection["viewport_verifications"]
             .as_array()

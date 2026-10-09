@@ -13,8 +13,9 @@ use crate::{
         BelvedereInvariantCheck, IngestionReceipt, LandscapeDiffReceipt, LandscapeReceipt,
         UiIrReceipt, ViewModelReceipt, diff_item_invariant_checks, diff_trace_invariant_checks,
         hex_digest, ingestion_record_invariant_checks, landscape_model_invariant_checks,
-        stage_invariant_checks, ui_ir_output_invariant_checks, ui_ir_trace_invariant_checks,
-        update_field, update_fields, view_model_item_invariant_checks,
+        stage_invariant_checks, ui_ir_output_invariant_checks,
+        ui_ir_source_locator_invariant_checks, ui_ir_trace_invariant_checks, update_field,
+        update_fields, view_model_item_invariant_checks,
         view_model_source_navigation_invariant_checks, view_model_trace_invariant_checks,
     },
     contracts::{
@@ -320,6 +321,7 @@ impl BelvedereStageCertificate {
         counts.extend(receipt.viewport_verification_counts().clone());
         counts.extend(receipt.trace_source_counts().clone());
         counts.extend(receipt.trace_source_kind_counts().clone());
+        counts.extend(receipt.source_locator_counts().clone());
         counts.extend(receipt.minted_prop_counts().clone());
         counts.extend(receipt.proof_token_counts().clone());
         counts.extend(receipt.output_kind_counts().clone());
@@ -335,6 +337,9 @@ impl BelvedereStageCertificate {
             &counts,
             receipt.output_kind_counts(),
             receipt.output_ids(),
+        ));
+        additional_invariant_checks.extend(ui_ir_source_locator_invariant_checks(
+            receipt.source_locator_counts(),
         ));
         Self::new(StageCertificateEvidence {
             stage: BelvederePipelineStage::UiIrProjection,

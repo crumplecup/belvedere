@@ -340,11 +340,12 @@ pub(super) fn source_navigation_widget(
         section_id,
         "link",
         format!(
-            "{} opens {} {} target {}",
+            "{} opens {} {} target {} locator {}",
             item.label(),
             item.artifact_kind(),
             item.source_kind(),
-            item.target()
+            item.target(),
+            item.source_locator()
         ),
         item.trace().clone(),
         trace_widgets,

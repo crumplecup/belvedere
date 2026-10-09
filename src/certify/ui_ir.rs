@@ -40,6 +40,7 @@ pub struct UiIrReceipt {
     viewport_verification_counts: BTreeMap<String, usize>,
     trace_source_counts: BTreeMap<String, usize>,
     trace_source_kind_counts: BTreeMap<String, usize>,
+    source_locator_counts: BTreeMap<String, usize>,
     minted_prop_counts: BTreeMap<String, usize>,
     proof_token_counts: BTreeMap<String, usize>,
     minted_standards: Vec<String>,
@@ -97,6 +98,8 @@ pub(crate) struct UiIrReceiptDigestEvidence<'evidence> {
     trace_source_counts: &'evidence BTreeMap<String, usize>,
     /// Counts grouped by source record kind in traces.
     trace_source_kind_counts: &'evidence BTreeMap<String, usize>,
+    /// Counts grouped by source navigation locator preservation.
+    source_locator_counts: &'evidence BTreeMap<String, usize>,
     /// Counts grouped by minted `elicit_ui` prop.
     minted_prop_counts: &'evidence BTreeMap<String, usize>,
     /// Counts grouped by UI proof token kind.
@@ -191,6 +194,7 @@ fn ui_ir_receipt_digest(evidence: UiIrReceiptDigestEvidence<'_>) -> String {
     update_counts(&mut hasher, evidence.viewport_verification_counts);
     update_counts(&mut hasher, evidence.trace_source_counts);
     update_counts(&mut hasher, evidence.trace_source_kind_counts);
+    update_counts(&mut hasher, evidence.source_locator_counts);
     update_counts(&mut hasher, evidence.minted_prop_counts);
     update_counts(&mut hasher, evidence.proof_token_counts);
     update_fields(&mut hasher, evidence.minted_standards);

@@ -101,7 +101,7 @@ impl BelvedereContract for ElicitUiProjectionContract {
             "assessment history widgets preserve proof-grouped reviewer flow, current review, superseded reviews, weak dimensions, comments, and trace IDs",
             "claim, assessment, witness, provenance, and gap widgets retain source trace references",
             "assessment widgets preserve review recency status in auditor-visible labels",
-            "source record navigation widgets retain ingested source record IDs and artifact families",
+            "source record navigation widgets retain ingested source record IDs, artifact families, and artifact-local locator hints",
             "projection receipts record emitted section-root widget IDs, trace widget IDs, section population counts, and per-section source trace coverage",
             "projection receipts record WCAG verification coverage across configured auditor viewports",
             "IrSourced is asserted at the projection boundary and WcagVerified is proven from the emitted tree",
