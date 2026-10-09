@@ -218,6 +218,16 @@ fn view_model_projection_builds_auditor_navigation_evidence() -> Result<()> {
         Some(&3)
     );
     assert_eq!(
+        receipt.review_workflow_task_digests().len(),
+        model.review_workflow().len()
+    );
+    assert!(receipt.review_workflow_task_digests().iter().all(|digest| {
+        digest.len() == 64
+            && digest
+                .chars()
+                .all(|character| character.is_ascii_hexdigit())
+    }));
+    assert_eq!(
         receipt
             .review_workflow_counts()
             .get("review_workflow_assessment_work_total"),
@@ -615,6 +625,18 @@ fn view_model_projection_builds_auditor_navigation_evidence() -> Result<()> {
     assert_eq!(
         decoded_task.source_count(),
         decoded_task.trace().source_record_ids().len()
+    );
+    assert_eq!(decoded_task.task_digest().len(), 64);
+    assert!(
+        decoded_task
+            .task_digest()
+            .chars()
+            .all(|character| character.is_ascii_hexdigit())
+    );
+    assert!(
+        receipt
+            .review_workflow_task_digests()
+            .contains(decoded_task.task_digest())
     );
     assert!(receipt.view_item_ids().contains(&format!(
         "view_model.review_task:{}",

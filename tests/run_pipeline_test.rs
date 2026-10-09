@@ -20,6 +20,15 @@ use serde_json::Value;
 
 type ReceiptAssertion = fn(&Value);
 
+fn is_hex_digest(value: &Value) -> bool {
+    value.as_str().is_some_and(|digest| {
+        digest.len() == 64
+            && digest
+                .chars()
+                .all(|character| character.is_ascii_hexdigit())
+    })
+}
+
 #[test]
 fn run_pipeline_uses_the_normal_amenable_artifact_path() -> Result<()> {
     belvedere::init_tracing();
@@ -1418,6 +1427,17 @@ fn assert_auditor_navigation_receipt(receipt: &Value) {
         Some(7)
     );
     assert_eq!(receipt["view_item_ids"].as_array().map(Vec::len), Some(60));
+    assert_eq!(
+        receipt["review_workflow_task_digests"]
+            .as_array()
+            .map(Vec::len),
+        Some(4)
+    );
+    assert!(
+        receipt["review_workflow_task_digests"]
+            .as_array()
+            .is_some_and(|digests| digests.iter().all(is_hex_digest))
+    );
     assert!(receipt["view_item_ids"].as_array().is_some_and(|ids| {
         ids.iter().any(|id| {
             id.as_str() == Some("view_model.claim:belvedere::ingestion::DecodedRegistrySnapshot")
@@ -1649,6 +1669,11 @@ fn assert_auditor_navigation_model(model: &Value) {
     assert_eq!(model["claim_explorer"].as_array().map(Vec::len), Some(4));
     assert_eq!(model["proof_chains"].as_array().map(Vec::len), Some(4));
     assert_eq!(model["review_workflow"].as_array().map(Vec::len), Some(4));
+    assert!(
+        model["review_workflow"]
+            .as_array()
+            .is_some_and(|tasks| { tasks.iter().all(|task| is_hex_digest(&task["task_digest"])) })
+    );
     assert_eq!(
         model["assessment_history"].as_array().map(Vec::len),
         Some(2)

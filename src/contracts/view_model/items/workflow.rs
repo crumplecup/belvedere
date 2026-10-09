@@ -35,6 +35,7 @@ impl ReviewWorkflowPriority {
 #[builder(vis = "pub(crate)", setter(into))]
 pub struct ReviewWorkflowItem {
     task_id: String,
+    task_digest: String,
     claim_id: String,
     lane: String,
     gap_ids: Vec<String>,

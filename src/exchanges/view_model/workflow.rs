@@ -2,15 +2,19 @@
 
 use std::collections::BTreeMap;
 
+use sha2::{Digest as _, Sha256};
 use tracing::instrument;
 
 use crate::{
+    certify::{hex_digest, update_field, update_fields},
     contracts::{
         AssessmentWorkItem, GapItem, ProofChainItem, ReviewWorkflowItem, ReviewWorkflowItemBuilder,
         ReviewWorkflowPriority,
     },
     error::BelvedereConstructionError,
 };
+
+const REVIEW_WORKFLOW_ITEM_SCHEMA_ID: &str = "belvedere.view_model.review_workflow_item.v1";
 
 #[instrument(level = "debug", skip(proof_chains, gaps))]
 pub(super) fn project_review_workflow(
@@ -27,15 +31,31 @@ pub(super) fn project_review_workflow(
             let priority = workflow_priority(chain.review_state());
             let lane = workflow_lane(chain, claim_gaps);
             let gap_ids = workflow_gap_ids(claim_gaps);
+            let task_id = format!("belvedere.review:{}:{lane}", chain.claim_id());
+            let action = chain.next_action().to_owned();
+            let rationale = workflow_rationale(chain, claim_gaps);
+            let source_count = chain.trace().source_record_ids().len();
+            let task_digest = review_workflow_task_digest(ReviewWorkflowTaskDigestEvidence {
+                task_id: &task_id,
+                claim_id: chain.claim_id(),
+                lane: &lane,
+                gap_ids: &gap_ids,
+                action: &action,
+                rationale: &rationale,
+                priority,
+                source_count,
+                source_record_ids: chain.trace().source_record_ids(),
+            });
             ReviewWorkflowItemBuilder::default()
-                .task_id(format!("belvedere.review:{}:{lane}", chain.claim_id()))
+                .task_id(task_id)
+                .task_digest(task_digest)
                 .claim_id(chain.claim_id())
                 .lane(lane)
                 .gap_ids(gap_ids)
-                .action(chain.next_action())
-                .rationale(workflow_rationale(chain, claim_gaps))
+                .action(action)
+                .rationale(rationale)
                 .priority(priority)
-                .source_count(chain.trace().source_record_ids().len())
+                .source_count(source_count)
                 .trace(chain.trace().clone())
                 .build()
                 .map_err(|error| BelvedereConstructionError::new("ReviewWorkflowItem", error))
@@ -125,6 +145,35 @@ pub(super) fn review_workflow_counts(
         gaps.iter().filter(|item| item.high_priority()).count(),
     );
     counts
+}
+
+#[derive(Debug, Clone, Copy)]
+struct ReviewWorkflowTaskDigestEvidence<'evidence> {
+    task_id: &'evidence str,
+    claim_id: &'evidence str,
+    lane: &'evidence str,
+    gap_ids: &'evidence [String],
+    action: &'evidence str,
+    rationale: &'evidence str,
+    priority: ReviewWorkflowPriority,
+    source_count: usize,
+    source_record_ids: &'evidence [String],
+}
+
+#[instrument(level = "debug", skip(evidence))]
+fn review_workflow_task_digest(evidence: ReviewWorkflowTaskDigestEvidence<'_>) -> String {
+    let mut hasher = Sha256::new();
+    update_field(&mut hasher, REVIEW_WORKFLOW_ITEM_SCHEMA_ID);
+    update_field(&mut hasher, evidence.task_id);
+    update_field(&mut hasher, evidence.claim_id);
+    update_field(&mut hasher, evidence.lane);
+    update_fields(&mut hasher, evidence.gap_ids);
+    update_field(&mut hasher, evidence.action);
+    update_field(&mut hasher, evidence.rationale);
+    update_field(&mut hasher, evidence.priority.label());
+    update_field(&mut hasher, &evidence.source_count.to_string());
+    update_fields(&mut hasher, evidence.source_record_ids);
+    hex_digest(hasher)
 }
 
 #[instrument(level = "trace", skip(gaps))]

@@ -144,6 +144,10 @@ impl BelvedereExchange<AuditorNavigationContract> for AuditorNavigationProjectio
         let receipt_provenance_root_kind_counts = provenance_root_kind_counts(&provenance_roots);
         let receipt_review_workflow_counts =
             review_workflow_counts(&proof_chains, &review_workflow, &assessment_work, &gaps);
+        let receipt_review_workflow_task_digests = review_workflow
+            .iter()
+            .map(|item| item.task_digest().to_owned())
+            .collect::<Vec<_>>();
         let receipt_trace_kind_counts = trace_kind_counts(&[
             ("filter_facet", filter_facets.len()),
             ("backend_coverage_item", backend_coverage.len()),
@@ -225,6 +229,7 @@ impl BelvedereExchange<AuditorNavigationContract> for AuditorNavigationProjectio
             .proof_chain_topology_counts(&receipt_proof_chain_topology_counts)
             .provenance_root_kind_counts(&receipt_provenance_root_kind_counts)
             .review_workflow_counts(&receipt_review_workflow_counts)
+            .review_workflow_task_digests(&receipt_review_workflow_task_digests)
             .trace_kind_counts(&receipt_trace_kind_counts)
             .trace_source_counts(&receipt_trace_source_counts)
             .item_kind_counts(&receipt_item_kind_counts)
@@ -249,6 +254,7 @@ impl BelvedereExchange<AuditorNavigationContract> for AuditorNavigationProjectio
             .proof_chain_topology_counts(receipt_proof_chain_topology_counts)
             .provenance_root_kind_counts(receipt_provenance_root_kind_counts)
             .review_workflow_counts(receipt_review_workflow_counts)
+            .review_workflow_task_digests(receipt_review_workflow_task_digests)
             .trace_kind_counts(receipt_trace_kind_counts)
             .trace_source_counts(receipt_trace_source_counts)
             .item_kind_counts(receipt_item_kind_counts)
