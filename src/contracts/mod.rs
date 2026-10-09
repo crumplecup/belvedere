@@ -3,6 +3,7 @@
 mod contract;
 
 mod diff;
+mod diff_review;
 mod ingestion;
 mod landscape;
 mod pipeline_claim;
@@ -15,6 +16,10 @@ pub use diff::{
     LandscapeDiff, LandscapeDiffChangeKind, LandscapeDiffContract, LandscapeDiffInput,
     LandscapeDiffItem, LandscapeDiffReviewAction, LandscapeDiffReviewGuidance,
     LandscapeDiffReviewPriority,
+};
+pub use diff_review::{
+    LandscapeDiffReviewContract, LandscapeDiffReviewInput, LandscapeDiffReviewItem,
+    LandscapeDiffReviewModel, LandscapeDiffReviewSummary,
 };
 pub use ingestion::{
     AcceptedAmenableArtifactFormat, ArtifactKind, AssessmentRecord,

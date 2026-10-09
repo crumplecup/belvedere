@@ -1,6 +1,6 @@
 //! Stage certificate construction.
 
-use std::{collections::BTreeMap, fmt::Display};
+use std::collections::BTreeMap;
 
 use derive_getters::Getters;
 use serde::Serialize;
@@ -10,60 +10,23 @@ use tracing::instrument;
 use crate::{
     certify::{
         BELVEDERE_STAGE_CERTIFICATE_SCHEMA_ID, BELVEDERE_STAGE_CERTIFICATE_SCHEMA_VERSION,
-        BelvedereInvariantCheck, IngestionReceipt, LandscapeDiffReceipt, LandscapeReceipt,
-        UiIrReceipt, ViewModelReceipt, diff_item_invariant_checks, diff_review_invariant_checks,
-        diff_trace_invariant_checks, hex_digest, ingestion_record_invariant_checks,
-        landscape_model_invariant_checks, stage_invariant_checks, ui_ir_output_invariant_checks,
+        BelvedereInvariantCheck, BelvederePipelineStage, IngestionReceipt, LandscapeDiffReceipt,
+        LandscapeDiffReviewReceipt, LandscapeReceipt, UiIrReceipt, ViewModelReceipt,
+        diff_item_invariant_checks, diff_review_invariant_checks, diff_trace_invariant_checks,
+        hex_digest, ingestion_record_invariant_checks, landscape_model_invariant_checks,
+        stage_invariant_checks, ui_ir_output_invariant_checks,
         ui_ir_source_locator_invariant_checks, ui_ir_trace_invariant_checks, update_field,
         update_fields, view_model_item_invariant_checks,
         view_model_source_navigation_invariant_checks, view_model_trace_invariant_checks,
     },
     contracts::{
         AssessmentStreamIngestionContract, AuditorNavigationContract, BelvedereContract,
-        ElicitUiProjectionContract, LandscapeDiffContract, LandscapeModelingContract,
-        RegistryDumpIngestionContract,
+        ElicitUiProjectionContract, LandscapeDiffContract, LandscapeDiffReviewContract,
+        LandscapeModelingContract, RegistryDumpIngestionContract,
     },
 };
 
-/// Named stage in a complete Belvedere pipeline run.
-#[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash, Serialize)]
-#[serde(rename_all = "snake_case")]
-pub enum BelvederePipelineStage {
-    /// Registry dump ingestion.
-    RegistryIngestion,
-    /// Proof assessment stream ingestion.
-    AssessmentIngestion,
-    /// Landscape graph construction.
-    LandscapeModeling,
-    /// Landscape snapshot comparison.
-    LandscapeDiff,
-    /// Auditor navigation view-model construction.
-    AuditorNavigation,
-    /// `elicit_ui` IR projection.
-    UiIrProjection,
-}
-
-impl BelvederePipelineStage {
-    /// Stable stage identifier.
-    #[must_use]
-    pub const fn as_str(self) -> &'static str {
-        match self {
-            Self::RegistryIngestion => "registry_ingestion",
-            Self::AssessmentIngestion => "assessment_ingestion",
-            Self::LandscapeModeling => "landscape_modeling",
-            Self::LandscapeDiff => "landscape_diff",
-            Self::AuditorNavigation => "auditor_navigation",
-            Self::UiIrProjection => "ui_ir_projection",
-        }
-    }
-}
-
-impl Display for BelvederePipelineStage {
-    #[instrument(level = "trace", skip(self, f))]
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        f.write_str(self.as_str())
-    }
-}
+use super::contract_metadata::{contract_guarantees, contract_requirements, contract_standards};
 
 /// Certificate for one successful Belvedere pipeline stage.
 #[derive(Debug, Clone, PartialEq, Eq, Getters, Serialize)]
@@ -219,6 +182,53 @@ impl BelvedereStageCertificate {
             input_ids,
             input_digests,
             output_ids: receipt.diff_item_ids().clone(),
+            counts,
+            additional_invariant_checks,
+            warning_count: receipt.warnings().len(),
+        })
+    }
+
+    /// Certificate the landscape diff review-model stage.
+    #[instrument(level = "debug", skip(receipt))]
+    #[must_use]
+    pub fn landscape_diff_review(receipt: &LandscapeDiffReviewReceipt) -> Self {
+        let mut counts = BTreeMap::from([
+            (
+                "blocking_items".to_owned(),
+                receipt.counts().blocking_items(),
+            ),
+            (
+                "informational_items".to_owned(),
+                receipt.counts().informational_items(),
+            ),
+            ("review_items".to_owned(), receipt.counts().review_items()),
+            (
+                "source_record_ids".to_owned(),
+                receipt.source_record_ids().len(),
+            ),
+            ("source_diffs".to_owned(), 1),
+            ("total_items".to_owned(), receipt.counts().total_items()),
+            ("warnings".to_owned(), receipt.warnings().len()),
+        ]);
+        counts.extend(receipt.change_kind_counts().clone());
+        counts.extend(receipt.subject_kind_counts().clone());
+        counts.extend(receipt.review_priority_counts().clone());
+        counts.extend(receipt.review_action_counts().clone());
+        counts.extend(receipt.trace_source_counts().clone());
+        let additional_invariant_checks = diff_review_invariant_checks(
+            receipt.review_item_ids(),
+            receipt.review_priority_counts(),
+            receipt.review_action_counts(),
+        );
+        Self::new(StageCertificateEvidence {
+            stage: BelvederePipelineStage::LandscapeDiffReview,
+            contract: receipt.contract().to_owned(),
+            standards: contract_standards::<LandscapeDiffReviewContract>(),
+            requires: contract_requirements::<LandscapeDiffReviewContract>(),
+            ensures: contract_guarantees::<LandscapeDiffReviewContract>(),
+            input_ids: vec![receipt.source_diff_receipt_id().to_owned()],
+            input_digests: vec![receipt.source_diff_receipt_digest().to_owned()],
+            output_ids: receipt.review_item_ids().clone(),
             counts,
             additional_invariant_checks,
             warning_count: receipt.warnings().len(),
@@ -469,28 +479,4 @@ fn stage_digest(
         update_field(&mut hasher, check.detail());
     }
     hex_digest(hasher)
-}
-
-#[instrument(level = "trace")]
-fn contract_requirements<C: BelvedereContract>() -> Vec<String> {
-    C::requires()
-        .iter()
-        .map(|requirement| (*requirement).to_owned())
-        .collect()
-}
-
-#[instrument(level = "trace")]
-fn contract_standards<C: BelvedereContract>() -> Vec<String> {
-    C::standard_ids()
-        .iter()
-        .map(|standard| (*standard).to_owned())
-        .collect()
-}
-
-#[instrument(level = "trace")]
-fn contract_guarantees<C: BelvedereContract>() -> Vec<String> {
-    C::ensures()
-        .iter()
-        .map(|guarantee| (*guarantee).to_owned())
-        .collect()
 }

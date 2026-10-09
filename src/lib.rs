@@ -24,8 +24,9 @@ pub use certify::{
     BelvedereManifestInputArtifact, BelvedereManifestOutputArtifact,
     BelvedereManifestStageCertificate, BelvederePipelineStage, BelvedereRunCertificate,
     BelvedereRunInvocation, BelvedereStageCertificate, IngestionReceipt, LandscapeDiffReceipt,
-    LandscapeDiffReceiptCounts, LandscapeReceipt, LandscapeReceiptCounts, UiIrReceipt,
-    UiIrReceiptCounts, ViewModelReceipt, ViewModelReceiptCounts,
+    LandscapeDiffReceiptCounts, LandscapeDiffReviewReceipt, LandscapeDiffReviewReceiptCounts,
+    LandscapeReceipt, LandscapeReceiptCounts, UiIrReceipt, UiIrReceiptCounts, ViewModelReceipt,
+    ViewModelReceiptCounts,
 };
 pub use cli::{
     BelvedereCli, BelvedereCliOutput, BelvedereCliOutputError, BelvedereCliReport,
@@ -49,11 +50,13 @@ pub use contracts::{
     LANDSCAPE_CONSTRUCTION_STANDARD_ID, LANDSCAPE_DIFF_FIDELITY_STANDARD_ID, LandscapeAssessment,
     LandscapeClaim, LandscapeConstructionStandard, LandscapeContractFragment, LandscapeDiff,
     LandscapeDiffChangeKind, LandscapeDiffContract, LandscapeDiffFidelityStandard,
-    LandscapeDiffInput, LandscapeDiffItem, LandscapeDiffReviewAction, LandscapeDiffReviewGuidance,
-    LandscapeDiffReviewPriority, LandscapeGap, LandscapeGapKind, LandscapeGraph, LandscapeInput,
-    LandscapeModelingContract, MintedElicitUiStandard, OverviewView, ProofExecutionStatus,
-    ProofRecordRecord, ProvenanceRootItem, REPORT_REPRODUCIBILITY_STANDARD_ID, RawAmenableArtifact,
-    Recommendation, RegistryDumpIngestionContract, ReportReproducibilityStandard, ResolutionPath,
+    LandscapeDiffInput, LandscapeDiffItem, LandscapeDiffReviewAction, LandscapeDiffReviewContract,
+    LandscapeDiffReviewGuidance, LandscapeDiffReviewInput, LandscapeDiffReviewItem,
+    LandscapeDiffReviewModel, LandscapeDiffReviewPriority, LandscapeDiffReviewSummary,
+    LandscapeGap, LandscapeGapKind, LandscapeGraph, LandscapeInput, LandscapeModelingContract,
+    MintedElicitUiStandard, OverviewView, ProofExecutionStatus, ProofRecordRecord,
+    ProvenanceRootItem, REPORT_REPRODUCIBILITY_STANDARD_ID, RawAmenableArtifact, Recommendation,
+    RegistryDumpIngestionContract, ReportReproducibilityStandard, ResolutionPath,
     ReviewWorkflowItem, ReviewWorkflowPriority, Rubric, SCHEMA_HONESTY_STANDARD_ID,
     SchemaHonestyStandard, SourceNavigationItem, TraceRef, TraceWidgetRef,
     UI_IR_SECTION_ASSESSMENT_HISTORY, UI_IR_SECTION_ASSESSMENT_QUEUE,
@@ -70,8 +73,8 @@ pub use contracts::{
 pub use error::{BelvedereConstructionError, BelvedereError};
 pub use exchanges::{
     AssessmentStreamIngestion, AuditorNavigationProjection, BelvedereExchange, ElicitUiProjection,
-    IngestionError, LandscapeDiffing, LandscapeModeling, RegistryDumpIngestion, UiIrError,
-    WrongArtifactKindError,
+    IngestionError, LandscapeDiffReviewProjection, LandscapeDiffing, LandscapeModeling,
+    RegistryDumpIngestion, UiIrError, WrongArtifactKindError,
 };
 pub use run::{
     BelvedereLandscapeDiffRunInput, BelvedereLandscapeDiffRunReport, BelvedereRunInput,

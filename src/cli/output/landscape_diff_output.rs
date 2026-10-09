@@ -134,18 +134,18 @@ pub(super) fn write_landscape_diff_output(
             write_json(diff.current_ui_ir_receipt(), file)
         }
         BelvedereCliOutput::LandscapeDiffViewModelJson => {
-            write_json(diff.current_view_model(), writer)
+            write_json(diff.diff_view_model(), writer)
         }
         BelvedereCliOutput::LandscapeDiffViewModelFile(path) => {
             let file = File::create(path).map_err(BelvedereCliOutputError::write)?;
-            write_json(diff.current_view_model(), file)
+            write_json(diff.diff_view_model(), file)
         }
         BelvedereCliOutput::LandscapeDiffViewModelReceiptJson => {
-            write_json(diff.current_view_model_receipt(), writer)
+            write_json(diff.diff_view_model_receipt(), writer)
         }
         BelvedereCliOutput::LandscapeDiffViewModelReceiptFile(path) => {
             let file = File::create(path).map_err(BelvedereCliOutputError::write)?;
-            write_json(diff.current_view_model_receipt(), file)
+            write_json(diff.diff_view_model_receipt(), file)
         }
         BelvedereCliOutput::LandscapeDiffUiIrJson => write_json(diff.current_projection(), writer),
         BelvedereCliOutput::LandscapeDiffUiIrFile(path) => {

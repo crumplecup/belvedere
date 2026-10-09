@@ -3,6 +3,7 @@
 mod accounting;
 mod indexed_artifacts;
 mod receipts;
+mod run_outputs;
 mod runs;
 
 use std::collections::BTreeMap;

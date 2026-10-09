@@ -1,7 +1,8 @@
 //! Receipt bundles used while building artifact manifests.
 
 use crate::certify::{
-    IngestionReceipt, LandscapeDiffReceipt, LandscapeReceipt, UiIrReceipt, ViewModelReceipt,
+    IngestionReceipt, LandscapeDiffReceipt, LandscapeDiffReviewReceipt, LandscapeReceipt,
+    UiIrReceipt, ViewModelReceipt,
 };
 
 use derive_getters::Getters;
@@ -48,6 +49,8 @@ pub(crate) struct BelvedereDiffManifestReceipts<'receipt> {
     current: BelvedereSnapshotManifestReceipts<'receipt>,
     #[getter(copy)]
     diff: &'receipt LandscapeDiffReceipt,
+    #[getter(copy)]
+    diff_review: &'receipt LandscapeDiffReviewReceipt,
 }
 
 impl<'receipt> BelvedereDiffManifestReceipts<'receipt> {
@@ -57,11 +60,13 @@ impl<'receipt> BelvedereDiffManifestReceipts<'receipt> {
         previous: BelvedereSnapshotManifestReceipts<'receipt>,
         current: BelvedereSnapshotManifestReceipts<'receipt>,
         diff: &'receipt LandscapeDiffReceipt,
+        diff_review: &'receipt LandscapeDiffReviewReceipt,
     ) -> Self {
         Self {
             previous,
             current,
             diff,
+            diff_review,
         }
     }
 }

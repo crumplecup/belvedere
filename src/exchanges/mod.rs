@@ -3,6 +3,7 @@
 mod exchange;
 
 mod diff;
+mod diff_review;
 mod ingestion;
 mod landscape;
 mod source_records;
@@ -10,6 +11,7 @@ mod ui_ir;
 mod view_model;
 
 pub use diff::LandscapeDiffing;
+pub use diff_review::LandscapeDiffReviewProjection;
 pub use exchange::BelvedereExchange;
 pub use ingestion::{
     AssessmentStreamIngestion, IngestionError, RegistryDumpIngestion, WrongArtifactKindError,

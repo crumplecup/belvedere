@@ -582,8 +582,8 @@ fn landscape_diff_runner_uses_the_normal_artifact_path() -> Result<()> {
         BELVEDERE_RUN_CERTIFICATE_SCHEMA_ID
     );
     assert_eq!(report.certificate().input_artifact_ids().len(), 4);
-    assert_eq!(report.certificate().stage_certificates().len(), 11);
-    assert_eq!(report.certificate().stage_certificate_ids().len(), 11);
+    assert_eq!(report.certificate().stage_certificates().len(), 12);
+    assert_eq!(report.certificate().stage_certificate_ids().len(), 12);
     assert_eq!(
         report
             .certificate()
@@ -624,6 +624,13 @@ fn landscape_diff_runner_uses_the_normal_artifact_path() -> Result<()> {
             .certificate()
             .stage_kind_counts()
             .get("stage_landscape_diff"),
+        Some(&1)
+    );
+    assert_eq!(
+        report
+            .certificate()
+            .stage_kind_counts()
+            .get("stage_landscape_diff_review"),
         Some(&1)
     );
     assert_eq!(
@@ -692,6 +699,13 @@ fn landscape_diff_runner_uses_the_normal_artifact_path() -> Result<()> {
     assert_eq!(
         report
             .manifest()
+            .stage_kind_counts()
+            .get("manifest_stage_kind_landscape_diff_review"),
+        Some(&1)
+    );
+    assert_eq!(
+        report
+            .manifest()
             .output_kind_counts()
             .get("manifest_output_kind_landscape_diff_receipt"),
         Some(&1)
@@ -715,6 +729,35 @@ fn landscape_diff_runner_uses_the_normal_artifact_path() -> Result<()> {
             .certificate()
             .stage_certificate_ids()
             .contains(report.diff_certificate().id())
+    );
+    assert!(
+        report
+            .certificate()
+            .stage_certificate_ids()
+            .contains(report.diff_view_model_certificate().id())
+    );
+    assert_eq!(
+        report.diff_view_model().summary().total_items(),
+        report.diff().items().len()
+    );
+    assert_eq!(
+        report.diff_view_model_receipt().counts().total_items(),
+        report.diff().items().len()
+    );
+    assert_eq!(
+        report.diff_view_model_receipt().source_diff_receipt_id(),
+        report.diff_receipt().receipt_id()
+    );
+    assert_eq!(
+        report.diff_view_model_certificate().stage(),
+        BelvederePipelineStage::LandscapeDiffReview
+    );
+    assert_eq!(
+        report
+            .diff_view_model_certificate()
+            .counts()
+            .get("total_items"),
+        Some(&report.diff().items().len())
     );
     assert!(report.certificate().stage_certificates().iter().any(
         |certificate| certificate.stage() == BelvederePipelineStage::AuditorNavigation

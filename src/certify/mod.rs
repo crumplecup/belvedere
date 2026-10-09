@@ -3,11 +3,14 @@
 mod artifact_manifest;
 mod certificate_digest;
 mod certificate_schema;
+mod contract_metadata;
 mod diff;
+mod diff_review;
 mod invariant;
 mod landscape;
 mod receipt;
 mod run_certificate;
+mod stage;
 mod stage_certificate;
 mod ui_ir;
 mod view_model;
@@ -30,6 +33,11 @@ pub(crate) use diff::{
     LandscapeDiffReceiptBuilder, LandscapeDiffReceiptDigestEvidenceBuilder,
     landscape_diff_receipt_identity,
 };
+pub use diff_review::{LandscapeDiffReviewReceipt, LandscapeDiffReviewReceiptCounts};
+pub(crate) use diff_review::{
+    LandscapeDiffReviewReceiptBuilder, LandscapeDiffReviewReceiptDigestEvidenceBuilder,
+    landscape_diff_review_receipt_identity,
+};
 pub use invariant::BelvedereInvariantCheck;
 pub(crate) use invariant::{
     RunInputArtifactEvidence, RunInvariantEvidence, RunStageCertificateEvidence,
@@ -47,7 +55,8 @@ pub use receipt::IngestionReceipt;
 pub use run_certificate::{
     BelvedereInvocationSurface, BelvedereRunCertificate, BelvedereRunInvocation,
 };
-pub use stage_certificate::{BelvederePipelineStage, BelvedereStageCertificate};
+pub use stage::BelvederePipelineStage;
+pub use stage_certificate::BelvedereStageCertificate;
 pub use ui_ir::{UiIrReceipt, UiIrReceiptCounts};
 pub(crate) use ui_ir::{
     UiIrReceiptBuilder, UiIrReceiptDigestEvidenceBuilder, ui_ir_receipt_identity,

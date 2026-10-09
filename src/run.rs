@@ -11,17 +11,19 @@ use crate::{
     certify::{
         BelvedereArtifactManifest, BelvedereDiffManifestReceipts, BelvedereRunCertificate,
         BelvedereRunInvocation, BelvedereSnapshotManifestReceipts, BelvedereStageCertificate,
-        IngestionReceipt, LandscapeDiffReceipt, LandscapeReceipt, UiIrReceipt, ViewModelReceipt,
+        IngestionReceipt, LandscapeDiffReceipt, LandscapeDiffReviewReceipt, LandscapeReceipt,
+        UiIrReceipt, ViewModelReceipt,
     },
     collect::read_raw_artifact,
     contracts::{
-        ArtifactKind, AuditorNavigationModel, LandscapeDiff, LandscapeDiffInput, LandscapeGraph,
-        LandscapeInput, UiIrInput, UiIrProjection, ViewModelInput,
+        ArtifactKind, AuditorNavigationModel, LandscapeDiff, LandscapeDiffInput,
+        LandscapeDiffReviewInput, LandscapeDiffReviewModel, LandscapeGraph, LandscapeInput,
+        UiIrInput, UiIrProjection, ViewModelInput,
     },
     error::{BelvedereConstructionError, BelvedereError},
     exchanges::{
         AssessmentStreamIngestion, AuditorNavigationProjection, ElicitUiProjection,
-        LandscapeDiffing, LandscapeModeling, RegistryDumpIngestion,
+        LandscapeDiffReviewProjection, LandscapeDiffing, LandscapeModeling, RegistryDumpIngestion,
     },
 };
 
@@ -103,9 +105,12 @@ pub struct BelvedereLandscapeDiffRunReport {
     current_view_model_receipt: ViewModelReceipt,
     current_ui_ir_receipt: UiIrReceipt,
     diff_receipt: LandscapeDiffReceipt,
+    diff_view_model: LandscapeDiffReviewModel,
+    diff_view_model_receipt: LandscapeDiffReviewReceipt,
     certificate: BelvedereRunCertificate,
     manifest: BelvedereArtifactManifest,
     diff_certificate: BelvedereStageCertificate,
+    diff_view_model_certificate: BelvedereStageCertificate,
     previous_projection: UiIrProjection,
     current_projection: UiIrProjection,
     diff: LandscapeDiff,
@@ -236,6 +241,11 @@ pub fn run_belvedere_landscape_diff(
             &current.landscape_receipt,
         ))?;
     let diff_certificate = BelvedereStageCertificate::landscape_diff(&diff_receipt);
+    let (diff_view_model, diff_view_model_receipt) = LandscapeDiffReviewProjection.project(
+        LandscapeDiffReviewInput::from_diff(diff.clone(), &diff_receipt),
+    )?;
+    let diff_view_model_certificate =
+        BelvedereStageCertificate::landscape_diff_review(&diff_view_model_receipt);
     let certificate = BelvedereRunCertificate::from_stage_certificates(
         invocation,
         input_artifact_ids,
@@ -243,7 +253,10 @@ pub fn run_belvedere_landscape_diff(
         previous_stage_certificates
             .into_iter()
             .chain(current_stage_certificates)
-            .chain([diff_certificate.clone()])
+            .chain([
+                diff_certificate.clone(),
+                diff_view_model_certificate.clone(),
+            ])
             .collect(),
     );
     let manifest = BelvedereArtifactManifest::landscape_diff_run(
@@ -264,6 +277,7 @@ pub fn run_belvedere_landscape_diff(
                 &current_ui_ir_receipt,
             ),
             &diff_receipt,
+            &diff_view_model_receipt,
         ),
     );
 
@@ -283,9 +297,12 @@ pub fn run_belvedere_landscape_diff(
         .current_view_model_receipt(current_view_model_receipt)
         .current_ui_ir_receipt(current_ui_ir_receipt)
         .diff_receipt(diff_receipt)
+        .diff_view_model(diff_view_model)
+        .diff_view_model_receipt(diff_view_model_receipt)
         .certificate(certificate)
         .manifest(manifest)
         .diff_certificate(diff_certificate)
+        .diff_view_model_certificate(diff_view_model_certificate)
         .previous_projection(previous_projection)
         .current_projection(current_projection)
         .diff(diff)
