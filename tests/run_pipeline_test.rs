@@ -1258,6 +1258,15 @@ fn assert_landscape_receipt_sources(receipt: &Value, expected_count: usize) {
                 .is_some_and(|id| id.starts_with("belvedere.receipt.ingestion:"))
         })
     }));
+    assert_eq!(
+        receipt["source_receipt_digests"].as_array().map(Vec::len),
+        Some(expected_count)
+    );
+    assert!(
+        receipt["source_receipt_digests"]
+            .as_array()
+            .is_some_and(|digests| digests.iter().all(is_hex_digest))
+    );
 }
 
 fn assert_landscape_graph(graph: &Value) {
@@ -1524,6 +1533,7 @@ fn assert_auditor_navigation_receipt_source(receipt: &Value) {
             .as_str()
             .is_some_and(|id| id.starts_with("belvedere.receipt.landscape:"))
     );
+    assert!(is_hex_digest(&receipt["source_landscape_receipt_digest"]));
 }
 
 fn assert_ui_ir_receipt(receipt: &Value) {
@@ -1615,6 +1625,7 @@ fn assert_ui_ir_receipt_source(receipt: &Value) {
             .as_str()
             .is_some_and(|id| id.starts_with("belvedere.receipt.view_model:"))
     );
+    assert!(is_hex_digest(&receipt["source_view_model_receipt_digest"]));
 }
 
 fn assert_ui_ir_receipt_identity(receipt: &Value) {

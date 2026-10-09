@@ -29,7 +29,7 @@ mod widgets;
 pub use errors::UiIrError;
 
 use assessment_widgets::{assessment_history_widget, assessment_widget, assessment_work_widget};
-use receipt::build_receipt;
+use receipt::{SourceViewModelReceipt, build_receipt};
 use widgets::{
     backend_coverage_widget, claim_detail_widget, claim_widget, filter_widget, gap_widget,
     labeled_widget, proof_chain_widget, provenance_root_widget, review_workflow_widget, section,
@@ -78,7 +78,10 @@ impl BelvedereExchange<ElicitUiProjectionContract> for ElicitUiProjection {
         let minted_standards = minted_standards();
         let receipt = build_receipt(
             model,
-            input.source_view_model_receipt_id(),
+            SourceViewModelReceipt::new(
+                input.source_view_model_receipt_id(),
+                input.source_view_model_receipt_digest(),
+            ),
             &sections,
             &trace_widgets,
             &tree,

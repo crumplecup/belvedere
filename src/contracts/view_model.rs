@@ -34,6 +34,7 @@ pub struct ViewModelInput {
     #[getter(skip)]
     landscape: LandscapeGraph,
     source_landscape_receipt_id: String,
+    source_landscape_receipt_digest: String,
 }
 
 impl ViewModelInput {
@@ -41,7 +42,11 @@ impl ViewModelInput {
     #[must_use]
     #[instrument(level = "debug", skip(landscape, landscape_receipt))]
     pub fn from_landscape(landscape: LandscapeGraph, landscape_receipt: &LandscapeReceipt) -> Self {
-        Self::new(landscape, landscape_receipt.receipt_id().to_owned())
+        Self::new(
+            landscape,
+            landscape_receipt.receipt_id().to_owned(),
+            landscape_receipt.receipt_digest().to_owned(),
+        )
     }
 
     /// Landscape evidence to project.

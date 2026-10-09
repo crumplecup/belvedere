@@ -130,6 +130,7 @@ impl BelvedereExchange<LandscapeModelingContract> for LandscapeModeling {
         let gap_kind_counts = gap_kind_counts(graph.gaps());
         let assessment_recency_counts = assessment_recency_counts(graph.assessments());
         let source_receipt_ids = input.source_receipt_ids().to_vec();
+        let source_receipt_digests = input.source_receipt_digests().to_vec();
         let source_record_ids = graph.source_record_ids().to_vec();
         let warnings = Vec::new();
         let digest_evidence = LandscapeReceiptDigestEvidenceBuilder::default()
@@ -140,6 +141,7 @@ impl BelvedereExchange<LandscapeModelingContract> for LandscapeModeling {
             .assessment_recency_counts(&assessment_recency_counts)
             .landscape_item_ids(&landscape_item_ids)
             .source_receipt_ids(&source_receipt_ids)
+            .source_receipt_digests(&source_receipt_digests)
             .source_record_ids(&source_record_ids)
             .warnings(&warnings)
             .build()
@@ -157,6 +159,7 @@ impl BelvedereExchange<LandscapeModelingContract> for LandscapeModeling {
             .assessment_recency_counts(assessment_recency_counts)
             .landscape_item_ids(landscape_item_ids)
             .source_receipt_ids(source_receipt_ids)
+            .source_receipt_digests(source_receipt_digests)
             .source_record_ids(source_record_ids)
             .warnings(warnings)
             .build()

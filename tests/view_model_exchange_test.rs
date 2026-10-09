@@ -9,8 +9,11 @@ use miette::{IntoDiagnostic, Result, WrapErr, miette};
 fn view_model_projection_builds_auditor_navigation_evidence() -> Result<()> {
     belvedere::init_tracing();
 
+    let input = fixture_input()?;
+    let expected_source_landscape_receipt_digest =
+        input.source_landscape_receipt_digest().to_owned();
     let (model, receipt) = AuditorNavigationProjection
-        .project(fixture_input()?)
+        .project(input)
         .into_diagnostic()
         .wrap_err("view-model projection is trace-preserving and infallible")?;
 
@@ -40,6 +43,11 @@ fn view_model_projection_builds_auditor_navigation_evidence() -> Result<()> {
             .source_landscape_receipt_id()
             .starts_with("belvedere.receipt.landscape:")
     );
+    assert_eq!(
+        receipt.source_landscape_receipt_digest(),
+        &expected_source_landscape_receipt_digest
+    );
+    assert!(is_hex_digest(receipt.source_landscape_receipt_digest()));
     assert_eq!(
         receipt.lane_counts().get("assessment_queue_lane_accepted"),
         Some(&1)
@@ -1127,6 +1135,10 @@ fn assert_view_model_receipt_identity(receipt: &belvedere::ViewModelReceipt) {
         receipt.receipt_id(),
         &format!("belvedere.receipt.view_model:{}", receipt.receipt_digest())
     );
+}
+
+fn is_hex_digest(digest: &str) -> bool {
+    digest.len() == 64 && digest.bytes().all(|byte| byte.is_ascii_hexdigit())
 }
 
 const STALE_ASSESSMENTS: &str = concat!(

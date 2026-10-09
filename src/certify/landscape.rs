@@ -27,6 +27,7 @@ pub struct LandscapeReceipt {
     assessment_recency_counts: BTreeMap<String, usize>,
     landscape_item_ids: Vec<String>,
     source_receipt_ids: Vec<String>,
+    source_receipt_digests: Vec<String>,
     source_record_ids: Vec<String>,
     warnings: Vec<String>,
 }
@@ -93,6 +94,8 @@ pub(crate) struct LandscapeReceiptDigestEvidence<'evidence> {
     landscape_item_ids: &'evidence [String],
     /// Upstream ingestion receipt IDs used as input evidence.
     source_receipt_ids: &'evidence [String],
+    /// Upstream ingestion receipt digests used as input evidence.
+    source_receipt_digests: &'evidence [String],
     /// Source record IDs represented by the landscape.
     source_record_ids: &'evidence [String],
     /// Recoverable warnings emitted by the exchange.
@@ -194,6 +197,7 @@ fn landscape_receipt_digest(evidence: LandscapeReceiptDigestEvidence<'_>) -> Str
     update_counts(&mut hasher, evidence.assessment_recency_counts);
     update_fields(&mut hasher, evidence.landscape_item_ids);
     update_fields(&mut hasher, evidence.source_receipt_ids);
+    update_fields(&mut hasher, evidence.source_receipt_digests);
     update_fields(&mut hasher, evidence.source_record_ids);
     update_fields(&mut hasher, evidence.warnings);
     hex_digest(hasher)

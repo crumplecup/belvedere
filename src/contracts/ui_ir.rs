@@ -35,6 +35,7 @@ pub struct UiIrInput {
     #[getter(skip)]
     model: AuditorNavigationModel,
     source_view_model_receipt_id: String,
+    source_view_model_receipt_digest: String,
 }
 
 impl UiIrInput {
@@ -45,7 +46,11 @@ impl UiIrInput {
         model: AuditorNavigationModel,
         view_model_receipt: &ViewModelReceipt,
     ) -> Self {
-        Self::new(model, view_model_receipt.receipt_id().to_owned())
+        Self::new(
+            model,
+            view_model_receipt.receipt_id().to_owned(),
+            view_model_receipt.receipt_digest().to_owned(),
+        )
     }
 
     /// Auditor navigation evidence to project.

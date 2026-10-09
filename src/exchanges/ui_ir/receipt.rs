@@ -2,6 +2,7 @@
 
 use std::collections::{BTreeMap, BTreeSet};
 
+use derive_new::new;
 use tracing::instrument;
 
 use crate::{
@@ -20,6 +21,7 @@ use crate::{
     level = "debug",
     skip(
         model,
+        source_view_model_receipt,
         sections,
         trace_widgets,
         tree,
@@ -29,7 +31,7 @@ use crate::{
 )]
 pub(super) fn build_receipt(
     model: &AuditorNavigationModel,
-    source_view_model_receipt_id: &str,
+    source_view_model_receipt: SourceViewModelReceipt<'_>,
     sections: &[UiIrSection],
     trace_widgets: &[TraceWidgetRef],
     tree: &elicit_ui::VerifiedTree,
@@ -90,7 +92,8 @@ pub(super) fn build_receipt(
     let digest_evidence = UiIrReceiptDigestEvidenceBuilder::default()
         .contract(ElicitUiProjectionContract::NAME)
         .counts(receipt_counts)
-        .source_view_model_receipt_id(source_view_model_receipt_id)
+        .source_view_model_receipt_id(source_view_model_receipt.receipt_id)
+        .source_view_model_receipt_digest(source_view_model_receipt.receipt_digest)
         .source_record_ids(&receipt_source_record_ids)
         .section_ids(&receipt_section_ids)
         .section_root_widget_ids(&receipt_section_root_widget_ids)
@@ -118,7 +121,8 @@ pub(super) fn build_receipt(
         .counts(receipt_counts)
         .receipt_id(receipt_id)
         .receipt_digest(receipt_digest)
-        .source_view_model_receipt_id(source_view_model_receipt_id)
+        .source_view_model_receipt_id(source_view_model_receipt.receipt_id)
+        .source_view_model_receipt_digest(source_view_model_receipt.receipt_digest)
         .source_record_ids(receipt_source_record_ids)
         .section_ids(receipt_section_ids)
         .section_root_widget_ids(receipt_section_root_widget_ids)
@@ -140,6 +144,12 @@ pub(super) fn build_receipt(
         .minted_standards(receipt_minted_standards)
         .build()
         .map_err(|error| UiIrError::construction("UiIrReceipt", error))
+}
+
+#[derive(Debug, Clone, Copy, new)]
+pub(super) struct SourceViewModelReceipt<'receipt> {
+    receipt_id: &'receipt str,
+    receipt_digest: &'receipt str,
 }
 
 #[instrument(

@@ -23,6 +23,7 @@ pub struct UiIrReceipt {
     receipt_id: String,
     receipt_digest: String,
     source_view_model_receipt_id: String,
+    source_view_model_receipt_digest: String,
     source_record_ids: Vec<String>,
     section_ids: Vec<String>,
     section_root_widget_ids: Vec<u64>,
@@ -62,6 +63,8 @@ pub(crate) struct UiIrReceiptDigestEvidence<'evidence> {
     counts: UiIrReceiptCounts,
     /// Upstream view-model receipt used as input evidence.
     source_view_model_receipt_id: &'evidence str,
+    /// Upstream view-model receipt digest used as input evidence.
+    source_view_model_receipt_digest: &'evidence str,
     /// Source record IDs represented by the UI IR projection.
     source_record_ids: &'evidence [String],
     /// Stable section IDs emitted by the projection.
@@ -171,6 +174,7 @@ fn ui_ir_receipt_digest(evidence: UiIrReceiptDigestEvidence<'_>) -> String {
     update_field(&mut hasher, &evidence.counts.trace_ref_count().to_string());
     update_field(&mut hasher, &evidence.counts.node_count().to_string());
     update_field(&mut hasher, evidence.source_view_model_receipt_id);
+    update_field(&mut hasher, evidence.source_view_model_receipt_digest);
     update_fields(&mut hasher, evidence.source_record_ids);
     update_fields(&mut hasher, evidence.section_ids);
     update_u64_fields(&mut hasher, evidence.section_root_widget_ids);

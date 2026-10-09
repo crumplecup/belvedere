@@ -34,6 +34,7 @@ pub struct ViewModelReceipt {
     trace_source_counts: BTreeMap<String, usize>,
     item_kind_counts: BTreeMap<String, usize>,
     source_landscape_receipt_id: String,
+    source_landscape_receipt_digest: String,
     view_item_ids: Vec<String>,
     source_record_ids: Vec<String>,
     warnings: Vec<String>,
@@ -79,6 +80,8 @@ pub(crate) struct ViewModelReceiptDigestEvidence<'evidence> {
     item_kind_counts: &'evidence BTreeMap<String, usize>,
     /// Upstream landscape receipt used as input evidence.
     source_landscape_receipt_id: &'evidence str,
+    /// Upstream landscape receipt digest used as input evidence.
+    source_landscape_receipt_digest: &'evidence str,
     /// Stable view-model item IDs emitted by the exchange.
     view_item_ids: &'evidence [String],
     /// Source record IDs represented by the view model.
@@ -244,6 +247,7 @@ fn view_model_receipt_digest(evidence: ViewModelReceiptDigestEvidence<'_>) -> St
     update_counts(&mut hasher, evidence.trace_source_counts);
     update_counts(&mut hasher, evidence.item_kind_counts);
     update_field(&mut hasher, evidence.source_landscape_receipt_id);
+    update_field(&mut hasher, evidence.source_landscape_receipt_digest);
     update_fields(&mut hasher, evidence.view_item_ids);
     update_fields(&mut hasher, evidence.source_record_ids);
     update_fields(&mut hasher, evidence.warnings);

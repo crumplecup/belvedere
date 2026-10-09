@@ -33,6 +33,7 @@ pub struct LandscapeInput {
     #[getter(skip)]
     assessments: DecodedAssessmentStream,
     source_receipt_ids: Vec<String>,
+    source_receipt_digests: Vec<String>,
 }
 
 impl LandscapeInput {
@@ -54,6 +55,10 @@ impl LandscapeInput {
             vec![
                 registry_receipt.receipt_id().to_owned(),
                 assessment_receipt.receipt_id().to_owned(),
+            ],
+            vec![
+                registry_receipt.receipt_digest().to_owned(),
+                assessment_receipt.receipt_digest().to_owned(),
             ],
         )
     }

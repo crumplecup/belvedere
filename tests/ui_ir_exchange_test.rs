@@ -14,8 +14,11 @@ use miette::{IntoDiagnostic, Result, WrapErr, miette};
 fn ui_ir_projection_mints_elicit_ui_standards_and_tree_proofs() -> Result<()> {
     belvedere::init_tracing();
 
+    let input = fixture_input()?;
+    let expected_source_view_model_receipt_digest =
+        input.source_view_model_receipt_digest().to_owned();
     let (projection, receipt) = ElicitUiProjection
-        .project(fixture_input()?)
+        .project(input)
         .into_diagnostic()
         .wrap_err("fixture view model should project into elicit_ui")?;
 
@@ -25,6 +28,11 @@ fn ui_ir_projection_mints_elicit_ui_standards_and_tree_proofs() -> Result<()> {
             .source_view_model_receipt_id()
             .starts_with("belvedere.receipt.view_model:")
     );
+    assert_eq!(
+        receipt.source_view_model_receipt_digest(),
+        &expected_source_view_model_receipt_digest
+    );
+    assert!(is_hex_digest(receipt.source_view_model_receipt_digest()));
     assert_ui_ir_receipt_identity(&receipt);
     assert!(
         projection

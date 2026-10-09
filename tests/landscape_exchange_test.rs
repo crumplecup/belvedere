@@ -9,8 +9,10 @@ use miette::{IntoDiagnostic, Result, WrapErr, miette};
 fn landscape_modeling_maps_decoded_records_into_a_review_graph() -> Result<()> {
     belvedere::init_tracing();
 
+    let input = fixture_input()?;
+    let expected_source_receipt_digests = input.source_receipt_digests().to_vec();
     let (landscape, receipt) = LandscapeModeling
-        .model(fixture_input()?)
+        .model(input)
         .into_diagnostic()
         .wrap_err("landscape modeling is conservative and infallible")?;
 
@@ -75,6 +77,16 @@ fn landscape_modeling_maps_decoded_records_into_a_review_graph() -> Result<()> {
             .source_receipt_ids()
             .iter()
             .all(|id| id.starts_with("belvedere.receipt.ingestion:"))
+    );
+    assert_eq!(
+        receipt.source_receipt_digests(),
+        &expected_source_receipt_digests
+    );
+    assert!(
+        receipt
+            .source_receipt_digests()
+            .iter()
+            .all(|digest| is_hex_digest(digest))
     );
     assert_eq!(receipt.landscape_item_ids().len(), 19);
     assert!(
@@ -258,6 +270,10 @@ fn assert_landscape_receipt_identity(receipt: &belvedere::LandscapeReceipt) {
         receipt.receipt_id(),
         &format!("belvedere.receipt.landscape:{}", receipt.receipt_digest())
     );
+}
+
+fn is_hex_digest(digest: &str) -> bool {
+    digest.len() == 64 && digest.bytes().all(|byte| byte.is_ascii_hexdigit())
 }
 
 #[test]
