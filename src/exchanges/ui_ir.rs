@@ -22,10 +22,12 @@ use crate::{
 
 mod accessibility;
 mod assessment_widgets;
+mod diff_review;
 mod errors;
 mod receipt;
 mod widgets;
 
+pub use diff_review::ElicitUiDiffReviewProjection;
 pub use errors::UiIrError;
 
 use assessment_widgets::{assessment_history_widget, assessment_widget, assessment_work_widget};
@@ -36,8 +38,8 @@ use widgets::{
     source_navigation_widget, witness_widget,
 };
 
-const UI_IR_PRIMARY_VIEWPORT: (u32, u32) = (1440, 960);
-const UI_IR_VERIFICATION_VIEWPORTS: &[(u32, u32)] =
+pub(in crate::exchanges::ui_ir) const UI_IR_PRIMARY_VIEWPORT: (u32, u32) = (1440, 960);
+pub(in crate::exchanges::ui_ir) const UI_IR_VERIFICATION_VIEWPORTS: &[(u32, u32)] =
     &[(390, 844), (768, 1024), UI_IR_PRIMARY_VIEWPORT];
 
 /// Exchange from auditor navigation evidence into `elicit_ui` IR.
@@ -391,7 +393,9 @@ fn source_navigation_section(
 }
 
 #[instrument(level = "debug", skip(backend))]
-fn verify_viewports(backend: &AccessKitUiBackend) -> Vec<UiViewportVerification> {
+pub(in crate::exchanges::ui_ir) fn verify_viewports(
+    backend: &AccessKitUiBackend,
+) -> Vec<UiViewportVerification> {
     UI_IR_VERIFICATION_VIEWPORTS
         .iter()
         .map(|&(width, height)| {
@@ -403,7 +407,7 @@ fn verify_viewports(backend: &AccessKitUiBackend) -> Vec<UiViewportVerification>
 }
 
 #[instrument(level = "debug")]
-fn minted_standards() -> Vec<UiStandardMint> {
+pub(in crate::exchanges::ui_ir) fn minted_standards() -> Vec<UiStandardMint> {
     vec![
         UiStandardMint::from_standard::<ElicitUiIrSourcedStandard>(),
         UiStandardMint::from_standard::<ElicitUiWcagVerifiedStandard>(),

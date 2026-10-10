@@ -147,17 +147,17 @@ pub(super) fn write_landscape_diff_output(
             let file = File::create(path).map_err(BelvedereCliOutputError::write)?;
             write_json(diff.diff_view_model_receipt(), file)
         }
-        BelvedereCliOutput::LandscapeDiffUiIrJson => write_json(diff.current_projection(), writer),
+        BelvedereCliOutput::LandscapeDiffUiIrJson => write_json(diff.diff_projection(), writer),
         BelvedereCliOutput::LandscapeDiffUiIrFile(path) => {
             let file = File::create(path).map_err(BelvedereCliOutputError::write)?;
-            write_json(diff.current_projection(), file)
+            write_json(diff.diff_projection(), file)
         }
         BelvedereCliOutput::LandscapeDiffUiIrReceiptJson => {
-            write_json(diff.current_ui_ir_receipt(), writer)
+            write_json(diff.diff_ui_ir_receipt(), writer)
         }
         BelvedereCliOutput::LandscapeDiffUiIrReceiptFile(path) => {
             let file = File::create(path).map_err(BelvedereCliOutputError::write)?;
-            write_json(diff.current_ui_ir_receipt(), file)
+            write_json(diff.diff_ui_ir_receipt(), file)
         }
         BelvedereCliOutput::LandscapeDiffJson => write_json(diff.diff(), writer),
         BelvedereCliOutput::LandscapeDiffReceiptJson => write_json(diff.diff_receipt(), writer),

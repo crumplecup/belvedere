@@ -454,6 +454,8 @@ fn landscape_diff_runner_uses_the_normal_artifact_path() -> Result<()> {
         report.current_projection().trace_widgets().len()
             >= report.current_view_model_receipt().counts().claim_cards()
     );
+    assert_eq!(report.diff_ui_ir_receipt().counts().section_count(), 3);
+    assert_eq!(report.diff_projection().trace_widgets().len(), 14);
     assert_eq!(
         report
             .diff_receipt()
@@ -582,8 +584,8 @@ fn landscape_diff_runner_uses_the_normal_artifact_path() -> Result<()> {
         BELVEDERE_RUN_CERTIFICATE_SCHEMA_ID
     );
     assert_eq!(report.certificate().input_artifact_ids().len(), 4);
-    assert_eq!(report.certificate().stage_certificates().len(), 12);
-    assert_eq!(report.certificate().stage_certificate_ids().len(), 12);
+    assert_eq!(report.certificate().stage_certificates().len(), 13);
+    assert_eq!(report.certificate().stage_certificate_ids().len(), 13);
     assert_eq!(
         report
             .certificate()
@@ -631,6 +633,13 @@ fn landscape_diff_runner_uses_the_normal_artifact_path() -> Result<()> {
             .certificate()
             .stage_kind_counts()
             .get("stage_landscape_diff_review"),
+        Some(&1)
+    );
+    assert_eq!(
+        report
+            .certificate()
+            .stage_kind_counts()
+            .get("stage_landscape_diff_review_ui_ir_projection"),
         Some(&1)
     );
     assert_eq!(
@@ -706,6 +715,27 @@ fn landscape_diff_runner_uses_the_normal_artifact_path() -> Result<()> {
     assert_eq!(
         report
             .manifest()
+            .stage_kind_counts()
+            .get("manifest_stage_kind_landscape_diff_review_ui_ir_projection"),
+        Some(&1)
+    );
+    assert_eq!(
+        report
+            .manifest()
+            .output_kind_counts()
+            .get("manifest_output_kind_elicit_ui_projection"),
+        Some(&3)
+    );
+    assert_eq!(
+        report
+            .manifest()
+            .output_kind_counts()
+            .get("manifest_output_kind_ui_ir_receipt"),
+        Some(&3)
+    );
+    assert_eq!(
+        report
+            .manifest()
             .output_kind_counts()
             .get("manifest_output_kind_landscape_diff_receipt"),
         Some(&1)
@@ -736,6 +766,12 @@ fn landscape_diff_runner_uses_the_normal_artifact_path() -> Result<()> {
             .stage_certificate_ids()
             .contains(report.diff_view_model_certificate().id())
     );
+    assert!(
+        report
+            .certificate()
+            .stage_certificate_ids()
+            .contains(report.diff_ui_ir_certificate().id())
+    );
     assert_eq!(
         report.diff_view_model().summary().total_items(),
         report.diff().items().len()
@@ -751,6 +787,24 @@ fn landscape_diff_runner_uses_the_normal_artifact_path() -> Result<()> {
     assert_eq!(
         report.diff_view_model_certificate().stage(),
         BelvederePipelineStage::LandscapeDiffReview
+    );
+    assert_eq!(
+        report.diff_ui_ir_certificate().stage(),
+        BelvederePipelineStage::LandscapeDiffReviewUiIrProjection
+    );
+    assert_eq!(
+        report
+            .diff_ui_ir_certificate()
+            .counts()
+            .get("ui_ir_sections_populated"),
+        Some(&3)
+    );
+    assert_eq!(
+        report
+            .diff_ui_ir_certificate()
+            .counts()
+            .get("ui_ir_source_navigation_items"),
+        Some(&7)
     );
     assert_eq!(
         report
@@ -770,6 +824,12 @@ fn landscape_diff_runner_uses_the_normal_artifact_path() -> Result<()> {
     assert!(report.certificate().stage_certificates().iter().any(
         |certificate| certificate.stage() == BelvederePipelineStage::UiIrProjection
             && certificate.counts().get("ui_ir_sections_populated") == Some(&13)
+    ));
+    assert!(report.certificate().stage_certificates().iter().any(
+        |certificate| certificate.stage()
+            == BelvederePipelineStage::LandscapeDiffReviewUiIrProjection
+            && certificate.counts().get("ui_ir_sections_populated") == Some(&3)
+            && certificate.counts().get("trace_unique_source_records") == Some(&7)
     ));
 
     fs::remove_file(previous_assessments_path)

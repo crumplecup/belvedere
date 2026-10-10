@@ -48,6 +48,16 @@ pub const UI_IR_SECTION_GAP_QUEUE: &str = "belvedere.ui.section.gap_queue";
 /// Stable section ID for source record navigation.
 pub const UI_IR_SECTION_SOURCE_NAVIGATION: &str = "belvedere.ui.section.source_navigation";
 
+/// Stable section ID for landscape diff review summary.
+pub const DIFF_REVIEW_UI_IR_SECTION_SUMMARY: &str = "belvedere.ui.section.diff_review_summary";
+
+/// Stable section ID for landscape diff review items.
+pub const DIFF_REVIEW_UI_IR_SECTION_ITEMS: &str = "belvedere.ui.section.diff_review_items";
+
+/// Stable section ID for landscape diff review source navigation.
+pub const DIFF_REVIEW_UI_IR_SECTION_SOURCE_NAVIGATION: &str =
+    "belvedere.ui.section.diff_review_source_navigation";
+
 /// A minted-standard entry returned with the UI IR projection.
 #[derive(Debug, Clone, PartialEq, Eq, Getters, Serialize)]
 pub struct UiStandardMint {

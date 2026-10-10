@@ -353,7 +353,7 @@ pub(super) fn source_navigation_widget(
 }
 
 #[instrument(level = "debug", skip(backend, trace, trace_widgets))]
-pub(super) fn labeled_widget(
+pub(in crate::exchanges::ui_ir) fn labeled_widget(
     backend: &AccessKitUiBackend,
     section_id: &'static str,
     role: &str,
@@ -457,7 +457,7 @@ fn trace_widget_ref_id(
 }
 
 #[instrument(level = "debug", skip(backend, content))]
-pub(super) fn section(
+pub(in crate::exchanges::ui_ir) fn section(
     backend: &AccessKitUiBackend,
     id: &'static str,
     name: &'static str,

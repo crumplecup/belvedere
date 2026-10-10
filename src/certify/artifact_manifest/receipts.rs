@@ -51,6 +51,8 @@ pub(crate) struct BelvedereDiffManifestReceipts<'receipt> {
     diff: &'receipt LandscapeDiffReceipt,
     #[getter(copy)]
     diff_review: &'receipt LandscapeDiffReviewReceipt,
+    #[getter(copy)]
+    diff_review_ui_ir: &'receipt UiIrReceipt,
 }
 
 impl<'receipt> BelvedereDiffManifestReceipts<'receipt> {
@@ -61,12 +63,14 @@ impl<'receipt> BelvedereDiffManifestReceipts<'receipt> {
         current: BelvedereSnapshotManifestReceipts<'receipt>,
         diff: &'receipt LandscapeDiffReceipt,
         diff_review: &'receipt LandscapeDiffReviewReceipt,
+        diff_review_ui_ir: &'receipt UiIrReceipt,
     ) -> Self {
         Self {
             previous,
             current,
             diff,
             diff_review,
+            diff_review_ui_ir,
         }
     }
 }

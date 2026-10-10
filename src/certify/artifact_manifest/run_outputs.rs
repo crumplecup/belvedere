@@ -151,6 +151,13 @@ fn diff_stage_certificate_outputs(
             receipts.diff_review().review_item_ids().len(),
             stage_certificates,
         ),
+        stage_certificate_output(
+            "diff_review_ui_ir_certificate",
+            "stage_certificate",
+            12,
+            receipts.diff_review_ui_ir().output_ids().len(),
+            stage_certificates,
+        ),
     ]
 }
 
@@ -356,6 +363,24 @@ fn diff_outputs(
             receipts.diff_review().receipt_digest(),
             11,
             receipts.diff_review().review_item_ids().len(),
+            stage_certificates,
+        ),
+        output_artifact(
+            "landscape_diff_review_ui_ir_projection",
+            "elicit_ui_projection",
+            receipts.diff_review_ui_ir().receipt_id(),
+            receipts.diff_review_ui_ir().receipt_digest(),
+            12,
+            receipts.diff_review_ui_ir().trace_widget_ids().len(),
+            stage_certificates,
+        ),
+        output_artifact(
+            "landscape_diff_review_ui_ir_receipt",
+            "ui_ir_receipt",
+            receipts.diff_review_ui_ir().receipt_id(),
+            receipts.diff_review_ui_ir().receipt_digest(),
+            12,
+            receipts.diff_review_ui_ir().trace_widget_ids().len(),
             stage_certificates,
         ),
     ]

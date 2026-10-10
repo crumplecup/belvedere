@@ -214,7 +214,7 @@ pub(super) fn normal_stage_roles() -> [&'static str; 5] {
 }
 
 #[instrument(level = "debug")]
-pub(super) fn diff_stage_roles() -> [&'static str; 12] {
+pub(super) fn diff_stage_roles() -> [&'static str; 13] {
     [
         "previous_registry_ingestion",
         "previous_assessment_ingestion",
@@ -228,6 +228,7 @@ pub(super) fn diff_stage_roles() -> [&'static str; 12] {
         "current_ui_ir_projection",
         "landscape_diff",
         "landscape_diff_review",
+        "landscape_diff_review_ui_ir_projection",
     ]
 }
 

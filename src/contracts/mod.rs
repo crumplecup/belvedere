@@ -47,6 +47,8 @@ pub use standards::{
     belvedere_pipeline_provenance,
 };
 pub use ui_ir::{
+    DIFF_REVIEW_UI_IR_SECTION_ITEMS, DIFF_REVIEW_UI_IR_SECTION_SOURCE_NAVIGATION,
+    DIFF_REVIEW_UI_IR_SECTION_SUMMARY, DiffReviewUiIrInput, ElicitUiDiffReviewProjectionContract,
     ElicitUiIrSourcedStandard, ElicitUiProjectionContract, ElicitUiRenderCompleteStandard,
     ElicitUiRolePreservedStandard, ElicitUiWcagVerifiedStandard, MintedElicitUiStandard,
     TraceWidgetRef, UI_IR_SECTION_ASSESSMENT_HISTORY, UI_IR_SECTION_ASSESSMENT_QUEUE,

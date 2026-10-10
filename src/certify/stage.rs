@@ -19,6 +19,8 @@ pub enum BelvederePipelineStage {
     LandscapeDiff,
     /// Landscape diff review-model construction.
     LandscapeDiffReview,
+    /// Landscape diff review `elicit_ui` IR projection.
+    LandscapeDiffReviewUiIrProjection,
     /// Auditor navigation view-model construction.
     AuditorNavigation,
     /// `elicit_ui` IR projection.
@@ -35,6 +37,7 @@ impl BelvederePipelineStage {
             Self::LandscapeModeling => "landscape_modeling",
             Self::LandscapeDiff => "landscape_diff",
             Self::LandscapeDiffReview => "landscape_diff_review",
+            Self::LandscapeDiffReviewUiIrProjection => "landscape_diff_review_ui_ir_projection",
             Self::AuditorNavigation => "auditor_navigation",
             Self::UiIrProjection => "ui_ir_projection",
         }

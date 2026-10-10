@@ -42,8 +42,10 @@ pub use contracts::{
     AssessmentRecord, AssessmentStreamIngestionContract, AssessmentWorkItem, AuditorFilterFacet,
     AuditorNavigationContract, AuditorNavigationModel, BackendCoverageItem, BelvedereContract,
     BelvederePipelineClaim, BelvederePipelineStandard, ClaimDetailItem, ClaimEdge,
-    ClaimExplorerCounts, ClaimExplorerItem, ContractRecordRecord, DecodedAssessmentStream,
-    DecodedRegistrySnapshot, ElicitUiIrSourcedStandard, ElicitUiProjectionContract,
+    ClaimExplorerCounts, ClaimExplorerItem, ContractRecordRecord, DIFF_REVIEW_UI_IR_SECTION_ITEMS,
+    DIFF_REVIEW_UI_IR_SECTION_SOURCE_NAVIGATION, DIFF_REVIEW_UI_IR_SECTION_SUMMARY,
+    DecodedAssessmentStream, DecodedRegistrySnapshot, DiffReviewUiIrInput,
+    ElicitUiDiffReviewProjectionContract, ElicitUiIrSourcedStandard, ElicitUiProjectionContract,
     ElicitUiRenderCompleteStandard, ElicitUiRolePreservedStandard, ElicitUiWcagVerifiedStandard,
     EvidenceLinkRecord, GAP_SOUNDNESS_STANDARD_ID, GapItem, GapSeverity, GapSoundnessStandard,
     INPUT_FIDELITY_STANDARD_ID, InputFidelityStandard, KaniProofRecord, KaniProofSummary,
@@ -72,9 +74,10 @@ pub use contracts::{
 };
 pub use error::{BelvedereConstructionError, BelvedereError};
 pub use exchanges::{
-    AssessmentStreamIngestion, AuditorNavigationProjection, BelvedereExchange, ElicitUiProjection,
-    IngestionError, LandscapeDiffReviewProjection, LandscapeDiffing, LandscapeModeling,
-    RegistryDumpIngestion, UiIrError, WrongArtifactKindError,
+    AssessmentStreamIngestion, AuditorNavigationProjection, BelvedereExchange,
+    ElicitUiDiffReviewProjection, ElicitUiProjection, IngestionError,
+    LandscapeDiffReviewProjection, LandscapeDiffing, LandscapeModeling, RegistryDumpIngestion,
+    UiIrError, WrongArtifactKindError,
 };
 pub use run::{
     BelvedereLandscapeDiffRunInput, BelvedereLandscapeDiffRunReport, BelvedereRunInput,
