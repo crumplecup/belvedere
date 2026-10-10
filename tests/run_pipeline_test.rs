@@ -1056,6 +1056,8 @@ fn cli_help_is_a_successful_public_output_contract() -> Result<()> {
     assert!(help.contains("--previous-landscape-receipt-file"));
     assert!(help.contains("--previous-view-model-json"));
     assert!(help.contains("--previous-view-model-file"));
+    assert!(help.contains("--previous-filter-facets-json"));
+    assert!(help.contains("--previous-filter-facets-file"));
     assert!(help.contains("--previous-view-model-receipt-json"));
     assert!(help.contains("--previous-view-model-receipt-file"));
     assert!(help.contains("--previous-ui-ir-json"));
@@ -1064,6 +1066,8 @@ fn cli_help_is_a_successful_public_output_contract() -> Result<()> {
     assert!(help.contains("--previous-ui-ir-receipt-file"));
     assert!(help.contains("--current-landscape-receipt-json"));
     assert!(help.contains("--current-landscape-receipt-file"));
+    assert!(help.contains("--current-filter-facets-json"));
+    assert!(help.contains("--current-filter-facets-file"));
     assert!(help.contains("--current-view-model-receipt-json"));
     assert!(help.contains("--current-view-model-receipt-file"));
     assert!(help.contains("--current-ui-ir-receipt-json"));
@@ -1074,6 +1078,8 @@ fn cli_help_is_a_successful_public_output_contract() -> Result<()> {
     assert!(help.contains("--assessment-receipt-file"));
     assert!(help.contains("--landscape-receipt-json"));
     assert!(help.contains("--landscape-receipt-file"));
+    assert!(help.contains("--filter-facets-json"));
+    assert!(help.contains("--filter-facets-file"));
     assert!(help.contains("--view-model-receipt-json"));
     assert!(help.contains("--view-model-receipt-file"));
     assert!(help.contains("--review-workflow-json"));
@@ -1948,6 +1954,46 @@ fn assert_auditor_navigation_model(model: &Value) {
     }));
 }
 
+fn assert_filter_facets(facets: &Value) {
+    assert_eq!(facets.as_array().map(Vec::len), Some(10));
+    assert!(facets.as_array().is_some_and(|items| {
+        items.iter().all(|facet| {
+            facet["facet_id"]
+                .as_str()
+                .is_some_and(|facet_id| !facet_id.is_empty())
+                && facet["group"]
+                    .as_str()
+                    .is_some_and(|group| !group.is_empty())
+                && facet["value"]
+                    .as_str()
+                    .is_some_and(|value| !value.is_empty())
+                && facet["label"]
+                    .as_str()
+                    .is_some_and(|label| !label.is_empty())
+                && facet["trace"]["claim_id"]
+                    .as_str()
+                    .is_some_and(|claim_id| !claim_id.is_empty())
+        })
+    }));
+    assert!(facets.as_array().is_some_and(|items| {
+        items.iter().any(|facet| {
+            facet["facet_id"].as_str() == Some("belvedere.filter.verifier:kani")
+                && facet["group"].as_str() == Some("verifier")
+                && facet["value"].as_str() == Some("kani")
+                && facet["count"].as_u64() == Some(2)
+                && facet["trace"]["claim_id"].as_str() == Some("belvedere.filter.verifier:kani")
+        })
+    }));
+    assert!(facets.as_array().is_some_and(|items| {
+        items.iter().any(|facet| {
+            facet["facet_id"].as_str() == Some("belvedere.filter.priority:high")
+                && facet["group"].as_str() == Some("priority")
+                && facet["value"].as_str() == Some("high")
+                && facet["count"].as_u64() == Some(3)
+        })
+    }));
+}
+
 fn assert_review_workflow_queue(queue: &Value) {
     assert_eq!(queue.as_array().map(Vec::len), Some(4));
     assert!(queue.as_array().is_some_and(|tasks| {
@@ -1965,6 +2011,24 @@ fn assert_review_workflow_queue(queue: &Value) {
                 && task["action"]
                     .as_str()
                     .is_some_and(|action| !action.is_empty())
+        })
+    }));
+}
+
+fn assert_previous_filter_facets(facets: &Value) {
+    assert_eq!(facets.as_array().map(Vec::len), Some(8));
+    assert!(facets.as_array().is_some_and(|items| {
+        items.iter().any(|facet| {
+            facet["facet_id"].as_str() == Some("belvedere.filter.claim_family:belvedere::ingestion")
+                && facet["group"].as_str() == Some("claim_family")
+                && facet["count"].as_u64() == Some(3)
+        })
+    }));
+    assert!(facets.as_array().is_some_and(|items| {
+        items.iter().any(|facet| {
+            facet["facet_id"].as_str() == Some("belvedere.filter.verifier:kani")
+                && facet["group"].as_str() == Some("verifier")
+                && facet["count"].as_u64() == Some(2)
         })
     }));
 }
@@ -2836,11 +2900,16 @@ fn cli_can_emit_the_view_model_receipt_as_json() -> Result<()> {
 fn cli_can_emit_run_projection_artifacts_as_json() -> Result<()> {
     belvedere::init_tracing();
 
-    let cases: [(&str, BelvedereCliOutput, ReceiptAssertion); 3] = [
+    let cases: [(&str, BelvedereCliOutput, ReceiptAssertion); 4] = [
         (
             "--view-model-json",
             BelvedereCliOutput::RunViewModelJson,
             assert_auditor_navigation_model,
+        ),
+        (
+            "--filter-facets-json",
+            BelvedereCliOutput::RunFilterFacetsJson,
+            assert_filter_facets,
         ),
         (
             "--review-workflow-json",
@@ -3176,15 +3245,23 @@ fn cli_can_persist_run_projection_artifacts_as_json() -> Result<()> {
 
     let view_model_path =
         std::env::temp_dir().join(format!("belvedere-view-model-{}.json", process::id()));
+    let filter_facets_path =
+        std::env::temp_dir().join(format!("belvedere-filter-facets-{}.json", process::id()));
     let review_workflow_path =
         std::env::temp_dir().join(format!("belvedere-review-workflow-{}.json", process::id()));
     let ui_ir_path = std::env::temp_dir().join(format!("belvedere-ui-ir-{}.json", process::id()));
-    let cases: [(&str, PathBuf, BelvedereCliOutput, ReceiptAssertion); 3] = [
+    let cases: [(&str, PathBuf, BelvedereCliOutput, ReceiptAssertion); 4] = [
         (
             "--view-model-file",
             view_model_path.clone(),
             BelvedereCliOutput::RunViewModelFile(view_model_path.clone()),
             assert_auditor_navigation_model,
+        ),
+        (
+            "--filter-facets-file",
+            filter_facets_path.clone(),
+            BelvedereCliOutput::RunFilterFacetsFile(filter_facets_path.clone()),
+            assert_filter_facets,
         ),
         (
             "--review-workflow-file",
@@ -4630,11 +4707,16 @@ fn cli_can_emit_previous_diff_projection_artifacts_as_json() -> Result<()> {
         .into_diagnostic()
         .wrap_err("temporary empty assessment artifact should be writable")?;
 
-    let cases: [(&str, BelvedereCliOutput, ReceiptAssertion); 2] = [
+    let cases: [(&str, BelvedereCliOutput, ReceiptAssertion); 3] = [
         (
             "--previous-view-model-json",
             BelvedereCliOutput::LandscapeDiffPreviousViewModelJson,
             assert_previous_auditor_navigation_model,
+        ),
+        (
+            "--previous-filter-facets-json",
+            BelvedereCliOutput::LandscapeDiffPreviousFilterFacetsJson,
+            assert_previous_filter_facets,
         ),
         (
             "--previous-ui-ir-json",
@@ -4685,14 +4767,24 @@ fn cli_can_persist_previous_diff_projection_artifacts_as_json() -> Result<()> {
         "belvedere-previous-view-model-{}.json",
         process::id()
     ));
+    let filter_facets_path = std::env::temp_dir().join(format!(
+        "belvedere-previous-filter-facets-{}.json",
+        process::id()
+    ));
     let ui_ir_path =
         std::env::temp_dir().join(format!("belvedere-previous-ui-ir-{}.json", process::id()));
-    let cases: [(&str, PathBuf, BelvedereCliOutput, ReceiptAssertion); 2] = [
+    let cases: [(&str, PathBuf, BelvedereCliOutput, ReceiptAssertion); 3] = [
         (
             "--previous-view-model-file",
             view_model_path.clone(),
             BelvedereCliOutput::LandscapeDiffPreviousViewModelFile(view_model_path.clone()),
             assert_previous_auditor_navigation_model,
+        ),
+        (
+            "--previous-filter-facets-file",
+            filter_facets_path.clone(),
+            BelvedereCliOutput::LandscapeDiffPreviousFilterFacetsFile(filter_facets_path.clone()),
+            assert_previous_filter_facets,
         ),
         (
             "--previous-ui-ir-file",
@@ -4882,11 +4974,16 @@ fn cli_can_emit_current_diff_projection_artifacts_as_json() -> Result<()> {
         .into_diagnostic()
         .wrap_err("temporary empty assessment artifact should be writable")?;
 
-    let cases: [(&str, BelvedereCliOutput, ReceiptAssertion); 2] = [
+    let cases: [(&str, BelvedereCliOutput, ReceiptAssertion); 3] = [
         (
             "--current-view-model-json",
             BelvedereCliOutput::LandscapeDiffCurrentViewModelJson,
             assert_auditor_navigation_model,
+        ),
+        (
+            "--current-filter-facets-json",
+            BelvedereCliOutput::LandscapeDiffCurrentFilterFacetsJson,
+            assert_filter_facets,
         ),
         (
             "--current-ui-ir-json",
@@ -4937,14 +5034,24 @@ fn cli_can_persist_current_diff_projection_artifacts_as_json() -> Result<()> {
         "belvedere-current-view-model-{}.json",
         process::id()
     ));
+    let filter_facets_path = std::env::temp_dir().join(format!(
+        "belvedere-current-filter-facets-{}.json",
+        process::id()
+    ));
     let ui_ir_path =
         std::env::temp_dir().join(format!("belvedere-current-ui-ir-{}.json", process::id()));
-    let cases: [(&str, PathBuf, BelvedereCliOutput, ReceiptAssertion); 2] = [
+    let cases: [(&str, PathBuf, BelvedereCliOutput, ReceiptAssertion); 3] = [
         (
             "--current-view-model-file",
             view_model_path.clone(),
             BelvedereCliOutput::LandscapeDiffCurrentViewModelFile(view_model_path.clone()),
             assert_auditor_navigation_model,
+        ),
+        (
+            "--current-filter-facets-file",
+            filter_facets_path.clone(),
+            BelvedereCliOutput::LandscapeDiffCurrentFilterFacetsFile(filter_facets_path.clone()),
+            assert_filter_facets,
         ),
         (
             "--current-ui-ir-file",
@@ -5006,11 +5113,16 @@ fn cli_can_emit_landscape_diff_projection_artifact_aliases_as_json() -> Result<(
         .into_diagnostic()
         .wrap_err("temporary empty assessment artifact should be writable")?;
 
-    let cases: [(&str, BelvedereCliOutput, ReceiptAssertion); 3] = [
+    let cases: [(&str, BelvedereCliOutput, ReceiptAssertion); 4] = [
         (
             "--view-model-json",
             BelvedereCliOutput::LandscapeDiffViewModelJson,
             assert_landscape_diff_review_model,
+        ),
+        (
+            "--filter-facets-json",
+            BelvedereCliOutput::LandscapeDiffFilterFacetsJson,
+            assert_filter_facets,
         ),
         (
             "--review-workflow-json",
@@ -5062,18 +5174,28 @@ fn cli_can_persist_landscape_diff_projection_artifact_aliases_as_json() -> Resul
 
     let view_model_path =
         std::env::temp_dir().join(format!("belvedere-diff-view-model-{}.json", process::id()));
+    let filter_facets_path = std::env::temp_dir().join(format!(
+        "belvedere-diff-filter-facets-{}.json",
+        process::id()
+    ));
     let review_workflow_path = std::env::temp_dir().join(format!(
         "belvedere-diff-review-workflow-{}.json",
         process::id()
     ));
     let ui_ir_path =
         std::env::temp_dir().join(format!("belvedere-diff-ui-ir-{}.json", process::id()));
-    let cases: [(&str, PathBuf, BelvedereCliOutput, ReceiptAssertion); 3] = [
+    let cases: [(&str, PathBuf, BelvedereCliOutput, ReceiptAssertion); 4] = [
         (
             "--view-model-file",
             view_model_path.clone(),
             BelvedereCliOutput::LandscapeDiffViewModelFile(view_model_path.clone()),
             assert_landscape_diff_review_model,
+        ),
+        (
+            "--filter-facets-file",
+            filter_facets_path.clone(),
+            BelvedereCliOutput::LandscapeDiffFilterFacetsFile(filter_facets_path.clone()),
+            assert_filter_facets,
         ),
         (
             "--review-workflow-file",

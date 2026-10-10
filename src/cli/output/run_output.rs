@@ -53,6 +53,13 @@ pub(super) fn write_run_output(
             let file = File::create(path).map_err(BelvedereCliOutputError::write)?;
             write_json(run.view_model(), file)
         }
+        BelvedereCliOutput::RunFilterFacetsJson => {
+            write_json(run.view_model().filter_facets(), writer)
+        }
+        BelvedereCliOutput::RunFilterFacetsFile(path) => {
+            let file = File::create(path).map_err(BelvedereCliOutputError::write)?;
+            write_json(run.view_model().filter_facets(), file)
+        }
         BelvedereCliOutput::RunReviewWorkflowJson => {
             write_json(run.view_model().review_workflow(), writer)
         }

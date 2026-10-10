@@ -51,6 +51,10 @@ pub enum BelvedereCliOutput {
     RunViewModelJson,
     /// Write the normal run view model as JSON to an artifact file.
     RunViewModelFile(PathBuf),
+    /// Write the normal run filter facets as JSON.
+    RunFilterFacetsJson,
+    /// Write the normal run filter facets as JSON to an artifact file.
+    RunFilterFacetsFile(PathBuf),
     /// Write the normal run auditor review workflow queue as JSON.
     RunReviewWorkflowJson,
     /// Write the normal run auditor review workflow queue as JSON to an artifact file.
@@ -105,6 +109,10 @@ pub enum BelvedereCliOutput {
     LandscapeDiffPreviousViewModelJson,
     /// Write the previous view model from a diff run as JSON to an artifact file.
     LandscapeDiffPreviousViewModelFile(PathBuf),
+    /// Write the previous filter facets from a diff run as JSON.
+    LandscapeDiffPreviousFilterFacetsJson,
+    /// Write the previous filter facets from a diff run as JSON to an artifact file.
+    LandscapeDiffPreviousFilterFacetsFile(PathBuf),
     /// Write the previous view-model receipt from a diff run as JSON.
     LandscapeDiffPreviousViewModelReceiptJson,
     /// Write the previous view-model receipt from a diff run as JSON to an artifact file.
@@ -125,6 +133,10 @@ pub enum BelvedereCliOutput {
     LandscapeDiffCurrentViewModelJson,
     /// Write the current view model from a diff run as JSON to an artifact file.
     LandscapeDiffCurrentViewModelFile(PathBuf),
+    /// Write the current filter facets from a diff run as JSON.
+    LandscapeDiffCurrentFilterFacetsJson,
+    /// Write the current filter facets from a diff run as JSON to an artifact file.
+    LandscapeDiffCurrentFilterFacetsFile(PathBuf),
     /// Write the current view-model receipt from a diff run as JSON.
     LandscapeDiffCurrentViewModelReceiptJson,
     /// Write the current view-model receipt from a diff run as JSON to an artifact file.
@@ -161,6 +173,10 @@ pub enum BelvedereCliOutput {
     LandscapeDiffViewModelJson,
     /// Write the current-snapshot view model from a diff run as JSON to an artifact file.
     LandscapeDiffViewModelFile(PathBuf),
+    /// Write the current-snapshot filter facets from a diff run as JSON.
+    LandscapeDiffFilterFacetsJson,
+    /// Write the current-snapshot filter facets from a diff run as JSON to an artifact file.
+    LandscapeDiffFilterFacetsFile(PathBuf),
     /// Write the landscape diff review workflow queue as JSON.
     LandscapeDiffReviewWorkflowJson,
     /// Write the landscape diff review workflow queue as JSON to an artifact file.
