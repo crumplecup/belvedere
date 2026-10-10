@@ -140,6 +140,13 @@ pub(super) fn write_landscape_diff_output(
             let file = File::create(path).map_err(BelvedereCliOutputError::write)?;
             write_json(diff.diff_view_model(), file)
         }
+        BelvedereCliOutput::LandscapeDiffReviewWorkflowJson => {
+            write_json(diff.diff_view_model().items(), writer)
+        }
+        BelvedereCliOutput::LandscapeDiffReviewWorkflowFile(path) => {
+            let file = File::create(path).map_err(BelvedereCliOutputError::write)?;
+            write_json(diff.diff_view_model().items(), file)
+        }
         BelvedereCliOutput::LandscapeDiffViewModelReceiptJson => {
             write_json(diff.diff_view_model_receipt(), writer)
         }

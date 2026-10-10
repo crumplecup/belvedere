@@ -51,6 +51,10 @@ pub enum BelvedereCliOutput {
     RunViewModelJson,
     /// Write the normal run view model as JSON to an artifact file.
     RunViewModelFile(PathBuf),
+    /// Write the normal run auditor review workflow queue as JSON.
+    RunReviewWorkflowJson,
+    /// Write the normal run auditor review workflow queue as JSON to an artifact file.
+    RunReviewWorkflowFile(PathBuf),
     /// Write the normal run view-model receipt as JSON.
     RunViewModelReceiptJson,
     /// Write the normal run view-model receipt as JSON to an artifact file.
@@ -157,6 +161,10 @@ pub enum BelvedereCliOutput {
     LandscapeDiffViewModelJson,
     /// Write the current-snapshot view model from a diff run as JSON to an artifact file.
     LandscapeDiffViewModelFile(PathBuf),
+    /// Write the landscape diff review workflow queue as JSON.
+    LandscapeDiffReviewWorkflowJson,
+    /// Write the landscape diff review workflow queue as JSON to an artifact file.
+    LandscapeDiffReviewWorkflowFile(PathBuf),
     /// Write the current-snapshot view-model receipt from a diff run as JSON.
     LandscapeDiffViewModelReceiptJson,
     /// Write the current-snapshot view-model receipt from a diff run as JSON to an artifact file.

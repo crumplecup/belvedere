@@ -1076,6 +1076,8 @@ fn cli_help_is_a_successful_public_output_contract() -> Result<()> {
     assert!(help.contains("--landscape-receipt-file"));
     assert!(help.contains("--view-model-receipt-json"));
     assert!(help.contains("--view-model-receipt-file"));
+    assert!(help.contains("--review-workflow-json"));
+    assert!(help.contains("--review-workflow-file"));
     assert!(help.contains("--ui-ir-receipt-json"));
     assert!(help.contains("--ui-ir-receipt-file"));
     Ok(())
@@ -1946,6 +1948,27 @@ fn assert_auditor_navigation_model(model: &Value) {
     }));
 }
 
+fn assert_review_workflow_queue(queue: &Value) {
+    assert_eq!(queue.as_array().map(Vec::len), Some(4));
+    assert!(queue.as_array().is_some_and(|tasks| {
+        tasks.iter().all(|task| {
+            is_hex_digest(&task["task_digest"])
+                && task["task_id"].as_str().is_some_and(|id| !id.is_empty())
+        })
+    }));
+    assert!(queue.as_array().is_some_and(|tasks| {
+        tasks.iter().any(|task| {
+            task["priority"].as_str() == Some("blocking")
+                && task["lane"]
+                    .as_str()
+                    .is_some_and(|lane| lane.starts_with("blocked:"))
+                && task["action"]
+                    .as_str()
+                    .is_some_and(|action| !action.is_empty())
+        })
+    }));
+}
+
 fn assert_previous_auditor_navigation_model(model: &Value) {
     assert_eq!(model["overview"]["claim_count"].as_u64(), Some(3));
     assert_eq!(model["overview"]["root_count"].as_u64(), Some(2));
@@ -1996,6 +2019,27 @@ fn assert_landscape_diff_review_model(model: &Value) {
                 && item["diff_item_id"]
                     .as_str()
                     .is_some_and(|id| id.starts_with("belvedere.diff."))
+        })
+    }));
+}
+
+fn assert_landscape_diff_review_workflow_queue(queue: &Value) {
+    assert_eq!(queue.as_array().map(Vec::len), Some(6));
+    assert!(queue.as_array().is_some_and(|items| {
+        items.iter().all(|item| {
+            item["item_id"]
+                .as_str()
+                .is_some_and(|id| id.starts_with("belvedere.diff_review.item:"))
+                && item["diff_item_id"]
+                    .as_str()
+                    .is_some_and(|id| id.starts_with("belvedere.diff."))
+        })
+    }));
+    assert!(queue.as_array().is_some_and(|items| {
+        items.iter().any(|item| {
+            item["review_priority"].as_str() == Some("blocking")
+                && item["review_action"].as_str() == Some("triage_new_gap")
+                && item["subject_kind"].as_str() == Some("gap")
         })
     }));
 }
@@ -2792,11 +2836,16 @@ fn cli_can_emit_the_view_model_receipt_as_json() -> Result<()> {
 fn cli_can_emit_run_projection_artifacts_as_json() -> Result<()> {
     belvedere::init_tracing();
 
-    let cases: [(&str, BelvedereCliOutput, ReceiptAssertion); 2] = [
+    let cases: [(&str, BelvedereCliOutput, ReceiptAssertion); 3] = [
         (
             "--view-model-json",
             BelvedereCliOutput::RunViewModelJson,
             assert_auditor_navigation_model,
+        ),
+        (
+            "--review-workflow-json",
+            BelvedereCliOutput::RunReviewWorkflowJson,
+            assert_review_workflow_queue,
         ),
         (
             "--ui-ir-json",
@@ -3127,13 +3176,21 @@ fn cli_can_persist_run_projection_artifacts_as_json() -> Result<()> {
 
     let view_model_path =
         std::env::temp_dir().join(format!("belvedere-view-model-{}.json", process::id()));
+    let review_workflow_path =
+        std::env::temp_dir().join(format!("belvedere-review-workflow-{}.json", process::id()));
     let ui_ir_path = std::env::temp_dir().join(format!("belvedere-ui-ir-{}.json", process::id()));
-    let cases: [(&str, PathBuf, BelvedereCliOutput, ReceiptAssertion); 2] = [
+    let cases: [(&str, PathBuf, BelvedereCliOutput, ReceiptAssertion); 3] = [
         (
             "--view-model-file",
             view_model_path.clone(),
             BelvedereCliOutput::RunViewModelFile(view_model_path.clone()),
             assert_auditor_navigation_model,
+        ),
+        (
+            "--review-workflow-file",
+            review_workflow_path.clone(),
+            BelvedereCliOutput::RunReviewWorkflowFile(review_workflow_path.clone()),
+            assert_review_workflow_queue,
         ),
         (
             "--ui-ir-file",
@@ -4949,11 +5006,16 @@ fn cli_can_emit_landscape_diff_projection_artifact_aliases_as_json() -> Result<(
         .into_diagnostic()
         .wrap_err("temporary empty assessment artifact should be writable")?;
 
-    let cases: [(&str, BelvedereCliOutput, ReceiptAssertion); 2] = [
+    let cases: [(&str, BelvedereCliOutput, ReceiptAssertion); 3] = [
         (
             "--view-model-json",
             BelvedereCliOutput::LandscapeDiffViewModelJson,
             assert_landscape_diff_review_model,
+        ),
+        (
+            "--review-workflow-json",
+            BelvedereCliOutput::LandscapeDiffReviewWorkflowJson,
+            assert_landscape_diff_review_workflow_queue,
         ),
         (
             "--ui-ir-json",
@@ -5000,14 +5062,24 @@ fn cli_can_persist_landscape_diff_projection_artifact_aliases_as_json() -> Resul
 
     let view_model_path =
         std::env::temp_dir().join(format!("belvedere-diff-view-model-{}.json", process::id()));
+    let review_workflow_path = std::env::temp_dir().join(format!(
+        "belvedere-diff-review-workflow-{}.json",
+        process::id()
+    ));
     let ui_ir_path =
         std::env::temp_dir().join(format!("belvedere-diff-ui-ir-{}.json", process::id()));
-    let cases: [(&str, PathBuf, BelvedereCliOutput, ReceiptAssertion); 2] = [
+    let cases: [(&str, PathBuf, BelvedereCliOutput, ReceiptAssertion); 3] = [
         (
             "--view-model-file",
             view_model_path.clone(),
             BelvedereCliOutput::LandscapeDiffViewModelFile(view_model_path.clone()),
             assert_landscape_diff_review_model,
+        ),
+        (
+            "--review-workflow-file",
+            review_workflow_path.clone(),
+            BelvedereCliOutput::LandscapeDiffReviewWorkflowFile(review_workflow_path.clone()),
+            assert_landscape_diff_review_workflow_queue,
         ),
         (
             "--ui-ir-file",

@@ -323,6 +323,16 @@ impl BelvedereCli {
                 )?);
                 1
             }
+            "--review-workflow-json" => {
+                *output = BelvedereCliOutput::LandscapeDiffReviewWorkflowJson;
+                0
+            }
+            "--review-workflow-file" => {
+                *output = BelvedereCliOutput::LandscapeDiffReviewWorkflowFile(Self::next_path(
+                    arguments, index,
+                )?);
+                1
+            }
             "--view-model-receipt-json" => {
                 *output = BelvedereCliOutput::LandscapeDiffViewModelReceiptJson;
                 0

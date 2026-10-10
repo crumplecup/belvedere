@@ -130,6 +130,16 @@ impl BelvedereCli {
                     output = BelvedereCliOutput::RunViewModelFile(PathBuf::from(path));
                     index += 1;
                 }
+                "--review-workflow-json" => {
+                    output = BelvedereCliOutput::RunReviewWorkflowJson;
+                }
+                "--review-workflow-file" => {
+                    let Some(path) = arguments.get(index + 1) else {
+                        return Err(BelvedereCliUsageError::new().into());
+                    };
+                    output = BelvedereCliOutput::RunReviewWorkflowFile(PathBuf::from(path));
+                    index += 1;
+                }
                 "--view-model-receipt-json" => {
                     output = BelvedereCliOutput::RunViewModelReceiptJson;
                 }
