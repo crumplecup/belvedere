@@ -51,6 +51,10 @@ pub enum BelvedereCliOutput {
     RunViewModelJson,
     /// Write the normal run view model as JSON to an artifact file.
     RunViewModelFile(PathBuf),
+    /// Write the normal run claim detail deep-dive items as JSON.
+    RunClaimDetailsJson,
+    /// Write the normal run claim detail deep-dive items as JSON to an artifact file.
+    RunClaimDetailsFile(PathBuf),
     /// Write the normal run filter facets as JSON.
     RunFilterFacetsJson,
     /// Write the normal run filter facets as JSON to an artifact file.
@@ -117,6 +121,10 @@ pub enum BelvedereCliOutput {
     LandscapeDiffPreviousViewModelJson,
     /// Write the previous view model from a diff run as JSON to an artifact file.
     LandscapeDiffPreviousViewModelFile(PathBuf),
+    /// Write the previous claim detail deep-dive items from a diff run as JSON.
+    LandscapeDiffPreviousClaimDetailsJson,
+    /// Write the previous claim detail deep-dive items from a diff run as JSON to an artifact file.
+    LandscapeDiffPreviousClaimDetailsFile(PathBuf),
     /// Write the previous filter facets from a diff run as JSON.
     LandscapeDiffPreviousFilterFacetsJson,
     /// Write the previous filter facets from a diff run as JSON to an artifact file.
@@ -149,6 +157,10 @@ pub enum BelvedereCliOutput {
     LandscapeDiffCurrentViewModelJson,
     /// Write the current view model from a diff run as JSON to an artifact file.
     LandscapeDiffCurrentViewModelFile(PathBuf),
+    /// Write the current claim detail deep-dive items from a diff run as JSON.
+    LandscapeDiffCurrentClaimDetailsJson,
+    /// Write the current claim detail deep-dive items from a diff run as JSON to an artifact file.
+    LandscapeDiffCurrentClaimDetailsFile(PathBuf),
     /// Write the current filter facets from a diff run as JSON.
     LandscapeDiffCurrentFilterFacetsJson,
     /// Write the current filter facets from a diff run as JSON to an artifact file.
@@ -197,6 +209,10 @@ pub enum BelvedereCliOutput {
     LandscapeDiffViewModelJson,
     /// Write the current-snapshot view model from a diff run as JSON to an artifact file.
     LandscapeDiffViewModelFile(PathBuf),
+    /// Write the current-snapshot claim detail deep-dive items from a diff run as JSON.
+    LandscapeDiffClaimDetailsJson,
+    /// Write the current-snapshot claim detail deep-dive items from a diff run as JSON to an artifact file.
+    LandscapeDiffClaimDetailsFile(PathBuf),
     /// Write the current-snapshot filter facets from a diff run as JSON.
     LandscapeDiffFilterFacetsJson,
     /// Write the current-snapshot filter facets from a diff run as JSON to an artifact file.

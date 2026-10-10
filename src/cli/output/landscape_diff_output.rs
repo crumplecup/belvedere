@@ -90,6 +90,12 @@ fn write_previous_snapshot_output(
         BelvedereCliOutput::LandscapeDiffPreviousViewModelFile(path) => {
             write_json_file(diff.previous_view_model(), path)?;
         }
+        BelvedereCliOutput::LandscapeDiffPreviousClaimDetailsJson => {
+            write_json(diff.previous_view_model().claim_details(), writer)?;
+        }
+        BelvedereCliOutput::LandscapeDiffPreviousClaimDetailsFile(path) => {
+            write_json_file(diff.previous_view_model().claim_details(), path)?;
+        }
         BelvedereCliOutput::LandscapeDiffPreviousFilterFacetsJson => {
             write_json(diff.previous_view_model().filter_facets(), writer)?;
         }
@@ -168,6 +174,12 @@ fn write_current_snapshot_output(
         BelvedereCliOutput::LandscapeDiffCurrentViewModelFile(path) => {
             write_json_file(diff.current_view_model(), path)?;
         }
+        BelvedereCliOutput::LandscapeDiffCurrentClaimDetailsJson => {
+            write_json(diff.current_view_model().claim_details(), writer)?;
+        }
+        BelvedereCliOutput::LandscapeDiffCurrentClaimDetailsFile(path) => {
+            write_json_file(diff.current_view_model().claim_details(), path)?;
+        }
         BelvedereCliOutput::LandscapeDiffCurrentFilterFacetsJson => {
             write_json(diff.current_view_model().filter_facets(), writer)?;
         }
@@ -245,6 +257,12 @@ fn write_current_alias_output(
         }
         BelvedereCliOutput::LandscapeDiffViewModelFile(path) => {
             write_json_file(diff.diff_view_model(), path)?;
+        }
+        BelvedereCliOutput::LandscapeDiffClaimDetailsJson => {
+            write_json(diff.current_view_model().claim_details(), writer)?;
+        }
+        BelvedereCliOutput::LandscapeDiffClaimDetailsFile(path) => {
+            write_json_file(diff.current_view_model().claim_details(), path)?;
         }
         BelvedereCliOutput::LandscapeDiffFilterFacetsJson => {
             write_json(diff.current_view_model().filter_facets(), writer)?;

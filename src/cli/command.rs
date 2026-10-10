@@ -130,6 +130,16 @@ impl BelvedereCli {
                     output = BelvedereCliOutput::RunViewModelFile(PathBuf::from(path));
                     index += 1;
                 }
+                "--claim-details-json" => {
+                    output = BelvedereCliOutput::RunClaimDetailsJson;
+                }
+                "--claim-details-file" => {
+                    let Some(path) = arguments.get(index + 1) else {
+                        return Err(BelvedereCliUsageError::new().into());
+                    };
+                    output = BelvedereCliOutput::RunClaimDetailsFile(PathBuf::from(path));
+                    index += 1;
+                }
                 "--filter-facets-json" => {
                     output = BelvedereCliOutput::RunFilterFacetsJson;
                 }

@@ -144,6 +144,16 @@ impl BelvedereCli {
                 )?);
                 1
             }
+            "--previous-claim-details-json" => {
+                *output = BelvedereCliOutput::LandscapeDiffPreviousClaimDetailsJson;
+                0
+            }
+            "--previous-claim-details-file" => {
+                *output = BelvedereCliOutput::LandscapeDiffPreviousClaimDetailsFile(
+                    Self::next_path(arguments, index)?,
+                );
+                1
+            }
             "--previous-filter-facets-json" => {
                 *output = BelvedereCliOutput::LandscapeDiffPreviousFilterFacetsJson;
                 0
@@ -280,6 +290,16 @@ impl BelvedereCli {
                 )?);
                 1
             }
+            "--current-claim-details-json" => {
+                *output = BelvedereCliOutput::LandscapeDiffCurrentClaimDetailsJson;
+                0
+            }
+            "--current-claim-details-file" => {
+                *output = BelvedereCliOutput::LandscapeDiffCurrentClaimDetailsFile(
+                    Self::next_path(arguments, index)?,
+                );
+                1
+            }
             "--current-filter-facets-json" => {
                 *output = BelvedereCliOutput::LandscapeDiffCurrentFilterFacetsJson;
                 0
@@ -379,6 +399,16 @@ impl BelvedereCli {
             }
             "--view-model-file" => {
                 *output = BelvedereCliOutput::LandscapeDiffViewModelFile(Self::next_path(
+                    arguments, index,
+                )?);
+                1
+            }
+            "--claim-details-json" => {
+                *output = BelvedereCliOutput::LandscapeDiffClaimDetailsJson;
+                0
+            }
+            "--claim-details-file" => {
+                *output = BelvedereCliOutput::LandscapeDiffClaimDetailsFile(Self::next_path(
                     arguments, index,
                 )?);
                 1
