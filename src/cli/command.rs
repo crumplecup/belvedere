@@ -140,6 +140,16 @@ impl BelvedereCli {
                     output = BelvedereCliOutput::RunFilterFacetsFile(PathBuf::from(path));
                     index += 1;
                 }
+                "--source-navigation-json" => {
+                    output = BelvedereCliOutput::RunSourceNavigationJson;
+                }
+                "--source-navigation-file" => {
+                    let Some(path) = arguments.get(index + 1) else {
+                        return Err(BelvedereCliUsageError::new().into());
+                    };
+                    output = BelvedereCliOutput::RunSourceNavigationFile(PathBuf::from(path));
+                    index += 1;
+                }
                 "--review-workflow-json" => {
                     output = BelvedereCliOutput::RunReviewWorkflowJson;
                 }

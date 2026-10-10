@@ -96,6 +96,12 @@ fn write_previous_snapshot_output(
         BelvedereCliOutput::LandscapeDiffPreviousFilterFacetsFile(path) => {
             write_json_file(diff.previous_view_model().filter_facets(), path)?;
         }
+        BelvedereCliOutput::LandscapeDiffPreviousSourceNavigationJson => {
+            write_json(diff.previous_view_model().source_navigation(), writer)?;
+        }
+        BelvedereCliOutput::LandscapeDiffPreviousSourceNavigationFile(path) => {
+            write_json_file(diff.previous_view_model().source_navigation(), path)?;
+        }
         BelvedereCliOutput::LandscapeDiffPreviousViewModelReceiptJson => {
             write_json(diff.previous_view_model_receipt(), writer)?;
         }
@@ -162,6 +168,12 @@ fn write_current_snapshot_output(
         BelvedereCliOutput::LandscapeDiffCurrentFilterFacetsFile(path) => {
             write_json_file(diff.current_view_model().filter_facets(), path)?;
         }
+        BelvedereCliOutput::LandscapeDiffCurrentSourceNavigationJson => {
+            write_json(diff.current_view_model().source_navigation(), writer)?;
+        }
+        BelvedereCliOutput::LandscapeDiffCurrentSourceNavigationFile(path) => {
+            write_json_file(diff.current_view_model().source_navigation(), path)?;
+        }
         BelvedereCliOutput::LandscapeDiffCurrentViewModelReceiptJson => {
             write_json(diff.current_view_model_receipt(), writer)?;
         }
@@ -227,6 +239,12 @@ fn write_current_alias_output(
         }
         BelvedereCliOutput::LandscapeDiffFilterFacetsFile(path) => {
             write_json_file(diff.current_view_model().filter_facets(), path)?;
+        }
+        BelvedereCliOutput::LandscapeDiffSourceNavigationJson => {
+            write_json(diff.current_view_model().source_navigation(), writer)?;
+        }
+        BelvedereCliOutput::LandscapeDiffSourceNavigationFile(path) => {
+            write_json_file(diff.current_view_model().source_navigation(), path)?;
         }
         BelvedereCliOutput::LandscapeDiffReviewWorkflowJson => {
             write_json(diff.diff_view_model().items(), writer)?;

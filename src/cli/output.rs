@@ -55,6 +55,10 @@ pub enum BelvedereCliOutput {
     RunFilterFacetsJson,
     /// Write the normal run filter facets as JSON to an artifact file.
     RunFilterFacetsFile(PathBuf),
+    /// Write the normal run source navigation map as JSON.
+    RunSourceNavigationJson,
+    /// Write the normal run source navigation map as JSON to an artifact file.
+    RunSourceNavigationFile(PathBuf),
     /// Write the normal run auditor review workflow queue as JSON.
     RunReviewWorkflowJson,
     /// Write the normal run auditor review workflow queue as JSON to an artifact file.
@@ -113,6 +117,10 @@ pub enum BelvedereCliOutput {
     LandscapeDiffPreviousFilterFacetsJson,
     /// Write the previous filter facets from a diff run as JSON to an artifact file.
     LandscapeDiffPreviousFilterFacetsFile(PathBuf),
+    /// Write the previous source navigation map from a diff run as JSON.
+    LandscapeDiffPreviousSourceNavigationJson,
+    /// Write the previous source navigation map from a diff run as JSON to an artifact file.
+    LandscapeDiffPreviousSourceNavigationFile(PathBuf),
     /// Write the previous view-model receipt from a diff run as JSON.
     LandscapeDiffPreviousViewModelReceiptJson,
     /// Write the previous view-model receipt from a diff run as JSON to an artifact file.
@@ -137,6 +145,10 @@ pub enum BelvedereCliOutput {
     LandscapeDiffCurrentFilterFacetsJson,
     /// Write the current filter facets from a diff run as JSON to an artifact file.
     LandscapeDiffCurrentFilterFacetsFile(PathBuf),
+    /// Write the current source navigation map from a diff run as JSON.
+    LandscapeDiffCurrentSourceNavigationJson,
+    /// Write the current source navigation map from a diff run as JSON to an artifact file.
+    LandscapeDiffCurrentSourceNavigationFile(PathBuf),
     /// Write the current view-model receipt from a diff run as JSON.
     LandscapeDiffCurrentViewModelReceiptJson,
     /// Write the current view-model receipt from a diff run as JSON to an artifact file.
@@ -177,6 +189,10 @@ pub enum BelvedereCliOutput {
     LandscapeDiffFilterFacetsJson,
     /// Write the current-snapshot filter facets from a diff run as JSON to an artifact file.
     LandscapeDiffFilterFacetsFile(PathBuf),
+    /// Write the current-snapshot source navigation map from a diff run as JSON.
+    LandscapeDiffSourceNavigationJson,
+    /// Write the current-snapshot source navigation map from a diff run as JSON to an artifact file.
+    LandscapeDiffSourceNavigationFile(PathBuf),
     /// Write the landscape diff review workflow queue as JSON.
     LandscapeDiffReviewWorkflowJson,
     /// Write the landscape diff review workflow queue as JSON to an artifact file.

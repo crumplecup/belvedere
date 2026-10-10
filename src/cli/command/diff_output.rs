@@ -154,6 +154,16 @@ impl BelvedereCli {
                 );
                 1
             }
+            "--previous-source-navigation-json" => {
+                *output = BelvedereCliOutput::LandscapeDiffPreviousSourceNavigationJson;
+                0
+            }
+            "--previous-source-navigation-file" => {
+                *output = BelvedereCliOutput::LandscapeDiffPreviousSourceNavigationFile(
+                    Self::next_path(arguments, index)?,
+                );
+                1
+            }
             "--previous-view-model-receipt-json" => {
                 *output = BelvedereCliOutput::LandscapeDiffPreviousViewModelReceiptJson;
                 0
@@ -270,6 +280,16 @@ impl BelvedereCli {
                 );
                 1
             }
+            "--current-source-navigation-json" => {
+                *output = BelvedereCliOutput::LandscapeDiffCurrentSourceNavigationJson;
+                0
+            }
+            "--current-source-navigation-file" => {
+                *output = BelvedereCliOutput::LandscapeDiffCurrentSourceNavigationFile(
+                    Self::next_path(arguments, index)?,
+                );
+                1
+            }
             "--current-view-model-receipt-json" => {
                 *output = BelvedereCliOutput::LandscapeDiffCurrentViewModelReceiptJson;
                 0
@@ -349,6 +369,16 @@ impl BelvedereCli {
             }
             "--filter-facets-file" => {
                 *output = BelvedereCliOutput::LandscapeDiffFilterFacetsFile(Self::next_path(
+                    arguments, index,
+                )?);
+                1
+            }
+            "--source-navigation-json" => {
+                *output = BelvedereCliOutput::LandscapeDiffSourceNavigationJson;
+                0
+            }
+            "--source-navigation-file" => {
+                *output = BelvedereCliOutput::LandscapeDiffSourceNavigationFile(Self::next_path(
                     arguments, index,
                 )?);
                 1
