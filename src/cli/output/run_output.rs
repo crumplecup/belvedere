@@ -67,6 +67,13 @@ pub(super) fn write_run_output(
             let file = File::create(path).map_err(BelvedereCliOutputError::write)?;
             write_json(run.view_model().source_navigation(), file)
         }
+        BelvedereCliOutput::RunProofChainsJson => {
+            write_json(run.view_model().proof_chains(), writer)
+        }
+        BelvedereCliOutput::RunProofChainsFile(path) => {
+            let file = File::create(path).map_err(BelvedereCliOutputError::write)?;
+            write_json(run.view_model().proof_chains(), file)
+        }
         BelvedereCliOutput::RunReviewWorkflowJson => {
             write_json(run.view_model().review_workflow(), writer)
         }

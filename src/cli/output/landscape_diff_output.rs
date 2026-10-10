@@ -102,6 +102,12 @@ fn write_previous_snapshot_output(
         BelvedereCliOutput::LandscapeDiffPreviousSourceNavigationFile(path) => {
             write_json_file(diff.previous_view_model().source_navigation(), path)?;
         }
+        BelvedereCliOutput::LandscapeDiffPreviousProofChainsJson => {
+            write_json(diff.previous_view_model().proof_chains(), writer)?;
+        }
+        BelvedereCliOutput::LandscapeDiffPreviousProofChainsFile(path) => {
+            write_json_file(diff.previous_view_model().proof_chains(), path)?;
+        }
         BelvedereCliOutput::LandscapeDiffPreviousViewModelReceiptJson => {
             write_json(diff.previous_view_model_receipt(), writer)?;
         }
@@ -174,6 +180,12 @@ fn write_current_snapshot_output(
         BelvedereCliOutput::LandscapeDiffCurrentSourceNavigationFile(path) => {
             write_json_file(diff.current_view_model().source_navigation(), path)?;
         }
+        BelvedereCliOutput::LandscapeDiffCurrentProofChainsJson => {
+            write_json(diff.current_view_model().proof_chains(), writer)?;
+        }
+        BelvedereCliOutput::LandscapeDiffCurrentProofChainsFile(path) => {
+            write_json_file(diff.current_view_model().proof_chains(), path)?;
+        }
         BelvedereCliOutput::LandscapeDiffCurrentViewModelReceiptJson => {
             write_json(diff.current_view_model_receipt(), writer)?;
         }
@@ -245,6 +257,12 @@ fn write_current_alias_output(
         }
         BelvedereCliOutput::LandscapeDiffSourceNavigationFile(path) => {
             write_json_file(diff.current_view_model().source_navigation(), path)?;
+        }
+        BelvedereCliOutput::LandscapeDiffProofChainsJson => {
+            write_json(diff.current_view_model().proof_chains(), writer)?;
+        }
+        BelvedereCliOutput::LandscapeDiffProofChainsFile(path) => {
+            write_json_file(diff.current_view_model().proof_chains(), path)?;
         }
         BelvedereCliOutput::LandscapeDiffReviewWorkflowJson => {
             write_json(diff.diff_view_model().items(), writer)?;

@@ -150,6 +150,16 @@ impl BelvedereCli {
                     output = BelvedereCliOutput::RunSourceNavigationFile(PathBuf::from(path));
                     index += 1;
                 }
+                "--proof-chains-json" => {
+                    output = BelvedereCliOutput::RunProofChainsJson;
+                }
+                "--proof-chains-file" => {
+                    let Some(path) = arguments.get(index + 1) else {
+                        return Err(BelvedereCliUsageError::new().into());
+                    };
+                    output = BelvedereCliOutput::RunProofChainsFile(PathBuf::from(path));
+                    index += 1;
+                }
                 "--review-workflow-json" => {
                     output = BelvedereCliOutput::RunReviewWorkflowJson;
                 }

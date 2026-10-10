@@ -164,6 +164,16 @@ impl BelvedereCli {
                 );
                 1
             }
+            "--previous-proof-chains-json" => {
+                *output = BelvedereCliOutput::LandscapeDiffPreviousProofChainsJson;
+                0
+            }
+            "--previous-proof-chains-file" => {
+                *output = BelvedereCliOutput::LandscapeDiffPreviousProofChainsFile(
+                    Self::next_path(arguments, index)?,
+                );
+                1
+            }
             "--previous-view-model-receipt-json" => {
                 *output = BelvedereCliOutput::LandscapeDiffPreviousViewModelReceiptJson;
                 0
@@ -290,6 +300,16 @@ impl BelvedereCli {
                 );
                 1
             }
+            "--current-proof-chains-json" => {
+                *output = BelvedereCliOutput::LandscapeDiffCurrentProofChainsJson;
+                0
+            }
+            "--current-proof-chains-file" => {
+                *output = BelvedereCliOutput::LandscapeDiffCurrentProofChainsFile(Self::next_path(
+                    arguments, index,
+                )?);
+                1
+            }
             "--current-view-model-receipt-json" => {
                 *output = BelvedereCliOutput::LandscapeDiffCurrentViewModelReceiptJson;
                 0
@@ -379,6 +399,16 @@ impl BelvedereCli {
             }
             "--source-navigation-file" => {
                 *output = BelvedereCliOutput::LandscapeDiffSourceNavigationFile(Self::next_path(
+                    arguments, index,
+                )?);
+                1
+            }
+            "--proof-chains-json" => {
+                *output = BelvedereCliOutput::LandscapeDiffProofChainsJson;
+                0
+            }
+            "--proof-chains-file" => {
+                *output = BelvedereCliOutput::LandscapeDiffProofChainsFile(Self::next_path(
                     arguments, index,
                 )?);
                 1

@@ -1060,6 +1060,8 @@ fn cli_help_is_a_successful_public_output_contract() -> Result<()> {
     assert!(help.contains("--previous-filter-facets-file"));
     assert!(help.contains("--previous-source-navigation-json"));
     assert!(help.contains("--previous-source-navigation-file"));
+    assert!(help.contains("--previous-proof-chains-json"));
+    assert!(help.contains("--previous-proof-chains-file"));
     assert!(help.contains("--previous-view-model-receipt-json"));
     assert!(help.contains("--previous-view-model-receipt-file"));
     assert!(help.contains("--previous-ui-ir-json"));
@@ -1072,6 +1074,8 @@ fn cli_help_is_a_successful_public_output_contract() -> Result<()> {
     assert!(help.contains("--current-filter-facets-file"));
     assert!(help.contains("--current-source-navigation-json"));
     assert!(help.contains("--current-source-navigation-file"));
+    assert!(help.contains("--current-proof-chains-json"));
+    assert!(help.contains("--current-proof-chains-file"));
     assert!(help.contains("--current-view-model-receipt-json"));
     assert!(help.contains("--current-view-model-receipt-file"));
     assert!(help.contains("--current-ui-ir-receipt-json"));
@@ -1086,6 +1090,8 @@ fn cli_help_is_a_successful_public_output_contract() -> Result<()> {
     assert!(help.contains("--filter-facets-file"));
     assert!(help.contains("--source-navigation-json"));
     assert!(help.contains("--source-navigation-file"));
+    assert!(help.contains("--proof-chains-json"));
+    assert!(help.contains("--proof-chains-file"));
     assert!(help.contains("--view-model-receipt-json"));
     assert!(help.contains("--view-model-receipt-file"));
     assert!(help.contains("--review-workflow-json"));
@@ -2040,6 +2046,56 @@ fn assert_source_navigation_map(map: &Value) {
     }));
 }
 
+fn assert_proof_chains(chains: &Value) {
+    assert_eq!(chains.as_array().map(Vec::len), Some(4));
+    assert!(chains.as_array().is_some_and(|items| {
+        items.iter().all(|item| {
+            item["claim_id"]
+                .as_str()
+                .is_some_and(|claim_id| !claim_id.is_empty())
+                && item["root_ids"].as_array().is_some()
+                && item["backend_coverage"]
+                    .as_array()
+                    .is_some_and(|coverage| coverage.len() == 3)
+                && item["topology"]["transitive_claim_count"]
+                    .as_u64()
+                    .is_some()
+                && item["trace"]["source_record_ids"]
+                    .as_array()
+                    .is_some_and(|source_record_ids| !source_record_ids.is_empty())
+        })
+    }));
+    assert!(chains.as_array().is_some_and(|items| {
+        items.iter().any(|item| {
+            item["claim_id"].as_str() == Some("belvedere::ingestion::DecodedRegistrySnapshot")
+                && item["root_ids"].as_array().is_some_and(|root_ids| {
+                    root_ids.iter().any(|root_id| {
+                        root_id.as_str() == Some("belvedere::ingestion::RawAmenableArtifact")
+                    })
+                })
+                && item["backend_coverage"].as_array().is_some_and(|coverage| {
+                    coverage.iter().any(|backend| {
+                        backend["verifier"].as_str() == Some("kani")
+                            && backend["covered_claim_count"]
+                                .as_u64()
+                                .is_some_and(|count| count > 0)
+                    })
+                })
+        })
+    }));
+    assert!(chains.as_array().is_some_and(|items| {
+        items.iter().any(|item| {
+            item["review_state"].as_str() == Some("blocked")
+                && item["gap_count"]
+                    .as_u64()
+                    .is_some_and(|gap_count| gap_count > 0)
+                && item["next_action"]
+                    .as_str()
+                    .is_some_and(|next_action| !next_action.is_empty())
+        })
+    }));
+}
+
 fn assert_review_workflow_queue(queue: &Value) {
     assert_eq!(queue.as_array().map(Vec::len), Some(4));
     assert!(queue.as_array().is_some_and(|tasks| {
@@ -2085,6 +2141,32 @@ fn assert_previous_source_navigation_map(map: &Value) {
                     == Some(
                         "registry_dump.kani_proofs[id=belvedere::ingestion::record_identity_is_preserved]",
                     )
+        })
+    }));
+}
+
+fn assert_previous_proof_chains(chains: &Value) {
+    assert_eq!(chains.as_array().map(Vec::len), Some(3));
+    assert!(chains.as_array().is_some_and(|items| {
+        items.iter().all(|item| {
+            item["claim_id"]
+                .as_str()
+                .is_some_and(|claim_id| !claim_id.is_empty())
+                && item["root_ids"].as_array().is_some()
+                && item["backend_coverage"]
+                    .as_array()
+                    .is_some_and(|coverage| coverage.len() == 3)
+                && item["topology"]["max_depth"].as_u64().is_some()
+        })
+    }));
+    assert!(chains.as_array().is_some_and(|items| {
+        items.iter().any(|item| {
+            item["claim_id"].as_str() == Some("belvedere::ingestion::record_identity_is_preserved")
+                && item["verifiers"].as_array().is_some_and(|verifiers| {
+                    verifiers
+                        .iter()
+                        .any(|verifier| verifier.as_str() == Some("kani"))
+                })
         })
     }));
 }
@@ -2974,7 +3056,7 @@ fn cli_can_emit_the_view_model_receipt_as_json() -> Result<()> {
 fn cli_can_emit_run_projection_artifacts_as_json() -> Result<()> {
     belvedere::init_tracing();
 
-    let cases: [(&str, BelvedereCliOutput, ReceiptAssertion); 5] = [
+    let cases: [(&str, BelvedereCliOutput, ReceiptAssertion); 6] = [
         (
             "--view-model-json",
             BelvedereCliOutput::RunViewModelJson,
@@ -2989,6 +3071,11 @@ fn cli_can_emit_run_projection_artifacts_as_json() -> Result<()> {
             "--source-navigation-json",
             BelvedereCliOutput::RunSourceNavigationJson,
             assert_source_navigation_map,
+        ),
+        (
+            "--proof-chains-json",
+            BelvedereCliOutput::RunProofChainsJson,
+            assert_proof_chains,
         ),
         (
             "--review-workflow-json",
@@ -3330,10 +3417,12 @@ fn cli_can_persist_run_projection_artifacts_as_json() -> Result<()> {
         "belvedere-source-navigation-{}.json",
         process::id()
     ));
+    let proof_chains_path =
+        std::env::temp_dir().join(format!("belvedere-proof-chains-{}.json", process::id()));
     let review_workflow_path =
         std::env::temp_dir().join(format!("belvedere-review-workflow-{}.json", process::id()));
     let ui_ir_path = std::env::temp_dir().join(format!("belvedere-ui-ir-{}.json", process::id()));
-    let cases: [(&str, PathBuf, BelvedereCliOutput, ReceiptAssertion); 5] = [
+    let cases: [(&str, PathBuf, BelvedereCliOutput, ReceiptAssertion); 6] = [
         (
             "--view-model-file",
             view_model_path.clone(),
@@ -3351,6 +3440,12 @@ fn cli_can_persist_run_projection_artifacts_as_json() -> Result<()> {
             source_navigation_path.clone(),
             BelvedereCliOutput::RunSourceNavigationFile(source_navigation_path.clone()),
             assert_source_navigation_map,
+        ),
+        (
+            "--proof-chains-file",
+            proof_chains_path.clone(),
+            BelvedereCliOutput::RunProofChainsFile(proof_chains_path.clone()),
+            assert_proof_chains,
         ),
         (
             "--review-workflow-file",
@@ -4796,7 +4891,7 @@ fn cli_can_emit_previous_diff_projection_artifacts_as_json() -> Result<()> {
         .into_diagnostic()
         .wrap_err("temporary empty assessment artifact should be writable")?;
 
-    let cases: [(&str, BelvedereCliOutput, ReceiptAssertion); 4] = [
+    let cases: [(&str, BelvedereCliOutput, ReceiptAssertion); 5] = [
         (
             "--previous-view-model-json",
             BelvedereCliOutput::LandscapeDiffPreviousViewModelJson,
@@ -4811,6 +4906,11 @@ fn cli_can_emit_previous_diff_projection_artifacts_as_json() -> Result<()> {
             "--previous-source-navigation-json",
             BelvedereCliOutput::LandscapeDiffPreviousSourceNavigationJson,
             assert_previous_source_navigation_map,
+        ),
+        (
+            "--previous-proof-chains-json",
+            BelvedereCliOutput::LandscapeDiffPreviousProofChainsJson,
+            assert_previous_proof_chains,
         ),
         (
             "--previous-ui-ir-json",
@@ -4869,9 +4969,13 @@ fn cli_can_persist_previous_diff_projection_artifacts_as_json() -> Result<()> {
         "belvedere-previous-source-navigation-{}.json",
         process::id()
     ));
+    let proof_chains_path = std::env::temp_dir().join(format!(
+        "belvedere-previous-proof-chains-{}.json",
+        process::id()
+    ));
     let ui_ir_path =
         std::env::temp_dir().join(format!("belvedere-previous-ui-ir-{}.json", process::id()));
-    let cases: [(&str, PathBuf, BelvedereCliOutput, ReceiptAssertion); 4] = [
+    let cases: [(&str, PathBuf, BelvedereCliOutput, ReceiptAssertion); 5] = [
         (
             "--previous-view-model-file",
             view_model_path.clone(),
@@ -4891,6 +4995,12 @@ fn cli_can_persist_previous_diff_projection_artifacts_as_json() -> Result<()> {
                 source_navigation_path.clone(),
             ),
             assert_previous_source_navigation_map,
+        ),
+        (
+            "--previous-proof-chains-file",
+            proof_chains_path.clone(),
+            BelvedereCliOutput::LandscapeDiffPreviousProofChainsFile(proof_chains_path.clone()),
+            assert_previous_proof_chains,
         ),
         (
             "--previous-ui-ir-file",
@@ -5080,7 +5190,7 @@ fn cli_can_emit_current_diff_projection_artifacts_as_json() -> Result<()> {
         .into_diagnostic()
         .wrap_err("temporary empty assessment artifact should be writable")?;
 
-    let cases: [(&str, BelvedereCliOutput, ReceiptAssertion); 4] = [
+    let cases: [(&str, BelvedereCliOutput, ReceiptAssertion); 5] = [
         (
             "--current-view-model-json",
             BelvedereCliOutput::LandscapeDiffCurrentViewModelJson,
@@ -5095,6 +5205,11 @@ fn cli_can_emit_current_diff_projection_artifacts_as_json() -> Result<()> {
             "--current-source-navigation-json",
             BelvedereCliOutput::LandscapeDiffCurrentSourceNavigationJson,
             assert_source_navigation_map,
+        ),
+        (
+            "--current-proof-chains-json",
+            BelvedereCliOutput::LandscapeDiffCurrentProofChainsJson,
+            assert_proof_chains,
         ),
         (
             "--current-ui-ir-json",
@@ -5153,9 +5268,13 @@ fn cli_can_persist_current_diff_projection_artifacts_as_json() -> Result<()> {
         "belvedere-current-source-navigation-{}.json",
         process::id()
     ));
+    let proof_chains_path = std::env::temp_dir().join(format!(
+        "belvedere-current-proof-chains-{}.json",
+        process::id()
+    ));
     let ui_ir_path =
         std::env::temp_dir().join(format!("belvedere-current-ui-ir-{}.json", process::id()));
-    let cases: [(&str, PathBuf, BelvedereCliOutput, ReceiptAssertion); 4] = [
+    let cases: [(&str, PathBuf, BelvedereCliOutput, ReceiptAssertion); 5] = [
         (
             "--current-view-model-file",
             view_model_path.clone(),
@@ -5175,6 +5294,12 @@ fn cli_can_persist_current_diff_projection_artifacts_as_json() -> Result<()> {
                 source_navigation_path.clone(),
             ),
             assert_source_navigation_map,
+        ),
+        (
+            "--current-proof-chains-file",
+            proof_chains_path.clone(),
+            BelvedereCliOutput::LandscapeDiffCurrentProofChainsFile(proof_chains_path.clone()),
+            assert_proof_chains,
         ),
         (
             "--current-ui-ir-file",
@@ -5236,7 +5361,7 @@ fn cli_can_emit_landscape_diff_projection_artifact_aliases_as_json() -> Result<(
         .into_diagnostic()
         .wrap_err("temporary empty assessment artifact should be writable")?;
 
-    let cases: [(&str, BelvedereCliOutput, ReceiptAssertion); 5] = [
+    let cases: [(&str, BelvedereCliOutput, ReceiptAssertion); 6] = [
         (
             "--view-model-json",
             BelvedereCliOutput::LandscapeDiffViewModelJson,
@@ -5251,6 +5376,11 @@ fn cli_can_emit_landscape_diff_projection_artifact_aliases_as_json() -> Result<(
             "--source-navigation-json",
             BelvedereCliOutput::LandscapeDiffSourceNavigationJson,
             assert_source_navigation_map,
+        ),
+        (
+            "--proof-chains-json",
+            BelvedereCliOutput::LandscapeDiffProofChainsJson,
+            assert_proof_chains,
         ),
         (
             "--review-workflow-json",
@@ -5310,13 +5440,17 @@ fn cli_can_persist_landscape_diff_projection_artifact_aliases_as_json() -> Resul
         "belvedere-diff-source-navigation-{}.json",
         process::id()
     ));
+    let proof_chains_path = std::env::temp_dir().join(format!(
+        "belvedere-diff-proof-chains-{}.json",
+        process::id()
+    ));
     let review_workflow_path = std::env::temp_dir().join(format!(
         "belvedere-diff-review-workflow-{}.json",
         process::id()
     ));
     let ui_ir_path =
         std::env::temp_dir().join(format!("belvedere-diff-ui-ir-{}.json", process::id()));
-    let cases: [(&str, PathBuf, BelvedereCliOutput, ReceiptAssertion); 5] = [
+    let cases: [(&str, PathBuf, BelvedereCliOutput, ReceiptAssertion); 6] = [
         (
             "--view-model-file",
             view_model_path.clone(),
@@ -5334,6 +5468,12 @@ fn cli_can_persist_landscape_diff_projection_artifact_aliases_as_json() -> Resul
             source_navigation_path.clone(),
             BelvedereCliOutput::LandscapeDiffSourceNavigationFile(source_navigation_path.clone()),
             assert_source_navigation_map,
+        ),
+        (
+            "--proof-chains-file",
+            proof_chains_path.clone(),
+            BelvedereCliOutput::LandscapeDiffProofChainsFile(proof_chains_path.clone()),
+            assert_proof_chains,
         ),
         (
             "--review-workflow-file",

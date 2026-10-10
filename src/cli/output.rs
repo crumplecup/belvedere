@@ -59,6 +59,10 @@ pub enum BelvedereCliOutput {
     RunSourceNavigationJson,
     /// Write the normal run source navigation map as JSON to an artifact file.
     RunSourceNavigationFile(PathBuf),
+    /// Write the normal run proof-chain deep-dive items as JSON.
+    RunProofChainsJson,
+    /// Write the normal run proof-chain deep-dive items as JSON to an artifact file.
+    RunProofChainsFile(PathBuf),
     /// Write the normal run auditor review workflow queue as JSON.
     RunReviewWorkflowJson,
     /// Write the normal run auditor review workflow queue as JSON to an artifact file.
@@ -121,6 +125,10 @@ pub enum BelvedereCliOutput {
     LandscapeDiffPreviousSourceNavigationJson,
     /// Write the previous source navigation map from a diff run as JSON to an artifact file.
     LandscapeDiffPreviousSourceNavigationFile(PathBuf),
+    /// Write the previous proof-chain deep-dive items from a diff run as JSON.
+    LandscapeDiffPreviousProofChainsJson,
+    /// Write the previous proof-chain deep-dive items from a diff run as JSON to an artifact file.
+    LandscapeDiffPreviousProofChainsFile(PathBuf),
     /// Write the previous view-model receipt from a diff run as JSON.
     LandscapeDiffPreviousViewModelReceiptJson,
     /// Write the previous view-model receipt from a diff run as JSON to an artifact file.
@@ -149,6 +157,10 @@ pub enum BelvedereCliOutput {
     LandscapeDiffCurrentSourceNavigationJson,
     /// Write the current source navigation map from a diff run as JSON to an artifact file.
     LandscapeDiffCurrentSourceNavigationFile(PathBuf),
+    /// Write the current proof-chain deep-dive items from a diff run as JSON.
+    LandscapeDiffCurrentProofChainsJson,
+    /// Write the current proof-chain deep-dive items from a diff run as JSON to an artifact file.
+    LandscapeDiffCurrentProofChainsFile(PathBuf),
     /// Write the current view-model receipt from a diff run as JSON.
     LandscapeDiffCurrentViewModelReceiptJson,
     /// Write the current view-model receipt from a diff run as JSON to an artifact file.
@@ -193,6 +205,10 @@ pub enum BelvedereCliOutput {
     LandscapeDiffSourceNavigationJson,
     /// Write the current-snapshot source navigation map from a diff run as JSON to an artifact file.
     LandscapeDiffSourceNavigationFile(PathBuf),
+    /// Write the current-snapshot proof-chain deep-dive items from a diff run as JSON.
+    LandscapeDiffProofChainsJson,
+    /// Write the current-snapshot proof-chain deep-dive items from a diff run as JSON to an artifact file.
+    LandscapeDiffProofChainsFile(PathBuf),
     /// Write the landscape diff review workflow queue as JSON.
     LandscapeDiffReviewWorkflowJson,
     /// Write the landscape diff review workflow queue as JSON to an artifact file.
