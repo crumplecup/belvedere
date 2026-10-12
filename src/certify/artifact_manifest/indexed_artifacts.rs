@@ -51,11 +51,13 @@ impl BelvedereManifestStageCertificate {
     }
 }
 
-/// Requestable output artifact indexed by a Belvedere artifact manifest.
+/// Output artifact indexed by a Belvedere artifact manifest.
 #[derive(Debug, Clone, PartialEq, Eq, Getters, Serialize)]
 pub struct BelvedereManifestOutputArtifact {
     role: String,
     artifact_kind: String,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    cli_selector: Option<String>,
     artifact_id: String,
     artifact_digest: String,
     evidence_id: String,
@@ -76,10 +78,35 @@ impl BelvedereManifestOutputArtifact {
         item_count: usize,
     ) -> Self {
         let role = role.into();
+        let cli_selector = cli_selector_for_role(&role);
+        Self::with_cli_selector(
+            role,
+            artifact_kind,
+            cli_selector,
+            evidence,
+            source_stage,
+            item_count,
+        )
+    }
+
+    #[instrument(
+        level = "trace",
+        skip(role, artifact_kind, cli_selector, evidence, source_stage)
+    )]
+    fn with_cli_selector(
+        role: impl Into<String>,
+        artifact_kind: impl Into<String>,
+        cli_selector: Option<String>,
+        evidence: ManifestOutputEvidence,
+        source_stage: ManifestOutputSourceStage,
+        item_count: usize,
+    ) -> Self {
+        let role = role.into();
         let artifact_kind = artifact_kind.into();
         let artifact_digest = manifest_output_artifact_digest(OutputArtifactDigestEvidence {
             role: &role,
             artifact_kind: &artifact_kind,
+            cli_selector: cli_selector.as_deref(),
             evidence_id: &evidence.id,
             evidence_digest: &evidence.digest,
             source_stage_role: &source_stage.role,
@@ -91,6 +118,7 @@ impl BelvedereManifestOutputArtifact {
         Self {
             role,
             artifact_kind,
+            cli_selector,
             artifact_id,
             artifact_digest,
             evidence_id: evidence.id,
@@ -136,6 +164,7 @@ impl ManifestOutputSourceStage {
 struct OutputArtifactDigestEvidence<'evidence> {
     role: &'evidence str,
     artifact_kind: &'evidence str,
+    cli_selector: Option<&'evidence str>,
     evidence_id: &'evidence str,
     evidence_digest: &'evidence str,
     source_stage_role: &'evidence str,
@@ -150,6 +179,7 @@ fn manifest_output_artifact_digest(evidence: OutputArtifactDigestEvidence<'_>) -
     update_field(&mut hasher, MANIFEST_OUTPUT_ARTIFACT_SCHEMA_ID);
     update_field(&mut hasher, evidence.role);
     update_field(&mut hasher, evidence.artifact_kind);
+    update_field(&mut hasher, evidence.cli_selector.unwrap_or_default());
     update_field(&mut hasher, evidence.evidence_id);
     update_field(&mut hasher, evidence.evidence_digest);
     update_field(&mut hasher, evidence.source_stage_role);
@@ -232,13 +262,15 @@ pub(super) fn diff_stage_roles() -> [&'static str; 13] {
     ]
 }
 
-#[instrument(level = "trace", skip(certificate))]
+#[instrument(level = "trace", skip(certificate, cli_selector))]
 pub(super) fn run_certificate_output(
     certificate: &BelvedereRunCertificate,
+    cli_selector: impl Into<String>,
 ) -> BelvedereManifestOutputArtifact {
-    BelvedereManifestOutputArtifact::new(
+    BelvedereManifestOutputArtifact::with_cli_selector(
         "run_certificate",
         "run_certificate",
+        Some(cli_selector.into()),
         ManifestOutputEvidence::new(certificate.id(), certificate.digest()),
         ManifestOutputSourceStage::new("run_certificate", certificate.id(), certificate.digest()),
         certificate.stage_certificates().len(),
@@ -272,6 +304,109 @@ pub(super) fn output_artifact(
         ManifestOutputSourceStage::new("unknown", "unknown", "unknown"),
         item_count,
     )
+}
+
+#[instrument(level = "trace", skip(role))]
+fn cli_selector_for_role(role: &str) -> Option<String> {
+    if let Some(role) = role.strip_prefix("previous_") {
+        return prefixed_cli_selector("previous", role);
+    }
+    if let Some(role) = role.strip_prefix("current_") {
+        return prefixed_cli_selector("current", role);
+    }
+
+    match role {
+        "registry_receipt" => Some("--registry-receipt".to_owned()),
+        "assessment_receipt" => Some("--assessment-receipt".to_owned()),
+        "landscape_graph" => Some("--landscape".to_owned()),
+        "landscape_receipt" => Some("--landscape-receipt".to_owned()),
+        "view_model" => Some("--view-model".to_owned()),
+        "view_model_receipt" => Some("--view-model-receipt".to_owned()),
+        "ui_ir_projection" => Some("--ui-ir".to_owned()),
+        "ui_ir_receipt" => Some("--ui-ir-receipt".to_owned()),
+        "diff_certificate" => Some("--certificate".to_owned()),
+        "landscape_diff" => Some("--diff".to_owned()),
+        "landscape_diff_receipt" => Some("--diff-receipt".to_owned()),
+        "landscape_diff_review_model" => Some("--view-model".to_owned()),
+        "landscape_diff_review_receipt" => Some("--view-model-receipt".to_owned()),
+        "landscape_diff_review_ui_ir_projection" => Some("--ui-ir".to_owned()),
+        "landscape_diff_review_ui_ir_receipt" => Some("--ui-ir-receipt".to_owned()),
+        role => projection_cli_selector(role).map(str::to_owned),
+    }
+}
+
+#[instrument(level = "trace", skip(prefix, role))]
+fn prefixed_cli_selector(prefix: &str, role: &str) -> Option<String> {
+    projection_flag_suffix(role)
+        .map(|suffix| format!("--{prefix}-{suffix}"))
+        .or_else(|| snapshot_flag_suffix(role).map(|suffix| format!("--{prefix}-{suffix}")))
+}
+
+#[instrument(level = "trace", skip(role))]
+fn projection_cli_selector(role: &str) -> Option<&'static str> {
+    match role {
+        "backend_coverage" => Some("--backend-coverage"),
+        "claim_explorer" => Some("--claim-explorer"),
+        "claim_details" => Some("--claim-details"),
+        "filter_facets" => Some("--filter-facets"),
+        "source_navigation" => Some("--source-navigation"),
+        "proof_chains" => Some("--proof-chains"),
+        "review_workflow" => Some("--review-workflow"),
+        "assessment_history" => Some("--assessment-history"),
+        "assessment_queue" => Some("--assessment-queue"),
+        "assessment_work" => Some("--assessment-work"),
+        "witness_surface" => Some("--witness-surface"),
+        "provenance_roots" => Some("--provenance-roots"),
+        "gaps" => Some("--gaps"),
+        "ui_ir_sections" => Some("--ui-ir-sections"),
+        "ui_ir_trace_widgets" => Some("--ui-ir-trace-widgets"),
+        "ui_ir_viewports" => Some("--ui-ir-viewports"),
+        "ui_ir_minted_standards" => Some("--ui-ir-minted-standards"),
+        "landscape_diff_review_ui_ir_sections" => Some("--ui-ir-sections"),
+        "landscape_diff_review_ui_ir_trace_widgets" => Some("--ui-ir-trace-widgets"),
+        "landscape_diff_review_ui_ir_viewports" => Some("--ui-ir-viewports"),
+        "landscape_diff_review_ui_ir_minted_standards" => Some("--ui-ir-minted-standards"),
+        _ => None,
+    }
+}
+
+#[instrument(level = "trace", skip(role))]
+fn snapshot_flag_suffix(role: &str) -> Option<&'static str> {
+    match role {
+        "registry_receipt" => Some("registry-receipt"),
+        "assessment_receipt" => Some("assessment-receipt"),
+        "landscape_graph" => Some("landscape"),
+        "landscape_receipt" => Some("landscape-receipt"),
+        "view_model" => Some("view-model"),
+        "view_model_receipt" => Some("view-model-receipt"),
+        "ui_ir_projection" => Some("ui-ir"),
+        "ui_ir_receipt" => Some("ui-ir-receipt"),
+        _ => None,
+    }
+}
+
+#[instrument(level = "trace", skip(role))]
+fn projection_flag_suffix(role: &str) -> Option<&'static str> {
+    match role {
+        "backend_coverage" => Some("backend-coverage"),
+        "claim_explorer" => Some("claim-explorer"),
+        "claim_details" => Some("claim-details"),
+        "filter_facets" => Some("filter-facets"),
+        "source_navigation" => Some("source-navigation"),
+        "proof_chains" => Some("proof-chains"),
+        "review_workflow" => Some("review-workflow"),
+        "assessment_history" => Some("assessment-history"),
+        "assessment_queue" => Some("assessment-queue"),
+        "assessment_work" => Some("assessment-work"),
+        "witness_surface" => Some("witness-surface"),
+        "provenance_roots" => Some("provenance-roots"),
+        "gaps" => Some("gaps"),
+        "ui_ir_sections" => Some("ui-ir-sections"),
+        "ui_ir_trace_widgets" => Some("ui-ir-trace-widgets"),
+        "ui_ir_viewports" => Some("ui-ir-viewports"),
+        "ui_ir_minted_standards" => Some("ui-ir-minted-standards"),
+        _ => None,
+    }
 }
 
 #[instrument(level = "trace", skip(role, artifact_kind, stage_certificates))]

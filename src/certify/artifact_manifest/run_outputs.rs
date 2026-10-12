@@ -36,7 +36,7 @@ pub(super) fn normal_run_outputs(
     stage_certificates: &[BelvedereManifestStageCertificate],
 ) -> Vec<BelvedereManifestOutputArtifact> {
     let mut output_artifacts = vec![
-        run_certificate_output(certificate),
+        run_certificate_output(certificate, "--certificate"),
         output_artifact(
             "registry_receipt",
             "ingestion_receipt",
@@ -133,7 +133,7 @@ pub(super) fn diff_run_outputs(
     receipts: BelvedereDiffManifestReceipts<'_>,
     stage_certificates: &[BelvedereManifestStageCertificate],
 ) -> Vec<BelvedereManifestOutputArtifact> {
-    let mut output_artifacts = vec![run_certificate_output(certificate)];
+    let mut output_artifacts = vec![run_certificate_output(certificate, "--run-certificate")];
     output_artifacts.extend(diff_stage_certificate_outputs(receipts, stage_certificates));
     output_artifacts.extend(previous_snapshot_outputs(
         *receipts.previous(),

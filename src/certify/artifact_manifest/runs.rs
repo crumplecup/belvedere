@@ -203,6 +203,10 @@ fn manifest_digest(evidence: ManifestDigestEvidence<'_>) -> String {
     for artifact in evidence.output_artifacts {
         update_field(&mut hasher, artifact.role());
         update_field(&mut hasher, artifact.artifact_kind());
+        update_field(
+            &mut hasher,
+            artifact.cli_selector().as_deref().unwrap_or_default(),
+        );
         update_field(&mut hasher, artifact.artifact_id());
         update_field(&mut hasher, artifact.artifact_digest());
         update_field(&mut hasher, artifact.evidence_id());

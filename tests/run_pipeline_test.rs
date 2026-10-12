@@ -2997,6 +2997,16 @@ fn assert_run_manifest(manifest: &Value) {
         "ui_ir_projection",
         60,
     ));
+    assert!(manifest_output_artifact_has_selector(
+        manifest,
+        "run_certificate",
+        "--certificate",
+    ));
+    assert!(manifest_output_artifact_has_selector(
+        manifest,
+        "ui_ir_trace_widgets",
+        "--ui-ir-trace-widgets",
+    ));
     assert!(manifest_output_artifact_matches(
         manifest,
         "ui_ir_outputs",
@@ -3004,6 +3014,10 @@ fn assert_run_manifest(manifest: &Value) {
         "belvedere.receipt.ui_ir:",
         "ui_ir_projection",
         153,
+    ));
+    assert!(manifest_output_artifact_omits_selector(
+        manifest,
+        "ui_ir_outputs",
     ));
 }
 
@@ -3189,6 +3203,21 @@ fn assert_diff_manifest(manifest: &Value) {
         "previous_ui_ir_projection",
         44,
     ));
+    assert!(manifest_output_artifact_has_selector(
+        manifest,
+        "run_certificate",
+        "--run-certificate",
+    ));
+    assert!(manifest_output_artifact_has_selector(
+        manifest,
+        "diff_certificate",
+        "--certificate",
+    ));
+    assert!(manifest_output_artifact_has_selector(
+        manifest,
+        "previous_ui_ir_trace_widgets",
+        "--previous-ui-ir-trace-widgets",
+    ));
     assert!(manifest_output_artifact_matches(
         manifest,
         "previous_ui_ir_outputs",
@@ -3204,6 +3233,11 @@ fn assert_diff_manifest(manifest: &Value) {
         "belvedere.receipt.ui_ir:",
         "current_ui_ir_projection",
         60,
+    ));
+    assert!(manifest_output_artifact_has_selector(
+        manifest,
+        "current_ui_ir_trace_widgets",
+        "--current-ui-ir-trace-widgets",
     ));
     assert!(manifest_output_artifact_matches(
         manifest,
@@ -3221,6 +3255,11 @@ fn assert_diff_manifest(manifest: &Value) {
         "landscape_diff_review_ui_ir_projection",
         14,
     ));
+    assert!(manifest_output_artifact_has_selector(
+        manifest,
+        "landscape_diff_review_ui_ir_trace_widgets",
+        "--ui-ir-trace-widgets",
+    ));
     assert!(manifest_output_artifact_matches(
         manifest,
         "landscape_diff_review_ui_ir_outputs",
@@ -3228,6 +3267,14 @@ fn assert_diff_manifest(manifest: &Value) {
         "belvedere.receipt.ui_ir:",
         "landscape_diff_review_ui_ir_projection",
         41,
+    ));
+    assert!(manifest_output_artifact_omits_selector(
+        manifest,
+        "diff_review_certificate",
+    ));
+    assert!(manifest_output_artifact_omits_selector(
+        manifest,
+        "landscape_diff_review_ui_ir_outputs",
     ));
 }
 
@@ -3251,6 +3298,27 @@ fn manifest_output_artifact_matches(
                     && is_hex_digest(&artifact["evidence_digest"])
                     && artifact["source_stage_role"].as_str() == Some(source_stage_role)
                     && artifact["item_count"].as_u64() == Some(item_count)
+            })
+        })
+}
+
+fn manifest_output_artifact_has_selector(manifest: &Value, role: &str, selector: &str) -> bool {
+    manifest["output_artifacts"]
+        .as_array()
+        .is_some_and(|artifacts| {
+            artifacts.iter().any(|artifact| {
+                artifact["role"].as_str() == Some(role)
+                    && artifact["cli_selector"].as_str() == Some(selector)
+            })
+        })
+}
+
+fn manifest_output_artifact_omits_selector(manifest: &Value, role: &str) -> bool {
+    manifest["output_artifacts"]
+        .as_array()
+        .is_some_and(|artifacts| {
+            artifacts.iter().any(|artifact| {
+                artifact["role"].as_str() == Some(role) && artifact.get("cli_selector").is_none()
             })
         })
 }
