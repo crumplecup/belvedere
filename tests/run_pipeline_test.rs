@@ -230,7 +230,7 @@ fn run_pipeline_uses_the_normal_amenable_artifact_path() -> Result<()> {
     );
     assert_eq!(report.manifest().input_artifacts().len(), 2);
     assert_eq!(report.manifest().stage_certificates().len(), 5);
-    assert_eq!(report.manifest().output_artifacts().len(), 9);
+    assert_eq!(report.manifest().output_artifacts().len(), 22);
     assert!(
         report
             .manifest()
@@ -260,6 +260,13 @@ fn run_pipeline_uses_the_normal_amenable_artifact_path() -> Result<()> {
         Some(&1)
     );
     assert_eq!(
+        report
+            .manifest()
+            .output_kind_counts()
+            .get("manifest_output_kind_auditor_backend_coverage"),
+        Some(&1)
+    );
+    assert_eq!(
         report.manifest().run_certificate_id(),
         report.certificate().id()
     );
@@ -277,6 +284,18 @@ fn run_pipeline_uses_the_normal_amenable_artifact_path() -> Result<()> {
                     artifact.artifact_digest()
                 )
             && *artifact.item_count() == report.ui_ir_receipt().trace_widget_ids().len()
+    }));
+    assert!(report.manifest().output_artifacts().iter().any(|artifact| {
+        artifact.role() == "backend_coverage"
+            && artifact.artifact_kind() == "auditor_backend_coverage"
+            && artifact.source_stage_role() == "auditor_navigation"
+            && artifact.evidence_id() == report.view_model_receipt().receipt_id()
+            && artifact.evidence_digest() == report.view_model_receipt().receipt_digest()
+            && *artifact.item_count()
+                == report
+                    .view_model_receipt()
+                    .counts()
+                    .backend_coverage_items()
     }));
     assert!(
         report
@@ -2745,7 +2764,7 @@ fn assert_run_manifest(manifest: &Value) {
     );
     assert_eq!(manifest["counts"]["input_artifacts"].as_u64(), Some(2));
     assert_eq!(manifest["counts"]["stage_certificates"].as_u64(), Some(5));
-    assert_eq!(manifest["counts"]["output_artifacts"].as_u64(), Some(9));
+    assert_eq!(manifest["counts"]["output_artifacts"].as_u64(), Some(22));
     assert_eq!(
         manifest["input_role_counts"]["manifest_input_role_registry"].as_u64(),
         Some(1)
@@ -2756,6 +2775,10 @@ fn assert_run_manifest(manifest: &Value) {
     );
     assert_eq!(
         manifest["output_kind_counts"]["manifest_output_kind_ui_ir_receipt"].as_u64(),
+        Some(1)
+    );
+    assert_eq!(
+        manifest["output_kind_counts"]["manifest_output_kind_auditor_backend_coverage"].as_u64(),
         Some(1)
     );
     assert!(
@@ -2784,7 +2807,7 @@ fn assert_run_manifest(manifest: &Value) {
     );
     assert_eq!(
         manifest["output_artifacts"].as_array().map(Vec::len),
-        Some(9)
+        Some(22)
     );
     assert!(
         manifest["output_artifacts"]
@@ -2808,6 +2831,14 @@ fn assert_run_manifest(manifest: &Value) {
                 })
             })
     );
+    assert!(manifest_output_artifact_matches(
+        manifest,
+        "backend_coverage",
+        "auditor_backend_coverage",
+        "belvedere.receipt.view_model:",
+        "auditor_navigation",
+        12,
+    ));
 }
 
 fn assert_diff_manifest(manifest: &Value) {
@@ -2828,7 +2859,7 @@ fn assert_diff_manifest(manifest: &Value) {
     );
     assert_eq!(manifest["counts"]["input_artifacts"].as_u64(), Some(4));
     assert_eq!(manifest["counts"]["stage_certificates"].as_u64(), Some(13));
-    assert_eq!(manifest["counts"]["output_artifacts"].as_u64(), Some(26));
+    assert_eq!(manifest["counts"]["output_artifacts"].as_u64(), Some(65));
     assert_eq!(
         manifest["stage_kind_counts"]["manifest_stage_kind_registry_ingestion"].as_u64(),
         Some(2)
@@ -2861,6 +2892,10 @@ fn assert_diff_manifest(manifest: &Value) {
     );
     assert_eq!(
         manifest["output_kind_counts"]["manifest_output_kind_ui_ir_receipt"].as_u64(),
+        Some(3)
+    );
+    assert_eq!(
+        manifest["output_kind_counts"]["manifest_output_kind_auditor_backend_coverage"].as_u64(),
         Some(3)
     );
     assert!(
@@ -2952,6 +2987,54 @@ fn assert_diff_manifest(manifest: &Value) {
                 })
             })
     );
+    assert!(manifest_output_artifact_matches(
+        manifest,
+        "previous_backend_coverage",
+        "auditor_backend_coverage",
+        "belvedere.receipt.view_model:",
+        "previous_auditor_navigation",
+        9,
+    ));
+    assert!(manifest_output_artifact_matches(
+        manifest,
+        "current_backend_coverage",
+        "auditor_backend_coverage",
+        "belvedere.receipt.view_model:",
+        "current_auditor_navigation",
+        12,
+    ));
+    assert!(manifest_output_artifact_matches(
+        manifest,
+        "backend_coverage",
+        "auditor_backend_coverage",
+        "belvedere.receipt.view_model:",
+        "current_auditor_navigation",
+        12,
+    ));
+}
+
+fn manifest_output_artifact_matches(
+    manifest: &Value,
+    role: &str,
+    artifact_kind: &str,
+    evidence_prefix: &str,
+    source_stage_role: &str,
+    item_count: u64,
+) -> bool {
+    manifest["output_artifacts"]
+        .as_array()
+        .is_some_and(|artifacts| {
+            artifacts.iter().any(|artifact| {
+                artifact["role"].as_str() == Some(role)
+                    && artifact["artifact_kind"].as_str() == Some(artifact_kind)
+                    && artifact["evidence_id"]
+                        .as_str()
+                        .is_some_and(|id| id.starts_with(evidence_prefix))
+                    && is_hex_digest(&artifact["evidence_digest"])
+                    && artifact["source_stage_role"].as_str() == Some(source_stage_role)
+                    && artifact["item_count"].as_u64() == Some(item_count)
+            })
+        })
 }
 
 #[test]

@@ -11,6 +11,7 @@ use super::{
     BelvedereDiffManifestReceipts, BelvedereManifestOutputArtifact,
     BelvedereManifestStageCertificate,
     indexed_artifacts::{output_artifact, run_certificate_output, stage_certificate_output},
+    projection_outputs::view_model_projection_outputs,
 };
 
 #[instrument(
@@ -34,7 +35,7 @@ pub(super) fn normal_run_outputs(
     ui_ir_receipt: &UiIrReceipt,
     stage_certificates: &[BelvedereManifestStageCertificate],
 ) -> Vec<BelvedereManifestOutputArtifact> {
-    vec![
+    let mut output_artifacts = vec![
         run_certificate_output(certificate),
         output_artifact(
             "registry_receipt",
@@ -81,6 +82,14 @@ pub(super) fn normal_run_outputs(
             view_model_receipt.view_item_ids().len(),
             stage_certificates,
         ),
+    ];
+    output_artifacts.extend(view_model_projection_outputs(
+        None,
+        view_model_receipt,
+        3,
+        stage_certificates,
+    ));
+    output_artifacts.extend([
         output_artifact(
             "view_model_receipt",
             "view_model_receipt",
@@ -108,7 +117,8 @@ pub(super) fn normal_run_outputs(
             ui_ir_receipt.trace_widget_ids().len(),
             stage_certificates,
         ),
-    ]
+    ]);
+    output_artifacts
 }
 
 #[instrument(level = "trace", skip(certificate, receipts, stage_certificates))]
@@ -125,6 +135,12 @@ pub(super) fn diff_run_outputs(
     ));
     output_artifacts.extend(current_snapshot_outputs(
         *receipts.current(),
+        stage_certificates,
+    ));
+    output_artifacts.extend(view_model_projection_outputs(
+        None,
+        receipts.current().view_model(),
+        8,
         stage_certificates,
     ));
     output_artifacts.extend(diff_outputs(receipts, stage_certificates));
@@ -166,7 +182,7 @@ fn previous_snapshot_outputs(
     snapshot: BelvedereSnapshotManifestReceipts<'_>,
     stage_certificates: &[BelvedereManifestStageCertificate],
 ) -> Vec<BelvedereManifestOutputArtifact> {
-    vec![
+    let mut output_artifacts = vec![
         output_artifact(
             "previous_registry_receipt",
             "ingestion_receipt",
@@ -212,6 +228,14 @@ fn previous_snapshot_outputs(
             snapshot.view_model().view_item_ids().len(),
             stage_certificates,
         ),
+    ];
+    output_artifacts.extend(view_model_projection_outputs(
+        Some("previous"),
+        snapshot.view_model(),
+        3,
+        stage_certificates,
+    ));
+    output_artifacts.extend([
         output_artifact(
             "previous_view_model_receipt",
             "view_model_receipt",
@@ -239,7 +263,8 @@ fn previous_snapshot_outputs(
             snapshot.ui_ir().trace_widget_ids().len(),
             stage_certificates,
         ),
-    ]
+    ]);
+    output_artifacts
 }
 
 #[instrument(level = "trace", skip(snapshot, stage_certificates))]
@@ -247,7 +272,7 @@ fn current_snapshot_outputs(
     snapshot: BelvedereSnapshotManifestReceipts<'_>,
     stage_certificates: &[BelvedereManifestStageCertificate],
 ) -> Vec<BelvedereManifestOutputArtifact> {
-    vec![
+    let mut output_artifacts = vec![
         output_artifact(
             "current_registry_receipt",
             "ingestion_receipt",
@@ -293,6 +318,14 @@ fn current_snapshot_outputs(
             snapshot.view_model().view_item_ids().len(),
             stage_certificates,
         ),
+    ];
+    output_artifacts.extend(view_model_projection_outputs(
+        Some("current"),
+        snapshot.view_model(),
+        8,
+        stage_certificates,
+    ));
+    output_artifacts.extend([
         output_artifact(
             "current_view_model_receipt",
             "view_model_receipt",
@@ -320,7 +353,8 @@ fn current_snapshot_outputs(
             snapshot.ui_ir().trace_widget_ids().len(),
             stage_certificates,
         ),
-    ]
+    ]);
+    output_artifacts
 }
 
 #[instrument(level = "trace", skip(receipts, stage_certificates))]

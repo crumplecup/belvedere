@@ -2,6 +2,7 @@
 
 mod accounting;
 mod indexed_artifacts;
+mod projection_outputs;
 mod receipts;
 mod run_outputs;
 mod runs;
