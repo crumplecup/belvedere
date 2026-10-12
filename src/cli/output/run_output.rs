@@ -30,6 +30,12 @@ pub(super) fn write_run_output(
             write_json_to_sink(run.landscape_receipt(), sink, writer)
         }
         BelvedereCliArtifact::RunViewModel => write_json_to_sink(run.view_model(), sink, writer),
+        BelvedereCliArtifact::RunBackendCoverage => {
+            write_json_to_sink(run.view_model().backend_coverage(), sink, writer)
+        }
+        BelvedereCliArtifact::RunClaimExplorer => {
+            write_json_to_sink(run.view_model().claim_explorer(), sink, writer)
+        }
         BelvedereCliArtifact::RunClaimDetails => {
             write_json_to_sink(run.view_model().claim_details(), sink, writer)
         }
@@ -45,6 +51,22 @@ pub(super) fn write_run_output(
         BelvedereCliArtifact::RunReviewWorkflow => {
             write_json_to_sink(run.view_model().review_workflow(), sink, writer)
         }
+        BelvedereCliArtifact::RunAssessmentHistory => {
+            write_json_to_sink(run.view_model().assessment_history(), sink, writer)
+        }
+        BelvedereCliArtifact::RunAssessmentQueue => {
+            write_json_to_sink(run.view_model().assessment_queue(), sink, writer)
+        }
+        BelvedereCliArtifact::RunAssessmentWork => {
+            write_json_to_sink(run.view_model().assessment_work(), sink, writer)
+        }
+        BelvedereCliArtifact::RunWitnessSurface => {
+            write_json_to_sink(run.view_model().witness_surface(), sink, writer)
+        }
+        BelvedereCliArtifact::RunProvenanceRoots => {
+            write_json_to_sink(run.view_model().provenance_roots(), sink, writer)
+        }
+        BelvedereCliArtifact::RunGaps => write_json_to_sink(run.view_model().gaps(), sink, writer),
         BelvedereCliArtifact::RunViewModelReceipt => {
             write_json_to_sink(run.view_model_receipt(), sink, writer)
         }

@@ -57,12 +57,37 @@ fn diff_artifact(flag: &str) -> Option<BelvedereCliArtifact> {
             Some(BelvedereCliArtifact::LandscapeDiffPreviousLandscapeReceipt)
         }
         "--previous-view-model" => Some(BelvedereCliArtifact::LandscapeDiffPreviousViewModel),
+        "--previous-backend-coverage" => {
+            Some(BelvedereCliArtifact::LandscapeDiffPreviousBackendCoverage)
+        }
+        "--previous-claim-explorer" => {
+            Some(BelvedereCliArtifact::LandscapeDiffPreviousClaimExplorer)
+        }
         "--previous-claim-details" => Some(BelvedereCliArtifact::LandscapeDiffPreviousClaimDetails),
         "--previous-filter-facets" => Some(BelvedereCliArtifact::LandscapeDiffPreviousFilterFacets),
         "--previous-source-navigation" => {
             Some(BelvedereCliArtifact::LandscapeDiffPreviousSourceNavigation)
         }
         "--previous-proof-chains" => Some(BelvedereCliArtifact::LandscapeDiffPreviousProofChains),
+        "--previous-review-workflow" => {
+            Some(BelvedereCliArtifact::LandscapeDiffPreviousReviewWorkflow)
+        }
+        "--previous-assessment-history" => {
+            Some(BelvedereCliArtifact::LandscapeDiffPreviousAssessmentHistory)
+        }
+        "--previous-assessment-queue" => {
+            Some(BelvedereCliArtifact::LandscapeDiffPreviousAssessmentQueue)
+        }
+        "--previous-assessment-work" => {
+            Some(BelvedereCliArtifact::LandscapeDiffPreviousAssessmentWork)
+        }
+        "--previous-witness-surface" => {
+            Some(BelvedereCliArtifact::LandscapeDiffPreviousWitnessSurface)
+        }
+        "--previous-provenance-roots" => {
+            Some(BelvedereCliArtifact::LandscapeDiffPreviousProvenanceRoots)
+        }
+        "--previous-gaps" => Some(BelvedereCliArtifact::LandscapeDiffPreviousGaps),
         "--previous-view-model-receipt" => {
             Some(BelvedereCliArtifact::LandscapeDiffPreviousViewModelReceipt)
         }
@@ -79,12 +104,35 @@ fn diff_artifact(flag: &str) -> Option<BelvedereCliArtifact> {
             Some(BelvedereCliArtifact::LandscapeDiffCurrentLandscapeReceipt)
         }
         "--current-view-model" => Some(BelvedereCliArtifact::LandscapeDiffCurrentViewModel),
+        "--current-backend-coverage" => {
+            Some(BelvedereCliArtifact::LandscapeDiffCurrentBackendCoverage)
+        }
+        "--current-claim-explorer" => Some(BelvedereCliArtifact::LandscapeDiffCurrentClaimExplorer),
         "--current-claim-details" => Some(BelvedereCliArtifact::LandscapeDiffCurrentClaimDetails),
         "--current-filter-facets" => Some(BelvedereCliArtifact::LandscapeDiffCurrentFilterFacets),
         "--current-source-navigation" => {
             Some(BelvedereCliArtifact::LandscapeDiffCurrentSourceNavigation)
         }
         "--current-proof-chains" => Some(BelvedereCliArtifact::LandscapeDiffCurrentProofChains),
+        "--current-review-workflow" => {
+            Some(BelvedereCliArtifact::LandscapeDiffCurrentReviewWorkflow)
+        }
+        "--current-assessment-history" => {
+            Some(BelvedereCliArtifact::LandscapeDiffCurrentAssessmentHistory)
+        }
+        "--current-assessment-queue" => {
+            Some(BelvedereCliArtifact::LandscapeDiffCurrentAssessmentQueue)
+        }
+        "--current-assessment-work" => {
+            Some(BelvedereCliArtifact::LandscapeDiffCurrentAssessmentWork)
+        }
+        "--current-witness-surface" => {
+            Some(BelvedereCliArtifact::LandscapeDiffCurrentWitnessSurface)
+        }
+        "--current-provenance-roots" => {
+            Some(BelvedereCliArtifact::LandscapeDiffCurrentProvenanceRoots)
+        }
+        "--current-gaps" => Some(BelvedereCliArtifact::LandscapeDiffCurrentGaps),
         "--current-view-model-receipt" => {
             Some(BelvedereCliArtifact::LandscapeDiffCurrentViewModelReceipt)
         }
@@ -93,11 +141,19 @@ fn diff_artifact(flag: &str) -> Option<BelvedereCliArtifact> {
         "--landscape" => Some(BelvedereCliArtifact::LandscapeDiffLandscape),
         "--landscape-receipt" => Some(BelvedereCliArtifact::LandscapeDiffLandscapeReceipt),
         "--view-model" => Some(BelvedereCliArtifact::LandscapeDiffViewModel),
+        "--backend-coverage" => Some(BelvedereCliArtifact::LandscapeDiffBackendCoverage),
+        "--claim-explorer" => Some(BelvedereCliArtifact::LandscapeDiffClaimExplorer),
         "--claim-details" => Some(BelvedereCliArtifact::LandscapeDiffClaimDetails),
         "--filter-facets" => Some(BelvedereCliArtifact::LandscapeDiffFilterFacets),
         "--source-navigation" => Some(BelvedereCliArtifact::LandscapeDiffSourceNavigation),
         "--proof-chains" => Some(BelvedereCliArtifact::LandscapeDiffProofChains),
         "--review-workflow" => Some(BelvedereCliArtifact::LandscapeDiffReviewWorkflow),
+        "--assessment-history" => Some(BelvedereCliArtifact::LandscapeDiffAssessmentHistory),
+        "--assessment-queue" => Some(BelvedereCliArtifact::LandscapeDiffAssessmentQueue),
+        "--assessment-work" => Some(BelvedereCliArtifact::LandscapeDiffAssessmentWork),
+        "--witness-surface" => Some(BelvedereCliArtifact::LandscapeDiffWitnessSurface),
+        "--provenance-roots" => Some(BelvedereCliArtifact::LandscapeDiffProvenanceRoots),
+        "--gaps" => Some(BelvedereCliArtifact::LandscapeDiffGaps),
         "--view-model-receipt" => Some(BelvedereCliArtifact::LandscapeDiffViewModelReceipt),
         "--ui-ir" => Some(BelvedereCliArtifact::LandscapeDiffUiIr),
         "--ui-ir-receipt" => Some(BelvedereCliArtifact::LandscapeDiffUiIrReceipt),

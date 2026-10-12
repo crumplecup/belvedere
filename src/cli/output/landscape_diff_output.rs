@@ -77,6 +77,12 @@ fn write_previous_snapshot_output(
         BelvedereCliArtifact::LandscapeDiffPreviousViewModel => {
             write_json_to_sink(diff.previous_view_model(), sink, writer)?;
         }
+        BelvedereCliArtifact::LandscapeDiffPreviousBackendCoverage => {
+            write_json_to_sink(diff.previous_view_model().backend_coverage(), sink, writer)?;
+        }
+        BelvedereCliArtifact::LandscapeDiffPreviousClaimExplorer => {
+            write_json_to_sink(diff.previous_view_model().claim_explorer(), sink, writer)?;
+        }
         BelvedereCliArtifact::LandscapeDiffPreviousClaimDetails => {
             write_json_to_sink(diff.previous_view_model().claim_details(), sink, writer)?;
         }
@@ -88,6 +94,31 @@ fn write_previous_snapshot_output(
         }
         BelvedereCliArtifact::LandscapeDiffPreviousProofChains => {
             write_json_to_sink(diff.previous_view_model().proof_chains(), sink, writer)?;
+        }
+        BelvedereCliArtifact::LandscapeDiffPreviousReviewWorkflow => {
+            write_json_to_sink(diff.previous_view_model().review_workflow(), sink, writer)?;
+        }
+        BelvedereCliArtifact::LandscapeDiffPreviousAssessmentHistory => {
+            write_json_to_sink(
+                diff.previous_view_model().assessment_history(),
+                sink,
+                writer,
+            )?;
+        }
+        BelvedereCliArtifact::LandscapeDiffPreviousAssessmentQueue => {
+            write_json_to_sink(diff.previous_view_model().assessment_queue(), sink, writer)?;
+        }
+        BelvedereCliArtifact::LandscapeDiffPreviousAssessmentWork => {
+            write_json_to_sink(diff.previous_view_model().assessment_work(), sink, writer)?;
+        }
+        BelvedereCliArtifact::LandscapeDiffPreviousWitnessSurface => {
+            write_json_to_sink(diff.previous_view_model().witness_surface(), sink, writer)?;
+        }
+        BelvedereCliArtifact::LandscapeDiffPreviousProvenanceRoots => {
+            write_json_to_sink(diff.previous_view_model().provenance_roots(), sink, writer)?;
+        }
+        BelvedereCliArtifact::LandscapeDiffPreviousGaps => {
+            write_json_to_sink(diff.previous_view_model().gaps(), sink, writer)?;
         }
         BelvedereCliArtifact::LandscapeDiffPreviousViewModelReceipt => {
             write_json_to_sink(diff.previous_view_model_receipt(), sink, writer)?;
@@ -126,6 +157,12 @@ fn write_current_snapshot_output(
         BelvedereCliArtifact::LandscapeDiffCurrentViewModel => {
             write_json_to_sink(diff.current_view_model(), sink, writer)?;
         }
+        BelvedereCliArtifact::LandscapeDiffCurrentBackendCoverage => {
+            write_json_to_sink(diff.current_view_model().backend_coverage(), sink, writer)?;
+        }
+        BelvedereCliArtifact::LandscapeDiffCurrentClaimExplorer => {
+            write_json_to_sink(diff.current_view_model().claim_explorer(), sink, writer)?;
+        }
         BelvedereCliArtifact::LandscapeDiffCurrentClaimDetails => {
             write_json_to_sink(diff.current_view_model().claim_details(), sink, writer)?;
         }
@@ -137,6 +174,27 @@ fn write_current_snapshot_output(
         }
         BelvedereCliArtifact::LandscapeDiffCurrentProofChains => {
             write_json_to_sink(diff.current_view_model().proof_chains(), sink, writer)?;
+        }
+        BelvedereCliArtifact::LandscapeDiffCurrentReviewWorkflow => {
+            write_json_to_sink(diff.current_view_model().review_workflow(), sink, writer)?;
+        }
+        BelvedereCliArtifact::LandscapeDiffCurrentAssessmentHistory => {
+            write_json_to_sink(diff.current_view_model().assessment_history(), sink, writer)?;
+        }
+        BelvedereCliArtifact::LandscapeDiffCurrentAssessmentQueue => {
+            write_json_to_sink(diff.current_view_model().assessment_queue(), sink, writer)?;
+        }
+        BelvedereCliArtifact::LandscapeDiffCurrentAssessmentWork => {
+            write_json_to_sink(diff.current_view_model().assessment_work(), sink, writer)?;
+        }
+        BelvedereCliArtifact::LandscapeDiffCurrentWitnessSurface => {
+            write_json_to_sink(diff.current_view_model().witness_surface(), sink, writer)?;
+        }
+        BelvedereCliArtifact::LandscapeDiffCurrentProvenanceRoots => {
+            write_json_to_sink(diff.current_view_model().provenance_roots(), sink, writer)?;
+        }
+        BelvedereCliArtifact::LandscapeDiffCurrentGaps => {
+            write_json_to_sink(diff.current_view_model().gaps(), sink, writer)?;
         }
         BelvedereCliArtifact::LandscapeDiffCurrentViewModelReceipt => {
             write_json_to_sink(diff.current_view_model_receipt(), sink, writer)?;
@@ -175,6 +233,12 @@ fn write_current_alias_output(
         BelvedereCliArtifact::LandscapeDiffViewModel => {
             write_json_to_sink(diff.diff_view_model(), sink, writer)?;
         }
+        BelvedereCliArtifact::LandscapeDiffBackendCoverage => {
+            write_json_to_sink(diff.current_view_model().backend_coverage(), sink, writer)?;
+        }
+        BelvedereCliArtifact::LandscapeDiffClaimExplorer => {
+            write_json_to_sink(diff.current_view_model().claim_explorer(), sink, writer)?;
+        }
         BelvedereCliArtifact::LandscapeDiffClaimDetails => {
             write_json_to_sink(diff.current_view_model().claim_details(), sink, writer)?;
         }
@@ -189,6 +253,24 @@ fn write_current_alias_output(
         }
         BelvedereCliArtifact::LandscapeDiffReviewWorkflow => {
             write_json_to_sink(diff.diff_view_model().items(), sink, writer)?;
+        }
+        BelvedereCliArtifact::LandscapeDiffAssessmentHistory => {
+            write_json_to_sink(diff.current_view_model().assessment_history(), sink, writer)?;
+        }
+        BelvedereCliArtifact::LandscapeDiffAssessmentQueue => {
+            write_json_to_sink(diff.current_view_model().assessment_queue(), sink, writer)?;
+        }
+        BelvedereCliArtifact::LandscapeDiffAssessmentWork => {
+            write_json_to_sink(diff.current_view_model().assessment_work(), sink, writer)?;
+        }
+        BelvedereCliArtifact::LandscapeDiffWitnessSurface => {
+            write_json_to_sink(diff.current_view_model().witness_surface(), sink, writer)?;
+        }
+        BelvedereCliArtifact::LandscapeDiffProvenanceRoots => {
+            write_json_to_sink(diff.current_view_model().provenance_roots(), sink, writer)?;
+        }
+        BelvedereCliArtifact::LandscapeDiffGaps => {
+            write_json_to_sink(diff.current_view_model().gaps(), sink, writer)?;
         }
         BelvedereCliArtifact::LandscapeDiffViewModelReceipt => {
             write_json_to_sink(diff.diff_view_model_receipt(), sink, writer)?;

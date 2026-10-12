@@ -18,11 +18,19 @@ Run artifacts:
       --landscape              Landscape graph.
       --landscape-receipt      Landscape receipt.
       --view-model             Auditor navigation view model.
+      --backend-coverage       Backend coverage items.
+      --claim-explorer         Claim explorer items.
       --claim-details          Claim detail deep-dive items.
       --filter-facets          Auditor filter facets.
       --source-navigation      Source navigation map.
       --proof-chains           Proof-chain deep-dive items.
       --review-workflow        Auditor review workflow queue.
+      --assessment-history     Assessment history items.
+      --assessment-queue       Assessment queue items.
+      --assessment-work        Assessment work items.
+      --witness-surface        Witness surface items.
+      --provenance-roots       Provenance root items.
+      --gaps                   Conservative gap items.
       --view-model-receipt     View-model receipt.
       --ui-ir                  UI IR projection.
       --ui-ir-receipt          UI IR receipt.
@@ -38,10 +46,19 @@ Diff artifacts:
       --previous-landscape
       --previous-landscape-receipt
       --previous-view-model
+      --previous-backend-coverage
+      --previous-claim-explorer
       --previous-claim-details
       --previous-filter-facets
       --previous-source-navigation
       --previous-proof-chains
+      --previous-review-workflow
+      --previous-assessment-history
+      --previous-assessment-queue
+      --previous-assessment-work
+      --previous-witness-surface
+      --previous-provenance-roots
+      --previous-gaps
       --previous-view-model-receipt
       --previous-ui-ir
       --previous-ui-ir-receipt
@@ -50,10 +67,19 @@ Diff artifacts:
       --current-landscape
       --current-landscape-receipt
       --current-view-model
+      --current-backend-coverage
+      --current-claim-explorer
       --current-claim-details
       --current-filter-facets
       --current-source-navigation
       --current-proof-chains
+      --current-review-workflow
+      --current-assessment-history
+      --current-assessment-queue
+      --current-assessment-work
+      --current-witness-surface
+      --current-provenance-roots
+      --current-gaps
       --current-view-model-receipt
       --current-ui-ir
       --current-ui-ir-receipt

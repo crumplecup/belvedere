@@ -1056,29 +1056,55 @@ fn cli_help_is_a_successful_public_output_contract() -> Result<()> {
     assert!(help.contains("--current-assessment-receipt"));
     assert!(help.contains("--previous-landscape-receipt"));
     assert!(help.contains("--previous-view-model"));
+    assert!(help.contains("--previous-backend-coverage"));
+    assert!(help.contains("--previous-claim-explorer"));
     assert!(help.contains("--previous-claim-details"));
     assert!(help.contains("--previous-filter-facets"));
     assert!(help.contains("--previous-source-navigation"));
     assert!(help.contains("--previous-proof-chains"));
+    assert!(help.contains("--previous-review-workflow"));
+    assert!(help.contains("--previous-assessment-history"));
+    assert!(help.contains("--previous-assessment-queue"));
+    assert!(help.contains("--previous-assessment-work"));
+    assert!(help.contains("--previous-witness-surface"));
+    assert!(help.contains("--previous-provenance-roots"));
+    assert!(help.contains("--previous-gaps"));
     assert!(help.contains("--previous-view-model-receipt"));
     assert!(help.contains("--previous-ui-ir"));
     assert!(help.contains("--previous-ui-ir-receipt"));
     assert!(help.contains("--current-landscape-receipt"));
+    assert!(help.contains("--current-backend-coverage"));
+    assert!(help.contains("--current-claim-explorer"));
     assert!(help.contains("--current-claim-details"));
     assert!(help.contains("--current-filter-facets"));
     assert!(help.contains("--current-source-navigation"));
     assert!(help.contains("--current-proof-chains"));
+    assert!(help.contains("--current-review-workflow"));
+    assert!(help.contains("--current-assessment-history"));
+    assert!(help.contains("--current-assessment-queue"));
+    assert!(help.contains("--current-assessment-work"));
+    assert!(help.contains("--current-witness-surface"));
+    assert!(help.contains("--current-provenance-roots"));
+    assert!(help.contains("--current-gaps"));
     assert!(help.contains("--current-view-model-receipt"));
     assert!(help.contains("--current-ui-ir-receipt"));
     assert!(help.contains("--registry-receipt"));
     assert!(help.contains("--assessment-receipt"));
     assert!(help.contains("--landscape-receipt"));
+    assert!(help.contains("--backend-coverage"));
+    assert!(help.contains("--claim-explorer"));
     assert!(help.contains("--claim-details"));
     assert!(help.contains("--filter-facets"));
     assert!(help.contains("--source-navigation"));
     assert!(help.contains("--proof-chains"));
     assert!(help.contains("--view-model-receipt"));
     assert!(help.contains("--review-workflow"));
+    assert!(help.contains("--assessment-history"));
+    assert!(help.contains("--assessment-queue"));
+    assert!(help.contains("--assessment-work"));
+    assert!(help.contains("--witness-surface"));
+    assert!(help.contains("--provenance-roots"));
+    assert!(help.contains("--gaps"));
     assert!(help.contains("--ui-ir-receipt"));
     assert!(!help.contains("--certificate-json"));
     assert!(!help.contains("--certificate-file"));
@@ -1955,6 +1981,71 @@ fn assert_auditor_navigation_model(model: &Value) {
     }));
 }
 
+fn assert_backend_coverage(items: &Value) {
+    assert_eq!(items.as_array().map(Vec::len), Some(12));
+    assert!(items.as_array().is_some_and(|coverage| {
+        coverage.iter().all(|item| {
+            item["claim_id"]
+                .as_str()
+                .is_some_and(|claim_id| !claim_id.is_empty())
+                && item["verifier"]
+                    .as_str()
+                    .is_some_and(|verifier| !verifier.is_empty())
+                && item["covered"].as_bool().is_some()
+                && item["trace"]["source_record_ids"].as_array().is_some()
+        })
+    }));
+    assert!(items.as_array().is_some_and(|coverage| {
+        coverage.iter().any(|item| {
+            item["claim_id"].as_str() == Some("belvedere::ingestion::DecodedRegistrySnapshot")
+                && item["verifier"].as_str() == Some("kani")
+                && item["covered"].as_bool() == Some(true)
+        })
+    }));
+}
+
+fn assert_previous_backend_coverage(items: &Value) {
+    assert_eq!(items.as_array().map(Vec::len), Some(9));
+    assert!(items.as_array().is_some_and(|coverage| {
+        coverage.iter().any(|item| {
+            item["claim_id"].as_str() == Some("belvedere::ingestion::record_identity_is_preserved")
+                && item["verifier"].as_str() == Some("kani")
+                && item["covered"].as_bool() == Some(true)
+        })
+    }));
+}
+
+fn assert_claim_explorer(items: &Value) {
+    assert_eq!(items.as_array().map(Vec::len), Some(4));
+    assert!(items.as_array().is_some_and(|claims| {
+        claims.iter().any(|item| {
+            item["claim_id"].as_str() == Some("belvedere::ingestion::DecodedRegistrySnapshot")
+                && item["root"].as_bool() == Some(false)
+                && item["verifiers"]
+                    .as_array()
+                    .is_some_and(|verifiers| verifiers.iter().any(|verifier| verifier == "kani"))
+                && item["gap_count"].as_u64() == Some(2)
+                && item["filter_ids"].as_array().is_some_and(|filters| {
+                    filters
+                        .iter()
+                        .any(|filter| filter.as_str() == Some("belvedere.filter.priority:high"))
+                })
+        })
+    }));
+}
+
+fn assert_previous_claim_explorer(items: &Value) {
+    assert_eq!(items.as_array().map(Vec::len), Some(3));
+    assert!(items.as_array().is_some_and(|claims| {
+        claims.iter().any(|item| {
+            item["claim_id"].as_str() == Some("belvedere::ingestion::record_identity_is_preserved")
+                && item["verifiers"]
+                    .as_array()
+                    .is_some_and(|verifiers| verifiers.iter().any(|verifier| verifier == "kani"))
+        })
+    }));
+}
+
 fn assert_filter_facets(facets: &Value) {
     assert_eq!(facets.as_array().map(Vec::len), Some(10));
     assert!(facets.as_array().is_some_and(|items| {
@@ -2166,6 +2257,121 @@ fn assert_review_workflow_queue(queue: &Value) {
                     .as_str()
                     .is_some_and(|action| !action.is_empty())
         })
+    }));
+}
+
+fn assert_previous_review_workflow_queue(queue: &Value) {
+    assert_eq!(queue.as_array().map(Vec::len), Some(3));
+    assert!(queue.as_array().is_some_and(|tasks| {
+        tasks.iter().all(|task| {
+            is_hex_digest(&task["task_digest"])
+                && task["task_id"].as_str().is_some_and(|id| !id.is_empty())
+        })
+    }));
+}
+
+fn assert_assessment_history(items: &Value) {
+    assert_eq!(items.as_array().map(Vec::len), Some(2));
+    assert!(items.as_array().is_some_and(|history| {
+        history.iter().any(|item| {
+            item["proof_id"].as_str() == Some("belvedere::ingestion::record_identity_is_preserved")
+                && item["current_assessment_id"].as_str() == Some("assess-belvedere-ingestion-1")
+                && item["history_count"].as_u64() == Some(1)
+                && item["recommendation_flow"].as_array().is_some_and(|flow| {
+                    flow.iter()
+                        .any(|entry| entry.as_str() == Some("Strengthen"))
+                })
+        })
+    }));
+}
+
+fn assert_empty_assessment_history(items: &Value) {
+    assert_eq!(items.as_array().map(Vec::len), Some(0));
+}
+
+fn assert_assessment_queue(items: &Value) {
+    assert_eq!(items.as_array().map(Vec::len), Some(2));
+    assert!(items.as_array().is_some_and(|queue| {
+        queue.iter().any(|item| {
+            item["assessment_id"].as_str() == Some("assess-belvedere-ingestion-1")
+                && item["proof_id"].as_str()
+                    == Some("belvedere::ingestion::record_identity_is_preserved")
+                && item["current"].as_bool() == Some(true)
+                && item["queue_lane"].as_str() == Some("strengthening")
+        })
+    }));
+}
+
+fn assert_empty_assessment_queue(items: &Value) {
+    assert_eq!(items.as_array().map(Vec::len), Some(0));
+}
+
+fn assert_assessment_work(items: &Value) {
+    assert_eq!(items.as_array().map(Vec::len), Some(2));
+    assert!(items.as_array().is_some_and(|work| {
+        work.iter().any(|item| {
+            item["claim_id"].as_str() == Some("belvedere::ingestion::DecodedRegistrySnapshot")
+                && item["queue_lane"].as_str() == Some("assessment")
+                && item["action"].as_str() == Some("assess proof coverage")
+                && item["resolution_label"].as_str() == Some("collect proof assessment")
+        })
+    }));
+}
+
+fn assert_witness_surface(items: &Value) {
+    assert_eq!(items.as_array().map(Vec::len), Some(1));
+    assert!(items.as_array().is_some_and(|witnesses| {
+        witnesses.iter().any(|item| {
+            item["claim_id"].as_str() == Some("belvedere::ingestion::DecodedRegistrySnapshot")
+                && item["verifier"].as_str() == Some("kani")
+                && item["support_kind"].as_str() == Some("checked_with_trusted")
+                && item["checked"].as_u64() == Some(1)
+                && item["trusted"].as_u64() == Some(1)
+        })
+    }));
+}
+
+fn assert_provenance_roots(items: &Value) {
+    assert_eq!(items.as_array().map(Vec::len), Some(3));
+    assert!(items.as_array().is_some_and(|roots| {
+        roots.iter().any(|item| {
+            item["claim_id"].as_str() == Some("belvedere::ingestion::RawAmenableArtifact")
+                && item["root_kind"].as_str() == Some("unmodeled_root")
+                && item["next_action"].as_str() == Some("establish modeled proof coverage")
+                && item["gap_count"].as_u64() == Some(1)
+        })
+    }));
+}
+
+fn assert_previous_provenance_roots(items: &Value) {
+    assert_eq!(items.as_array().map(Vec::len), Some(2));
+    assert!(items.as_array().is_some_and(|roots| {
+        roots.iter().any(|item| {
+            item["claim_id"].as_str() == Some("belvedere::ingestion::record_identity_is_preserved")
+                && item["root_kind"].as_str() == Some("proof_registration_root")
+        })
+    }));
+}
+
+fn assert_gap_items(items: &Value) {
+    assert_eq!(items.as_array().map(Vec::len), Some(4));
+    assert!(items.as_array().is_some_and(|gaps| {
+        gaps.iter().any(|item| {
+            item["claim_id"].as_str() == Some("belvedere::ingestion::DecodedRegistrySnapshot")
+                && item["kind"].as_str() == Some("missing_assessment")
+                && item["severity"].as_str() == Some("review")
+                && item["queue_lane"].as_str() == Some("assessment")
+        })
+    }));
+}
+
+fn assert_previous_gap_items(items: &Value) {
+    assert!(items.as_array().is_some_and(|gaps| {
+        !gaps.is_empty()
+            && gaps.iter().any(|item| {
+                item["kind"].as_str() == Some("missing_proof")
+                    && item["severity"].as_str() == Some("blocking")
+            })
     }));
 }
 
@@ -3171,11 +3377,21 @@ fn cli_can_emit_the_view_model_receipt_as_json() -> Result<()> {
 fn cli_can_emit_run_projection_artifacts_as_json() -> Result<()> {
     belvedere::init_tracing();
 
-    let cases: [(&str, BelvedereCliOutput, ReceiptAssertion); 7] = [
+    let cases: [(&str, BelvedereCliOutput, ReceiptAssertion); 15] = [
         (
             "--view-model",
             stdio_output(BelvedereCliArtifact::RunViewModel),
             assert_auditor_navigation_model,
+        ),
+        (
+            "--backend-coverage",
+            stdio_output(BelvedereCliArtifact::RunBackendCoverage),
+            assert_backend_coverage,
+        ),
+        (
+            "--claim-explorer",
+            stdio_output(BelvedereCliArtifact::RunClaimExplorer),
+            assert_claim_explorer,
         ),
         (
             "--claim-details",
@@ -3201,6 +3417,36 @@ fn cli_can_emit_run_projection_artifacts_as_json() -> Result<()> {
             "--review-workflow",
             stdio_output(BelvedereCliArtifact::RunReviewWorkflow),
             assert_review_workflow_queue,
+        ),
+        (
+            "--assessment-history",
+            stdio_output(BelvedereCliArtifact::RunAssessmentHistory),
+            assert_assessment_history,
+        ),
+        (
+            "--assessment-queue",
+            stdio_output(BelvedereCliArtifact::RunAssessmentQueue),
+            assert_assessment_queue,
+        ),
+        (
+            "--assessment-work",
+            stdio_output(BelvedereCliArtifact::RunAssessmentWork),
+            assert_assessment_work,
+        ),
+        (
+            "--witness-surface",
+            stdio_output(BelvedereCliArtifact::RunWitnessSurface),
+            assert_witness_surface,
+        ),
+        (
+            "--provenance-roots",
+            stdio_output(BelvedereCliArtifact::RunProvenanceRoots),
+            assert_provenance_roots,
+        ),
+        (
+            "--gaps",
+            stdio_output(BelvedereCliArtifact::RunGaps),
+            assert_gap_items,
         ),
         (
             "--ui-ir",
@@ -5096,11 +5342,21 @@ fn cli_can_emit_previous_diff_projection_artifacts_as_json() -> Result<()> {
         .into_diagnostic()
         .wrap_err("temporary empty assessment artifact should be writable")?;
 
-    let cases: [(&str, BelvedereCliOutput, ReceiptAssertion); 6] = [
+    let cases: [(&str, BelvedereCliOutput, ReceiptAssertion); 15] = [
         (
             "--previous-view-model",
             stdio_output(BelvedereCliArtifact::LandscapeDiffPreviousViewModel),
             assert_previous_auditor_navigation_model,
+        ),
+        (
+            "--previous-backend-coverage",
+            stdio_output(BelvedereCliArtifact::LandscapeDiffPreviousBackendCoverage),
+            assert_previous_backend_coverage,
+        ),
+        (
+            "--previous-claim-explorer",
+            stdio_output(BelvedereCliArtifact::LandscapeDiffPreviousClaimExplorer),
+            assert_previous_claim_explorer,
         ),
         (
             "--previous-claim-details",
@@ -5121,6 +5377,41 @@ fn cli_can_emit_previous_diff_projection_artifacts_as_json() -> Result<()> {
             "--previous-proof-chains",
             stdio_output(BelvedereCliArtifact::LandscapeDiffPreviousProofChains),
             assert_previous_proof_chains,
+        ),
+        (
+            "--previous-review-workflow",
+            stdio_output(BelvedereCliArtifact::LandscapeDiffPreviousReviewWorkflow),
+            assert_previous_review_workflow_queue,
+        ),
+        (
+            "--previous-assessment-history",
+            stdio_output(BelvedereCliArtifact::LandscapeDiffPreviousAssessmentHistory),
+            assert_empty_assessment_history,
+        ),
+        (
+            "--previous-assessment-queue",
+            stdio_output(BelvedereCliArtifact::LandscapeDiffPreviousAssessmentQueue),
+            assert_empty_assessment_queue,
+        ),
+        (
+            "--previous-assessment-work",
+            stdio_output(BelvedereCliArtifact::LandscapeDiffPreviousAssessmentWork),
+            assert_assessment_work,
+        ),
+        (
+            "--previous-witness-surface",
+            stdio_output(BelvedereCliArtifact::LandscapeDiffPreviousWitnessSurface),
+            assert_witness_surface,
+        ),
+        (
+            "--previous-provenance-roots",
+            stdio_output(BelvedereCliArtifact::LandscapeDiffPreviousProvenanceRoots),
+            assert_previous_provenance_roots,
+        ),
+        (
+            "--previous-gaps",
+            stdio_output(BelvedereCliArtifact::LandscapeDiffPreviousGaps),
+            assert_previous_gap_items,
         ),
         (
             "--previous-ui-ir",
@@ -5430,11 +5721,21 @@ fn cli_can_emit_current_diff_projection_artifacts_as_json() -> Result<()> {
         .into_diagnostic()
         .wrap_err("temporary empty assessment artifact should be writable")?;
 
-    let cases: [(&str, BelvedereCliOutput, ReceiptAssertion); 6] = [
+    let cases: [(&str, BelvedereCliOutput, ReceiptAssertion); 15] = [
         (
             "--current-view-model",
             stdio_output(BelvedereCliArtifact::LandscapeDiffCurrentViewModel),
             assert_auditor_navigation_model,
+        ),
+        (
+            "--current-backend-coverage",
+            stdio_output(BelvedereCliArtifact::LandscapeDiffCurrentBackendCoverage),
+            assert_backend_coverage,
+        ),
+        (
+            "--current-claim-explorer",
+            stdio_output(BelvedereCliArtifact::LandscapeDiffCurrentClaimExplorer),
+            assert_claim_explorer,
         ),
         (
             "--current-claim-details",
@@ -5455,6 +5756,41 @@ fn cli_can_emit_current_diff_projection_artifacts_as_json() -> Result<()> {
             "--current-proof-chains",
             stdio_output(BelvedereCliArtifact::LandscapeDiffCurrentProofChains),
             assert_proof_chains,
+        ),
+        (
+            "--current-review-workflow",
+            stdio_output(BelvedereCliArtifact::LandscapeDiffCurrentReviewWorkflow),
+            assert_review_workflow_queue,
+        ),
+        (
+            "--current-assessment-history",
+            stdio_output(BelvedereCliArtifact::LandscapeDiffCurrentAssessmentHistory),
+            assert_assessment_history,
+        ),
+        (
+            "--current-assessment-queue",
+            stdio_output(BelvedereCliArtifact::LandscapeDiffCurrentAssessmentQueue),
+            assert_assessment_queue,
+        ),
+        (
+            "--current-assessment-work",
+            stdio_output(BelvedereCliArtifact::LandscapeDiffCurrentAssessmentWork),
+            assert_assessment_work,
+        ),
+        (
+            "--current-witness-surface",
+            stdio_output(BelvedereCliArtifact::LandscapeDiffCurrentWitnessSurface),
+            assert_witness_surface,
+        ),
+        (
+            "--current-provenance-roots",
+            stdio_output(BelvedereCliArtifact::LandscapeDiffCurrentProvenanceRoots),
+            assert_provenance_roots,
+        ),
+        (
+            "--current-gaps",
+            stdio_output(BelvedereCliArtifact::LandscapeDiffCurrentGaps),
+            assert_gap_items,
         ),
         (
             "--current-ui-ir",
@@ -5632,11 +5968,21 @@ fn cli_can_emit_landscape_diff_projection_artifact_aliases_as_json() -> Result<(
         .into_diagnostic()
         .wrap_err("temporary empty assessment artifact should be writable")?;
 
-    let cases: [(&str, BelvedereCliOutput, ReceiptAssertion); 7] = [
+    let cases: [(&str, BelvedereCliOutput, ReceiptAssertion); 15] = [
         (
             "--view-model",
             stdio_output(BelvedereCliArtifact::LandscapeDiffViewModel),
             assert_landscape_diff_review_model,
+        ),
+        (
+            "--backend-coverage",
+            stdio_output(BelvedereCliArtifact::LandscapeDiffBackendCoverage),
+            assert_backend_coverage,
+        ),
+        (
+            "--claim-explorer",
+            stdio_output(BelvedereCliArtifact::LandscapeDiffClaimExplorer),
+            assert_claim_explorer,
         ),
         (
             "--claim-details",
@@ -5662,6 +6008,36 @@ fn cli_can_emit_landscape_diff_projection_artifact_aliases_as_json() -> Result<(
             "--review-workflow",
             stdio_output(BelvedereCliArtifact::LandscapeDiffReviewWorkflow),
             assert_landscape_diff_review_workflow_queue,
+        ),
+        (
+            "--assessment-history",
+            stdio_output(BelvedereCliArtifact::LandscapeDiffAssessmentHistory),
+            assert_assessment_history,
+        ),
+        (
+            "--assessment-queue",
+            stdio_output(BelvedereCliArtifact::LandscapeDiffAssessmentQueue),
+            assert_assessment_queue,
+        ),
+        (
+            "--assessment-work",
+            stdio_output(BelvedereCliArtifact::LandscapeDiffAssessmentWork),
+            assert_assessment_work,
+        ),
+        (
+            "--witness-surface",
+            stdio_output(BelvedereCliArtifact::LandscapeDiffWitnessSurface),
+            assert_witness_surface,
+        ),
+        (
+            "--provenance-roots",
+            stdio_output(BelvedereCliArtifact::LandscapeDiffProvenanceRoots),
+            assert_provenance_roots,
+        ),
+        (
+            "--gaps",
+            stdio_output(BelvedereCliArtifact::LandscapeDiffGaps),
+            assert_gap_items,
         ),
         (
             "--ui-ir",

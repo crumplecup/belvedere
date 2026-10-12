@@ -49,6 +49,10 @@ pub enum BelvedereCliArtifact {
     RunLandscapeReceipt,
     /// Normal run auditor navigation view model.
     RunViewModel,
+    /// Normal run backend coverage items.
+    RunBackendCoverage,
+    /// Normal run claim explorer items.
+    RunClaimExplorer,
     /// Normal run claim detail deep-dive items.
     RunClaimDetails,
     /// Normal run filter facets.
@@ -59,6 +63,18 @@ pub enum BelvedereCliArtifact {
     RunProofChains,
     /// Normal run auditor review workflow queue.
     RunReviewWorkflow,
+    /// Normal run assessment history items.
+    RunAssessmentHistory,
+    /// Normal run assessment queue items.
+    RunAssessmentQueue,
+    /// Normal run assessment work items.
+    RunAssessmentWork,
+    /// Normal run witness surface items.
+    RunWitnessSurface,
+    /// Normal run provenance root items.
+    RunProvenanceRoots,
+    /// Normal run conservative gap items.
+    RunGaps,
     /// Normal run view-model receipt.
     RunViewModelReceipt,
     /// Normal run UI IR projection.
@@ -79,6 +95,10 @@ pub enum BelvedereCliArtifact {
     LandscapeDiffPreviousLandscapeReceipt,
     /// Previous view model from a diff run.
     LandscapeDiffPreviousViewModel,
+    /// Previous backend coverage items from a diff run.
+    LandscapeDiffPreviousBackendCoverage,
+    /// Previous claim explorer items from a diff run.
+    LandscapeDiffPreviousClaimExplorer,
     /// Previous claim detail deep-dive items from a diff run.
     LandscapeDiffPreviousClaimDetails,
     /// Previous filter facets from a diff run.
@@ -87,6 +107,20 @@ pub enum BelvedereCliArtifact {
     LandscapeDiffPreviousSourceNavigation,
     /// Previous proof-chain deep-dive items from a diff run.
     LandscapeDiffPreviousProofChains,
+    /// Previous review workflow queue from a diff run.
+    LandscapeDiffPreviousReviewWorkflow,
+    /// Previous assessment history items from a diff run.
+    LandscapeDiffPreviousAssessmentHistory,
+    /// Previous assessment queue items from a diff run.
+    LandscapeDiffPreviousAssessmentQueue,
+    /// Previous assessment work items from a diff run.
+    LandscapeDiffPreviousAssessmentWork,
+    /// Previous witness surface items from a diff run.
+    LandscapeDiffPreviousWitnessSurface,
+    /// Previous provenance root items from a diff run.
+    LandscapeDiffPreviousProvenanceRoots,
+    /// Previous conservative gap items from a diff run.
+    LandscapeDiffPreviousGaps,
     /// Previous view-model receipt from a diff run.
     LandscapeDiffPreviousViewModelReceipt,
     /// Previous UI IR projection from a diff run.
@@ -103,6 +137,10 @@ pub enum BelvedereCliArtifact {
     LandscapeDiffCurrentLandscapeReceipt,
     /// Current view model from a diff run.
     LandscapeDiffCurrentViewModel,
+    /// Current backend coverage items from a diff run.
+    LandscapeDiffCurrentBackendCoverage,
+    /// Current claim explorer items from a diff run.
+    LandscapeDiffCurrentClaimExplorer,
     /// Current claim detail deep-dive items from a diff run.
     LandscapeDiffCurrentClaimDetails,
     /// Current filter facets from a diff run.
@@ -111,6 +149,20 @@ pub enum BelvedereCliArtifact {
     LandscapeDiffCurrentSourceNavigation,
     /// Current proof-chain deep-dive items from a diff run.
     LandscapeDiffCurrentProofChains,
+    /// Current review workflow queue from a diff run.
+    LandscapeDiffCurrentReviewWorkflow,
+    /// Current assessment history items from a diff run.
+    LandscapeDiffCurrentAssessmentHistory,
+    /// Current assessment queue items from a diff run.
+    LandscapeDiffCurrentAssessmentQueue,
+    /// Current assessment work items from a diff run.
+    LandscapeDiffCurrentAssessmentWork,
+    /// Current witness surface items from a diff run.
+    LandscapeDiffCurrentWitnessSurface,
+    /// Current provenance root items from a diff run.
+    LandscapeDiffCurrentProvenanceRoots,
+    /// Current conservative gap items from a diff run.
+    LandscapeDiffCurrentGaps,
     /// Current view-model receipt from a diff run.
     LandscapeDiffCurrentViewModelReceipt,
     /// Current UI IR projection from a diff run.
@@ -129,6 +181,10 @@ pub enum BelvedereCliArtifact {
     LandscapeDiffLandscapeReceipt,
     /// Diff review view model from a diff run.
     LandscapeDiffViewModel,
+    /// Current-snapshot backend coverage items from a diff run.
+    LandscapeDiffBackendCoverage,
+    /// Current-snapshot claim explorer items from a diff run.
+    LandscapeDiffClaimExplorer,
     /// Current-snapshot claim detail deep-dive items from a diff run.
     LandscapeDiffClaimDetails,
     /// Current-snapshot filter facets from a diff run.
@@ -139,6 +195,18 @@ pub enum BelvedereCliArtifact {
     LandscapeDiffProofChains,
     /// Landscape diff review workflow queue.
     LandscapeDiffReviewWorkflow,
+    /// Current-snapshot assessment history items from a diff run.
+    LandscapeDiffAssessmentHistory,
+    /// Current-snapshot assessment queue items from a diff run.
+    LandscapeDiffAssessmentQueue,
+    /// Current-snapshot assessment work items from a diff run.
+    LandscapeDiffAssessmentWork,
+    /// Current-snapshot witness surface items from a diff run.
+    LandscapeDiffWitnessSurface,
+    /// Current-snapshot provenance root items from a diff run.
+    LandscapeDiffProvenanceRoots,
+    /// Current-snapshot conservative gap items from a diff run.
+    LandscapeDiffGaps,
     /// Landscape diff review-model receipt.
     LandscapeDiffViewModelReceipt,
     /// Landscape diff UI IR projection.
