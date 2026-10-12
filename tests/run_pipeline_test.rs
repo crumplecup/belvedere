@@ -230,7 +230,7 @@ fn run_pipeline_uses_the_normal_amenable_artifact_path() -> Result<()> {
     );
     assert_eq!(report.manifest().input_artifacts().len(), 2);
     assert_eq!(report.manifest().stage_certificates().len(), 5);
-    assert_eq!(report.manifest().output_artifacts().len(), 22);
+    assert_eq!(report.manifest().output_artifacts().len(), 29);
     assert!(
         report
             .manifest()
@@ -267,6 +267,13 @@ fn run_pipeline_uses_the_normal_amenable_artifact_path() -> Result<()> {
         Some(&1)
     );
     assert_eq!(
+        report
+            .manifest()
+            .output_kind_counts()
+            .get("manifest_output_kind_elicit_ui_trace_widgets"),
+        Some(&1)
+    );
+    assert_eq!(
         report.manifest().run_certificate_id(),
         report.certificate().id()
     );
@@ -296,6 +303,14 @@ fn run_pipeline_uses_the_normal_amenable_artifact_path() -> Result<()> {
                     .view_model_receipt()
                     .counts()
                     .backend_coverage_items()
+    }));
+    assert!(report.manifest().output_artifacts().iter().any(|artifact| {
+        artifact.role() == "ui_ir_trace_widgets"
+            && artifact.artifact_kind() == "elicit_ui_trace_widgets"
+            && artifact.source_stage_role() == "ui_ir_projection"
+            && artifact.evidence_id() == report.ui_ir_receipt().receipt_id()
+            && artifact.evidence_digest() == report.ui_ir_receipt().receipt_digest()
+            && *artifact.item_count() == report.ui_ir_receipt().trace_widget_ids().len()
     }));
     assert!(
         report
@@ -2764,7 +2779,7 @@ fn assert_run_manifest(manifest: &Value) {
     );
     assert_eq!(manifest["counts"]["input_artifacts"].as_u64(), Some(2));
     assert_eq!(manifest["counts"]["stage_certificates"].as_u64(), Some(5));
-    assert_eq!(manifest["counts"]["output_artifacts"].as_u64(), Some(22));
+    assert_eq!(manifest["counts"]["output_artifacts"].as_u64(), Some(29));
     assert_eq!(
         manifest["input_role_counts"]["manifest_input_role_registry"].as_u64(),
         Some(1)
@@ -2779,6 +2794,10 @@ fn assert_run_manifest(manifest: &Value) {
     );
     assert_eq!(
         manifest["output_kind_counts"]["manifest_output_kind_auditor_backend_coverage"].as_u64(),
+        Some(1)
+    );
+    assert_eq!(
+        manifest["output_kind_counts"]["manifest_output_kind_elicit_ui_trace_widgets"].as_u64(),
         Some(1)
     );
     assert!(
@@ -2807,7 +2826,7 @@ fn assert_run_manifest(manifest: &Value) {
     );
     assert_eq!(
         manifest["output_artifacts"].as_array().map(Vec::len),
-        Some(22)
+        Some(29)
     );
     assert!(
         manifest["output_artifacts"]
@@ -2839,6 +2858,22 @@ fn assert_run_manifest(manifest: &Value) {
         "auditor_navigation",
         12,
     ));
+    assert!(manifest_output_artifact_matches(
+        manifest,
+        "ui_ir_trace_widgets",
+        "elicit_ui_trace_widgets",
+        "belvedere.receipt.ui_ir:",
+        "ui_ir_projection",
+        60,
+    ));
+    assert!(manifest_output_artifact_matches(
+        manifest,
+        "ui_ir_outputs",
+        "elicit_ui_outputs",
+        "belvedere.receipt.ui_ir:",
+        "ui_ir_projection",
+        153,
+    ));
 }
 
 fn assert_diff_manifest(manifest: &Value) {
@@ -2859,7 +2894,7 @@ fn assert_diff_manifest(manifest: &Value) {
     );
     assert_eq!(manifest["counts"]["input_artifacts"].as_u64(), Some(4));
     assert_eq!(manifest["counts"]["stage_certificates"].as_u64(), Some(13));
-    assert_eq!(manifest["counts"]["output_artifacts"].as_u64(), Some(65));
+    assert_eq!(manifest["counts"]["output_artifacts"].as_u64(), Some(86));
     assert_eq!(
         manifest["stage_kind_counts"]["manifest_stage_kind_registry_ingestion"].as_u64(),
         Some(2)
@@ -2896,6 +2931,10 @@ fn assert_diff_manifest(manifest: &Value) {
     );
     assert_eq!(
         manifest["output_kind_counts"]["manifest_output_kind_auditor_backend_coverage"].as_u64(),
+        Some(3)
+    );
+    assert_eq!(
+        manifest["output_kind_counts"]["manifest_output_kind_elicit_ui_trace_widgets"].as_u64(),
         Some(3)
     );
     assert!(
@@ -3010,6 +3049,54 @@ fn assert_diff_manifest(manifest: &Value) {
         "belvedere.receipt.view_model:",
         "current_auditor_navigation",
         12,
+    ));
+    assert!(manifest_output_artifact_matches(
+        manifest,
+        "previous_ui_ir_trace_widgets",
+        "elicit_ui_trace_widgets",
+        "belvedere.receipt.ui_ir:",
+        "previous_ui_ir_projection",
+        44,
+    ));
+    assert!(manifest_output_artifact_matches(
+        manifest,
+        "previous_ui_ir_outputs",
+        "elicit_ui_outputs",
+        "belvedere.receipt.ui_ir:",
+        "previous_ui_ir_projection",
+        121,
+    ));
+    assert!(manifest_output_artifact_matches(
+        manifest,
+        "current_ui_ir_trace_widgets",
+        "elicit_ui_trace_widgets",
+        "belvedere.receipt.ui_ir:",
+        "current_ui_ir_projection",
+        60,
+    ));
+    assert!(manifest_output_artifact_matches(
+        manifest,
+        "current_ui_ir_outputs",
+        "elicit_ui_outputs",
+        "belvedere.receipt.ui_ir:",
+        "current_ui_ir_projection",
+        153,
+    ));
+    assert!(manifest_output_artifact_matches(
+        manifest,
+        "landscape_diff_review_ui_ir_trace_widgets",
+        "elicit_ui_trace_widgets",
+        "belvedere.receipt.ui_ir:",
+        "landscape_diff_review_ui_ir_projection",
+        14,
+    ));
+    assert!(manifest_output_artifact_matches(
+        manifest,
+        "landscape_diff_review_ui_ir_outputs",
+        "elicit_ui_outputs",
+        "belvedere.receipt.ui_ir:",
+        "landscape_diff_review_ui_ir_projection",
+        41,
     ));
 }
 

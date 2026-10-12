@@ -11,7 +11,7 @@ use super::{
     BelvedereDiffManifestReceipts, BelvedereManifestOutputArtifact,
     BelvedereManifestStageCertificate,
     indexed_artifacts::{output_artifact, run_certificate_output, stage_certificate_output},
-    projection_outputs::view_model_projection_outputs,
+    projection_outputs::{ui_ir_projection_outputs, view_model_projection_outputs},
 };
 
 #[instrument(
@@ -108,16 +108,22 @@ pub(super) fn normal_run_outputs(
             ui_ir_receipt.trace_widget_ids().len(),
             stage_certificates,
         ),
-        output_artifact(
-            "ui_ir_receipt",
-            "ui_ir_receipt",
-            ui_ir_receipt.receipt_id(),
-            ui_ir_receipt.receipt_digest(),
-            4,
-            ui_ir_receipt.trace_widget_ids().len(),
-            stage_certificates,
-        ),
     ]);
+    output_artifacts.extend(ui_ir_projection_outputs(
+        None,
+        ui_ir_receipt,
+        4,
+        stage_certificates,
+    ));
+    output_artifacts.extend([output_artifact(
+        "ui_ir_receipt",
+        "ui_ir_receipt",
+        ui_ir_receipt.receipt_id(),
+        ui_ir_receipt.receipt_digest(),
+        4,
+        ui_ir_receipt.trace_widget_ids().len(),
+        stage_certificates,
+    )]);
     output_artifacts
 }
 
@@ -254,16 +260,22 @@ fn previous_snapshot_outputs(
             snapshot.ui_ir().trace_widget_ids().len(),
             stage_certificates,
         ),
-        output_artifact(
-            "previous_ui_ir_receipt",
-            "ui_ir_receipt",
-            snapshot.ui_ir().receipt_id(),
-            snapshot.ui_ir().receipt_digest(),
-            4,
-            snapshot.ui_ir().trace_widget_ids().len(),
-            stage_certificates,
-        ),
     ]);
+    output_artifacts.extend(ui_ir_projection_outputs(
+        Some("previous"),
+        snapshot.ui_ir(),
+        4,
+        stage_certificates,
+    ));
+    output_artifacts.extend([output_artifact(
+        "previous_ui_ir_receipt",
+        "ui_ir_receipt",
+        snapshot.ui_ir().receipt_id(),
+        snapshot.ui_ir().receipt_digest(),
+        4,
+        snapshot.ui_ir().trace_widget_ids().len(),
+        stage_certificates,
+    )]);
     output_artifacts
 }
 
@@ -344,16 +356,22 @@ fn current_snapshot_outputs(
             snapshot.ui_ir().trace_widget_ids().len(),
             stage_certificates,
         ),
-        output_artifact(
-            "current_ui_ir_receipt",
-            "ui_ir_receipt",
-            snapshot.ui_ir().receipt_id(),
-            snapshot.ui_ir().receipt_digest(),
-            9,
-            snapshot.ui_ir().trace_widget_ids().len(),
-            stage_certificates,
-        ),
     ]);
+    output_artifacts.extend(ui_ir_projection_outputs(
+        Some("current"),
+        snapshot.ui_ir(),
+        9,
+        stage_certificates,
+    ));
+    output_artifacts.extend([output_artifact(
+        "current_ui_ir_receipt",
+        "ui_ir_receipt",
+        snapshot.ui_ir().receipt_id(),
+        snapshot.ui_ir().receipt_digest(),
+        9,
+        snapshot.ui_ir().trace_widget_ids().len(),
+        stage_certificates,
+    )]);
     output_artifacts
 }
 
@@ -362,7 +380,7 @@ fn diff_outputs(
     receipts: BelvedereDiffManifestReceipts<'_>,
     stage_certificates: &[BelvedereManifestStageCertificate],
 ) -> Vec<BelvedereManifestOutputArtifact> {
-    vec![
+    let mut output_artifacts = vec![
         output_artifact(
             "landscape_diff",
             "landscape_diff",
@@ -408,14 +426,21 @@ fn diff_outputs(
             receipts.diff_review_ui_ir().trace_widget_ids().len(),
             stage_certificates,
         ),
-        output_artifact(
-            "landscape_diff_review_ui_ir_receipt",
-            "ui_ir_receipt",
-            receipts.diff_review_ui_ir().receipt_id(),
-            receipts.diff_review_ui_ir().receipt_digest(),
-            12,
-            receipts.diff_review_ui_ir().trace_widget_ids().len(),
-            stage_certificates,
-        ),
-    ]
+    ];
+    output_artifacts.extend(ui_ir_projection_outputs(
+        Some("landscape_diff_review"),
+        receipts.diff_review_ui_ir(),
+        12,
+        stage_certificates,
+    ));
+    output_artifacts.extend([output_artifact(
+        "landscape_diff_review_ui_ir_receipt",
+        "ui_ir_receipt",
+        receipts.diff_review_ui_ir().receipt_id(),
+        receipts.diff_review_ui_ir().receipt_digest(),
+        12,
+        receipts.diff_review_ui_ir().trace_widget_ids().len(),
+        stage_certificates,
+    )]);
+    output_artifacts
 }

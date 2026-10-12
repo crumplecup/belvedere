@@ -737,6 +737,13 @@ fn landscape_diff_runner_uses_the_normal_artifact_path() -> Result<()> {
         report
             .manifest()
             .output_kind_counts()
+            .get("manifest_output_kind_elicit_ui_trace_widgets"),
+        Some(&3)
+    );
+    assert_eq!(
+        report
+            .manifest()
+            .output_kind_counts()
             .get("manifest_output_kind_landscape_diff_receipt"),
         Some(&1)
     );
