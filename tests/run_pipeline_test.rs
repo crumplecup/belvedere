@@ -1105,6 +1105,10 @@ fn cli_help_is_a_successful_public_output_contract() -> Result<()> {
     assert!(help.contains("--previous-gaps"));
     assert!(help.contains("--previous-view-model-receipt"));
     assert!(help.contains("--previous-ui-ir"));
+    assert!(help.contains("--previous-ui-ir-sections"));
+    assert!(help.contains("--previous-ui-ir-trace-widgets"));
+    assert!(help.contains("--previous-ui-ir-viewports"));
+    assert!(help.contains("--previous-ui-ir-minted-standards"));
     assert!(help.contains("--previous-ui-ir-receipt"));
     assert!(help.contains("--current-landscape-receipt"));
     assert!(help.contains("--current-backend-coverage"));
@@ -1121,6 +1125,10 @@ fn cli_help_is_a_successful_public_output_contract() -> Result<()> {
     assert!(help.contains("--current-provenance-roots"));
     assert!(help.contains("--current-gaps"));
     assert!(help.contains("--current-view-model-receipt"));
+    assert!(help.contains("--current-ui-ir-sections"));
+    assert!(help.contains("--current-ui-ir-trace-widgets"));
+    assert!(help.contains("--current-ui-ir-viewports"));
+    assert!(help.contains("--current-ui-ir-minted-standards"));
     assert!(help.contains("--current-ui-ir-receipt"));
     assert!(help.contains("--registry-receipt"));
     assert!(help.contains("--assessment-receipt"));
@@ -1139,6 +1147,10 @@ fn cli_help_is_a_successful_public_output_contract() -> Result<()> {
     assert!(help.contains("--witness-surface"));
     assert!(help.contains("--provenance-roots"));
     assert!(help.contains("--gaps"));
+    assert!(help.contains("--ui-ir-sections"));
+    assert!(help.contains("--ui-ir-trace-widgets"));
+    assert!(help.contains("--ui-ir-viewports"));
+    assert!(help.contains("--ui-ir-minted-standards"));
     assert!(help.contains("--ui-ir-receipt"));
     assert!(!help.contains("--certificate-json"));
     assert!(!help.contains("--certificate-file"));
@@ -2654,6 +2666,90 @@ fn assert_ui_ir_projection(projection: &Value) {
     );
 }
 
+fn assert_ui_ir_sections(sections: &Value) {
+    assert_eq!(sections.as_array().map(Vec::len), Some(13));
+    assert!(sections.as_array().is_some_and(|sections| {
+        sections
+            .iter()
+            .any(|section| section["id"].as_str() == Some(UI_IR_SECTION_REVIEW_WORKFLOW))
+    }));
+    assert!(sections.as_array().is_some_and(|sections| {
+        sections.iter().all(|section| {
+            section["name"]
+                .as_str()
+                .is_some_and(|name| !name.is_empty())
+                && section["root_widget_id"].as_u64().is_some()
+                && section["widget_count"].as_u64().is_some()
+        })
+    }));
+}
+
+fn assert_ui_ir_trace_widgets(widgets: &Value) {
+    assert_eq!(widgets.as_array().map(Vec::len), Some(60));
+    assert!(widgets.as_array().is_some_and(|widgets| {
+        widgets
+            .iter()
+            .all(|widget| is_hex_digest(&widget["trace_widget_digest"]))
+    }));
+    assert!(widgets.as_array().is_some_and(|widgets| {
+        widgets.iter().any(|widget| {
+            widget["section_id"].as_str() == Some(UI_IR_SECTION_SOURCE_NAVIGATION)
+                && widget["source_record_ids"]
+                    .as_array()
+                    .is_some_and(|ids| !ids.is_empty())
+        })
+    }));
+}
+
+fn assert_previous_ui_ir_trace_widgets(widgets: &Value) {
+    assert_eq!(widgets.as_array().map(Vec::len), Some(44));
+    assert!(widgets.as_array().is_some_and(|widgets| {
+        widgets
+            .iter()
+            .all(|widget| is_hex_digest(&widget["trace_widget_digest"]))
+    }));
+    assert!(widgets.as_array().is_some_and(|widgets| {
+        widgets.iter().any(|widget| {
+            widget["section_id"].as_str() == Some(UI_IR_SECTION_SOURCE_NAVIGATION)
+                && widget["source_record_ids"]
+                    .as_array()
+                    .is_some_and(|ids| !ids.is_empty())
+        })
+    }));
+}
+
+fn assert_ui_ir_viewports(viewports: &Value) {
+    assert_eq!(viewports.as_array().map(Vec::len), Some(3));
+    assert!(viewports.as_array().is_some_and(|viewports| {
+        viewports.iter().any(|viewport| {
+            viewport["width"].as_u64() == Some(1440)
+                && viewport["height"].as_u64() == Some(960)
+                && viewport["node_count"]
+                    .as_u64()
+                    .is_some_and(|count| count > 0)
+        })
+    }));
+}
+
+fn assert_ui_ir_minted_standards(standards: &Value) {
+    assert_eq!(standards.as_array().map(Vec::len), Some(4));
+    assert!(standards.as_array().is_some_and(|standards| {
+        standards
+            .iter()
+            .any(|standard| standard["prop"].as_str() == Some("elicit_ui::WcagVerified"))
+    }));
+    assert!(standards.as_array().is_some_and(|standards| {
+        standards.iter().all(|standard| {
+            standard["standard"]
+                .as_str()
+                .is_some_and(|name| name.contains("ElicitUi"))
+                && standard["purpose"]
+                    .as_str()
+                    .is_some_and(|purpose| !purpose.is_empty())
+        })
+    }));
+}
+
 fn assert_landscape_diff_review_ui_ir_projection(projection: &Value) {
     assert!(projection.get("tree").is_none());
     assert!(projection.get("proofs").is_none());
@@ -2704,6 +2800,41 @@ fn assert_landscape_diff_review_ui_ir_projection(projection: &Value) {
     assert!(projection["sections"].as_array().is_some_and(|sections| {
         sections.iter().any(|section| {
             section["id"].as_str() == Some(DIFF_REVIEW_UI_IR_SECTION_SOURCE_NAVIGATION)
+        })
+    }));
+}
+
+fn assert_landscape_diff_review_ui_ir_sections(sections: &Value) {
+    assert_eq!(sections.as_array().map(Vec::len), Some(3));
+    assert!(sections.as_array().is_some_and(|sections| {
+        sections
+            .iter()
+            .any(|section| section["id"].as_str() == Some(DIFF_REVIEW_UI_IR_SECTION_SUMMARY))
+    }));
+    assert!(sections.as_array().is_some_and(|sections| {
+        sections.iter().all(|section| {
+            section["name"]
+                .as_str()
+                .is_some_and(|name| !name.is_empty())
+                && section["root_widget_id"].as_u64().is_some()
+                && section["widget_count"].as_u64().is_some()
+        })
+    }));
+}
+
+fn assert_landscape_diff_review_ui_ir_trace_widgets(widgets: &Value) {
+    assert_eq!(widgets.as_array().map(Vec::len), Some(14));
+    assert!(widgets.as_array().is_some_and(|widgets| {
+        widgets
+            .iter()
+            .all(|widget| is_hex_digest(&widget["trace_widget_digest"]))
+    }));
+    assert!(widgets.as_array().is_some_and(|widgets| {
+        widgets.iter().any(|widget| {
+            widget["section_id"].as_str() == Some(DIFF_REVIEW_UI_IR_SECTION_ITEMS)
+                && widget["label"]
+                    .as_str()
+                    .is_some_and(|label| label.contains("action triage new gap"))
         })
     }));
 }
@@ -3547,7 +3678,7 @@ fn cli_can_emit_the_view_model_receipt_as_json() -> Result<()> {
 fn cli_can_emit_run_projection_artifacts_as_json() -> Result<()> {
     belvedere::init_tracing();
 
-    let cases: [(&str, BelvedereCliOutput, ReceiptAssertion); 15] = [
+    let cases: [(&str, BelvedereCliOutput, ReceiptAssertion); 19] = [
         (
             "--view-model",
             stdio_output(BelvedereCliArtifact::RunViewModel),
@@ -3622,6 +3753,26 @@ fn cli_can_emit_run_projection_artifacts_as_json() -> Result<()> {
             "--ui-ir",
             stdio_output(BelvedereCliArtifact::RunUiIr),
             assert_ui_ir_projection,
+        ),
+        (
+            "--ui-ir-sections",
+            stdio_output(BelvedereCliArtifact::RunUiIrSections),
+            assert_ui_ir_sections,
+        ),
+        (
+            "--ui-ir-trace-widgets",
+            stdio_output(BelvedereCliArtifact::RunUiIrTraceWidgets),
+            assert_ui_ir_trace_widgets,
+        ),
+        (
+            "--ui-ir-viewports",
+            stdio_output(BelvedereCliArtifact::RunUiIrViewports),
+            assert_ui_ir_viewports,
+        ),
+        (
+            "--ui-ir-minted-standards",
+            stdio_output(BelvedereCliArtifact::RunUiIrMintedStandards),
+            assert_ui_ir_minted_standards,
         ),
     ];
 
@@ -5512,7 +5663,7 @@ fn cli_can_emit_previous_diff_projection_artifacts_as_json() -> Result<()> {
         .into_diagnostic()
         .wrap_err("temporary empty assessment artifact should be writable")?;
 
-    let cases: [(&str, BelvedereCliOutput, ReceiptAssertion); 15] = [
+    let cases: [(&str, BelvedereCliOutput, ReceiptAssertion); 19] = [
         (
             "--previous-view-model",
             stdio_output(BelvedereCliArtifact::LandscapeDiffPreviousViewModel),
@@ -5587,6 +5738,26 @@ fn cli_can_emit_previous_diff_projection_artifacts_as_json() -> Result<()> {
             "--previous-ui-ir",
             stdio_output(BelvedereCliArtifact::LandscapeDiffPreviousUiIr),
             assert_previous_ui_ir_projection,
+        ),
+        (
+            "--previous-ui-ir-sections",
+            stdio_output(BelvedereCliArtifact::LandscapeDiffPreviousUiIrSections),
+            assert_ui_ir_sections,
+        ),
+        (
+            "--previous-ui-ir-trace-widgets",
+            stdio_output(BelvedereCliArtifact::LandscapeDiffPreviousUiIrTraceWidgets),
+            assert_previous_ui_ir_trace_widgets,
+        ),
+        (
+            "--previous-ui-ir-viewports",
+            stdio_output(BelvedereCliArtifact::LandscapeDiffPreviousUiIrViewports),
+            assert_ui_ir_viewports,
+        ),
+        (
+            "--previous-ui-ir-minted-standards",
+            stdio_output(BelvedereCliArtifact::LandscapeDiffPreviousUiIrMintedStandards),
+            assert_ui_ir_minted_standards,
         ),
     ];
 
@@ -5891,7 +6062,7 @@ fn cli_can_emit_current_diff_projection_artifacts_as_json() -> Result<()> {
         .into_diagnostic()
         .wrap_err("temporary empty assessment artifact should be writable")?;
 
-    let cases: [(&str, BelvedereCliOutput, ReceiptAssertion); 15] = [
+    let cases: [(&str, BelvedereCliOutput, ReceiptAssertion); 19] = [
         (
             "--current-view-model",
             stdio_output(BelvedereCliArtifact::LandscapeDiffCurrentViewModel),
@@ -5966,6 +6137,26 @@ fn cli_can_emit_current_diff_projection_artifacts_as_json() -> Result<()> {
             "--current-ui-ir",
             stdio_output(BelvedereCliArtifact::LandscapeDiffCurrentUiIr),
             assert_ui_ir_projection,
+        ),
+        (
+            "--current-ui-ir-sections",
+            stdio_output(BelvedereCliArtifact::LandscapeDiffCurrentUiIrSections),
+            assert_ui_ir_sections,
+        ),
+        (
+            "--current-ui-ir-trace-widgets",
+            stdio_output(BelvedereCliArtifact::LandscapeDiffCurrentUiIrTraceWidgets),
+            assert_ui_ir_trace_widgets,
+        ),
+        (
+            "--current-ui-ir-viewports",
+            stdio_output(BelvedereCliArtifact::LandscapeDiffCurrentUiIrViewports),
+            assert_ui_ir_viewports,
+        ),
+        (
+            "--current-ui-ir-minted-standards",
+            stdio_output(BelvedereCliArtifact::LandscapeDiffCurrentUiIrMintedStandards),
+            assert_ui_ir_minted_standards,
         ),
     ];
 
@@ -6138,7 +6329,7 @@ fn cli_can_emit_landscape_diff_projection_artifact_aliases_as_json() -> Result<(
         .into_diagnostic()
         .wrap_err("temporary empty assessment artifact should be writable")?;
 
-    let cases: [(&str, BelvedereCliOutput, ReceiptAssertion); 15] = [
+    let cases: [(&str, BelvedereCliOutput, ReceiptAssertion); 19] = [
         (
             "--view-model",
             stdio_output(BelvedereCliArtifact::LandscapeDiffViewModel),
@@ -6213,6 +6404,26 @@ fn cli_can_emit_landscape_diff_projection_artifact_aliases_as_json() -> Result<(
             "--ui-ir",
             stdio_output(BelvedereCliArtifact::LandscapeDiffUiIr),
             assert_landscape_diff_review_ui_ir_projection,
+        ),
+        (
+            "--ui-ir-sections",
+            stdio_output(BelvedereCliArtifact::LandscapeDiffUiIrSections),
+            assert_landscape_diff_review_ui_ir_sections,
+        ),
+        (
+            "--ui-ir-trace-widgets",
+            stdio_output(BelvedereCliArtifact::LandscapeDiffUiIrTraceWidgets),
+            assert_landscape_diff_review_ui_ir_trace_widgets,
+        ),
+        (
+            "--ui-ir-viewports",
+            stdio_output(BelvedereCliArtifact::LandscapeDiffUiIrViewports),
+            assert_ui_ir_viewports,
+        ),
+        (
+            "--ui-ir-minted-standards",
+            stdio_output(BelvedereCliArtifact::LandscapeDiffUiIrMintedStandards),
+            assert_ui_ir_minted_standards,
         ),
     ];
 

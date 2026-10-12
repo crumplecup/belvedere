@@ -33,6 +33,10 @@ Run artifacts:
       --gaps                   Conservative gap items.
       --view-model-receipt     View-model receipt.
       --ui-ir                  UI IR projection.
+      --ui-ir-sections         UI IR sections.
+      --ui-ir-trace-widgets    Traceable UI IR widgets.
+      --ui-ir-viewports        UI IR viewport verification evidence.
+      --ui-ir-minted-standards Minted UI IR standards.
       --ui-ir-receipt          UI IR receipt.
 
 Diff artifacts:
@@ -61,6 +65,10 @@ Diff artifacts:
       --previous-gaps
       --previous-view-model-receipt
       --previous-ui-ir
+      --previous-ui-ir-sections
+      --previous-ui-ir-trace-widgets
+      --previous-ui-ir-viewports
+      --previous-ui-ir-minted-standards
       --previous-ui-ir-receipt
       --current-registry-receipt
       --current-assessment-receipt
@@ -82,5 +90,13 @@ Diff artifacts:
       --current-gaps
       --current-view-model-receipt
       --current-ui-ir
+      --current-ui-ir-sections
+      --current-ui-ir-trace-widgets
+      --current-ui-ir-viewports
+      --current-ui-ir-minted-standards
       --current-ui-ir-receipt
+      --ui-ir-sections
+      --ui-ir-trace-widgets
+      --ui-ir-viewports
+      --ui-ir-minted-standards
 ";

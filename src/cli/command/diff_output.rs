@@ -92,6 +92,18 @@ fn diff_artifact(flag: &str) -> Option<BelvedereCliArtifact> {
             Some(BelvedereCliArtifact::LandscapeDiffPreviousViewModelReceipt)
         }
         "--previous-ui-ir" => Some(BelvedereCliArtifact::LandscapeDiffPreviousUiIr),
+        "--previous-ui-ir-sections" => {
+            Some(BelvedereCliArtifact::LandscapeDiffPreviousUiIrSections)
+        }
+        "--previous-ui-ir-trace-widgets" => {
+            Some(BelvedereCliArtifact::LandscapeDiffPreviousUiIrTraceWidgets)
+        }
+        "--previous-ui-ir-viewports" => {
+            Some(BelvedereCliArtifact::LandscapeDiffPreviousUiIrViewports)
+        }
+        "--previous-ui-ir-minted-standards" => {
+            Some(BelvedereCliArtifact::LandscapeDiffPreviousUiIrMintedStandards)
+        }
         "--previous-ui-ir-receipt" => Some(BelvedereCliArtifact::LandscapeDiffPreviousUiIrReceipt),
         "--current-registry-receipt" => {
             Some(BelvedereCliArtifact::LandscapeDiffCurrentRegistryReceipt)
@@ -137,6 +149,16 @@ fn diff_artifact(flag: &str) -> Option<BelvedereCliArtifact> {
             Some(BelvedereCliArtifact::LandscapeDiffCurrentViewModelReceipt)
         }
         "--current-ui-ir" => Some(BelvedereCliArtifact::LandscapeDiffCurrentUiIr),
+        "--current-ui-ir-sections" => Some(BelvedereCliArtifact::LandscapeDiffCurrentUiIrSections),
+        "--current-ui-ir-trace-widgets" => {
+            Some(BelvedereCliArtifact::LandscapeDiffCurrentUiIrTraceWidgets)
+        }
+        "--current-ui-ir-viewports" => {
+            Some(BelvedereCliArtifact::LandscapeDiffCurrentUiIrViewports)
+        }
+        "--current-ui-ir-minted-standards" => {
+            Some(BelvedereCliArtifact::LandscapeDiffCurrentUiIrMintedStandards)
+        }
         "--current-ui-ir-receipt" => Some(BelvedereCliArtifact::LandscapeDiffCurrentUiIrReceipt),
         "--landscape" => Some(BelvedereCliArtifact::LandscapeDiffLandscape),
         "--landscape-receipt" => Some(BelvedereCliArtifact::LandscapeDiffLandscapeReceipt),
@@ -156,6 +178,10 @@ fn diff_artifact(flag: &str) -> Option<BelvedereCliArtifact> {
         "--gaps" => Some(BelvedereCliArtifact::LandscapeDiffGaps),
         "--view-model-receipt" => Some(BelvedereCliArtifact::LandscapeDiffViewModelReceipt),
         "--ui-ir" => Some(BelvedereCliArtifact::LandscapeDiffUiIr),
+        "--ui-ir-sections" => Some(BelvedereCliArtifact::LandscapeDiffUiIrSections),
+        "--ui-ir-trace-widgets" => Some(BelvedereCliArtifact::LandscapeDiffUiIrTraceWidgets),
+        "--ui-ir-viewports" => Some(BelvedereCliArtifact::LandscapeDiffUiIrViewports),
+        "--ui-ir-minted-standards" => Some(BelvedereCliArtifact::LandscapeDiffUiIrMintedStandards),
         "--ui-ir-receipt" => Some(BelvedereCliArtifact::LandscapeDiffUiIrReceipt),
         _ => None,
     }

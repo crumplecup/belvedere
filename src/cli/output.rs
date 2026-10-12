@@ -79,6 +79,14 @@ pub enum BelvedereCliArtifact {
     RunViewModelReceipt,
     /// Normal run UI IR projection.
     RunUiIr,
+    /// Normal run UI IR sections.
+    RunUiIrSections,
+    /// Normal run traceable UI IR widgets.
+    RunUiIrTraceWidgets,
+    /// Normal run UI IR viewport verification evidence.
+    RunUiIrViewports,
+    /// Normal run UI IR minted standards.
+    RunUiIrMintedStandards,
     /// Normal run UI IR receipt.
     RunUiIrReceipt,
     /// Certified landscape diff.
@@ -125,6 +133,14 @@ pub enum BelvedereCliArtifact {
     LandscapeDiffPreviousViewModelReceipt,
     /// Previous UI IR projection from a diff run.
     LandscapeDiffPreviousUiIr,
+    /// Previous UI IR sections from a diff run.
+    LandscapeDiffPreviousUiIrSections,
+    /// Previous traceable UI IR widgets from a diff run.
+    LandscapeDiffPreviousUiIrTraceWidgets,
+    /// Previous UI IR viewport verification evidence from a diff run.
+    LandscapeDiffPreviousUiIrViewports,
+    /// Previous UI IR minted standards from a diff run.
+    LandscapeDiffPreviousUiIrMintedStandards,
     /// Previous UI IR receipt from a diff run.
     LandscapeDiffPreviousUiIrReceipt,
     /// Current registry ingestion receipt from a diff run.
@@ -167,6 +183,14 @@ pub enum BelvedereCliArtifact {
     LandscapeDiffCurrentViewModelReceipt,
     /// Current UI IR projection from a diff run.
     LandscapeDiffCurrentUiIr,
+    /// Current UI IR sections from a diff run.
+    LandscapeDiffCurrentUiIrSections,
+    /// Current traceable UI IR widgets from a diff run.
+    LandscapeDiffCurrentUiIrTraceWidgets,
+    /// Current UI IR viewport verification evidence from a diff run.
+    LandscapeDiffCurrentUiIrViewports,
+    /// Current UI IR minted standards from a diff run.
+    LandscapeDiffCurrentUiIrMintedStandards,
     /// Current UI IR receipt from a diff run.
     LandscapeDiffCurrentUiIrReceipt,
     /// Landscape diff stage certificate.
@@ -211,6 +235,14 @@ pub enum BelvedereCliArtifact {
     LandscapeDiffViewModelReceipt,
     /// Landscape diff UI IR projection.
     LandscapeDiffUiIr,
+    /// Landscape diff UI IR sections.
+    LandscapeDiffUiIrSections,
+    /// Landscape diff traceable UI IR widgets.
+    LandscapeDiffUiIrTraceWidgets,
+    /// Landscape diff UI IR viewport verification evidence.
+    LandscapeDiffUiIrViewports,
+    /// Landscape diff UI IR minted standards.
+    LandscapeDiffUiIrMintedStandards,
     /// Landscape diff UI IR receipt.
     LandscapeDiffUiIrReceipt,
 }

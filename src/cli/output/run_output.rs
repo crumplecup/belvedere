@@ -71,6 +71,18 @@ pub(super) fn write_run_output(
             write_json_to_sink(run.view_model_receipt(), sink, writer)
         }
         BelvedereCliArtifact::RunUiIr => write_json_to_sink(run.projection(), sink, writer),
+        BelvedereCliArtifact::RunUiIrSections => {
+            write_json_to_sink(run.projection().sections(), sink, writer)
+        }
+        BelvedereCliArtifact::RunUiIrTraceWidgets => {
+            write_json_to_sink(run.projection().trace_widgets(), sink, writer)
+        }
+        BelvedereCliArtifact::RunUiIrViewports => {
+            write_json_to_sink(run.projection().viewport_verifications(), sink, writer)
+        }
+        BelvedereCliArtifact::RunUiIrMintedStandards => {
+            write_json_to_sink(run.projection().minted_standards(), sink, writer)
+        }
         BelvedereCliArtifact::RunUiIrReceipt => {
             write_json_to_sink(run.ui_ir_receipt(), sink, writer)
         }

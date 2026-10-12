@@ -126,6 +126,22 @@ fn write_previous_snapshot_output(
         BelvedereCliArtifact::LandscapeDiffPreviousUiIr => {
             write_json_to_sink(diff.previous_projection(), sink, writer)?;
         }
+        BelvedereCliArtifact::LandscapeDiffPreviousUiIrSections => {
+            write_json_to_sink(diff.previous_projection().sections(), sink, writer)?;
+        }
+        BelvedereCliArtifact::LandscapeDiffPreviousUiIrTraceWidgets => {
+            write_json_to_sink(diff.previous_projection().trace_widgets(), sink, writer)?;
+        }
+        BelvedereCliArtifact::LandscapeDiffPreviousUiIrViewports => {
+            write_json_to_sink(
+                diff.previous_projection().viewport_verifications(),
+                sink,
+                writer,
+            )?;
+        }
+        BelvedereCliArtifact::LandscapeDiffPreviousUiIrMintedStandards => {
+            write_json_to_sink(diff.previous_projection().minted_standards(), sink, writer)?;
+        }
         BelvedereCliArtifact::LandscapeDiffPreviousUiIrReceipt => {
             write_json_to_sink(diff.previous_ui_ir_receipt(), sink, writer)?;
         }
@@ -202,6 +218,22 @@ fn write_current_snapshot_output(
         BelvedereCliArtifact::LandscapeDiffCurrentUiIr => {
             write_json_to_sink(diff.current_projection(), sink, writer)?;
         }
+        BelvedereCliArtifact::LandscapeDiffCurrentUiIrSections => {
+            write_json_to_sink(diff.current_projection().sections(), sink, writer)?;
+        }
+        BelvedereCliArtifact::LandscapeDiffCurrentUiIrTraceWidgets => {
+            write_json_to_sink(diff.current_projection().trace_widgets(), sink, writer)?;
+        }
+        BelvedereCliArtifact::LandscapeDiffCurrentUiIrViewports => {
+            write_json_to_sink(
+                diff.current_projection().viewport_verifications(),
+                sink,
+                writer,
+            )?;
+        }
+        BelvedereCliArtifact::LandscapeDiffCurrentUiIrMintedStandards => {
+            write_json_to_sink(diff.current_projection().minted_standards(), sink, writer)?;
+        }
         BelvedereCliArtifact::LandscapeDiffCurrentUiIrReceipt => {
             write_json_to_sink(diff.current_ui_ir_receipt(), sink, writer)?;
         }
@@ -277,6 +309,22 @@ fn write_current_alias_output(
         }
         BelvedereCliArtifact::LandscapeDiffUiIr => {
             write_json_to_sink(diff.diff_projection(), sink, writer)?;
+        }
+        BelvedereCliArtifact::LandscapeDiffUiIrSections => {
+            write_json_to_sink(diff.diff_projection().sections(), sink, writer)?;
+        }
+        BelvedereCliArtifact::LandscapeDiffUiIrTraceWidgets => {
+            write_json_to_sink(diff.diff_projection().trace_widgets(), sink, writer)?;
+        }
+        BelvedereCliArtifact::LandscapeDiffUiIrViewports => {
+            write_json_to_sink(
+                diff.diff_projection().viewport_verifications(),
+                sink,
+                writer,
+            )?;
+        }
+        BelvedereCliArtifact::LandscapeDiffUiIrMintedStandards => {
+            write_json_to_sink(diff.diff_projection().minted_standards(), sink, writer)?;
         }
         BelvedereCliArtifact::LandscapeDiffUiIrReceipt => {
             write_json_to_sink(diff.diff_ui_ir_receipt(), sink, writer)?;

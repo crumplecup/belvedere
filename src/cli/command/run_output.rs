@@ -63,6 +63,10 @@ fn run_artifact(flag: &str) -> Option<BelvedereCliArtifact> {
         "--gaps" => Some(BelvedereCliArtifact::RunGaps),
         "--view-model-receipt" => Some(BelvedereCliArtifact::RunViewModelReceipt),
         "--ui-ir" => Some(BelvedereCliArtifact::RunUiIr),
+        "--ui-ir-sections" => Some(BelvedereCliArtifact::RunUiIrSections),
+        "--ui-ir-trace-widgets" => Some(BelvedereCliArtifact::RunUiIrTraceWidgets),
+        "--ui-ir-viewports" => Some(BelvedereCliArtifact::RunUiIrViewports),
+        "--ui-ir-minted-standards" => Some(BelvedereCliArtifact::RunUiIrMintedStandards),
         "--ui-ir-receipt" => Some(BelvedereCliArtifact::RunUiIrReceipt),
         _ => None,
     }
