@@ -2,92 +2,59 @@
 
 /// Stable CLI help text.
 pub const BELVEDERE_CLI_HELP: &str = "\
-usage: belvedere [--help] [--certificate-json | --certificate-file <path> | --manifest-json | --manifest-file <path> | --registry-receipt-json | --registry-receipt-file <path> | --assessment-receipt-json | --assessment-receipt-file <path> | --landscape-json | --landscape-file <path> | --landscape-receipt-json | --landscape-receipt-file <path> | --view-model-json | --view-model-file <path> | --claim-details-json | --claim-details-file <path> | --filter-facets-json | --filter-facets-file <path> | --source-navigation-json | --source-navigation-file <path> | --proof-chains-json | --proof-chains-file <path> | --review-workflow-json | --review-workflow-file <path> | --view-model-receipt-json | --view-model-receipt-file <path> | --ui-ir-json | --ui-ir-file <path> | --ui-ir-receipt-json | --ui-ir-receipt-file <path>] <registry-dump.json> <proof-assessments.jsonl>
-       belvedere diff [--certificate-json | --certificate-file <path> | --run-certificate-json | --run-certificate-file <path> | --manifest-json | --manifest-file <path> | --diff-json | --diff-receipt-json | --diff-receipt-file <path> | --previous-registry-receipt-json | --previous-registry-receipt-file <path> | --previous-assessment-receipt-json | --previous-assessment-receipt-file <path> | --current-registry-receipt-json | --current-registry-receipt-file <path> | --current-assessment-receipt-json | --current-assessment-receipt-file <path> | --previous-landscape-json | --previous-landscape-file <path> | --previous-landscape-receipt-json | --previous-landscape-receipt-file <path> | --previous-view-model-json | --previous-view-model-file <path> | --previous-claim-details-json | --previous-claim-details-file <path> | --previous-filter-facets-json | --previous-filter-facets-file <path> | --previous-source-navigation-json | --previous-source-navigation-file <path> | --previous-proof-chains-json | --previous-proof-chains-file <path> | --previous-view-model-receipt-json | --previous-view-model-receipt-file <path> | --previous-ui-ir-json | --previous-ui-ir-file <path> | --previous-ui-ir-receipt-json | --previous-ui-ir-receipt-file <path> | --current-landscape-json | --current-landscape-file <path> | --current-landscape-receipt-json | --current-landscape-receipt-file <path> | --current-view-model-json | --current-view-model-file <path> | --current-claim-details-json | --current-claim-details-file <path> | --current-filter-facets-json | --current-filter-facets-file <path> | --current-source-navigation-json | --current-source-navigation-file <path> | --current-proof-chains-json | --current-proof-chains-file <path> | --current-view-model-receipt-json | --current-view-model-receipt-file <path> | --current-ui-ir-json | --current-ui-ir-file <path> | --current-ui-ir-receipt-json | --current-ui-ir-receipt-file <path> | --landscape-json | --landscape-file <path> | --landscape-receipt-json | --landscape-receipt-file <path> | --view-model-json | --view-model-file <path> | --claim-details-json | --claim-details-file <path> | --filter-facets-json | --filter-facets-file <path> | --source-navigation-json | --source-navigation-file <path> | --proof-chains-json | --proof-chains-file <path> | --review-workflow-json | --review-workflow-file <path> | --view-model-receipt-json | --view-model-receipt-file <path> | --ui-ir-json | --ui-ir-file <path> | --ui-ir-receipt-json | --ui-ir-receipt-file <path>] <previous-registry-dump.json> <previous-proof-assessments.jsonl> <current-registry-dump.json> <current-proof-assessments.jsonl>
+usage: belvedere [--help] [<artifact> (--stdio | --file <path>)] <registry-dump.json> <proof-assessments.jsonl>
+       belvedere diff [<artifact> (--stdio | --file <path>)] <previous-registry-dump.json> <previous-proof-assessments.jsonl> <current-registry-dump.json> <current-proof-assessments.jsonl>
 
 Options:
-  -h, --help                       Show this help text.
-      --certificate-json           Write the requested certificate as JSON to stdout.
-      --certificate-file           Write the requested certificate as JSON to a file.
-      --manifest-json              Write the run artifact manifest as JSON to stdout.
-      --manifest-file              Write the run artifact manifest as JSON to a file.
-      --registry-receipt-json      Write the registry ingestion receipt as JSON to stdout.
-      --registry-receipt-file      Write the registry ingestion receipt as JSON to a file.
-      --assessment-receipt-json    Write the assessment ingestion receipt as JSON to stdout.
-      --assessment-receipt-file    Write the assessment ingestion receipt as JSON to a file.
-      --run-certificate-json       Write the full diff run certificate as JSON to stdout.
-      --run-certificate-file       Write the full diff run certificate as JSON to a file.
-      --diff-json                  Write the landscape diff as JSON to stdout.
-      --diff-receipt-json          Write the landscape diff receipt as JSON to stdout.
-      --diff-receipt-file          Write the landscape diff receipt as JSON to a file.
-      --previous-registry-receipt-json Write the previous registry ingestion receipt from a diff run as JSON to stdout.
-      --previous-registry-receipt-file Write the previous registry ingestion receipt from a diff run as JSON to a file.
-      --previous-assessment-receipt-json Write the previous assessment ingestion receipt from a diff run as JSON to stdout.
-      --previous-assessment-receipt-file Write the previous assessment ingestion receipt from a diff run as JSON to a file.
-      --current-registry-receipt-json Write the current registry ingestion receipt from a diff run as JSON to stdout.
-      --current-registry-receipt-file Write the current registry ingestion receipt from a diff run as JSON to a file.
-      --current-assessment-receipt-json Write the current assessment ingestion receipt from a diff run as JSON to stdout.
-      --current-assessment-receipt-file Write the current assessment ingestion receipt from a diff run as JSON to a file.
-      --previous-landscape-json Write the previous landscape graph from a diff run as JSON to stdout.
-      --previous-landscape-file Write the previous landscape graph from a diff run as JSON to a file.
-      --previous-landscape-receipt-json Write the previous landscape receipt from a diff run as JSON to stdout.
-      --previous-landscape-receipt-file Write the previous landscape receipt from a diff run as JSON to a file.
-      --previous-view-model-json Write the previous view model from a diff run as JSON to stdout.
-      --previous-view-model-file Write the previous view model from a diff run as JSON to a file.
-      --previous-claim-details-json Write the previous claim detail deep-dive items from a diff run as JSON to stdout.
-      --previous-claim-details-file Write the previous claim detail deep-dive items from a diff run as JSON to a file.
-      --previous-filter-facets-json Write the previous filter facets from a diff run as JSON to stdout.
-      --previous-filter-facets-file Write the previous filter facets from a diff run as JSON to a file.
-      --previous-source-navigation-json Write the previous source navigation map from a diff run as JSON to stdout.
-      --previous-source-navigation-file Write the previous source navigation map from a diff run as JSON to a file.
-      --previous-proof-chains-json Write the previous proof-chain deep-dive items from a diff run as JSON to stdout.
-      --previous-proof-chains-file Write the previous proof-chain deep-dive items from a diff run as JSON to a file.
-      --previous-view-model-receipt-json Write the previous view-model receipt from a diff run as JSON to stdout.
-      --previous-view-model-receipt-file Write the previous view-model receipt from a diff run as JSON to a file.
-      --previous-ui-ir-json   Write the previous UI IR projection from a diff run as JSON to stdout.
-      --previous-ui-ir-file   Write the previous UI IR projection from a diff run as JSON to a file.
-      --previous-ui-ir-receipt-json Write the previous UI IR receipt from a diff run as JSON to stdout.
-      --previous-ui-ir-receipt-file Write the previous UI IR receipt from a diff run as JSON to a file.
-      --current-landscape-json Write the current landscape graph from a diff run as JSON to stdout.
-      --current-landscape-file Write the current landscape graph from a diff run as JSON to a file.
-      --current-landscape-receipt-json Write the current landscape receipt from a diff run as JSON to stdout.
-      --current-landscape-receipt-file Write the current landscape receipt from a diff run as JSON to a file.
-      --current-view-model-json Write the current view model from a diff run as JSON to stdout.
-      --current-view-model-file Write the current view model from a diff run as JSON to a file.
-      --current-claim-details-json Write the current claim detail deep-dive items from a diff run as JSON to stdout.
-      --current-claim-details-file Write the current claim detail deep-dive items from a diff run as JSON to a file.
-      --current-filter-facets-json Write the current filter facets from a diff run as JSON to stdout.
-      --current-filter-facets-file Write the current filter facets from a diff run as JSON to a file.
-      --current-source-navigation-json Write the current source navigation map from a diff run as JSON to stdout.
-      --current-source-navigation-file Write the current source navigation map from a diff run as JSON to a file.
-      --current-proof-chains-json Write the current proof-chain deep-dive items from a diff run as JSON to stdout.
-      --current-proof-chains-file Write the current proof-chain deep-dive items from a diff run as JSON to a file.
-      --current-view-model-receipt-json Write the current view-model receipt from a diff run as JSON to stdout.
-      --current-view-model-receipt-file Write the current view-model receipt from a diff run as JSON to a file.
-      --current-ui-ir-json      Write the current UI IR projection from a diff run as JSON to stdout.
-      --current-ui-ir-file      Write the current UI IR projection from a diff run as JSON to a file.
-      --current-ui-ir-receipt-json Write the current UI IR receipt from a diff run as JSON to stdout.
-      --current-ui-ir-receipt-file Write the current UI IR receipt from a diff run as JSON to a file.
-      --landscape-json            Write the landscape graph as JSON to stdout.
-      --landscape-file            Write the landscape graph as JSON to a file.
-      --landscape-receipt-json     Write the landscape receipt as JSON to stdout.
-      --landscape-receipt-file     Write the landscape receipt as JSON to a file.
-      --view-model-json        Write the view model as JSON to stdout.
-      --view-model-file        Write the view model as JSON to a file.
-      --claim-details-json     Write claim detail deep-dive items as JSON to stdout.
-      --claim-details-file     Write claim detail deep-dive items as JSON to a file.
-      --filter-facets-json     Write auditor filter facets as JSON to stdout.
-      --filter-facets-file     Write auditor filter facets as JSON to a file.
-      --source-navigation-json Write source navigation map as JSON to stdout.
-      --source-navigation-file Write source navigation map as JSON to a file.
-      --proof-chains-json     Write proof-chain deep-dive items as JSON to stdout.
-      --proof-chains-file     Write proof-chain deep-dive items as JSON to a file.
-      --review-workflow-json   Write the auditor review workflow queue as JSON to stdout.
-      --review-workflow-file   Write the auditor review workflow queue as JSON to a file.
-      --view-model-receipt-json    Write the view-model receipt as JSON to stdout.
-      --view-model-receipt-file    Write the view-model receipt as JSON to a file.
-      --ui-ir-json             Write the UI IR projection as JSON to stdout.
-      --ui-ir-file             Write the UI IR projection as JSON to a file.
-      --ui-ir-receipt-json         Write the UI IR receipt as JSON to stdout.
-      --ui-ir-receipt-file         Write the UI IR receipt as JSON to a file.
+  -h, --help                   Show this help text.
+      --stdio                  Write the selected artifact as JSON to stdout.
+      --file <path>            Write the selected artifact as JSON to a file.
+
+Run artifacts:
+      --certificate            Complete run certificate.
+      --manifest               Run artifact manifest.
+      --registry-receipt       Registry ingestion receipt.
+      --assessment-receipt     Assessment ingestion receipt.
+      --landscape              Landscape graph.
+      --landscape-receipt      Landscape receipt.
+      --view-model             Auditor navigation view model.
+      --claim-details          Claim detail deep-dive items.
+      --filter-facets          Auditor filter facets.
+      --source-navigation      Source navigation map.
+      --proof-chains           Proof-chain deep-dive items.
+      --review-workflow        Auditor review workflow queue.
+      --view-model-receipt     View-model receipt.
+      --ui-ir                  UI IR projection.
+      --ui-ir-receipt          UI IR receipt.
+
+Diff artifacts:
+      --certificate            Landscape diff stage certificate.
+      --run-certificate        Complete landscape diff run certificate.
+      --manifest               Landscape diff run artifact manifest.
+      --diff                   Certified landscape diff.
+      --diff-receipt           Landscape diff receipt.
+      --previous-registry-receipt
+      --previous-assessment-receipt
+      --previous-landscape
+      --previous-landscape-receipt
+      --previous-view-model
+      --previous-claim-details
+      --previous-filter-facets
+      --previous-source-navigation
+      --previous-proof-chains
+      --previous-view-model-receipt
+      --previous-ui-ir
+      --previous-ui-ir-receipt
+      --current-registry-receipt
+      --current-assessment-receipt
+      --current-landscape
+      --current-landscape-receipt
+      --current-view-model
+      --current-claim-details
+      --current-filter-facets
+      --current-source-navigation
+      --current-proof-chains
+      --current-view-model-receipt
+      --current-ui-ir
+      --current-ui-ir-receipt
 ";

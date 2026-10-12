@@ -1,8 +1,8 @@
 //! CLI command parsing and execution.
 
 mod diff_output;
-
-use std::path::PathBuf;
+mod output_parts;
+mod run_output;
 
 use tracing::instrument;
 
@@ -58,157 +58,20 @@ impl BelvedereCli {
 
     #[instrument(level = "debug", skip(arguments))]
     fn from_run_args(arguments: Vec<String>) -> Result<Self, BelvedereError> {
-        let mut output = BelvedereCliOutput::LogSummary;
+        let mut artifact = None;
+        let mut sink = None;
         let mut paths = Vec::new();
         let mut index = 0;
 
         while let Some(arg) = arguments.get(index) {
-            match arg.as_str() {
-                "--certificate-json" => output = BelvedereCliOutput::RunCertificateJson,
-                "--certificate-file" => {
-                    let Some(path) = arguments.get(index + 1) else {
-                        return Err(BelvedereCliUsageError::new().into());
-                    };
-                    output = BelvedereCliOutput::RunCertificateFile(PathBuf::from(path));
-                    index += 1;
-                }
-                "--manifest-json" => output = BelvedereCliOutput::RunManifestJson,
-                "--manifest-file" => {
-                    let Some(path) = arguments.get(index + 1) else {
-                        return Err(BelvedereCliUsageError::new().into());
-                    };
-                    output = BelvedereCliOutput::RunManifestFile(PathBuf::from(path));
-                    index += 1;
-                }
-                "--registry-receipt-json" => {
-                    output = BelvedereCliOutput::RunRegistryReceiptJson;
-                }
-                "--registry-receipt-file" => {
-                    let Some(path) = arguments.get(index + 1) else {
-                        return Err(BelvedereCliUsageError::new().into());
-                    };
-                    output = BelvedereCliOutput::RunRegistryReceiptFile(PathBuf::from(path));
-                    index += 1;
-                }
-                "--assessment-receipt-json" => {
-                    output = BelvedereCliOutput::RunAssessmentReceiptJson;
-                }
-                "--assessment-receipt-file" => {
-                    let Some(path) = arguments.get(index + 1) else {
-                        return Err(BelvedereCliUsageError::new().into());
-                    };
-                    output = BelvedereCliOutput::RunAssessmentReceiptFile(PathBuf::from(path));
-                    index += 1;
-                }
-                "--landscape-json" => {
-                    output = BelvedereCliOutput::RunLandscapeJson;
-                }
-                "--landscape-file" => {
-                    let Some(path) = arguments.get(index + 1) else {
-                        return Err(BelvedereCliUsageError::new().into());
-                    };
-                    output = BelvedereCliOutput::RunLandscapeFile(PathBuf::from(path));
-                    index += 1;
-                }
-                "--landscape-receipt-json" => {
-                    output = BelvedereCliOutput::RunLandscapeReceiptJson;
-                }
-                "--landscape-receipt-file" => {
-                    let Some(path) = arguments.get(index + 1) else {
-                        return Err(BelvedereCliUsageError::new().into());
-                    };
-                    output = BelvedereCliOutput::RunLandscapeReceiptFile(PathBuf::from(path));
-                    index += 1;
-                }
-                "--view-model-json" => {
-                    output = BelvedereCliOutput::RunViewModelJson;
-                }
-                "--view-model-file" => {
-                    let Some(path) = arguments.get(index + 1) else {
-                        return Err(BelvedereCliUsageError::new().into());
-                    };
-                    output = BelvedereCliOutput::RunViewModelFile(PathBuf::from(path));
-                    index += 1;
-                }
-                "--claim-details-json" => {
-                    output = BelvedereCliOutput::RunClaimDetailsJson;
-                }
-                "--claim-details-file" => {
-                    let Some(path) = arguments.get(index + 1) else {
-                        return Err(BelvedereCliUsageError::new().into());
-                    };
-                    output = BelvedereCliOutput::RunClaimDetailsFile(PathBuf::from(path));
-                    index += 1;
-                }
-                "--filter-facets-json" => {
-                    output = BelvedereCliOutput::RunFilterFacetsJson;
-                }
-                "--filter-facets-file" => {
-                    let Some(path) = arguments.get(index + 1) else {
-                        return Err(BelvedereCliUsageError::new().into());
-                    };
-                    output = BelvedereCliOutput::RunFilterFacetsFile(PathBuf::from(path));
-                    index += 1;
-                }
-                "--source-navigation-json" => {
-                    output = BelvedereCliOutput::RunSourceNavigationJson;
-                }
-                "--source-navigation-file" => {
-                    let Some(path) = arguments.get(index + 1) else {
-                        return Err(BelvedereCliUsageError::new().into());
-                    };
-                    output = BelvedereCliOutput::RunSourceNavigationFile(PathBuf::from(path));
-                    index += 1;
-                }
-                "--proof-chains-json" => {
-                    output = BelvedereCliOutput::RunProofChainsJson;
-                }
-                "--proof-chains-file" => {
-                    let Some(path) = arguments.get(index + 1) else {
-                        return Err(BelvedereCliUsageError::new().into());
-                    };
-                    output = BelvedereCliOutput::RunProofChainsFile(PathBuf::from(path));
-                    index += 1;
-                }
-                "--review-workflow-json" => {
-                    output = BelvedereCliOutput::RunReviewWorkflowJson;
-                }
-                "--review-workflow-file" => {
-                    let Some(path) = arguments.get(index + 1) else {
-                        return Err(BelvedereCliUsageError::new().into());
-                    };
-                    output = BelvedereCliOutput::RunReviewWorkflowFile(PathBuf::from(path));
-                    index += 1;
-                }
-                "--view-model-receipt-json" => {
-                    output = BelvedereCliOutput::RunViewModelReceiptJson;
-                }
-                "--view-model-receipt-file" => {
-                    let Some(path) = arguments.get(index + 1) else {
-                        return Err(BelvedereCliUsageError::new().into());
-                    };
-                    output = BelvedereCliOutput::RunViewModelReceiptFile(PathBuf::from(path));
-                    index += 1;
-                }
-                "--ui-ir-json" => output = BelvedereCliOutput::RunUiIrJson,
-                "--ui-ir-file" => {
-                    let Some(path) = arguments.get(index + 1) else {
-                        return Err(BelvedereCliUsageError::new().into());
-                    };
-                    output = BelvedereCliOutput::RunUiIrFile(PathBuf::from(path));
-                    index += 1;
-                }
-                "--ui-ir-receipt-json" => output = BelvedereCliOutput::RunUiIrReceiptJson,
-                "--ui-ir-receipt-file" => {
-                    let Some(path) = arguments.get(index + 1) else {
-                        return Err(BelvedereCliUsageError::new().into());
-                    };
-                    output = BelvedereCliOutput::RunUiIrReceiptFile(PathBuf::from(path));
-                    index += 1;
-                }
-                "--diff-json" => return Err(BelvedereCliUsageError::new().into()),
-                _ if arg.starts_with("--") => return Err(BelvedereCliUsageError::new().into()),
-                _ => paths.push(arg.clone()),
+            if let Some(consumed) =
+                Self::parse_run_output_arg(&arguments, index, &mut artifact, &mut sink)?
+            {
+                index += consumed;
+            } else if arg.starts_with("--") {
+                return Err(BelvedereCliUsageError::new().into());
+            } else {
+                paths.push(arg.clone());
             }
             index += 1;
         }
@@ -230,19 +93,22 @@ impl BelvedereCli {
                     assessments_path,
                     BelvedereRunInvocation::cli(arguments),
                 ),
-                output,
+                output: Self::output_from_parts(artifact, sink)?,
             },
         })
     }
 
     #[instrument(level = "debug", skip(arguments))]
     fn from_diff_args(arguments: Vec<String>) -> Result<Self, BelvedereError> {
-        let mut output = BelvedereCliOutput::LogSummary;
+        let mut artifact = None;
+        let mut sink = None;
         let mut paths = Vec::new();
         let mut index = 1;
 
         while let Some(arg) = arguments.get(index) {
-            if let Some(consumed) = Self::parse_diff_output_arg(&arguments, index, &mut output)? {
+            if let Some(consumed) =
+                Self::parse_diff_output_arg(&arguments, index, &mut artifact, &mut sink)?
+            {
                 index += consumed;
             } else if arg.starts_with("--") {
                 return Err(BelvedereCliUsageError::new().into());
@@ -284,20 +150,9 @@ impl BelvedereCli {
                         invocation,
                     ),
                 ),
-                output,
+                output: Self::output_from_parts(artifact, sink)?,
             },
         })
-    }
-
-    #[instrument(level = "debug")]
-    pub(in crate::cli::command) fn next_path(
-        arguments: &[String],
-        index: usize,
-    ) -> Result<PathBuf, BelvedereError> {
-        let Some(path) = arguments.get(index + 1) else {
-            return Err(BelvedereCliUsageError::new().into());
-        };
-        Ok(PathBuf::from(path))
     }
 
     /// Execute the parsed command.

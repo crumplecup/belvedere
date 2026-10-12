@@ -188,6 +188,16 @@ belvedere diff \
   current-registry-dump.json current-proof-assessments.jsonl
 ```
 
+Select an artifact and an output sink independently:
+
+```sh
+belvedere --view-model --stdio registry-dump.json proof-assessments.jsonl
+belvedere --certificate --file certificate.json registry-dump.json proof-assessments.jsonl
+belvedere diff --diff --stdio \
+  previous-registry-dump.json previous-proof-assessments.jsonl \
+  current-registry-dump.json current-proof-assessments.jsonl
+```
+
 The CLI can emit the same artifacts exposed by the library API: certificates,
 manifests, ingestion receipts, landscape graphs, auditor navigation models,
 review queues, proof-chain details, source navigation, UI IR projections, and

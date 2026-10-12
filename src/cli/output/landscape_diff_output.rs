@@ -1,316 +1,205 @@
 //! Landscape diff CLI output writers.
 
-use std::{fs::File, io::Write, path::Path};
+use std::io::Write;
 
-use serde::Serialize;
 use tracing::instrument;
 
 use crate::{BelvedereError, BelvedereLandscapeDiffRunReport};
 
-use super::{BelvedereCliOutput, write_json};
-use crate::cli::{BelvedereCliOutputError, BelvedereCliUsageError};
+use super::{BelvedereCliArtifact, BelvedereCliOutputSink, write_json_to_sink};
+use crate::cli::BelvedereCliUsageError;
 
-#[instrument(level = "info", skip(output, diff, writer))]
+#[instrument(level = "info", skip(artifact, sink, diff, writer))]
 pub(super) fn write_landscape_diff_output(
-    output: BelvedereCliOutput,
+    artifact: BelvedereCliArtifact,
+    sink: &BelvedereCliOutputSink,
     diff: &BelvedereLandscapeDiffRunReport,
     writer: impl Write,
 ) -> Result<(), BelvedereError> {
     let mut writer = writer;
-    if write_landscape_diff_certificate_output(&output, diff, &mut writer)? {
+    if write_landscape_diff_certificate_output(artifact, sink, diff, &mut writer)? {
         return Ok(());
     }
-    if write_previous_snapshot_output(&output, diff, &mut writer)? {
+    if write_previous_snapshot_output(artifact, sink, diff, &mut writer)? {
         return Ok(());
     }
-    if write_current_snapshot_output(&output, diff, &mut writer)? {
+    if write_current_snapshot_output(artifact, sink, diff, &mut writer)? {
         return Ok(());
     }
-    if write_current_alias_output(&output, diff, &mut writer)? {
+    if write_current_alias_output(artifact, sink, diff, &mut writer)? {
         return Ok(());
     }
     Err(BelvedereCliUsageError::new().into())
 }
 
-#[instrument(level = "info", skip(output, diff, writer))]
+#[instrument(level = "info", skip(artifact, sink, diff, writer))]
 fn write_landscape_diff_certificate_output(
-    output: &BelvedereCliOutput,
+    artifact: BelvedereCliArtifact,
+    sink: &BelvedereCliOutputSink,
     diff: &BelvedereLandscapeDiffRunReport,
     writer: impl Write,
 ) -> Result<bool, BelvedereError> {
-    match output {
-        BelvedereCliOutput::LandscapeDiffCertificateJson => {
-            write_json(diff.diff_certificate(), writer)?;
+    match artifact {
+        BelvedereCliArtifact::LandscapeDiffCertificate => {
+            write_json_to_sink(diff.diff_certificate(), sink, writer)?;
         }
-        BelvedereCliOutput::LandscapeDiffCertificateFile(path) => {
-            write_json_file(diff.diff_certificate(), path)?;
+        BelvedereCliArtifact::LandscapeDiffRunCertificate => {
+            write_json_to_sink(diff.certificate(), sink, writer)?;
         }
-        BelvedereCliOutput::LandscapeDiffRunCertificateJson => {
-            write_json(diff.certificate(), writer)?;
+        BelvedereCliArtifact::LandscapeDiffManifest => {
+            write_json_to_sink(diff.manifest(), sink, writer)?;
         }
-        BelvedereCliOutput::LandscapeDiffRunCertificateFile(path) => {
-            write_json_file(diff.certificate(), path)?;
+        BelvedereCliArtifact::LandscapeDiff => {
+            write_json_to_sink(diff.diff(), sink, writer)?;
         }
-        BelvedereCliOutput::LandscapeDiffManifestJson => write_json(diff.manifest(), writer)?,
-        BelvedereCliOutput::LandscapeDiffManifestFile(path) => {
-            write_json_file(diff.manifest(), path)?;
-        }
-        BelvedereCliOutput::LandscapeDiffJson => write_json(diff.diff(), writer)?,
-        BelvedereCliOutput::LandscapeDiffReceiptJson => write_json(diff.diff_receipt(), writer)?,
-        BelvedereCliOutput::LandscapeDiffReceiptFile(path) => {
-            write_json_file(diff.diff_receipt(), path)?;
+        BelvedereCliArtifact::LandscapeDiffReceipt => {
+            write_json_to_sink(diff.diff_receipt(), sink, writer)?;
         }
         _ => return Ok(false),
     }
     Ok(true)
 }
 
-#[instrument(level = "info", skip(output, diff, writer))]
+#[instrument(level = "info", skip(artifact, sink, diff, writer))]
 fn write_previous_snapshot_output(
-    output: &BelvedereCliOutput,
+    artifact: BelvedereCliArtifact,
+    sink: &BelvedereCliOutputSink,
     diff: &BelvedereLandscapeDiffRunReport,
     writer: impl Write,
 ) -> Result<bool, BelvedereError> {
-    match output {
-        BelvedereCliOutput::LandscapeDiffPreviousLandscapeJson => {
-            write_json(diff.previous_landscape(), writer)?;
+    match artifact {
+        BelvedereCliArtifact::LandscapeDiffPreviousLandscape => {
+            write_json_to_sink(diff.previous_landscape(), sink, writer)?;
         }
-        BelvedereCliOutput::LandscapeDiffPreviousLandscapeFile(path) => {
-            write_json_file(diff.previous_landscape(), path)?;
+        BelvedereCliArtifact::LandscapeDiffPreviousLandscapeReceipt => {
+            write_json_to_sink(diff.previous_landscape_receipt(), sink, writer)?;
         }
-        BelvedereCliOutput::LandscapeDiffPreviousLandscapeReceiptJson => {
-            write_json(diff.previous_landscape_receipt(), writer)?;
+        BelvedereCliArtifact::LandscapeDiffPreviousViewModel => {
+            write_json_to_sink(diff.previous_view_model(), sink, writer)?;
         }
-        BelvedereCliOutput::LandscapeDiffPreviousLandscapeReceiptFile(path) => {
-            write_json_file(diff.previous_landscape_receipt(), path)?;
+        BelvedereCliArtifact::LandscapeDiffPreviousClaimDetails => {
+            write_json_to_sink(diff.previous_view_model().claim_details(), sink, writer)?;
         }
-        BelvedereCliOutput::LandscapeDiffPreviousViewModelJson => {
-            write_json(diff.previous_view_model(), writer)?;
+        BelvedereCliArtifact::LandscapeDiffPreviousFilterFacets => {
+            write_json_to_sink(diff.previous_view_model().filter_facets(), sink, writer)?;
         }
-        BelvedereCliOutput::LandscapeDiffPreviousViewModelFile(path) => {
-            write_json_file(diff.previous_view_model(), path)?;
+        BelvedereCliArtifact::LandscapeDiffPreviousSourceNavigation => {
+            write_json_to_sink(diff.previous_view_model().source_navigation(), sink, writer)?;
         }
-        BelvedereCliOutput::LandscapeDiffPreviousClaimDetailsJson => {
-            write_json(diff.previous_view_model().claim_details(), writer)?;
+        BelvedereCliArtifact::LandscapeDiffPreviousProofChains => {
+            write_json_to_sink(diff.previous_view_model().proof_chains(), sink, writer)?;
         }
-        BelvedereCliOutput::LandscapeDiffPreviousClaimDetailsFile(path) => {
-            write_json_file(diff.previous_view_model().claim_details(), path)?;
+        BelvedereCliArtifact::LandscapeDiffPreviousViewModelReceipt => {
+            write_json_to_sink(diff.previous_view_model_receipt(), sink, writer)?;
         }
-        BelvedereCliOutput::LandscapeDiffPreviousFilterFacetsJson => {
-            write_json(diff.previous_view_model().filter_facets(), writer)?;
+        BelvedereCliArtifact::LandscapeDiffPreviousUiIr => {
+            write_json_to_sink(diff.previous_projection(), sink, writer)?;
         }
-        BelvedereCliOutput::LandscapeDiffPreviousFilterFacetsFile(path) => {
-            write_json_file(diff.previous_view_model().filter_facets(), path)?;
+        BelvedereCliArtifact::LandscapeDiffPreviousUiIrReceipt => {
+            write_json_to_sink(diff.previous_ui_ir_receipt(), sink, writer)?;
         }
-        BelvedereCliOutput::LandscapeDiffPreviousSourceNavigationJson => {
-            write_json(diff.previous_view_model().source_navigation(), writer)?;
+        BelvedereCliArtifact::LandscapeDiffPreviousRegistryReceipt => {
+            write_json_to_sink(diff.previous_registry_receipt(), sink, writer)?;
         }
-        BelvedereCliOutput::LandscapeDiffPreviousSourceNavigationFile(path) => {
-            write_json_file(diff.previous_view_model().source_navigation(), path)?;
-        }
-        BelvedereCliOutput::LandscapeDiffPreviousProofChainsJson => {
-            write_json(diff.previous_view_model().proof_chains(), writer)?;
-        }
-        BelvedereCliOutput::LandscapeDiffPreviousProofChainsFile(path) => {
-            write_json_file(diff.previous_view_model().proof_chains(), path)?;
-        }
-        BelvedereCliOutput::LandscapeDiffPreviousViewModelReceiptJson => {
-            write_json(diff.previous_view_model_receipt(), writer)?;
-        }
-        BelvedereCliOutput::LandscapeDiffPreviousViewModelReceiptFile(path) => {
-            write_json_file(diff.previous_view_model_receipt(), path)?;
-        }
-        BelvedereCliOutput::LandscapeDiffPreviousUiIrJson => {
-            write_json(diff.previous_projection(), writer)?;
-        }
-        BelvedereCliOutput::LandscapeDiffPreviousUiIrFile(path) => {
-            write_json_file(diff.previous_projection(), path)?;
-        }
-        BelvedereCliOutput::LandscapeDiffPreviousUiIrReceiptJson => {
-            write_json(diff.previous_ui_ir_receipt(), writer)?;
-        }
-        BelvedereCliOutput::LandscapeDiffPreviousUiIrReceiptFile(path) => {
-            write_json_file(diff.previous_ui_ir_receipt(), path)?;
-        }
-        BelvedereCliOutput::LandscapeDiffPreviousRegistryReceiptJson => {
-            write_json(diff.previous_registry_receipt(), writer)?;
-        }
-        BelvedereCliOutput::LandscapeDiffPreviousRegistryReceiptFile(path) => {
-            write_json_file(diff.previous_registry_receipt(), path)?;
-        }
-        BelvedereCliOutput::LandscapeDiffPreviousAssessmentReceiptJson => {
-            write_json(diff.previous_assessment_receipt(), writer)?;
-        }
-        BelvedereCliOutput::LandscapeDiffPreviousAssessmentReceiptFile(path) => {
-            write_json_file(diff.previous_assessment_receipt(), path)?;
+        BelvedereCliArtifact::LandscapeDiffPreviousAssessmentReceipt => {
+            write_json_to_sink(diff.previous_assessment_receipt(), sink, writer)?;
         }
         _ => return Ok(false),
     }
     Ok(true)
 }
 
-#[instrument(level = "info", skip(output, diff, writer))]
+#[instrument(level = "info", skip(artifact, sink, diff, writer))]
 fn write_current_snapshot_output(
-    output: &BelvedereCliOutput,
+    artifact: BelvedereCliArtifact,
+    sink: &BelvedereCliOutputSink,
     diff: &BelvedereLandscapeDiffRunReport,
     writer: impl Write,
 ) -> Result<bool, BelvedereError> {
-    match output {
-        BelvedereCliOutput::LandscapeDiffCurrentLandscapeReceiptJson => {
-            write_json(diff.current_landscape_receipt(), writer)?;
+    match artifact {
+        BelvedereCliArtifact::LandscapeDiffCurrentLandscapeReceipt => {
+            write_json_to_sink(diff.current_landscape_receipt(), sink, writer)?;
         }
-        BelvedereCliOutput::LandscapeDiffCurrentLandscapeReceiptFile(path) => {
-            write_json_file(diff.current_landscape_receipt(), path)?;
+        BelvedereCliArtifact::LandscapeDiffCurrentLandscape => {
+            write_json_to_sink(diff.current_landscape(), sink, writer)?;
         }
-        BelvedereCliOutput::LandscapeDiffCurrentLandscapeJson => {
-            write_json(diff.current_landscape(), writer)?;
+        BelvedereCliArtifact::LandscapeDiffCurrentViewModel => {
+            write_json_to_sink(diff.current_view_model(), sink, writer)?;
         }
-        BelvedereCliOutput::LandscapeDiffCurrentLandscapeFile(path) => {
-            write_json_file(diff.current_landscape(), path)?;
+        BelvedereCliArtifact::LandscapeDiffCurrentClaimDetails => {
+            write_json_to_sink(diff.current_view_model().claim_details(), sink, writer)?;
         }
-        BelvedereCliOutput::LandscapeDiffCurrentViewModelJson => {
-            write_json(diff.current_view_model(), writer)?;
+        BelvedereCliArtifact::LandscapeDiffCurrentFilterFacets => {
+            write_json_to_sink(diff.current_view_model().filter_facets(), sink, writer)?;
         }
-        BelvedereCliOutput::LandscapeDiffCurrentViewModelFile(path) => {
-            write_json_file(diff.current_view_model(), path)?;
+        BelvedereCliArtifact::LandscapeDiffCurrentSourceNavigation => {
+            write_json_to_sink(diff.current_view_model().source_navigation(), sink, writer)?;
         }
-        BelvedereCliOutput::LandscapeDiffCurrentClaimDetailsJson => {
-            write_json(diff.current_view_model().claim_details(), writer)?;
+        BelvedereCliArtifact::LandscapeDiffCurrentProofChains => {
+            write_json_to_sink(diff.current_view_model().proof_chains(), sink, writer)?;
         }
-        BelvedereCliOutput::LandscapeDiffCurrentClaimDetailsFile(path) => {
-            write_json_file(diff.current_view_model().claim_details(), path)?;
+        BelvedereCliArtifact::LandscapeDiffCurrentViewModelReceipt => {
+            write_json_to_sink(diff.current_view_model_receipt(), sink, writer)?;
         }
-        BelvedereCliOutput::LandscapeDiffCurrentFilterFacetsJson => {
-            write_json(diff.current_view_model().filter_facets(), writer)?;
+        BelvedereCliArtifact::LandscapeDiffCurrentUiIr => {
+            write_json_to_sink(diff.current_projection(), sink, writer)?;
         }
-        BelvedereCliOutput::LandscapeDiffCurrentFilterFacetsFile(path) => {
-            write_json_file(diff.current_view_model().filter_facets(), path)?;
+        BelvedereCliArtifact::LandscapeDiffCurrentUiIrReceipt => {
+            write_json_to_sink(diff.current_ui_ir_receipt(), sink, writer)?;
         }
-        BelvedereCliOutput::LandscapeDiffCurrentSourceNavigationJson => {
-            write_json(diff.current_view_model().source_navigation(), writer)?;
+        BelvedereCliArtifact::LandscapeDiffCurrentRegistryReceipt => {
+            write_json_to_sink(diff.current_registry_receipt(), sink, writer)?;
         }
-        BelvedereCliOutput::LandscapeDiffCurrentSourceNavigationFile(path) => {
-            write_json_file(diff.current_view_model().source_navigation(), path)?;
-        }
-        BelvedereCliOutput::LandscapeDiffCurrentProofChainsJson => {
-            write_json(diff.current_view_model().proof_chains(), writer)?;
-        }
-        BelvedereCliOutput::LandscapeDiffCurrentProofChainsFile(path) => {
-            write_json_file(diff.current_view_model().proof_chains(), path)?;
-        }
-        BelvedereCliOutput::LandscapeDiffCurrentViewModelReceiptJson => {
-            write_json(diff.current_view_model_receipt(), writer)?;
-        }
-        BelvedereCliOutput::LandscapeDiffCurrentViewModelReceiptFile(path) => {
-            write_json_file(diff.current_view_model_receipt(), path)?;
-        }
-        BelvedereCliOutput::LandscapeDiffCurrentUiIrJson => {
-            write_json(diff.current_projection(), writer)?;
-        }
-        BelvedereCliOutput::LandscapeDiffCurrentUiIrFile(path) => {
-            write_json_file(diff.current_projection(), path)?;
-        }
-        BelvedereCliOutput::LandscapeDiffCurrentUiIrReceiptJson => {
-            write_json(diff.current_ui_ir_receipt(), writer)?;
-        }
-        BelvedereCliOutput::LandscapeDiffCurrentUiIrReceiptFile(path) => {
-            write_json_file(diff.current_ui_ir_receipt(), path)?;
-        }
-        BelvedereCliOutput::LandscapeDiffCurrentRegistryReceiptJson => {
-            write_json(diff.current_registry_receipt(), writer)?;
-        }
-        BelvedereCliOutput::LandscapeDiffCurrentRegistryReceiptFile(path) => {
-            write_json_file(diff.current_registry_receipt(), path)?;
-        }
-        BelvedereCliOutput::LandscapeDiffCurrentAssessmentReceiptJson => {
-            write_json(diff.current_assessment_receipt(), writer)?;
-        }
-        BelvedereCliOutput::LandscapeDiffCurrentAssessmentReceiptFile(path) => {
-            write_json_file(diff.current_assessment_receipt(), path)?;
+        BelvedereCliArtifact::LandscapeDiffCurrentAssessmentReceipt => {
+            write_json_to_sink(diff.current_assessment_receipt(), sink, writer)?;
         }
         _ => return Ok(false),
     }
     Ok(true)
 }
 
-#[instrument(level = "info", skip(output, diff, writer))]
+#[instrument(level = "info", skip(artifact, sink, diff, writer))]
 fn write_current_alias_output(
-    output: &BelvedereCliOutput,
+    artifact: BelvedereCliArtifact,
+    sink: &BelvedereCliOutputSink,
     diff: &BelvedereLandscapeDiffRunReport,
     writer: impl Write,
 ) -> Result<bool, BelvedereError> {
-    match output {
-        BelvedereCliOutput::LandscapeDiffLandscapeReceiptJson => {
-            write_json(diff.current_landscape_receipt(), writer)?;
+    match artifact {
+        BelvedereCliArtifact::LandscapeDiffLandscapeReceipt => {
+            write_json_to_sink(diff.current_landscape_receipt(), sink, writer)?;
         }
-        BelvedereCliOutput::LandscapeDiffLandscapeReceiptFile(path) => {
-            write_json_file(diff.current_landscape_receipt(), path)?;
+        BelvedereCliArtifact::LandscapeDiffLandscape => {
+            write_json_to_sink(diff.current_landscape(), sink, writer)?;
         }
-        BelvedereCliOutput::LandscapeDiffLandscapeJson => {
-            write_json(diff.current_landscape(), writer)?;
+        BelvedereCliArtifact::LandscapeDiffViewModel => {
+            write_json_to_sink(diff.diff_view_model(), sink, writer)?;
         }
-        BelvedereCliOutput::LandscapeDiffLandscapeFile(path) => {
-            write_json_file(diff.current_landscape(), path)?;
+        BelvedereCliArtifact::LandscapeDiffClaimDetails => {
+            write_json_to_sink(diff.current_view_model().claim_details(), sink, writer)?;
         }
-        BelvedereCliOutput::LandscapeDiffViewModelJson => {
-            write_json(diff.diff_view_model(), writer)?;
+        BelvedereCliArtifact::LandscapeDiffFilterFacets => {
+            write_json_to_sink(diff.current_view_model().filter_facets(), sink, writer)?;
         }
-        BelvedereCliOutput::LandscapeDiffViewModelFile(path) => {
-            write_json_file(diff.diff_view_model(), path)?;
+        BelvedereCliArtifact::LandscapeDiffSourceNavigation => {
+            write_json_to_sink(diff.current_view_model().source_navigation(), sink, writer)?;
         }
-        BelvedereCliOutput::LandscapeDiffClaimDetailsJson => {
-            write_json(diff.current_view_model().claim_details(), writer)?;
+        BelvedereCliArtifact::LandscapeDiffProofChains => {
+            write_json_to_sink(diff.current_view_model().proof_chains(), sink, writer)?;
         }
-        BelvedereCliOutput::LandscapeDiffClaimDetailsFile(path) => {
-            write_json_file(diff.current_view_model().claim_details(), path)?;
+        BelvedereCliArtifact::LandscapeDiffReviewWorkflow => {
+            write_json_to_sink(diff.diff_view_model().items(), sink, writer)?;
         }
-        BelvedereCliOutput::LandscapeDiffFilterFacetsJson => {
-            write_json(diff.current_view_model().filter_facets(), writer)?;
+        BelvedereCliArtifact::LandscapeDiffViewModelReceipt => {
+            write_json_to_sink(diff.diff_view_model_receipt(), sink, writer)?;
         }
-        BelvedereCliOutput::LandscapeDiffFilterFacetsFile(path) => {
-            write_json_file(diff.current_view_model().filter_facets(), path)?;
+        BelvedereCliArtifact::LandscapeDiffUiIr => {
+            write_json_to_sink(diff.diff_projection(), sink, writer)?;
         }
-        BelvedereCliOutput::LandscapeDiffSourceNavigationJson => {
-            write_json(diff.current_view_model().source_navigation(), writer)?;
-        }
-        BelvedereCliOutput::LandscapeDiffSourceNavigationFile(path) => {
-            write_json_file(diff.current_view_model().source_navigation(), path)?;
-        }
-        BelvedereCliOutput::LandscapeDiffProofChainsJson => {
-            write_json(diff.current_view_model().proof_chains(), writer)?;
-        }
-        BelvedereCliOutput::LandscapeDiffProofChainsFile(path) => {
-            write_json_file(diff.current_view_model().proof_chains(), path)?;
-        }
-        BelvedereCliOutput::LandscapeDiffReviewWorkflowJson => {
-            write_json(diff.diff_view_model().items(), writer)?;
-        }
-        BelvedereCliOutput::LandscapeDiffReviewWorkflowFile(path) => {
-            write_json_file(diff.diff_view_model().items(), path)?;
-        }
-        BelvedereCliOutput::LandscapeDiffViewModelReceiptJson => {
-            write_json(diff.diff_view_model_receipt(), writer)?;
-        }
-        BelvedereCliOutput::LandscapeDiffViewModelReceiptFile(path) => {
-            write_json_file(diff.diff_view_model_receipt(), path)?;
-        }
-        BelvedereCliOutput::LandscapeDiffUiIrJson => write_json(diff.diff_projection(), writer)?,
-        BelvedereCliOutput::LandscapeDiffUiIrFile(path) => {
-            write_json_file(diff.diff_projection(), path)?;
-        }
-        BelvedereCliOutput::LandscapeDiffUiIrReceiptJson => {
-            write_json(diff.diff_ui_ir_receipt(), writer)?;
-        }
-        BelvedereCliOutput::LandscapeDiffUiIrReceiptFile(path) => {
-            write_json_file(diff.diff_ui_ir_receipt(), path)?;
+        BelvedereCliArtifact::LandscapeDiffUiIrReceipt => {
+            write_json_to_sink(diff.diff_ui_ir_receipt(), sink, writer)?;
         }
         _ => return Ok(false),
     }
     Ok(true)
-}
-
-#[instrument(level = "info", skip(value, path))]
-fn write_json_file(value: &impl Serialize, path: impl AsRef<Path>) -> Result<(), BelvedereError> {
-    let file = File::create(path).map_err(BelvedereCliOutputError::write)?;
-    write_json(value, file)
 }

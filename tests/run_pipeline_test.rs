@@ -8,19 +8,27 @@ use belvedere::{
     BELVEDERE_ARTIFACT_MANIFEST_SCHEMA_ID, BELVEDERE_ARTIFACT_MANIFEST_SCHEMA_VERSION,
     BELVEDERE_RUN_CERTIFICATE_SCHEMA_ID, BELVEDERE_RUN_CERTIFICATE_SCHEMA_VERSION,
     BELVEDERE_STAGE_CERTIFICATE_SCHEMA_ID, BELVEDERE_STAGE_CERTIFICATE_SCHEMA_VERSION,
-    BelvedereCli, BelvedereCliOutput, BelvedereInvocationSurface, BelvederePipelineStage,
-    BelvedereRunInput, DIFF_REVIEW_UI_IR_SECTION_ITEMS,
-    DIFF_REVIEW_UI_IR_SECTION_SOURCE_NAVIGATION, DIFF_REVIEW_UI_IR_SECTION_SUMMARY,
-    INPUT_FIDELITY_STANDARD_ID, REPORT_REPRODUCIBILITY_STANDARD_ID,
-    UI_IR_SECTION_ASSESSMENT_HISTORY, UI_IR_SECTION_BACKEND_COVERAGE, UI_IR_SECTION_CLAIM_DETAIL,
-    UI_IR_SECTION_FILTERS, UI_IR_SECTION_PROOF_CHAINS, UI_IR_SECTION_REVIEW_WORKFLOW,
-    UI_IR_SECTION_SOURCE_NAVIGATION, VIEW_MODEL_FIDELITY_STANDARD_ID, run_belvedere_pipeline,
-    run_cli_with_writer,
+    BelvedereCli, BelvedereCliArtifact, BelvedereCliOutput, BelvedereCliOutputSink,
+    BelvedereInvocationSurface, BelvederePipelineStage, BelvedereRunInput,
+    DIFF_REVIEW_UI_IR_SECTION_ITEMS, DIFF_REVIEW_UI_IR_SECTION_SOURCE_NAVIGATION,
+    DIFF_REVIEW_UI_IR_SECTION_SUMMARY, INPUT_FIDELITY_STANDARD_ID,
+    REPORT_REPRODUCIBILITY_STANDARD_ID, UI_IR_SECTION_ASSESSMENT_HISTORY,
+    UI_IR_SECTION_BACKEND_COVERAGE, UI_IR_SECTION_CLAIM_DETAIL, UI_IR_SECTION_FILTERS,
+    UI_IR_SECTION_PROOF_CHAINS, UI_IR_SECTION_REVIEW_WORKFLOW, UI_IR_SECTION_SOURCE_NAVIGATION,
+    VIEW_MODEL_FIDELITY_STANDARD_ID, run_belvedere_pipeline, run_cli_with_writer,
 };
 use miette::{IntoDiagnostic, Result, WrapErr};
 use serde_json::Value;
 
 type ReceiptAssertion = fn(&Value);
+
+fn stdio_output(artifact: BelvedereCliArtifact) -> BelvedereCliOutput {
+    BelvedereCliOutput::artifact(artifact, BelvedereCliOutputSink::Stdio)
+}
+
+fn file_output(artifact: BelvedereCliArtifact, path: PathBuf) -> BelvedereCliOutput {
+    BelvedereCliOutput::artifact(artifact, BelvedereCliOutputSink::File(path))
+}
 
 fn is_hex_digest(value: &Value) -> bool {
     value.as_str().is_some_and(|digest| {
@@ -1035,75 +1043,45 @@ fn cli_help_is_a_successful_public_output_contract() -> Result<()> {
         .wrap_err("help output should be UTF-8")?;
     assert!(help.contains("usage: belvedere"));
     assert!(help.contains("belvedere diff"));
-    assert!(help.contains("--certificate-json"));
-    assert!(help.contains("--certificate-file"));
-    assert!(help.contains("--manifest-json"));
-    assert!(help.contains("--manifest-file"));
-    assert!(help.contains("--run-certificate-json"));
-    assert!(help.contains("--run-certificate-file"));
-    assert!(help.contains("--diff-json"));
-    assert!(help.contains("--diff-receipt-json"));
-    assert!(help.contains("--diff-receipt-file"));
-    assert!(help.contains("--previous-registry-receipt-json"));
-    assert!(help.contains("--previous-registry-receipt-file"));
-    assert!(help.contains("--previous-assessment-receipt-json"));
-    assert!(help.contains("--previous-assessment-receipt-file"));
-    assert!(help.contains("--current-registry-receipt-json"));
-    assert!(help.contains("--current-registry-receipt-file"));
-    assert!(help.contains("--current-assessment-receipt-json"));
-    assert!(help.contains("--current-assessment-receipt-file"));
-    assert!(help.contains("--previous-landscape-receipt-json"));
-    assert!(help.contains("--previous-landscape-receipt-file"));
-    assert!(help.contains("--previous-view-model-json"));
-    assert!(help.contains("--previous-view-model-file"));
-    assert!(help.contains("--previous-claim-details-json"));
-    assert!(help.contains("--previous-claim-details-file"));
-    assert!(help.contains("--previous-filter-facets-json"));
-    assert!(help.contains("--previous-filter-facets-file"));
-    assert!(help.contains("--previous-source-navigation-json"));
-    assert!(help.contains("--previous-source-navigation-file"));
-    assert!(help.contains("--previous-proof-chains-json"));
-    assert!(help.contains("--previous-proof-chains-file"));
-    assert!(help.contains("--previous-view-model-receipt-json"));
-    assert!(help.contains("--previous-view-model-receipt-file"));
-    assert!(help.contains("--previous-ui-ir-json"));
-    assert!(help.contains("--previous-ui-ir-file"));
-    assert!(help.contains("--previous-ui-ir-receipt-json"));
-    assert!(help.contains("--previous-ui-ir-receipt-file"));
-    assert!(help.contains("--current-landscape-receipt-json"));
-    assert!(help.contains("--current-landscape-receipt-file"));
-    assert!(help.contains("--current-claim-details-json"));
-    assert!(help.contains("--current-claim-details-file"));
-    assert!(help.contains("--current-filter-facets-json"));
-    assert!(help.contains("--current-filter-facets-file"));
-    assert!(help.contains("--current-source-navigation-json"));
-    assert!(help.contains("--current-source-navigation-file"));
-    assert!(help.contains("--current-proof-chains-json"));
-    assert!(help.contains("--current-proof-chains-file"));
-    assert!(help.contains("--current-view-model-receipt-json"));
-    assert!(help.contains("--current-view-model-receipt-file"));
-    assert!(help.contains("--current-ui-ir-receipt-json"));
-    assert!(help.contains("--current-ui-ir-receipt-file"));
-    assert!(help.contains("--registry-receipt-json"));
-    assert!(help.contains("--registry-receipt-file"));
-    assert!(help.contains("--assessment-receipt-json"));
-    assert!(help.contains("--assessment-receipt-file"));
-    assert!(help.contains("--landscape-receipt-json"));
-    assert!(help.contains("--landscape-receipt-file"));
-    assert!(help.contains("--claim-details-json"));
-    assert!(help.contains("--claim-details-file"));
-    assert!(help.contains("--filter-facets-json"));
-    assert!(help.contains("--filter-facets-file"));
-    assert!(help.contains("--source-navigation-json"));
-    assert!(help.contains("--source-navigation-file"));
-    assert!(help.contains("--proof-chains-json"));
-    assert!(help.contains("--proof-chains-file"));
-    assert!(help.contains("--view-model-receipt-json"));
-    assert!(help.contains("--view-model-receipt-file"));
-    assert!(help.contains("--review-workflow-json"));
-    assert!(help.contains("--review-workflow-file"));
-    assert!(help.contains("--ui-ir-receipt-json"));
-    assert!(help.contains("--ui-ir-receipt-file"));
+    assert!(help.contains("--stdio"));
+    assert!(help.contains("--file <path>"));
+    assert!(help.contains("--certificate"));
+    assert!(help.contains("--manifest"));
+    assert!(help.contains("--run-certificate"));
+    assert!(help.contains("--diff"));
+    assert!(help.contains("--diff-receipt"));
+    assert!(help.contains("--previous-registry-receipt"));
+    assert!(help.contains("--previous-assessment-receipt"));
+    assert!(help.contains("--current-registry-receipt"));
+    assert!(help.contains("--current-assessment-receipt"));
+    assert!(help.contains("--previous-landscape-receipt"));
+    assert!(help.contains("--previous-view-model"));
+    assert!(help.contains("--previous-claim-details"));
+    assert!(help.contains("--previous-filter-facets"));
+    assert!(help.contains("--previous-source-navigation"));
+    assert!(help.contains("--previous-proof-chains"));
+    assert!(help.contains("--previous-view-model-receipt"));
+    assert!(help.contains("--previous-ui-ir"));
+    assert!(help.contains("--previous-ui-ir-receipt"));
+    assert!(help.contains("--current-landscape-receipt"));
+    assert!(help.contains("--current-claim-details"));
+    assert!(help.contains("--current-filter-facets"));
+    assert!(help.contains("--current-source-navigation"));
+    assert!(help.contains("--current-proof-chains"));
+    assert!(help.contains("--current-view-model-receipt"));
+    assert!(help.contains("--current-ui-ir-receipt"));
+    assert!(help.contains("--registry-receipt"));
+    assert!(help.contains("--assessment-receipt"));
+    assert!(help.contains("--landscape-receipt"));
+    assert!(help.contains("--claim-details"));
+    assert!(help.contains("--filter-facets"));
+    assert!(help.contains("--source-navigation"));
+    assert!(help.contains("--proof-chains"));
+    assert!(help.contains("--view-model-receipt"));
+    assert!(help.contains("--review-workflow"));
+    assert!(help.contains("--ui-ir-receipt"));
+    assert!(!help.contains("--certificate-json"));
+    assert!(!help.contains("--certificate-file"));
     Ok(())
 }
 
@@ -1218,9 +1196,14 @@ fn diff_args_with_empty_previous_assessments(
     let previous_assessments_path = previous_assessments_path
         .to_str()
         .ok_or_else(|| miette::miette!("temporary assessment path should be UTF-8"))?;
+    let output_args = match output_args {
+        [artifact] => vec![*artifact, "--stdio"],
+        [artifact, path] => vec![*artifact, "--file", *path],
+        _ => output_args.to_vec(),
+    };
     Ok(["diff"]
         .into_iter()
-        .chain(output_args.iter().copied())
+        .chain(output_args)
         .chain([
             "tests/fixtures/registry_dump.json",
             previous_assessments_path,
@@ -2770,7 +2753,8 @@ fn cli_can_emit_the_run_certificate_as_json() -> Result<()> {
     belvedere::init_tracing();
 
     let args = [
-        "--certificate-json",
+        "--certificate",
+        "--stdio",
         "tests/fixtures/registry_dump.json",
         "tests/fixtures/proof_assessments.jsonl",
     ]
@@ -2781,7 +2765,10 @@ fn cli_can_emit_the_run_certificate_as_json() -> Result<()> {
         .into_diagnostic()
         .wrap_err("certificate JSON flag should be part of the public CLI API")?;
 
-    assert_eq!(command.output(), BelvedereCliOutput::RunCertificateJson);
+    assert_eq!(
+        command.output(),
+        stdio_output(BelvedereCliArtifact::RunCertificate)
+    );
 
     let mut output = Vec::new();
     let status = run_cli_with_writer(args, &mut output);
@@ -2920,7 +2907,7 @@ fn cli_can_emit_the_run_certificate_as_json() -> Result<()> {
         certificate["invocation"]["arguments"]
             .as_array()
             .map(Vec::len),
-        Some(3)
+        Some(4)
     );
     Ok(())
 }
@@ -2930,7 +2917,8 @@ fn cli_can_emit_the_run_manifest_as_json() -> Result<()> {
     belvedere::init_tracing();
 
     let args = [
-        "--manifest-json",
+        "--manifest",
+        "--stdio",
         "tests/fixtures/registry_dump.json",
         "tests/fixtures/proof_assessments.jsonl",
     ]
@@ -2941,7 +2929,10 @@ fn cli_can_emit_the_run_manifest_as_json() -> Result<()> {
         .into_diagnostic()
         .wrap_err("manifest JSON flag should be part of the public CLI API")?;
 
-    assert_eq!(command.output(), BelvedereCliOutput::RunManifestJson);
+    assert_eq!(
+        command.output(),
+        stdio_output(BelvedereCliArtifact::RunManifest)
+    );
 
     let mut output = Vec::new();
     let status = run_cli_with_writer(args, &mut output);
@@ -2959,7 +2950,8 @@ fn cli_can_emit_the_registry_ingestion_receipt_as_json() -> Result<()> {
     belvedere::init_tracing();
 
     let args = [
-        "--registry-receipt-json",
+        "--registry-receipt",
+        "--stdio",
         "tests/fixtures/registry_dump.json",
         "tests/fixtures/proof_assessments.jsonl",
     ]
@@ -2970,7 +2962,10 @@ fn cli_can_emit_the_registry_ingestion_receipt_as_json() -> Result<()> {
         .into_diagnostic()
         .wrap_err("registry receipt JSON flag should be part of the public CLI API")?;
 
-    assert_eq!(command.output(), BelvedereCliOutput::RunRegistryReceiptJson);
+    assert_eq!(
+        command.output(),
+        stdio_output(BelvedereCliArtifact::RunRegistryReceipt)
+    );
 
     let mut output = Vec::new();
     let status = run_cli_with_writer(args, &mut output);
@@ -2988,7 +2983,8 @@ fn cli_can_emit_the_assessment_ingestion_receipt_as_json() -> Result<()> {
     belvedere::init_tracing();
 
     let args = [
-        "--assessment-receipt-json",
+        "--assessment-receipt",
+        "--stdio",
         "tests/fixtures/registry_dump.json",
         "tests/fixtures/proof_assessments.jsonl",
     ]
@@ -3001,7 +2997,7 @@ fn cli_can_emit_the_assessment_ingestion_receipt_as_json() -> Result<()> {
 
     assert_eq!(
         command.output(),
-        BelvedereCliOutput::RunAssessmentReceiptJson
+        stdio_output(BelvedereCliArtifact::RunAssessmentReceipt)
     );
 
     let mut output = Vec::new();
@@ -3020,7 +3016,8 @@ fn cli_can_emit_the_landscape_receipt_as_json() -> Result<()> {
     belvedere::init_tracing();
 
     let args = [
-        "--landscape-receipt-json",
+        "--landscape-receipt",
+        "--stdio",
         "tests/fixtures/registry_dump.json",
         "tests/fixtures/proof_assessments.jsonl",
     ]
@@ -3033,7 +3030,7 @@ fn cli_can_emit_the_landscape_receipt_as_json() -> Result<()> {
 
     assert_eq!(
         command.output(),
-        BelvedereCliOutput::RunLandscapeReceiptJson
+        stdio_output(BelvedereCliArtifact::RunLandscapeReceipt)
     );
 
     let mut output = Vec::new();
@@ -3052,7 +3049,8 @@ fn cli_can_emit_the_landscape_graph_as_json() -> Result<()> {
     belvedere::init_tracing();
 
     let args = [
-        "--landscape-json",
+        "--landscape",
+        "--stdio",
         "tests/fixtures/registry_dump.json",
         "tests/fixtures/proof_assessments.jsonl",
     ]
@@ -3063,7 +3061,10 @@ fn cli_can_emit_the_landscape_graph_as_json() -> Result<()> {
         .into_diagnostic()
         .wrap_err("landscape graph JSON flag should be part of the public CLI API")?;
 
-    assert_eq!(command.output(), BelvedereCliOutput::RunLandscapeJson);
+    assert_eq!(
+        command.output(),
+        stdio_output(BelvedereCliArtifact::RunLandscape)
+    );
 
     let mut output = Vec::new();
     let status = run_cli_with_writer(args, &mut output);
@@ -3081,7 +3082,8 @@ fn cli_can_emit_the_ui_ir_receipt_as_json() -> Result<()> {
     belvedere::init_tracing();
 
     let args = [
-        "--ui-ir-receipt-json",
+        "--ui-ir-receipt",
+        "--stdio",
         "tests/fixtures/registry_dump.json",
         "tests/fixtures/proof_assessments.jsonl",
     ]
@@ -3092,7 +3094,10 @@ fn cli_can_emit_the_ui_ir_receipt_as_json() -> Result<()> {
         .into_diagnostic()
         .wrap_err("UI IR receipt JSON flag should be part of the public CLI API")?;
 
-    assert_eq!(command.output(), BelvedereCliOutput::RunUiIrReceiptJson);
+    assert_eq!(
+        command.output(),
+        stdio_output(BelvedereCliArtifact::RunUiIrReceipt)
+    );
 
     let mut output = Vec::new();
     let status = run_cli_with_writer(args, &mut output);
@@ -3134,7 +3139,8 @@ fn cli_can_emit_the_view_model_receipt_as_json() -> Result<()> {
     belvedere::init_tracing();
 
     let args = [
-        "--view-model-receipt-json",
+        "--view-model-receipt",
+        "--stdio",
         "tests/fixtures/registry_dump.json",
         "tests/fixtures/proof_assessments.jsonl",
     ]
@@ -3147,7 +3153,7 @@ fn cli_can_emit_the_view_model_receipt_as_json() -> Result<()> {
 
     assert_eq!(
         command.output(),
-        BelvedereCliOutput::RunViewModelReceiptJson
+        stdio_output(BelvedereCliArtifact::RunViewModelReceipt)
     );
 
     let mut output = Vec::new();
@@ -3167,38 +3173,38 @@ fn cli_can_emit_run_projection_artifacts_as_json() -> Result<()> {
 
     let cases: [(&str, BelvedereCliOutput, ReceiptAssertion); 7] = [
         (
-            "--view-model-json",
-            BelvedereCliOutput::RunViewModelJson,
+            "--view-model",
+            stdio_output(BelvedereCliArtifact::RunViewModel),
             assert_auditor_navigation_model,
         ),
         (
-            "--claim-details-json",
-            BelvedereCliOutput::RunClaimDetailsJson,
+            "--claim-details",
+            stdio_output(BelvedereCliArtifact::RunClaimDetails),
             assert_claim_details,
         ),
         (
-            "--filter-facets-json",
-            BelvedereCliOutput::RunFilterFacetsJson,
+            "--filter-facets",
+            stdio_output(BelvedereCliArtifact::RunFilterFacets),
             assert_filter_facets,
         ),
         (
-            "--source-navigation-json",
-            BelvedereCliOutput::RunSourceNavigationJson,
+            "--source-navigation",
+            stdio_output(BelvedereCliArtifact::RunSourceNavigation),
             assert_source_navigation_map,
         ),
         (
-            "--proof-chains-json",
-            BelvedereCliOutput::RunProofChainsJson,
+            "--proof-chains",
+            stdio_output(BelvedereCliArtifact::RunProofChains),
             assert_proof_chains,
         ),
         (
-            "--review-workflow-json",
-            BelvedereCliOutput::RunReviewWorkflowJson,
+            "--review-workflow",
+            stdio_output(BelvedereCliArtifact::RunReviewWorkflow),
             assert_review_workflow_queue,
         ),
         (
-            "--ui-ir-json",
-            BelvedereCliOutput::RunUiIrJson,
+            "--ui-ir",
+            stdio_output(BelvedereCliArtifact::RunUiIr),
             assert_ui_ir_projection,
         ),
     ];
@@ -3206,6 +3212,7 @@ fn cli_can_emit_run_projection_artifacts_as_json() -> Result<()> {
     for (flag, expected_output, assert_artifact) in cases {
         let args = [
             flag,
+            "--stdio",
             "tests/fixtures/registry_dump.json",
             "tests/fixtures/proof_assessments.jsonl",
         ]
@@ -3238,7 +3245,8 @@ fn cli_can_persist_the_registry_ingestion_receipt_as_json() -> Result<()> {
     let receipt_path =
         std::env::temp_dir().join(format!("belvedere-registry-receipt-{}.json", process::id()));
     let args = [
-        "--registry-receipt-file",
+        "--registry-receipt",
+        "--file",
         receipt_path
             .to_str()
             .ok_or_else(|| miette::miette!("temporary registry receipt path should be UTF-8"))?,
@@ -3254,7 +3262,10 @@ fn cli_can_persist_the_registry_ingestion_receipt_as_json() -> Result<()> {
 
     assert_eq!(
         command.output(),
-        BelvedereCliOutput::RunRegistryReceiptFile(receipt_path.clone())
+        file_output(
+            BelvedereCliArtifact::RunRegistryReceipt,
+            receipt_path.clone()
+        )
     );
 
     let mut output = Vec::new();
@@ -3285,7 +3296,8 @@ fn cli_can_persist_the_assessment_ingestion_receipt_as_json() -> Result<()> {
         process::id()
     ));
     let args = [
-        "--assessment-receipt-file",
+        "--assessment-receipt",
+        "--file",
         receipt_path
             .to_str()
             .ok_or_else(|| miette::miette!("temporary assessment receipt path should be UTF-8"))?,
@@ -3301,7 +3313,10 @@ fn cli_can_persist_the_assessment_ingestion_receipt_as_json() -> Result<()> {
 
     assert_eq!(
         command.output(),
-        BelvedereCliOutput::RunAssessmentReceiptFile(receipt_path.clone())
+        file_output(
+            BelvedereCliArtifact::RunAssessmentReceipt,
+            receipt_path.clone()
+        )
     );
 
     let mut output = Vec::new();
@@ -3332,7 +3347,8 @@ fn cli_can_persist_the_landscape_receipt_as_json() -> Result<()> {
         process::id()
     ));
     let args = [
-        "--landscape-receipt-file",
+        "--landscape-receipt",
+        "--file",
         receipt_path
             .to_str()
             .ok_or_else(|| miette::miette!("temporary landscape receipt path should be UTF-8"))?,
@@ -3348,7 +3364,10 @@ fn cli_can_persist_the_landscape_receipt_as_json() -> Result<()> {
 
     assert_eq!(
         command.output(),
-        BelvedereCliOutput::RunLandscapeReceiptFile(receipt_path.clone())
+        file_output(
+            BelvedereCliArtifact::RunLandscapeReceipt,
+            receipt_path.clone()
+        )
     );
 
     let mut output = Vec::new();
@@ -3377,7 +3396,8 @@ fn cli_can_persist_the_landscape_graph_as_json() -> Result<()> {
     let graph_path =
         std::env::temp_dir().join(format!("belvedere-landscape-{}.json", process::id()));
     let args = [
-        "--landscape-file",
+        "--landscape",
+        "--file",
         graph_path
             .to_str()
             .ok_or_else(|| miette::miette!("temporary landscape graph path should be UTF-8"))?,
@@ -3393,7 +3413,7 @@ fn cli_can_persist_the_landscape_graph_as_json() -> Result<()> {
 
     assert_eq!(
         command.output(),
-        BelvedereCliOutput::RunLandscapeFile(graph_path.clone())
+        file_output(BelvedereCliArtifact::RunLandscape, graph_path.clone())
     );
 
     let mut output = Vec::new();
@@ -3422,7 +3442,8 @@ fn cli_can_persist_the_ui_ir_receipt_as_json() -> Result<()> {
     let receipt_path =
         std::env::temp_dir().join(format!("belvedere-ui-ir-receipt-{}.json", process::id()));
     let args = [
-        "--ui-ir-receipt-file",
+        "--ui-ir-receipt",
+        "--file",
         receipt_path
             .to_str()
             .ok_or_else(|| miette::miette!("temporary UI IR receipt path should be UTF-8"))?,
@@ -3438,7 +3459,7 @@ fn cli_can_persist_the_ui_ir_receipt_as_json() -> Result<()> {
 
     assert_eq!(
         command.output(),
-        BelvedereCliOutput::RunUiIrReceiptFile(receipt_path.clone())
+        file_output(BelvedereCliArtifact::RunUiIrReceipt, receipt_path.clone())
     );
 
     let mut output = Vec::new();
@@ -3481,7 +3502,8 @@ fn cli_can_persist_the_view_model_receipt_as_json() -> Result<()> {
         process::id()
     ));
     let args = [
-        "--view-model-receipt-file",
+        "--view-model-receipt",
+        "--file",
         receipt_path
             .to_str()
             .ok_or_else(|| miette::miette!("temporary view-model receipt path should be UTF-8"))?,
@@ -3497,7 +3519,10 @@ fn cli_can_persist_the_view_model_receipt_as_json() -> Result<()> {
 
     assert_eq!(
         command.output(),
-        BelvedereCliOutput::RunViewModelReceiptFile(receipt_path.clone())
+        file_output(
+            BelvedereCliArtifact::RunViewModelReceipt,
+            receipt_path.clone()
+        )
     );
 
     let mut output = Vec::new();
@@ -3540,45 +3565,60 @@ fn cli_can_persist_run_projection_artifacts_as_json() -> Result<()> {
     let ui_ir_path = std::env::temp_dir().join(format!("belvedere-ui-ir-{}.json", process::id()));
     let cases: [(&str, PathBuf, BelvedereCliOutput, ReceiptAssertion); 7] = [
         (
-            "--view-model-file",
+            "--view-model",
             view_model_path.clone(),
-            BelvedereCliOutput::RunViewModelFile(view_model_path.clone()),
+            file_output(BelvedereCliArtifact::RunViewModel, view_model_path.clone()),
             assert_auditor_navigation_model,
         ),
         (
-            "--claim-details-file",
+            "--claim-details",
             claim_details_path.clone(),
-            BelvedereCliOutput::RunClaimDetailsFile(claim_details_path.clone()),
+            file_output(
+                BelvedereCliArtifact::RunClaimDetails,
+                claim_details_path.clone(),
+            ),
             assert_claim_details,
         ),
         (
-            "--filter-facets-file",
+            "--filter-facets",
             filter_facets_path.clone(),
-            BelvedereCliOutput::RunFilterFacetsFile(filter_facets_path.clone()),
+            file_output(
+                BelvedereCliArtifact::RunFilterFacets,
+                filter_facets_path.clone(),
+            ),
             assert_filter_facets,
         ),
         (
-            "--source-navigation-file",
+            "--source-navigation",
             source_navigation_path.clone(),
-            BelvedereCliOutput::RunSourceNavigationFile(source_navigation_path.clone()),
+            file_output(
+                BelvedereCliArtifact::RunSourceNavigation,
+                source_navigation_path.clone(),
+            ),
             assert_source_navigation_map,
         ),
         (
-            "--proof-chains-file",
+            "--proof-chains",
             proof_chains_path.clone(),
-            BelvedereCliOutput::RunProofChainsFile(proof_chains_path.clone()),
+            file_output(
+                BelvedereCliArtifact::RunProofChains,
+                proof_chains_path.clone(),
+            ),
             assert_proof_chains,
         ),
         (
-            "--review-workflow-file",
+            "--review-workflow",
             review_workflow_path.clone(),
-            BelvedereCliOutput::RunReviewWorkflowFile(review_workflow_path.clone()),
+            file_output(
+                BelvedereCliArtifact::RunReviewWorkflow,
+                review_workflow_path.clone(),
+            ),
             assert_review_workflow_queue,
         ),
         (
-            "--ui-ir-file",
+            "--ui-ir",
             ui_ir_path.clone(),
-            BelvedereCliOutput::RunUiIrFile(ui_ir_path.clone()),
+            file_output(BelvedereCliArtifact::RunUiIr, ui_ir_path.clone()),
             assert_ui_ir_projection,
         ),
     ];
@@ -3589,6 +3629,7 @@ fn cli_can_persist_run_projection_artifacts_as_json() -> Result<()> {
             .ok_or_else(|| miette::miette!("temporary projection path should be UTF-8"))?;
         let args = [
             flag,
+            "--file",
             artifact_path_text,
             "tests/fixtures/registry_dump.json",
             "tests/fixtures/proof_assessments.jsonl",
@@ -3630,7 +3671,8 @@ fn cli_can_persist_the_run_certificate_as_json() -> Result<()> {
     let certificate_path =
         std::env::temp_dir().join(format!("belvedere-certificate-{}.json", process::id()));
     let args = [
-        "--certificate-file",
+        "--certificate",
+        "--file",
         certificate_path
             .to_str()
             .ok_or_else(|| miette::miette!("temporary certificate path should be UTF-8"))?,
@@ -3646,7 +3688,10 @@ fn cli_can_persist_the_run_certificate_as_json() -> Result<()> {
 
     assert_eq!(
         command.output(),
-        BelvedereCliOutput::RunCertificateFile(certificate_path.clone())
+        file_output(
+            BelvedereCliArtifact::RunCertificate,
+            certificate_path.clone()
+        )
     );
 
     let mut output = Vec::new();
@@ -3726,7 +3771,8 @@ fn cli_can_persist_the_run_manifest_as_json() -> Result<()> {
     let manifest_path =
         std::env::temp_dir().join(format!("belvedere-manifest-{}.json", process::id()));
     let args = [
-        "--manifest-file",
+        "--manifest",
+        "--file",
         manifest_path
             .to_str()
             .ok_or_else(|| miette::miette!("temporary manifest path should be UTF-8"))?,
@@ -3742,7 +3788,7 @@ fn cli_can_persist_the_run_manifest_as_json() -> Result<()> {
 
     assert_eq!(
         command.output(),
-        BelvedereCliOutput::RunManifestFile(manifest_path.clone())
+        file_output(BelvedereCliArtifact::RunManifest, manifest_path.clone())
     );
 
     let mut output = Vec::new();
@@ -3778,7 +3824,8 @@ fn cli_can_emit_the_landscape_diff_certificate_as_json() -> Result<()> {
 
     let args = [
         "diff",
-        "--certificate-json",
+        "--certificate",
+        "--stdio",
         "tests/fixtures/registry_dump.json",
         previous_assessments_path
             .to_str()
@@ -3795,7 +3842,7 @@ fn cli_can_emit_the_landscape_diff_certificate_as_json() -> Result<()> {
 
     assert_eq!(
         command.output(),
-        BelvedereCliOutput::LandscapeDiffCertificateJson
+        stdio_output(BelvedereCliArtifact::LandscapeDiffCertificate)
     );
 
     let mut output = Vec::new();
@@ -3874,7 +3921,8 @@ fn cli_can_emit_the_landscape_diff_run_certificate_as_json() -> Result<()> {
 
     let args = [
         "diff",
-        "--run-certificate-json",
+        "--run-certificate",
+        "--stdio",
         "tests/fixtures/registry_dump.json",
         previous_assessments_path
             .to_str()
@@ -3891,7 +3939,7 @@ fn cli_can_emit_the_landscape_diff_run_certificate_as_json() -> Result<()> {
 
     assert_eq!(
         command.output(),
-        BelvedereCliOutput::LandscapeDiffRunCertificateJson
+        stdio_output(BelvedereCliArtifact::LandscapeDiffRunCertificate)
     );
 
     let mut output = Vec::new();
@@ -3928,7 +3976,7 @@ fn cli_can_emit_the_landscape_diff_run_certificate_as_json() -> Result<()> {
         certificate["invocation"]["arguments"]
             .as_array()
             .map(Vec::len),
-        Some(6)
+        Some(7)
     );
     assert!(
         certificate["stage_certificates"]
@@ -4035,7 +4083,8 @@ fn cli_can_emit_the_landscape_diff_manifest_as_json() -> Result<()> {
 
     let args = [
         "diff",
-        "--manifest-json",
+        "--manifest",
+        "--stdio",
         "tests/fixtures/registry_dump.json",
         previous_assessments_path
             .to_str()
@@ -4052,7 +4101,7 @@ fn cli_can_emit_the_landscape_diff_manifest_as_json() -> Result<()> {
 
     assert_eq!(
         command.output(),
-        BelvedereCliOutput::LandscapeDiffManifestJson
+        stdio_output(BelvedereCliArtifact::LandscapeDiffManifest)
     );
 
     let mut output = Vec::new();
@@ -4088,7 +4137,8 @@ fn cli_can_persist_the_landscape_diff_run_certificate_as_json() -> Result<()> {
 
     let args = [
         "diff",
-        "--run-certificate-file",
+        "--run-certificate",
+        "--file",
         certificate_path
             .to_str()
             .ok_or_else(|| miette::miette!("temporary certificate path should be UTF-8"))?,
@@ -4108,7 +4158,10 @@ fn cli_can_persist_the_landscape_diff_run_certificate_as_json() -> Result<()> {
 
     assert_eq!(
         command.output(),
-        BelvedereCliOutput::LandscapeDiffRunCertificateFile(certificate_path.clone())
+        file_output(
+            BelvedereCliArtifact::LandscapeDiffRunCertificate,
+            certificate_path.clone()
+        )
     );
 
     let mut output = Vec::new();
@@ -4188,7 +4241,8 @@ fn cli_can_emit_the_landscape_diff_receipt_as_json() -> Result<()> {
 
     let args = [
         "diff",
-        "--diff-receipt-json",
+        "--diff-receipt",
+        "--stdio",
         "tests/fixtures/registry_dump.json",
         previous_assessments_path
             .to_str()
@@ -4205,7 +4259,7 @@ fn cli_can_emit_the_landscape_diff_receipt_as_json() -> Result<()> {
 
     assert_eq!(
         command.output(),
-        BelvedereCliOutput::LandscapeDiffReceiptJson
+        stdio_output(BelvedereCliArtifact::LandscapeDiffReceipt)
     );
 
     let mut output = Vec::new();
@@ -4239,7 +4293,8 @@ fn cli_can_persist_the_landscape_diff_receipt_as_json() -> Result<()> {
 
     let args = [
         "diff",
-        "--diff-receipt-file",
+        "--diff-receipt",
+        "--file",
         receipt_path
             .to_str()
             .ok_or_else(|| miette::miette!("temporary diff receipt path should be UTF-8"))?,
@@ -4259,7 +4314,10 @@ fn cli_can_persist_the_landscape_diff_receipt_as_json() -> Result<()> {
 
     assert_eq!(
         command.output(),
-        BelvedereCliOutput::LandscapeDiffReceiptFile(receipt_path.clone())
+        file_output(
+            BelvedereCliArtifact::LandscapeDiffReceipt,
+            receipt_path.clone()
+        )
     );
 
     let mut output = Vec::new();
@@ -4298,23 +4356,23 @@ fn cli_can_emit_diff_snapshot_ingestion_receipts_as_json() -> Result<()> {
 
     let cases: [(&str, BelvedereCliOutput, ReceiptAssertion); 4] = [
         (
-            "--previous-registry-receipt-json",
-            BelvedereCliOutput::LandscapeDiffPreviousRegistryReceiptJson,
+            "--previous-registry-receipt",
+            stdio_output(BelvedereCliArtifact::LandscapeDiffPreviousRegistryReceipt),
             assert_registry_ingestion_receipt,
         ),
         (
-            "--previous-assessment-receipt-json",
-            BelvedereCliOutput::LandscapeDiffPreviousAssessmentReceiptJson,
+            "--previous-assessment-receipt",
+            stdio_output(BelvedereCliArtifact::LandscapeDiffPreviousAssessmentReceipt),
             assert_empty_assessment_ingestion_receipt,
         ),
         (
-            "--current-registry-receipt-json",
-            BelvedereCliOutput::LandscapeDiffCurrentRegistryReceiptJson,
+            "--current-registry-receipt",
+            stdio_output(BelvedereCliArtifact::LandscapeDiffCurrentRegistryReceipt),
             assert_registry_ingestion_receipt,
         ),
         (
-            "--current-assessment-receipt-json",
-            BelvedereCliOutput::LandscapeDiffCurrentAssessmentReceiptJson,
+            "--current-assessment-receipt",
+            stdio_output(BelvedereCliArtifact::LandscapeDiffCurrentAssessmentReceipt),
             assert_assessment_ingestion_receipt,
         ),
     ];
@@ -4365,7 +4423,7 @@ fn cli_can_persist_the_current_diff_registry_receipt_as_json() -> Result<()> {
         miette::miette!("temporary current registry receipt path should be UTF-8")
     })?;
     let args = diff_args_with_empty_previous_assessments(
-        &["--current-registry-receipt-file", receipt_path_text],
+        &["--current-registry-receipt", receipt_path_text],
         &previous_assessments_path,
     )?;
     let command = BelvedereCli::from_args(args.clone())
@@ -4374,7 +4432,10 @@ fn cli_can_persist_the_current_diff_registry_receipt_as_json() -> Result<()> {
 
     assert_eq!(
         command.output(),
-        BelvedereCliOutput::LandscapeDiffCurrentRegistryReceiptFile(receipt_path.clone())
+        file_output(
+            BelvedereCliArtifact::LandscapeDiffCurrentRegistryReceipt,
+            receipt_path.clone()
+        )
     );
 
     let mut output = Vec::new();
@@ -4413,13 +4474,13 @@ fn cli_can_emit_diff_snapshot_landscape_receipts_as_json() -> Result<()> {
 
     let cases: [(&str, BelvedereCliOutput, ReceiptAssertion); 2] = [
         (
-            "--previous-landscape-receipt-json",
-            BelvedereCliOutput::LandscapeDiffPreviousLandscapeReceiptJson,
+            "--previous-landscape-receipt",
+            stdio_output(BelvedereCliArtifact::LandscapeDiffPreviousLandscapeReceipt),
             assert_previous_landscape_receipt,
         ),
         (
-            "--current-landscape-receipt-json",
-            BelvedereCliOutput::LandscapeDiffCurrentLandscapeReceiptJson,
+            "--current-landscape-receipt",
+            stdio_output(BelvedereCliArtifact::LandscapeDiffCurrentLandscapeReceipt),
             assert_landscape_receipt,
         ),
     ];
@@ -4464,13 +4525,13 @@ fn cli_can_emit_diff_snapshot_landscapes_as_json() -> Result<()> {
 
     let cases: [(&str, BelvedereCliOutput, ReceiptAssertion); 2] = [
         (
-            "--previous-landscape-json",
-            BelvedereCliOutput::LandscapeDiffPreviousLandscapeJson,
+            "--previous-landscape",
+            stdio_output(BelvedereCliArtifact::LandscapeDiffPreviousLandscape),
             assert_previous_landscape_graph,
         ),
         (
-            "--current-landscape-json",
-            BelvedereCliOutput::LandscapeDiffCurrentLandscapeJson,
+            "--current-landscape",
+            stdio_output(BelvedereCliArtifact::LandscapeDiffCurrentLandscape),
             assert_landscape_graph,
         ),
     ];
@@ -4521,17 +4582,19 @@ fn cli_can_persist_diff_snapshot_landscape_receipts_as_json() -> Result<()> {
     ));
     let cases: [(&str, PathBuf, BelvedereCliOutput, ReceiptAssertion); 2] = [
         (
-            "--previous-landscape-receipt-file",
+            "--previous-landscape-receipt",
             previous_receipt_path.clone(),
-            BelvedereCliOutput::LandscapeDiffPreviousLandscapeReceiptFile(
+            file_output(
+                BelvedereCliArtifact::LandscapeDiffPreviousLandscapeReceipt,
                 previous_receipt_path.clone(),
             ),
             assert_previous_landscape_receipt,
         ),
         (
-            "--current-landscape-receipt-file",
+            "--current-landscape-receipt",
             current_receipt_path.clone(),
-            BelvedereCliOutput::LandscapeDiffCurrentLandscapeReceiptFile(
+            file_output(
+                BelvedereCliArtifact::LandscapeDiffCurrentLandscapeReceipt,
                 current_receipt_path.clone(),
             ),
             assert_landscape_receipt,
@@ -4600,15 +4663,21 @@ fn cli_can_persist_diff_snapshot_landscapes_as_json() -> Result<()> {
     ));
     let cases: [(&str, PathBuf, BelvedereCliOutput, ReceiptAssertion); 2] = [
         (
-            "--previous-landscape-file",
+            "--previous-landscape",
             previous_graph_path.clone(),
-            BelvedereCliOutput::LandscapeDiffPreviousLandscapeFile(previous_graph_path.clone()),
+            file_output(
+                BelvedereCliArtifact::LandscapeDiffPreviousLandscape,
+                previous_graph_path.clone(),
+            ),
             assert_previous_landscape_graph,
         ),
         (
-            "--current-landscape-file",
+            "--current-landscape",
             current_graph_path.clone(),
-            BelvedereCliOutput::LandscapeDiffCurrentLandscapeFile(current_graph_path.clone()),
+            file_output(
+                BelvedereCliArtifact::LandscapeDiffCurrentLandscape,
+                current_graph_path.clone(),
+            ),
             assert_landscape_graph,
         ),
     ];
@@ -4665,7 +4734,8 @@ fn cli_can_emit_the_landscape_diff_landscape_receipt_as_json() -> Result<()> {
 
     let args = [
         "diff",
-        "--landscape-receipt-json",
+        "--landscape-receipt",
+        "--stdio",
         "tests/fixtures/registry_dump.json",
         previous_assessments_path
             .to_str()
@@ -4682,7 +4752,7 @@ fn cli_can_emit_the_landscape_diff_landscape_receipt_as_json() -> Result<()> {
 
     assert_eq!(
         command.output(),
-        BelvedereCliOutput::LandscapeDiffLandscapeReceiptJson
+        stdio_output(BelvedereCliArtifact::LandscapeDiffLandscapeReceipt)
     );
 
     let mut output = Vec::new();
@@ -4718,7 +4788,8 @@ fn cli_can_persist_the_landscape_diff_landscape_receipt_as_json() -> Result<()> 
 
     let args = [
         "diff",
-        "--landscape-receipt-file",
+        "--landscape-receipt",
+        "--file",
         receipt_path
             .to_str()
             .ok_or_else(|| miette::miette!("temporary landscape receipt path should be UTF-8"))?,
@@ -4738,7 +4809,10 @@ fn cli_can_persist_the_landscape_diff_landscape_receipt_as_json() -> Result<()> 
 
     assert_eq!(
         command.output(),
-        BelvedereCliOutput::LandscapeDiffLandscapeReceiptFile(receipt_path.clone())
+        file_output(
+            BelvedereCliArtifact::LandscapeDiffLandscapeReceipt,
+            receipt_path.clone()
+        )
     );
 
     let mut output = Vec::new();
@@ -4777,7 +4851,8 @@ fn cli_can_emit_the_landscape_diff_landscape_as_json() -> Result<()> {
 
     let args = [
         "diff",
-        "--landscape-json",
+        "--landscape",
+        "--stdio",
         "tests/fixtures/registry_dump.json",
         previous_assessments_path
             .to_str()
@@ -4794,7 +4869,7 @@ fn cli_can_emit_the_landscape_diff_landscape_as_json() -> Result<()> {
 
     assert_eq!(
         command.output(),
-        BelvedereCliOutput::LandscapeDiffLandscapeJson
+        stdio_output(BelvedereCliArtifact::LandscapeDiffLandscape)
     );
 
     let mut output = Vec::new();
@@ -4828,7 +4903,8 @@ fn cli_can_persist_the_landscape_diff_landscape_as_json() -> Result<()> {
 
     let args = [
         "diff",
-        "--landscape-file",
+        "--landscape",
+        "--file",
         graph_path
             .to_str()
             .ok_or_else(|| miette::miette!("temporary landscape graph path should be UTF-8"))?,
@@ -4848,7 +4924,10 @@ fn cli_can_persist_the_landscape_diff_landscape_as_json() -> Result<()> {
 
     assert_eq!(
         command.output(),
-        BelvedereCliOutput::LandscapeDiffLandscapeFile(graph_path.clone())
+        file_output(
+            BelvedereCliArtifact::LandscapeDiffLandscape,
+            graph_path.clone()
+        )
     );
 
     let mut output = Vec::new();
@@ -4887,13 +4966,13 @@ fn cli_can_emit_previous_diff_projection_receipts_as_json() -> Result<()> {
 
     let cases: [(&str, BelvedereCliOutput, ReceiptAssertion); 2] = [
         (
-            "--previous-view-model-receipt-json",
-            BelvedereCliOutput::LandscapeDiffPreviousViewModelReceiptJson,
+            "--previous-view-model-receipt",
+            stdio_output(BelvedereCliArtifact::LandscapeDiffPreviousViewModelReceipt),
             assert_previous_auditor_navigation_receipt,
         ),
         (
-            "--previous-ui-ir-receipt-json",
-            BelvedereCliOutput::LandscapeDiffPreviousUiIrReceiptJson,
+            "--previous-ui-ir-receipt",
+            stdio_output(BelvedereCliArtifact::LandscapeDiffPreviousUiIrReceipt),
             assert_previous_ui_ir_receipt,
         ),
     ];
@@ -4946,17 +5025,21 @@ fn cli_can_persist_previous_diff_projection_receipts_as_json() -> Result<()> {
     ));
     let cases: [(&str, PathBuf, BelvedereCliOutput, ReceiptAssertion); 2] = [
         (
-            "--previous-view-model-receipt-file",
+            "--previous-view-model-receipt",
             view_model_receipt_path.clone(),
-            BelvedereCliOutput::LandscapeDiffPreviousViewModelReceiptFile(
+            file_output(
+                BelvedereCliArtifact::LandscapeDiffPreviousViewModelReceipt,
                 view_model_receipt_path.clone(),
             ),
             assert_previous_auditor_navigation_receipt,
         ),
         (
-            "--previous-ui-ir-receipt-file",
+            "--previous-ui-ir-receipt",
             ui_ir_receipt_path.clone(),
-            BelvedereCliOutput::LandscapeDiffPreviousUiIrReceiptFile(ui_ir_receipt_path.clone()),
+            file_output(
+                BelvedereCliArtifact::LandscapeDiffPreviousUiIrReceipt,
+                ui_ir_receipt_path.clone(),
+            ),
             assert_previous_ui_ir_receipt,
         ),
     ];
@@ -5015,33 +5098,33 @@ fn cli_can_emit_previous_diff_projection_artifacts_as_json() -> Result<()> {
 
     let cases: [(&str, BelvedereCliOutput, ReceiptAssertion); 6] = [
         (
-            "--previous-view-model-json",
-            BelvedereCliOutput::LandscapeDiffPreviousViewModelJson,
+            "--previous-view-model",
+            stdio_output(BelvedereCliArtifact::LandscapeDiffPreviousViewModel),
             assert_previous_auditor_navigation_model,
         ),
         (
-            "--previous-claim-details-json",
-            BelvedereCliOutput::LandscapeDiffPreviousClaimDetailsJson,
+            "--previous-claim-details",
+            stdio_output(BelvedereCliArtifact::LandscapeDiffPreviousClaimDetails),
             assert_previous_claim_details,
         ),
         (
-            "--previous-filter-facets-json",
-            BelvedereCliOutput::LandscapeDiffPreviousFilterFacetsJson,
+            "--previous-filter-facets",
+            stdio_output(BelvedereCliArtifact::LandscapeDiffPreviousFilterFacets),
             assert_previous_filter_facets,
         ),
         (
-            "--previous-source-navigation-json",
-            BelvedereCliOutput::LandscapeDiffPreviousSourceNavigationJson,
+            "--previous-source-navigation",
+            stdio_output(BelvedereCliArtifact::LandscapeDiffPreviousSourceNavigation),
             assert_previous_source_navigation_map,
         ),
         (
-            "--previous-proof-chains-json",
-            BelvedereCliOutput::LandscapeDiffPreviousProofChainsJson,
+            "--previous-proof-chains",
+            stdio_output(BelvedereCliArtifact::LandscapeDiffPreviousProofChains),
             assert_previous_proof_chains,
         ),
         (
-            "--previous-ui-ir-json",
-            BelvedereCliOutput::LandscapeDiffPreviousUiIrJson,
+            "--previous-ui-ir",
+            stdio_output(BelvedereCliArtifact::LandscapeDiffPreviousUiIr),
             assert_previous_ui_ir_projection,
         ),
     ];
@@ -5108,41 +5191,57 @@ fn cli_can_persist_previous_diff_projection_artifacts_as_json() -> Result<()> {
         std::env::temp_dir().join(format!("belvedere-previous-ui-ir-{}.json", process::id()));
     let cases: [(&str, PathBuf, BelvedereCliOutput, ReceiptAssertion); 6] = [
         (
-            "--previous-view-model-file",
+            "--previous-view-model",
             view_model_path.clone(),
-            BelvedereCliOutput::LandscapeDiffPreviousViewModelFile(view_model_path.clone()),
+            file_output(
+                BelvedereCliArtifact::LandscapeDiffPreviousViewModel,
+                view_model_path.clone(),
+            ),
             assert_previous_auditor_navigation_model,
         ),
         (
-            "--previous-claim-details-file",
+            "--previous-claim-details",
             claim_details_path.clone(),
-            BelvedereCliOutput::LandscapeDiffPreviousClaimDetailsFile(claim_details_path.clone()),
+            file_output(
+                BelvedereCliArtifact::LandscapeDiffPreviousClaimDetails,
+                claim_details_path.clone(),
+            ),
             assert_previous_claim_details,
         ),
         (
-            "--previous-filter-facets-file",
+            "--previous-filter-facets",
             filter_facets_path.clone(),
-            BelvedereCliOutput::LandscapeDiffPreviousFilterFacetsFile(filter_facets_path.clone()),
+            file_output(
+                BelvedereCliArtifact::LandscapeDiffPreviousFilterFacets,
+                filter_facets_path.clone(),
+            ),
             assert_previous_filter_facets,
         ),
         (
-            "--previous-source-navigation-file",
+            "--previous-source-navigation",
             source_navigation_path.clone(),
-            BelvedereCliOutput::LandscapeDiffPreviousSourceNavigationFile(
+            file_output(
+                BelvedereCliArtifact::LandscapeDiffPreviousSourceNavigation,
                 source_navigation_path.clone(),
             ),
             assert_previous_source_navigation_map,
         ),
         (
-            "--previous-proof-chains-file",
+            "--previous-proof-chains",
             proof_chains_path.clone(),
-            BelvedereCliOutput::LandscapeDiffPreviousProofChainsFile(proof_chains_path.clone()),
+            file_output(
+                BelvedereCliArtifact::LandscapeDiffPreviousProofChains,
+                proof_chains_path.clone(),
+            ),
             assert_previous_proof_chains,
         ),
         (
-            "--previous-ui-ir-file",
+            "--previous-ui-ir",
             ui_ir_path.clone(),
-            BelvedereCliOutput::LandscapeDiffPreviousUiIrFile(ui_ir_path.clone()),
+            file_output(
+                BelvedereCliArtifact::LandscapeDiffPreviousUiIr,
+                ui_ir_path.clone(),
+            ),
             assert_previous_ui_ir_projection,
         ),
     ];
@@ -5201,13 +5300,13 @@ fn cli_can_emit_current_diff_projection_receipts_as_json() -> Result<()> {
 
     let cases: [(&str, BelvedereCliOutput, ReceiptAssertion); 2] = [
         (
-            "--current-view-model-receipt-json",
-            BelvedereCliOutput::LandscapeDiffCurrentViewModelReceiptJson,
+            "--current-view-model-receipt",
+            stdio_output(BelvedereCliArtifact::LandscapeDiffCurrentViewModelReceipt),
             assert_auditor_navigation_receipt,
         ),
         (
-            "--current-ui-ir-receipt-json",
-            BelvedereCliOutput::LandscapeDiffCurrentUiIrReceiptJson,
+            "--current-ui-ir-receipt",
+            stdio_output(BelvedereCliArtifact::LandscapeDiffCurrentUiIrReceipt),
             assert_ui_ir_receipt,
         ),
     ];
@@ -5260,17 +5359,21 @@ fn cli_can_persist_current_diff_projection_receipts_as_json() -> Result<()> {
     ));
     let cases: [(&str, PathBuf, BelvedereCliOutput, ReceiptAssertion); 2] = [
         (
-            "--current-view-model-receipt-file",
+            "--current-view-model-receipt",
             view_model_receipt_path.clone(),
-            BelvedereCliOutput::LandscapeDiffCurrentViewModelReceiptFile(
+            file_output(
+                BelvedereCliArtifact::LandscapeDiffCurrentViewModelReceipt,
                 view_model_receipt_path.clone(),
             ),
             assert_auditor_navigation_receipt,
         ),
         (
-            "--current-ui-ir-receipt-file",
+            "--current-ui-ir-receipt",
             ui_ir_receipt_path.clone(),
-            BelvedereCliOutput::LandscapeDiffCurrentUiIrReceiptFile(ui_ir_receipt_path.clone()),
+            file_output(
+                BelvedereCliArtifact::LandscapeDiffCurrentUiIrReceipt,
+                ui_ir_receipt_path.clone(),
+            ),
             assert_ui_ir_receipt,
         ),
     ];
@@ -5329,33 +5432,33 @@ fn cli_can_emit_current_diff_projection_artifacts_as_json() -> Result<()> {
 
     let cases: [(&str, BelvedereCliOutput, ReceiptAssertion); 6] = [
         (
-            "--current-view-model-json",
-            BelvedereCliOutput::LandscapeDiffCurrentViewModelJson,
+            "--current-view-model",
+            stdio_output(BelvedereCliArtifact::LandscapeDiffCurrentViewModel),
             assert_auditor_navigation_model,
         ),
         (
-            "--current-claim-details-json",
-            BelvedereCliOutput::LandscapeDiffCurrentClaimDetailsJson,
+            "--current-claim-details",
+            stdio_output(BelvedereCliArtifact::LandscapeDiffCurrentClaimDetails),
             assert_claim_details,
         ),
         (
-            "--current-filter-facets-json",
-            BelvedereCliOutput::LandscapeDiffCurrentFilterFacetsJson,
+            "--current-filter-facets",
+            stdio_output(BelvedereCliArtifact::LandscapeDiffCurrentFilterFacets),
             assert_filter_facets,
         ),
         (
-            "--current-source-navigation-json",
-            BelvedereCliOutput::LandscapeDiffCurrentSourceNavigationJson,
+            "--current-source-navigation",
+            stdio_output(BelvedereCliArtifact::LandscapeDiffCurrentSourceNavigation),
             assert_source_navigation_map,
         ),
         (
-            "--current-proof-chains-json",
-            BelvedereCliOutput::LandscapeDiffCurrentProofChainsJson,
+            "--current-proof-chains",
+            stdio_output(BelvedereCliArtifact::LandscapeDiffCurrentProofChains),
             assert_proof_chains,
         ),
         (
-            "--current-ui-ir-json",
-            BelvedereCliOutput::LandscapeDiffCurrentUiIrJson,
+            "--current-ui-ir",
+            stdio_output(BelvedereCliArtifact::LandscapeDiffCurrentUiIr),
             assert_ui_ir_projection,
         ),
     ];
@@ -5422,41 +5525,57 @@ fn cli_can_persist_current_diff_projection_artifacts_as_json() -> Result<()> {
         std::env::temp_dir().join(format!("belvedere-current-ui-ir-{}.json", process::id()));
     let cases: [(&str, PathBuf, BelvedereCliOutput, ReceiptAssertion); 6] = [
         (
-            "--current-view-model-file",
+            "--current-view-model",
             view_model_path.clone(),
-            BelvedereCliOutput::LandscapeDiffCurrentViewModelFile(view_model_path.clone()),
+            file_output(
+                BelvedereCliArtifact::LandscapeDiffCurrentViewModel,
+                view_model_path.clone(),
+            ),
             assert_auditor_navigation_model,
         ),
         (
-            "--current-claim-details-file",
+            "--current-claim-details",
             claim_details_path.clone(),
-            BelvedereCliOutput::LandscapeDiffCurrentClaimDetailsFile(claim_details_path.clone()),
+            file_output(
+                BelvedereCliArtifact::LandscapeDiffCurrentClaimDetails,
+                claim_details_path.clone(),
+            ),
             assert_claim_details,
         ),
         (
-            "--current-filter-facets-file",
+            "--current-filter-facets",
             filter_facets_path.clone(),
-            BelvedereCliOutput::LandscapeDiffCurrentFilterFacetsFile(filter_facets_path.clone()),
+            file_output(
+                BelvedereCliArtifact::LandscapeDiffCurrentFilterFacets,
+                filter_facets_path.clone(),
+            ),
             assert_filter_facets,
         ),
         (
-            "--current-source-navigation-file",
+            "--current-source-navigation",
             source_navigation_path.clone(),
-            BelvedereCliOutput::LandscapeDiffCurrentSourceNavigationFile(
+            file_output(
+                BelvedereCliArtifact::LandscapeDiffCurrentSourceNavigation,
                 source_navigation_path.clone(),
             ),
             assert_source_navigation_map,
         ),
         (
-            "--current-proof-chains-file",
+            "--current-proof-chains",
             proof_chains_path.clone(),
-            BelvedereCliOutput::LandscapeDiffCurrentProofChainsFile(proof_chains_path.clone()),
+            file_output(
+                BelvedereCliArtifact::LandscapeDiffCurrentProofChains,
+                proof_chains_path.clone(),
+            ),
             assert_proof_chains,
         ),
         (
-            "--current-ui-ir-file",
+            "--current-ui-ir",
             ui_ir_path.clone(),
-            BelvedereCliOutput::LandscapeDiffCurrentUiIrFile(ui_ir_path.clone()),
+            file_output(
+                BelvedereCliArtifact::LandscapeDiffCurrentUiIr,
+                ui_ir_path.clone(),
+            ),
             assert_ui_ir_projection,
         ),
     ];
@@ -5515,38 +5634,38 @@ fn cli_can_emit_landscape_diff_projection_artifact_aliases_as_json() -> Result<(
 
     let cases: [(&str, BelvedereCliOutput, ReceiptAssertion); 7] = [
         (
-            "--view-model-json",
-            BelvedereCliOutput::LandscapeDiffViewModelJson,
+            "--view-model",
+            stdio_output(BelvedereCliArtifact::LandscapeDiffViewModel),
             assert_landscape_diff_review_model,
         ),
         (
-            "--claim-details-json",
-            BelvedereCliOutput::LandscapeDiffClaimDetailsJson,
+            "--claim-details",
+            stdio_output(BelvedereCliArtifact::LandscapeDiffClaimDetails),
             assert_claim_details,
         ),
         (
-            "--filter-facets-json",
-            BelvedereCliOutput::LandscapeDiffFilterFacetsJson,
+            "--filter-facets",
+            stdio_output(BelvedereCliArtifact::LandscapeDiffFilterFacets),
             assert_filter_facets,
         ),
         (
-            "--source-navigation-json",
-            BelvedereCliOutput::LandscapeDiffSourceNavigationJson,
+            "--source-navigation",
+            stdio_output(BelvedereCliArtifact::LandscapeDiffSourceNavigation),
             assert_source_navigation_map,
         ),
         (
-            "--proof-chains-json",
-            BelvedereCliOutput::LandscapeDiffProofChainsJson,
+            "--proof-chains",
+            stdio_output(BelvedereCliArtifact::LandscapeDiffProofChains),
             assert_proof_chains,
         ),
         (
-            "--review-workflow-json",
-            BelvedereCliOutput::LandscapeDiffReviewWorkflowJson,
+            "--review-workflow",
+            stdio_output(BelvedereCliArtifact::LandscapeDiffReviewWorkflow),
             assert_landscape_diff_review_workflow_queue,
         ),
         (
-            "--ui-ir-json",
-            BelvedereCliOutput::LandscapeDiffUiIrJson,
+            "--ui-ir",
+            stdio_output(BelvedereCliArtifact::LandscapeDiffUiIr),
             assert_landscape_diff_review_ui_ir_projection,
         ),
     ];
@@ -5613,45 +5732,63 @@ fn cli_can_persist_landscape_diff_projection_artifact_aliases_as_json() -> Resul
         std::env::temp_dir().join(format!("belvedere-diff-ui-ir-{}.json", process::id()));
     let cases: [(&str, PathBuf, BelvedereCliOutput, ReceiptAssertion); 7] = [
         (
-            "--view-model-file",
+            "--view-model",
             view_model_path.clone(),
-            BelvedereCliOutput::LandscapeDiffViewModelFile(view_model_path.clone()),
+            file_output(
+                BelvedereCliArtifact::LandscapeDiffViewModel,
+                view_model_path.clone(),
+            ),
             assert_landscape_diff_review_model,
         ),
         (
-            "--claim-details-file",
+            "--claim-details",
             claim_details_path.clone(),
-            BelvedereCliOutput::LandscapeDiffClaimDetailsFile(claim_details_path.clone()),
+            file_output(
+                BelvedereCliArtifact::LandscapeDiffClaimDetails,
+                claim_details_path.clone(),
+            ),
             assert_claim_details,
         ),
         (
-            "--filter-facets-file",
+            "--filter-facets",
             filter_facets_path.clone(),
-            BelvedereCliOutput::LandscapeDiffFilterFacetsFile(filter_facets_path.clone()),
+            file_output(
+                BelvedereCliArtifact::LandscapeDiffFilterFacets,
+                filter_facets_path.clone(),
+            ),
             assert_filter_facets,
         ),
         (
-            "--source-navigation-file",
+            "--source-navigation",
             source_navigation_path.clone(),
-            BelvedereCliOutput::LandscapeDiffSourceNavigationFile(source_navigation_path.clone()),
+            file_output(
+                BelvedereCliArtifact::LandscapeDiffSourceNavigation,
+                source_navigation_path.clone(),
+            ),
             assert_source_navigation_map,
         ),
         (
-            "--proof-chains-file",
+            "--proof-chains",
             proof_chains_path.clone(),
-            BelvedereCliOutput::LandscapeDiffProofChainsFile(proof_chains_path.clone()),
+            file_output(
+                BelvedereCliArtifact::LandscapeDiffProofChains,
+                proof_chains_path.clone(),
+            ),
             assert_proof_chains,
         ),
         (
-            "--review-workflow-file",
+            "--review-workflow",
             review_workflow_path.clone(),
-            BelvedereCliOutput::LandscapeDiffReviewWorkflowFile(review_workflow_path.clone()),
+            file_output(
+                BelvedereCliArtifact::LandscapeDiffReviewWorkflow,
+                review_workflow_path.clone(),
+            ),
             assert_landscape_diff_review_workflow_queue,
         ),
         (
-            "--ui-ir-file",
+            "--ui-ir",
             ui_ir_path.clone(),
-            BelvedereCliOutput::LandscapeDiffUiIrFile(ui_ir_path.clone()),
+            file_output(BelvedereCliArtifact::LandscapeDiffUiIr, ui_ir_path.clone()),
             assert_landscape_diff_review_ui_ir_projection,
         ),
     ];
@@ -5708,7 +5845,8 @@ fn cli_can_emit_the_landscape_diff_ui_ir_receipt_as_json() -> Result<()> {
 
     let args = [
         "diff",
-        "--ui-ir-receipt-json",
+        "--ui-ir-receipt",
+        "--stdio",
         "tests/fixtures/registry_dump.json",
         previous_assessments_path
             .to_str()
@@ -5725,7 +5863,7 @@ fn cli_can_emit_the_landscape_diff_ui_ir_receipt_as_json() -> Result<()> {
 
     assert_eq!(
         command.output(),
-        BelvedereCliOutput::LandscapeDiffUiIrReceiptJson
+        stdio_output(BelvedereCliArtifact::LandscapeDiffUiIrReceipt)
     );
 
     let mut output = Vec::new();
@@ -5757,7 +5895,8 @@ fn cli_can_emit_the_landscape_diff_view_model_receipt_as_json() -> Result<()> {
 
     let args = [
         "diff",
-        "--view-model-receipt-json",
+        "--view-model-receipt",
+        "--stdio",
         "tests/fixtures/registry_dump.json",
         previous_assessments_path
             .to_str()
@@ -5774,7 +5913,7 @@ fn cli_can_emit_the_landscape_diff_view_model_receipt_as_json() -> Result<()> {
 
     assert_eq!(
         command.output(),
-        BelvedereCliOutput::LandscapeDiffViewModelReceiptJson
+        stdio_output(BelvedereCliArtifact::LandscapeDiffViewModelReceipt)
     );
 
     let mut output = Vec::new();
@@ -5810,7 +5949,8 @@ fn cli_can_persist_the_landscape_diff_ui_ir_receipt_as_json() -> Result<()> {
 
     let args = [
         "diff",
-        "--ui-ir-receipt-file",
+        "--ui-ir-receipt",
+        "--file",
         receipt_path
             .to_str()
             .ok_or_else(|| miette::miette!("temporary UI IR receipt path should be UTF-8"))?,
@@ -5830,7 +5970,10 @@ fn cli_can_persist_the_landscape_diff_ui_ir_receipt_as_json() -> Result<()> {
 
     assert_eq!(
         command.output(),
-        BelvedereCliOutput::LandscapeDiffUiIrReceiptFile(receipt_path.clone())
+        file_output(
+            BelvedereCliArtifact::LandscapeDiffUiIrReceipt,
+            receipt_path.clone()
+        )
     );
 
     let mut output = Vec::new();
@@ -5873,7 +6016,8 @@ fn cli_can_persist_the_landscape_diff_view_model_receipt_as_json() -> Result<()>
 
     let args = [
         "diff",
-        "--view-model-receipt-file",
+        "--view-model-receipt",
+        "--file",
         receipt_path
             .to_str()
             .ok_or_else(|| miette::miette!("temporary view-model receipt path should be UTF-8"))?,
@@ -5893,7 +6037,10 @@ fn cli_can_persist_the_landscape_diff_view_model_receipt_as_json() -> Result<()>
 
     assert_eq!(
         command.output(),
-        BelvedereCliOutput::LandscapeDiffViewModelReceiptFile(receipt_path.clone())
+        file_output(
+            BelvedereCliArtifact::LandscapeDiffViewModelReceipt,
+            receipt_path.clone()
+        )
     );
 
     let mut output = Vec::new();
@@ -5932,7 +6079,8 @@ fn cli_can_emit_the_landscape_diff_as_json() -> Result<()> {
 
     let args = [
         "diff",
-        "--diff-json",
+        "--diff",
+        "--stdio",
         "tests/fixtures/registry_dump.json",
         previous_assessments_path
             .to_str()
@@ -5947,7 +6095,10 @@ fn cli_can_emit_the_landscape_diff_as_json() -> Result<()> {
         .into_diagnostic()
         .wrap_err("diff JSON flag should be part of the public CLI API")?;
 
-    assert_eq!(command.output(), BelvedereCliOutput::LandscapeDiffJson);
+    assert_eq!(
+        command.output(),
+        stdio_output(BelvedereCliArtifact::LandscapeDiff)
+    );
 
     let mut output = Vec::new();
     let status = run_cli_with_writer(args, &mut output);

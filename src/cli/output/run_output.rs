@@ -1,107 +1,56 @@
 //! Normal run CLI output writers.
 
-use std::{fs::File, io::Write};
+use std::io::Write;
 
 use tracing::instrument;
 
 use crate::{BelvedereError, BelvedereRunReport};
 
-use super::{BelvedereCliOutput, write_json};
-use crate::cli::{BelvedereCliOutputError, BelvedereCliUsageError};
+use super::{BelvedereCliArtifact, BelvedereCliOutputSink, write_json_to_sink};
+use crate::cli::BelvedereCliUsageError;
 
-#[instrument(level = "info", skip(output, run, writer))]
+#[instrument(level = "info", skip(artifact, sink, run, writer))]
 pub(super) fn write_run_output(
-    output: BelvedereCliOutput,
+    artifact: BelvedereCliArtifact,
+    sink: &BelvedereCliOutputSink,
     run: &BelvedereRunReport,
     writer: impl Write,
 ) -> Result<(), BelvedereError> {
-    match output {
-        BelvedereCliOutput::RunCertificateJson => write_json(run.certificate(), writer),
-        BelvedereCliOutput::RunCertificateFile(path) => {
-            let file = File::create(path).map_err(BelvedereCliOutputError::write)?;
-            write_json(run.certificate(), file)
+    match artifact {
+        BelvedereCliArtifact::RunCertificate => write_json_to_sink(run.certificate(), sink, writer),
+        BelvedereCliArtifact::RunManifest => write_json_to_sink(run.manifest(), sink, writer),
+        BelvedereCliArtifact::RunRegistryReceipt => {
+            write_json_to_sink(run.registry_receipt(), sink, writer)
         }
-        BelvedereCliOutput::RunManifestJson => write_json(run.manifest(), writer),
-        BelvedereCliOutput::RunManifestFile(path) => {
-            let file = File::create(path).map_err(BelvedereCliOutputError::write)?;
-            write_json(run.manifest(), file)
+        BelvedereCliArtifact::RunAssessmentReceipt => {
+            write_json_to_sink(run.assessment_receipt(), sink, writer)
         }
-        BelvedereCliOutput::RunRegistryReceiptJson => write_json(run.registry_receipt(), writer),
-        BelvedereCliOutput::RunRegistryReceiptFile(path) => {
-            let file = File::create(path).map_err(BelvedereCliOutputError::write)?;
-            write_json(run.registry_receipt(), file)
+        BelvedereCliArtifact::RunLandscape => write_json_to_sink(run.landscape(), sink, writer),
+        BelvedereCliArtifact::RunLandscapeReceipt => {
+            write_json_to_sink(run.landscape_receipt(), sink, writer)
         }
-        BelvedereCliOutput::RunAssessmentReceiptJson => {
-            write_json(run.assessment_receipt(), writer)
+        BelvedereCliArtifact::RunViewModel => write_json_to_sink(run.view_model(), sink, writer),
+        BelvedereCliArtifact::RunClaimDetails => {
+            write_json_to_sink(run.view_model().claim_details(), sink, writer)
         }
-        BelvedereCliOutput::RunAssessmentReceiptFile(path) => {
-            let file = File::create(path).map_err(BelvedereCliOutputError::write)?;
-            write_json(run.assessment_receipt(), file)
+        BelvedereCliArtifact::RunFilterFacets => {
+            write_json_to_sink(run.view_model().filter_facets(), sink, writer)
         }
-        BelvedereCliOutput::RunLandscapeReceiptJson => write_json(run.landscape_receipt(), writer),
-        BelvedereCliOutput::RunLandscapeReceiptFile(path) => {
-            let file = File::create(path).map_err(BelvedereCliOutputError::write)?;
-            write_json(run.landscape_receipt(), file)
+        BelvedereCliArtifact::RunSourceNavigation => {
+            write_json_to_sink(run.view_model().source_navigation(), sink, writer)
         }
-        BelvedereCliOutput::RunLandscapeJson => write_json(run.landscape(), writer),
-        BelvedereCliOutput::RunLandscapeFile(path) => {
-            let file = File::create(path).map_err(BelvedereCliOutputError::write)?;
-            write_json(run.landscape(), file)
+        BelvedereCliArtifact::RunProofChains => {
+            write_json_to_sink(run.view_model().proof_chains(), sink, writer)
         }
-        BelvedereCliOutput::RunViewModelJson => write_json(run.view_model(), writer),
-        BelvedereCliOutput::RunViewModelFile(path) => {
-            let file = File::create(path).map_err(BelvedereCliOutputError::write)?;
-            write_json(run.view_model(), file)
+        BelvedereCliArtifact::RunReviewWorkflow => {
+            write_json_to_sink(run.view_model().review_workflow(), sink, writer)
         }
-        BelvedereCliOutput::RunClaimDetailsJson => {
-            write_json(run.view_model().claim_details(), writer)
+        BelvedereCliArtifact::RunViewModelReceipt => {
+            write_json_to_sink(run.view_model_receipt(), sink, writer)
         }
-        BelvedereCliOutput::RunClaimDetailsFile(path) => {
-            let file = File::create(path).map_err(BelvedereCliOutputError::write)?;
-            write_json(run.view_model().claim_details(), file)
-        }
-        BelvedereCliOutput::RunFilterFacetsJson => {
-            write_json(run.view_model().filter_facets(), writer)
-        }
-        BelvedereCliOutput::RunFilterFacetsFile(path) => {
-            let file = File::create(path).map_err(BelvedereCliOutputError::write)?;
-            write_json(run.view_model().filter_facets(), file)
-        }
-        BelvedereCliOutput::RunSourceNavigationJson => {
-            write_json(run.view_model().source_navigation(), writer)
-        }
-        BelvedereCliOutput::RunSourceNavigationFile(path) => {
-            let file = File::create(path).map_err(BelvedereCliOutputError::write)?;
-            write_json(run.view_model().source_navigation(), file)
-        }
-        BelvedereCliOutput::RunProofChainsJson => {
-            write_json(run.view_model().proof_chains(), writer)
-        }
-        BelvedereCliOutput::RunProofChainsFile(path) => {
-            let file = File::create(path).map_err(BelvedereCliOutputError::write)?;
-            write_json(run.view_model().proof_chains(), file)
-        }
-        BelvedereCliOutput::RunReviewWorkflowJson => {
-            write_json(run.view_model().review_workflow(), writer)
-        }
-        BelvedereCliOutput::RunReviewWorkflowFile(path) => {
-            let file = File::create(path).map_err(BelvedereCliOutputError::write)?;
-            write_json(run.view_model().review_workflow(), file)
-        }
-        BelvedereCliOutput::RunViewModelReceiptJson => write_json(run.view_model_receipt(), writer),
-        BelvedereCliOutput::RunViewModelReceiptFile(path) => {
-            let file = File::create(path).map_err(BelvedereCliOutputError::write)?;
-            write_json(run.view_model_receipt(), file)
-        }
-        BelvedereCliOutput::RunUiIrJson => write_json(run.projection(), writer),
-        BelvedereCliOutput::RunUiIrFile(path) => {
-            let file = File::create(path).map_err(BelvedereCliOutputError::write)?;
-            write_json(run.projection(), file)
-        }
-        BelvedereCliOutput::RunUiIrReceiptJson => write_json(run.ui_ir_receipt(), writer),
-        BelvedereCliOutput::RunUiIrReceiptFile(path) => {
-            let file = File::create(path).map_err(BelvedereCliOutputError::write)?;
-            write_json(run.ui_ir_receipt(), file)
+        BelvedereCliArtifact::RunUiIr => write_json_to_sink(run.projection(), sink, writer),
+        BelvedereCliArtifact::RunUiIrReceipt => {
+            write_json_to_sink(run.ui_ir_receipt(), sink, writer)
         }
         _ => Err(BelvedereCliUsageError::new().into()),
     }

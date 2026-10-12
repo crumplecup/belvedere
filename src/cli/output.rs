@@ -4,7 +4,7 @@ mod help;
 mod landscape_diff_output;
 mod run_output;
 
-use std::{io::Write, path::PathBuf};
+use std::{fs::File, io::Write, path::PathBuf};
 
 use serde::Serialize;
 use tracing::instrument;
@@ -23,224 +23,145 @@ pub enum BelvedereCliOutput {
     Help,
     /// Log the run summary through the configured tracing subscriber.
     LogSummary,
-    /// Write the complete run certificate as JSON.
-    RunCertificateJson,
-    /// Write the complete run certificate as JSON to an artifact file.
-    RunCertificateFile(PathBuf),
-    /// Write the normal run artifact manifest as JSON.
-    RunManifestJson,
-    /// Write the normal run artifact manifest as JSON to an artifact file.
-    RunManifestFile(PathBuf),
-    /// Write the normal run registry ingestion receipt as JSON.
-    RunRegistryReceiptJson,
-    /// Write the normal run registry ingestion receipt as JSON to an artifact file.
-    RunRegistryReceiptFile(PathBuf),
-    /// Write the normal run assessment ingestion receipt as JSON.
-    RunAssessmentReceiptJson,
-    /// Write the normal run assessment ingestion receipt as JSON to an artifact file.
-    RunAssessmentReceiptFile(PathBuf),
-    /// Write the normal run landscape graph as JSON.
-    RunLandscapeJson,
-    /// Write the normal run landscape graph as JSON to an artifact file.
-    RunLandscapeFile(PathBuf),
-    /// Write the normal run landscape receipt as JSON.
-    RunLandscapeReceiptJson,
-    /// Write the normal run landscape receipt as JSON to an artifact file.
-    RunLandscapeReceiptFile(PathBuf),
-    /// Write the normal run view model as JSON.
-    RunViewModelJson,
-    /// Write the normal run view model as JSON to an artifact file.
-    RunViewModelFile(PathBuf),
-    /// Write the normal run claim detail deep-dive items as JSON.
-    RunClaimDetailsJson,
-    /// Write the normal run claim detail deep-dive items as JSON to an artifact file.
-    RunClaimDetailsFile(PathBuf),
-    /// Write the normal run filter facets as JSON.
-    RunFilterFacetsJson,
-    /// Write the normal run filter facets as JSON to an artifact file.
-    RunFilterFacetsFile(PathBuf),
-    /// Write the normal run source navigation map as JSON.
-    RunSourceNavigationJson,
-    /// Write the normal run source navigation map as JSON to an artifact file.
-    RunSourceNavigationFile(PathBuf),
-    /// Write the normal run proof-chain deep-dive items as JSON.
-    RunProofChainsJson,
-    /// Write the normal run proof-chain deep-dive items as JSON to an artifact file.
-    RunProofChainsFile(PathBuf),
-    /// Write the normal run auditor review workflow queue as JSON.
-    RunReviewWorkflowJson,
-    /// Write the normal run auditor review workflow queue as JSON to an artifact file.
-    RunReviewWorkflowFile(PathBuf),
-    /// Write the normal run view-model receipt as JSON.
-    RunViewModelReceiptJson,
-    /// Write the normal run view-model receipt as JSON to an artifact file.
-    RunViewModelReceiptFile(PathBuf),
-    /// Write the normal run UI IR projection as JSON.
-    RunUiIrJson,
-    /// Write the normal run UI IR projection as JSON to an artifact file.
-    RunUiIrFile(PathBuf),
-    /// Write the normal run UI IR receipt as JSON.
-    RunUiIrReceiptJson,
-    /// Write the normal run UI IR receipt as JSON to an artifact file.
-    RunUiIrReceiptFile(PathBuf),
-    /// Write the certified landscape diff as JSON.
-    LandscapeDiffJson,
-    /// Write the landscape diff receipt as JSON.
-    LandscapeDiffReceiptJson,
-    /// Write the landscape diff receipt as JSON to an artifact file.
-    LandscapeDiffReceiptFile(PathBuf),
-    /// Write the previous registry ingestion receipt from a diff run as JSON.
-    LandscapeDiffPreviousRegistryReceiptJson,
-    /// Write the previous registry ingestion receipt from a diff run as JSON to an artifact file.
-    LandscapeDiffPreviousRegistryReceiptFile(PathBuf),
-    /// Write the previous assessment ingestion receipt from a diff run as JSON.
-    LandscapeDiffPreviousAssessmentReceiptJson,
-    /// Write the previous assessment ingestion receipt from a diff run as JSON to an artifact file.
-    LandscapeDiffPreviousAssessmentReceiptFile(PathBuf),
-    /// Write the previous landscape graph from a diff run as JSON.
-    LandscapeDiffPreviousLandscapeJson,
-    /// Write the previous landscape graph from a diff run as JSON to an artifact file.
-    LandscapeDiffPreviousLandscapeFile(PathBuf),
-    /// Write the current registry ingestion receipt from a diff run as JSON.
-    LandscapeDiffCurrentRegistryReceiptJson,
-    /// Write the current registry ingestion receipt from a diff run as JSON to an artifact file.
-    LandscapeDiffCurrentRegistryReceiptFile(PathBuf),
-    /// Write the current assessment ingestion receipt from a diff run as JSON.
-    LandscapeDiffCurrentAssessmentReceiptJson,
-    /// Write the current assessment ingestion receipt from a diff run as JSON to an artifact file.
-    LandscapeDiffCurrentAssessmentReceiptFile(PathBuf),
-    /// Write the current landscape graph from a diff run as JSON.
-    LandscapeDiffCurrentLandscapeJson,
-    /// Write the current landscape graph from a diff run as JSON to an artifact file.
-    LandscapeDiffCurrentLandscapeFile(PathBuf),
-    /// Write the previous landscape receipt from a diff run as JSON.
-    LandscapeDiffPreviousLandscapeReceiptJson,
-    /// Write the previous landscape receipt from a diff run as JSON to an artifact file.
-    LandscapeDiffPreviousLandscapeReceiptFile(PathBuf),
-    /// Write the previous view model from a diff run as JSON.
-    LandscapeDiffPreviousViewModelJson,
-    /// Write the previous view model from a diff run as JSON to an artifact file.
-    LandscapeDiffPreviousViewModelFile(PathBuf),
-    /// Write the previous claim detail deep-dive items from a diff run as JSON.
-    LandscapeDiffPreviousClaimDetailsJson,
-    /// Write the previous claim detail deep-dive items from a diff run as JSON to an artifact file.
-    LandscapeDiffPreviousClaimDetailsFile(PathBuf),
-    /// Write the previous filter facets from a diff run as JSON.
-    LandscapeDiffPreviousFilterFacetsJson,
-    /// Write the previous filter facets from a diff run as JSON to an artifact file.
-    LandscapeDiffPreviousFilterFacetsFile(PathBuf),
-    /// Write the previous source navigation map from a diff run as JSON.
-    LandscapeDiffPreviousSourceNavigationJson,
-    /// Write the previous source navigation map from a diff run as JSON to an artifact file.
-    LandscapeDiffPreviousSourceNavigationFile(PathBuf),
-    /// Write the previous proof-chain deep-dive items from a diff run as JSON.
-    LandscapeDiffPreviousProofChainsJson,
-    /// Write the previous proof-chain deep-dive items from a diff run as JSON to an artifact file.
-    LandscapeDiffPreviousProofChainsFile(PathBuf),
-    /// Write the previous view-model receipt from a diff run as JSON.
-    LandscapeDiffPreviousViewModelReceiptJson,
-    /// Write the previous view-model receipt from a diff run as JSON to an artifact file.
-    LandscapeDiffPreviousViewModelReceiptFile(PathBuf),
-    /// Write the previous UI IR projection from a diff run as JSON.
-    LandscapeDiffPreviousUiIrJson,
-    /// Write the previous UI IR projection from a diff run as JSON to an artifact file.
-    LandscapeDiffPreviousUiIrFile(PathBuf),
-    /// Write the previous UI IR receipt from a diff run as JSON.
-    LandscapeDiffPreviousUiIrReceiptJson,
-    /// Write the previous UI IR receipt from a diff run as JSON to an artifact file.
-    LandscapeDiffPreviousUiIrReceiptFile(PathBuf),
-    /// Write the current landscape receipt from a diff run as JSON.
-    LandscapeDiffCurrentLandscapeReceiptJson,
-    /// Write the current landscape receipt from a diff run as JSON to an artifact file.
-    LandscapeDiffCurrentLandscapeReceiptFile(PathBuf),
-    /// Write the current view model from a diff run as JSON.
-    LandscapeDiffCurrentViewModelJson,
-    /// Write the current view model from a diff run as JSON to an artifact file.
-    LandscapeDiffCurrentViewModelFile(PathBuf),
-    /// Write the current claim detail deep-dive items from a diff run as JSON.
-    LandscapeDiffCurrentClaimDetailsJson,
-    /// Write the current claim detail deep-dive items from a diff run as JSON to an artifact file.
-    LandscapeDiffCurrentClaimDetailsFile(PathBuf),
-    /// Write the current filter facets from a diff run as JSON.
-    LandscapeDiffCurrentFilterFacetsJson,
-    /// Write the current filter facets from a diff run as JSON to an artifact file.
-    LandscapeDiffCurrentFilterFacetsFile(PathBuf),
-    /// Write the current source navigation map from a diff run as JSON.
-    LandscapeDiffCurrentSourceNavigationJson,
-    /// Write the current source navigation map from a diff run as JSON to an artifact file.
-    LandscapeDiffCurrentSourceNavigationFile(PathBuf),
-    /// Write the current proof-chain deep-dive items from a diff run as JSON.
-    LandscapeDiffCurrentProofChainsJson,
-    /// Write the current proof-chain deep-dive items from a diff run as JSON to an artifact file.
-    LandscapeDiffCurrentProofChainsFile(PathBuf),
-    /// Write the current view-model receipt from a diff run as JSON.
-    LandscapeDiffCurrentViewModelReceiptJson,
-    /// Write the current view-model receipt from a diff run as JSON to an artifact file.
-    LandscapeDiffCurrentViewModelReceiptFile(PathBuf),
-    /// Write the current UI IR projection from a diff run as JSON.
-    LandscapeDiffCurrentUiIrJson,
-    /// Write the current UI IR projection from a diff run as JSON to an artifact file.
-    LandscapeDiffCurrentUiIrFile(PathBuf),
-    /// Write the current UI IR receipt from a diff run as JSON.
-    LandscapeDiffCurrentUiIrReceiptJson,
-    /// Write the current UI IR receipt from a diff run as JSON to an artifact file.
-    LandscapeDiffCurrentUiIrReceiptFile(PathBuf),
-    /// Write the landscape diff stage certificate as JSON.
-    LandscapeDiffCertificateJson,
-    /// Write the landscape diff stage certificate as JSON to an artifact file.
-    LandscapeDiffCertificateFile(PathBuf),
-    /// Write the complete landscape diff run certificate as JSON.
-    LandscapeDiffRunCertificateJson,
-    /// Write the complete landscape diff run certificate as JSON to an artifact file.
-    LandscapeDiffRunCertificateFile(PathBuf),
-    /// Write the landscape diff run artifact manifest as JSON.
-    LandscapeDiffManifestJson,
-    /// Write the landscape diff run artifact manifest as JSON to an artifact file.
-    LandscapeDiffManifestFile(PathBuf),
-    /// Write the current-snapshot landscape graph from a diff run as JSON.
-    LandscapeDiffLandscapeJson,
-    /// Write the current-snapshot landscape graph from a diff run as JSON to an artifact file.
-    LandscapeDiffLandscapeFile(PathBuf),
-    /// Write the current-snapshot landscape receipt from a diff run as JSON.
-    LandscapeDiffLandscapeReceiptJson,
-    /// Write the current-snapshot landscape receipt from a diff run as JSON to an artifact file.
-    LandscapeDiffLandscapeReceiptFile(PathBuf),
-    /// Write the current-snapshot view model from a diff run as JSON.
-    LandscapeDiffViewModelJson,
-    /// Write the current-snapshot view model from a diff run as JSON to an artifact file.
-    LandscapeDiffViewModelFile(PathBuf),
-    /// Write the current-snapshot claim detail deep-dive items from a diff run as JSON.
-    LandscapeDiffClaimDetailsJson,
-    /// Write the current-snapshot claim detail deep-dive items from a diff run as JSON to an artifact file.
-    LandscapeDiffClaimDetailsFile(PathBuf),
-    /// Write the current-snapshot filter facets from a diff run as JSON.
-    LandscapeDiffFilterFacetsJson,
-    /// Write the current-snapshot filter facets from a diff run as JSON to an artifact file.
-    LandscapeDiffFilterFacetsFile(PathBuf),
-    /// Write the current-snapshot source navigation map from a diff run as JSON.
-    LandscapeDiffSourceNavigationJson,
-    /// Write the current-snapshot source navigation map from a diff run as JSON to an artifact file.
-    LandscapeDiffSourceNavigationFile(PathBuf),
-    /// Write the current-snapshot proof-chain deep-dive items from a diff run as JSON.
-    LandscapeDiffProofChainsJson,
-    /// Write the current-snapshot proof-chain deep-dive items from a diff run as JSON to an artifact file.
-    LandscapeDiffProofChainsFile(PathBuf),
-    /// Write the landscape diff review workflow queue as JSON.
-    LandscapeDiffReviewWorkflowJson,
-    /// Write the landscape diff review workflow queue as JSON to an artifact file.
-    LandscapeDiffReviewWorkflowFile(PathBuf),
-    /// Write the current-snapshot view-model receipt from a diff run as JSON.
-    LandscapeDiffViewModelReceiptJson,
-    /// Write the current-snapshot view-model receipt from a diff run as JSON to an artifact file.
-    LandscapeDiffViewModelReceiptFile(PathBuf),
-    /// Write the current-snapshot UI IR projection from a diff run as JSON.
-    LandscapeDiffUiIrJson,
-    /// Write the current-snapshot UI IR projection from a diff run as JSON to an artifact file.
-    LandscapeDiffUiIrFile(PathBuf),
-    /// Write the current-snapshot UI IR receipt from a diff run as JSON.
-    LandscapeDiffUiIrReceiptJson,
-    /// Write the current-snapshot UI IR receipt from a diff run as JSON to an artifact file.
-    LandscapeDiffUiIrReceiptFile(PathBuf),
+    /// Write a selected artifact to a selected output sink.
+    Artifact {
+        /// Artifact requested by the command line.
+        artifact: BelvedereCliArtifact,
+        /// Output sink requested by the command line.
+        sink: BelvedereCliOutputSink,
+    },
+}
+
+/// Artifact selected by the CLI output flags.
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum BelvedereCliArtifact {
+    /// Complete normal run certificate.
+    RunCertificate,
+    /// Normal run artifact manifest.
+    RunManifest,
+    /// Normal run registry ingestion receipt.
+    RunRegistryReceipt,
+    /// Normal run assessment ingestion receipt.
+    RunAssessmentReceipt,
+    /// Normal run landscape graph.
+    RunLandscape,
+    /// Normal run landscape receipt.
+    RunLandscapeReceipt,
+    /// Normal run auditor navigation view model.
+    RunViewModel,
+    /// Normal run claim detail deep-dive items.
+    RunClaimDetails,
+    /// Normal run filter facets.
+    RunFilterFacets,
+    /// Normal run source navigation map.
+    RunSourceNavigation,
+    /// Normal run proof-chain deep-dive items.
+    RunProofChains,
+    /// Normal run auditor review workflow queue.
+    RunReviewWorkflow,
+    /// Normal run view-model receipt.
+    RunViewModelReceipt,
+    /// Normal run UI IR projection.
+    RunUiIr,
+    /// Normal run UI IR receipt.
+    RunUiIrReceipt,
+    /// Certified landscape diff.
+    LandscapeDiff,
+    /// Landscape diff receipt.
+    LandscapeDiffReceipt,
+    /// Previous registry ingestion receipt from a diff run.
+    LandscapeDiffPreviousRegistryReceipt,
+    /// Previous assessment ingestion receipt from a diff run.
+    LandscapeDiffPreviousAssessmentReceipt,
+    /// Previous landscape graph from a diff run.
+    LandscapeDiffPreviousLandscape,
+    /// Previous landscape receipt from a diff run.
+    LandscapeDiffPreviousLandscapeReceipt,
+    /// Previous view model from a diff run.
+    LandscapeDiffPreviousViewModel,
+    /// Previous claim detail deep-dive items from a diff run.
+    LandscapeDiffPreviousClaimDetails,
+    /// Previous filter facets from a diff run.
+    LandscapeDiffPreviousFilterFacets,
+    /// Previous source navigation map from a diff run.
+    LandscapeDiffPreviousSourceNavigation,
+    /// Previous proof-chain deep-dive items from a diff run.
+    LandscapeDiffPreviousProofChains,
+    /// Previous view-model receipt from a diff run.
+    LandscapeDiffPreviousViewModelReceipt,
+    /// Previous UI IR projection from a diff run.
+    LandscapeDiffPreviousUiIr,
+    /// Previous UI IR receipt from a diff run.
+    LandscapeDiffPreviousUiIrReceipt,
+    /// Current registry ingestion receipt from a diff run.
+    LandscapeDiffCurrentRegistryReceipt,
+    /// Current assessment ingestion receipt from a diff run.
+    LandscapeDiffCurrentAssessmentReceipt,
+    /// Current landscape graph from a diff run.
+    LandscapeDiffCurrentLandscape,
+    /// Current landscape receipt from a diff run.
+    LandscapeDiffCurrentLandscapeReceipt,
+    /// Current view model from a diff run.
+    LandscapeDiffCurrentViewModel,
+    /// Current claim detail deep-dive items from a diff run.
+    LandscapeDiffCurrentClaimDetails,
+    /// Current filter facets from a diff run.
+    LandscapeDiffCurrentFilterFacets,
+    /// Current source navigation map from a diff run.
+    LandscapeDiffCurrentSourceNavigation,
+    /// Current proof-chain deep-dive items from a diff run.
+    LandscapeDiffCurrentProofChains,
+    /// Current view-model receipt from a diff run.
+    LandscapeDiffCurrentViewModelReceipt,
+    /// Current UI IR projection from a diff run.
+    LandscapeDiffCurrentUiIr,
+    /// Current UI IR receipt from a diff run.
+    LandscapeDiffCurrentUiIrReceipt,
+    /// Landscape diff stage certificate.
+    LandscapeDiffCertificate,
+    /// Complete landscape diff run certificate.
+    LandscapeDiffRunCertificate,
+    /// Landscape diff run artifact manifest.
+    LandscapeDiffManifest,
+    /// Current-snapshot landscape graph from a diff run.
+    LandscapeDiffLandscape,
+    /// Current-snapshot landscape receipt from a diff run.
+    LandscapeDiffLandscapeReceipt,
+    /// Diff review view model from a diff run.
+    LandscapeDiffViewModel,
+    /// Current-snapshot claim detail deep-dive items from a diff run.
+    LandscapeDiffClaimDetails,
+    /// Current-snapshot filter facets from a diff run.
+    LandscapeDiffFilterFacets,
+    /// Current-snapshot source navigation map from a diff run.
+    LandscapeDiffSourceNavigation,
+    /// Current-snapshot proof-chain deep-dive items from a diff run.
+    LandscapeDiffProofChains,
+    /// Landscape diff review workflow queue.
+    LandscapeDiffReviewWorkflow,
+    /// Landscape diff review-model receipt.
+    LandscapeDiffViewModelReceipt,
+    /// Landscape diff UI IR projection.
+    LandscapeDiffUiIr,
+    /// Landscape diff UI IR receipt.
+    LandscapeDiffUiIrReceipt,
+}
+
+/// Output sink selected by the CLI output flags.
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub enum BelvedereCliOutputSink {
+    /// Write JSON to stdout.
+    Stdio,
+    /// Write JSON to the supplied artifact path.
+    File(PathBuf),
+}
+
+impl BelvedereCliOutput {
+    /// Build an artifact output contract.
+    #[must_use]
+    pub const fn artifact(artifact: BelvedereCliArtifact, sink: BelvedereCliOutputSink) -> Self {
+        Self::Artifact { artifact, sink }
+    }
 }
 
 #[instrument(level = "info", skip(output, report, writer))]
@@ -252,10 +173,10 @@ pub(super) fn write_cli_output(
     match output {
         BelvedereCliOutput::Help => write_cli_help(writer),
         BelvedereCliOutput::LogSummary => Ok(()),
-        _ => match report {
-            BelvedereCliReport::Run(run) => write_run_output(output, run, writer),
+        BelvedereCliOutput::Artifact { artifact, sink } => match report {
+            BelvedereCliReport::Run(run) => write_run_output(artifact, &sink, run, writer),
             BelvedereCliReport::LandscapeDiff(diff) => {
-                write_landscape_diff_output(output, diff, writer)
+                write_landscape_diff_output(artifact, &sink, diff, writer)
             }
         },
     }
@@ -267,6 +188,21 @@ pub(super) fn write_cli_help(mut writer: impl Write) -> Result<(), BelvedereErro
         .write_all(BELVEDERE_CLI_HELP.as_bytes())
         .map_err(BelvedereCliOutputError::write)?;
     Ok(())
+}
+
+#[instrument(level = "info", skip(value, sink, writer))]
+pub(super) fn write_json_to_sink(
+    value: &impl Serialize,
+    sink: &BelvedereCliOutputSink,
+    writer: impl Write,
+) -> Result<(), BelvedereError> {
+    match sink {
+        BelvedereCliOutputSink::Stdio => write_json(value, writer),
+        BelvedereCliOutputSink::File(path) => {
+            let file = File::create(path).map_err(BelvedereCliOutputError::write)?;
+            write_json(value, file)
+        }
+    }
 }
 
 #[instrument(level = "info", skip(value, writer))]

@@ -15,7 +15,9 @@ mod output;
 
 pub use command::BelvedereCli;
 pub use errors::{BelvedereCliOutputError, BelvedereCliUsageError};
-pub use output::{BELVEDERE_CLI_HELP, BelvedereCliOutput};
+pub use output::{
+    BELVEDERE_CLI_HELP, BelvedereCliArtifact, BelvedereCliOutput, BelvedereCliOutputSink,
+};
 
 /// Report emitted by a successful CLI action.
 #[derive(Debug, Clone)]
