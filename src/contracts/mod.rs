@@ -52,11 +52,12 @@ pub use ui_ir::{
     ElicitUiIrSourcedStandard, ElicitUiProjectionContract, ElicitUiRenderCompleteStandard,
     ElicitUiRolePreservedStandard, ElicitUiWcagVerifiedStandard, MintedElicitUiStandard,
     TraceWidgetRef, UI_IR_SECTION_ASSESSMENT_HISTORY, UI_IR_SECTION_ASSESSMENT_QUEUE,
-    UI_IR_SECTION_BACKEND_COVERAGE, UI_IR_SECTION_CLAIM_DETAIL, UI_IR_SECTION_CLAIM_EXPLORER,
-    UI_IR_SECTION_FILTERS, UI_IR_SECTION_GAP_QUEUE, UI_IR_SECTION_OVERVIEW,
-    UI_IR_SECTION_PROOF_CHAINS, UI_IR_SECTION_PROVENANCE_ROOTS, UI_IR_SECTION_REVIEW_WORKFLOW,
-    UI_IR_SECTION_SOURCE_NAVIGATION, UI_IR_SECTION_WITNESS_SURFACE, UiIrInput, UiIrProjection,
-    UiIrProofBundle, UiIrSection, UiStandardMint, UiViewportVerification, elicit_ui_provenance,
+    UI_IR_SECTION_ASSESSMENT_WORK, UI_IR_SECTION_BACKEND_COVERAGE, UI_IR_SECTION_CLAIM_DETAIL,
+    UI_IR_SECTION_CLAIM_EXPLORER, UI_IR_SECTION_FILTERS, UI_IR_SECTION_GAP_QUEUE,
+    UI_IR_SECTION_OVERVIEW, UI_IR_SECTION_PROOF_CHAINS, UI_IR_SECTION_PROVENANCE_ROOTS,
+    UI_IR_SECTION_REVIEW_WORKFLOW, UI_IR_SECTION_SOURCE_NAVIGATION, UI_IR_SECTION_WITNESS_SURFACE,
+    UiIrInput, UiIrProjection, UiIrProofBundle, UiIrSection, UiStandardMint,
+    UiViewportVerification, elicit_ui_provenance,
 };
 pub(crate) use ui_ir::{TraceWidgetRefBuilder, UiIrProjectionBuilder};
 pub use view_model::{

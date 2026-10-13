@@ -10,12 +10,13 @@ use crate::{
         AuditorNavigationModel, ElicitUiIrSourcedStandard, ElicitUiProjectionContract,
         ElicitUiRenderCompleteStandard, ElicitUiRolePreservedStandard,
         ElicitUiWcagVerifiedStandard, TraceRef, TraceWidgetRef, UI_IR_SECTION_ASSESSMENT_HISTORY,
-        UI_IR_SECTION_ASSESSMENT_QUEUE, UI_IR_SECTION_BACKEND_COVERAGE, UI_IR_SECTION_CLAIM_DETAIL,
-        UI_IR_SECTION_CLAIM_EXPLORER, UI_IR_SECTION_FILTERS, UI_IR_SECTION_GAP_QUEUE,
-        UI_IR_SECTION_OVERVIEW, UI_IR_SECTION_PROOF_CHAINS, UI_IR_SECTION_PROVENANCE_ROOTS,
-        UI_IR_SECTION_REVIEW_WORKFLOW, UI_IR_SECTION_SOURCE_NAVIGATION,
-        UI_IR_SECTION_WITNESS_SURFACE, UiIrInput, UiIrProjection, UiIrProjectionBuilder,
-        UiIrProofBundle, UiIrSection, UiStandardMint, UiViewportVerification,
+        UI_IR_SECTION_ASSESSMENT_QUEUE, UI_IR_SECTION_ASSESSMENT_WORK,
+        UI_IR_SECTION_BACKEND_COVERAGE, UI_IR_SECTION_CLAIM_DETAIL, UI_IR_SECTION_CLAIM_EXPLORER,
+        UI_IR_SECTION_FILTERS, UI_IR_SECTION_GAP_QUEUE, UI_IR_SECTION_OVERVIEW,
+        UI_IR_SECTION_PROOF_CHAINS, UI_IR_SECTION_PROVENANCE_ROOTS, UI_IR_SECTION_REVIEW_WORKFLOW,
+        UI_IR_SECTION_SOURCE_NAVIGATION, UI_IR_SECTION_WITNESS_SURFACE, UiIrInput, UiIrProjection,
+        UiIrProjectionBuilder, UiIrProofBundle, UiIrSection, UiStandardMint,
+        UiViewportVerification,
     },
     exchanges::BelvedereExchange,
 };
@@ -120,6 +121,7 @@ fn project_sections(
         review_workflow_section(backend, model, trace_widgets)?,
         assessment_history_section(backend, model, trace_widgets)?,
         assessment_queue_section(backend, model, trace_widgets)?,
+        assessment_work_section(backend, model, trace_widgets)?,
         witness_surface_section(backend, model, trace_widgets)?,
         provenance_roots_section(backend, model, trace_widgets)?,
         gap_queue_section(backend, model, trace_widgets)?,
@@ -293,21 +295,31 @@ fn assessment_queue_section(
         .iter()
         .map(|item| assessment_widget(backend, UI_IR_SECTION_ASSESSMENT_QUEUE, item, trace_widgets))
         .collect::<Result<Vec<_>, _>>()?;
-    let assessment_work_widgets = model
-        .assessment_work()
-        .iter()
-        .map(|item| {
-            assessment_work_widget(backend, UI_IR_SECTION_ASSESSMENT_QUEUE, item, trace_widgets)
-        })
-        .collect::<Result<Vec<_>, _>>()?;
-    let widgets = assessment_widgets
-        .into_iter()
-        .chain(assessment_work_widgets)
-        .collect::<Vec<_>>();
     section(
         backend,
         UI_IR_SECTION_ASSESSMENT_QUEUE,
         "assessment queue",
+        assessment_widgets,
+    )
+}
+
+#[instrument(level = "debug", skip(backend, model, trace_widgets))]
+fn assessment_work_section(
+    backend: &AccessKitUiBackend,
+    model: &AuditorNavigationModel,
+    trace_widgets: &mut Vec<TraceWidgetRef>,
+) -> Result<UiIrSection, UiIrError> {
+    let widgets = model
+        .assessment_work()
+        .iter()
+        .map(|item| {
+            assessment_work_widget(backend, UI_IR_SECTION_ASSESSMENT_WORK, item, trace_widgets)
+        })
+        .collect::<Result<Vec<_>, _>>()?;
+    section(
+        backend,
+        UI_IR_SECTION_ASSESSMENT_WORK,
+        "assessment work",
         widgets,
     )
 }

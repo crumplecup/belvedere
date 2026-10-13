@@ -3,7 +3,8 @@ use std::collections::BTreeMap;
 use belvedere::{
     ArtifactKind, AssessmentStreamIngestion, AuditorNavigationProjection, ElicitUiProjection,
     LandscapeInput, LandscapeModeling, RawAmenableArtifact, RegistryDumpIngestion,
-    UI_IR_SECTION_ASSESSMENT_HISTORY, UI_IR_SECTION_BACKEND_COVERAGE, UI_IR_SECTION_CLAIM_DETAIL,
+    UI_IR_SECTION_ASSESSMENT_HISTORY, UI_IR_SECTION_ASSESSMENT_QUEUE,
+    UI_IR_SECTION_ASSESSMENT_WORK, UI_IR_SECTION_BACKEND_COVERAGE, UI_IR_SECTION_CLAIM_DETAIL,
     UI_IR_SECTION_CLAIM_EXPLORER, UI_IR_SECTION_FILTERS, UI_IR_SECTION_OVERVIEW,
     UI_IR_SECTION_PROOF_CHAINS, UI_IR_SECTION_REVIEW_WORKFLOW, UI_IR_SECTION_SOURCE_NAVIGATION,
     UiIrInput, ViewModelInput,
@@ -22,7 +23,7 @@ fn ui_ir_projection_mints_elicit_ui_standards_and_tree_proofs() -> Result<()> {
         .into_diagnostic()
         .wrap_err("fixture view model should project into elicit_ui")?;
 
-    assert_eq!(projection.sections().len(), 13);
+    assert_eq!(projection.sections().len(), 14);
     assert!(
         receipt
             .source_view_model_receipt_id()
@@ -74,6 +75,16 @@ fn ui_ir_projection_mints_elicit_ui_standards_and_tree_proofs() -> Result<()> {
         receipt
             .section_ids()
             .contains(&UI_IR_SECTION_ASSESSMENT_HISTORY.to_owned())
+    );
+    assert!(
+        receipt
+            .section_ids()
+            .contains(&UI_IR_SECTION_ASSESSMENT_QUEUE.to_owned())
+    );
+    assert!(
+        receipt
+            .section_ids()
+            .contains(&UI_IR_SECTION_ASSESSMENT_WORK.to_owned())
     );
     assert!(
         receipt
@@ -324,9 +335,21 @@ fn ui_ir_projection_mints_elicit_ui_standards_and_tree_proofs() -> Result<()> {
     );
     assert_eq!(
         receipt
+            .section_widget_counts()
+            .get(UI_IR_SECTION_ASSESSMENT_QUEUE),
+        Some(&2)
+    );
+    assert_eq!(
+        receipt
+            .section_widget_counts()
+            .get(UI_IR_SECTION_ASSESSMENT_WORK),
+        Some(&2)
+    );
+    assert_eq!(
+        receipt
             .section_population_counts()
             .get("ui_ir_sections_populated"),
-        Some(&13)
+        Some(&14)
     );
     assert_eq!(
         receipt
@@ -344,7 +367,7 @@ fn ui_ir_projection_mints_elicit_ui_standards_and_tree_proofs() -> Result<()> {
         receipt
             .section_trace_counts()
             .get("ui_ir_sections_with_source_widgets"),
-        Some(&13)
+        Some(&14)
     );
     assert_eq!(
         receipt
@@ -748,6 +771,10 @@ fn ui_ir_projection_preserves_trace_widgets_for_auditor_deep_dives() -> Result<(
             )
         })
         .ok_or_else(|| miette!("assessment work should have traceable widgets"))?;
+    assert_eq!(
+        assessment_work_widget.section_id(),
+        UI_IR_SECTION_ASSESSMENT_WORK
+    );
     assert!(
         assessment_work_widget
             .label()

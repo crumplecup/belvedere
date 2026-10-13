@@ -426,7 +426,7 @@ fn landscape_diff_runner_uses_the_normal_artifact_path() -> Result<()> {
             .claim_detail_items(),
         3
     );
-    assert_eq!(report.previous_ui_ir_receipt().counts().section_count(), 13);
+    assert_eq!(report.previous_ui_ir_receipt().counts().section_count(), 14);
     assert!(
         report.previous_projection().trace_widgets().len()
             >= report.previous_view_model_receipt().counts().claim_cards()
@@ -449,7 +449,7 @@ fn landscape_diff_runner_uses_the_normal_artifact_path() -> Result<()> {
             .claim_detail_items(),
         4
     );
-    assert_eq!(report.current_ui_ir_receipt().counts().section_count(), 13);
+    assert_eq!(report.current_ui_ir_receipt().counts().section_count(), 14);
     assert!(
         report.current_projection().trace_widgets().len()
             >= report.current_view_model_receipt().counts().claim_cards()
@@ -830,7 +830,7 @@ fn landscape_diff_runner_uses_the_normal_artifact_path() -> Result<()> {
     ));
     assert!(report.certificate().stage_certificates().iter().any(
         |certificate| certificate.stage() == BelvederePipelineStage::UiIrProjection
-            && certificate.counts().get("ui_ir_sections_populated") == Some(&13)
+            && certificate.counts().get("ui_ir_sections_populated") == Some(&14)
     ));
     assert!(report.certificate().stage_certificates().iter().any(
         |certificate| certificate.stage()

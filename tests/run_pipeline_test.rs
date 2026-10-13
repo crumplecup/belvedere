@@ -13,8 +13,9 @@ use belvedere::{
     DIFF_REVIEW_UI_IR_SECTION_ITEMS, DIFF_REVIEW_UI_IR_SECTION_SOURCE_NAVIGATION,
     DIFF_REVIEW_UI_IR_SECTION_SUMMARY, INPUT_FIDELITY_STANDARD_ID,
     REPORT_REPRODUCIBILITY_STANDARD_ID, UI_IR_SECTION_ASSESSMENT_HISTORY,
-    UI_IR_SECTION_BACKEND_COVERAGE, UI_IR_SECTION_CLAIM_DETAIL, UI_IR_SECTION_FILTERS,
-    UI_IR_SECTION_PROOF_CHAINS, UI_IR_SECTION_REVIEW_WORKFLOW, UI_IR_SECTION_SOURCE_NAVIGATION,
+    UI_IR_SECTION_ASSESSMENT_QUEUE, UI_IR_SECTION_ASSESSMENT_WORK, UI_IR_SECTION_BACKEND_COVERAGE,
+    UI_IR_SECTION_CLAIM_DETAIL, UI_IR_SECTION_FILTERS, UI_IR_SECTION_PROOF_CHAINS,
+    UI_IR_SECTION_REVIEW_WORKFLOW, UI_IR_SECTION_SOURCE_NAVIGATION,
     VIEW_MODEL_FIDELITY_STANDARD_ID, run_belvedere_pipeline, run_cli_with_writer,
 };
 use miette::{IntoDiagnostic, Result, WrapErr};
@@ -74,7 +75,7 @@ fn run_pipeline_uses_the_normal_amenable_artifact_path() -> Result<()> {
         Some(&1)
     );
     assert_eq!(report.view_model_receipt().counts().source_items(), 7);
-    assert_eq!(report.ui_ir_receipt().counts().section_count(), 13);
+    assert_eq!(report.ui_ir_receipt().counts().section_count(), 14);
     assert!(
         report
             .ui_ir_receipt()
@@ -778,7 +779,7 @@ fn run_pipeline_uses_the_normal_amenable_artifact_path() -> Result<()> {
         .ok_or_else(|| {
             miette::miette!("run certificate should include UI IR projection stage evidence")
         })?;
-    assert_eq!(ui_stage.counts().get("ui_ir_sections_populated"), Some(&13));
+    assert_eq!(ui_stage.counts().get("ui_ir_sections_populated"), Some(&14));
     assert_eq!(ui_stage.counts().get("ui_ir_sections_empty"), Some(&0));
     assert_eq!(
         ui_stage.counts().get("ui_ir_section_widgets_total"),
@@ -786,7 +787,7 @@ fn run_pipeline_uses_the_normal_amenable_artifact_path() -> Result<()> {
     );
     assert_eq!(
         ui_stage.counts().get("ui_ir_sections_with_source_widgets"),
-        Some(&13)
+        Some(&14)
     );
     assert_eq!(
         ui_stage
@@ -1830,9 +1831,17 @@ fn assert_ui_ir_receipt(receipt: &Value) {
     );
     assert_ui_ir_receipt_identity(receipt);
     assert_ui_ir_receipt_source_with_prefix(receipt, "belvedere.receipt.view_model:");
-    assert_eq!(receipt["counts"]["section_count"].as_u64(), Some(13));
+    assert_eq!(receipt["counts"]["section_count"].as_u64(), Some(14));
     assert_eq!(
         receipt["section_widget_counts"][UI_IR_SECTION_ASSESSMENT_HISTORY].as_u64(),
+        Some(2)
+    );
+    assert_eq!(
+        receipt["section_widget_counts"][UI_IR_SECTION_ASSESSMENT_QUEUE].as_u64(),
+        Some(2)
+    );
+    assert_eq!(
+        receipt["section_widget_counts"][UI_IR_SECTION_ASSESSMENT_WORK].as_u64(),
         Some(2)
     );
     assert_eq!(
@@ -1859,14 +1868,14 @@ fn assert_ui_ir_receipt(receipt: &Value) {
         receipt["source_locator_counts"]["ui_ir_source_locator_widgets"].as_u64(),
         Some(7)
     );
-    assert_eq!(receipt["output_ids"].as_array().map(Vec::len), Some(153));
+    assert_eq!(receipt["output_ids"].as_array().map(Vec::len), Some(155));
     assert_eq!(
         receipt["output_kind_counts"]["ui_ir_output_kind_minted_standard"].as_u64(),
         Some(4)
     );
     assert_eq!(
         receipt["output_kind_counts"]["ui_ir_output_kind_section"].as_u64(),
-        Some(13)
+        Some(14)
     );
     assert_eq!(
         receipt["output_kind_counts"]["ui_ir_output_kind_viewport"].as_u64(),
@@ -1874,7 +1883,7 @@ fn assert_ui_ir_receipt(receipt: &Value) {
     );
     assert_eq!(
         receipt["output_kind_counts"]["ui_ir_output_kind_section_root_widget"].as_u64(),
-        Some(13)
+        Some(14)
     );
     assert_eq!(
         receipt["output_kind_counts"]["ui_ir_output_kind_trace_widget"].as_u64(),
@@ -1914,6 +1923,15 @@ fn assert_ui_ir_receipt(receipt: &Value) {
                 section_ids
                     .iter()
                     .any(|section_id| section_id.as_str() == Some(UI_IR_SECTION_ASSESSMENT_HISTORY))
+            })
+    );
+    assert!(
+        receipt["section_ids"]
+            .as_array()
+            .is_some_and(|section_ids| {
+                section_ids
+                    .iter()
+                    .any(|section_id| section_id.as_str() == Some(UI_IR_SECTION_ASSESSMENT_WORK))
             })
     );
 }
@@ -2025,7 +2043,7 @@ fn assert_previous_ui_ir_receipt(receipt: &Value) {
         Some("belvedere.ui_ir.elicit_ui_projection")
     );
     assert_ui_ir_receipt_identity(receipt);
-    assert_eq!(receipt["counts"]["section_count"].as_u64(), Some(13));
+    assert_eq!(receipt["counts"]["section_count"].as_u64(), Some(14));
     assert_eq!(receipt["counts"]["widget_count"].as_u64(), Some(44));
     assert_eq!(
         receipt["section_widget_counts"][UI_IR_SECTION_REVIEW_WORKFLOW].as_u64(),
@@ -2038,6 +2056,10 @@ fn assert_previous_ui_ir_receipt(receipt: &Value) {
     assert_eq!(
         receipt["section_widget_counts"][UI_IR_SECTION_ASSESSMENT_HISTORY].as_u64(),
         Some(0)
+    );
+    assert_eq!(
+        receipt["section_widget_counts"][UI_IR_SECTION_ASSESSMENT_WORK].as_u64(),
+        Some(2)
     );
     assert_eq!(
         receipt["trace_source_counts"]["trace_unique_source_records"].as_u64(),
@@ -2693,7 +2715,7 @@ fn assert_landscape_diff_review_workflow_queue(queue: &Value) {
 fn assert_ui_ir_projection(projection: &Value) {
     assert!(projection.get("tree").is_none());
     assert!(projection.get("proofs").is_none());
-    assert_eq!(projection["sections"].as_array().map(Vec::len), Some(13));
+    assert_eq!(projection["sections"].as_array().map(Vec::len), Some(14));
     assert_eq!(
         projection["trace_widgets"].as_array().map(Vec::len),
         Some(60)
@@ -2739,6 +2761,11 @@ fn assert_ui_ir_projection(projection: &Value) {
             .iter()
             .any(|section| section["id"].as_str() == Some(UI_IR_SECTION_ASSESSMENT_HISTORY))
     }));
+    assert!(projection["sections"].as_array().is_some_and(|sections| {
+        sections
+            .iter()
+            .any(|section| section["id"].as_str() == Some(UI_IR_SECTION_ASSESSMENT_WORK))
+    }));
     assert!(
         projection["minted_standards"]
             .as_array()
@@ -2749,7 +2776,7 @@ fn assert_ui_ir_projection(projection: &Value) {
 }
 
 fn assert_ui_ir_sections(sections: &Value) {
-    assert_eq!(sections.as_array().map(Vec::len), Some(13));
+    assert_eq!(sections.as_array().map(Vec::len), Some(14));
     assert!(sections.as_array().is_some_and(|sections| {
         sections
             .iter()
@@ -2924,7 +2951,7 @@ fn assert_landscape_diff_review_ui_ir_trace_widgets(widgets: &Value) {
 fn assert_previous_ui_ir_projection(projection: &Value) {
     assert!(projection.get("tree").is_none());
     assert!(projection.get("proofs").is_none());
-    assert_eq!(projection["sections"].as_array().map(Vec::len), Some(13));
+    assert_eq!(projection["sections"].as_array().map(Vec::len), Some(14));
     assert_eq!(
         projection["trace_widgets"].as_array().map(Vec::len),
         Some(44)
@@ -3141,7 +3168,7 @@ fn assert_run_manifest(manifest: &Value) {
         "elicit_ui_outputs",
         "belvedere.receipt.ui_ir:",
         "ui_ir_projection",
-        153,
+        155,
     ));
     assert!(manifest_output_artifact_omits_selector(
         manifest,
@@ -3430,7 +3457,7 @@ fn assert_diff_manifest(manifest: &Value) {
         "stage_certificate",
         "belvedere.stage.ui_ir_projection:",
         "current_ui_ir_projection",
-        153,
+        155,
     ));
     assert!(manifest_output_artifact_has_selector(
         manifest,
@@ -3448,7 +3475,7 @@ fn assert_diff_manifest(manifest: &Value) {
         "elicit_ui_outputs",
         "belvedere.receipt.ui_ir:",
         "previous_ui_ir_projection",
-        121,
+        123,
     ));
     assert!(manifest_output_artifact_matches(
         manifest,
@@ -3469,7 +3496,7 @@ fn assert_diff_manifest(manifest: &Value) {
         "elicit_ui_outputs",
         "belvedere.receipt.ui_ir:",
         "current_ui_ir_projection",
-        153,
+        155,
     ));
     assert!(manifest_output_artifact_matches(
         manifest,
@@ -3745,7 +3772,7 @@ fn cli_can_emit_the_normal_run_stage_certificates_as_json() -> Result<()> {
             BelvedereCliArtifact::RunUiIrProjectionCertificate,
             "ui_ir_projection",
             "belvedere.ui_ir.elicit_ui_projection",
-            153,
+            155,
         ),
     ];
 
@@ -4001,14 +4028,18 @@ fn cli_can_emit_the_ui_ir_receipt_as_json() -> Result<()> {
         receipt["contract"].as_str(),
         Some("belvedere.ui_ir.elicit_ui_projection")
     );
-    assert_eq!(receipt["counts"]["section_count"].as_u64(), Some(13));
-    assert_eq!(receipt["section_ids"].as_array().map(Vec::len), Some(13));
+    assert_eq!(receipt["counts"]["section_count"].as_u64(), Some(14));
+    assert_eq!(receipt["section_ids"].as_array().map(Vec::len), Some(14));
     assert_eq!(
         receipt["section_widget_counts"][UI_IR_SECTION_REVIEW_WORKFLOW].as_u64(),
         Some(4)
     );
     assert_eq!(
         receipt["section_widget_counts"][UI_IR_SECTION_ASSESSMENT_HISTORY].as_u64(),
+        Some(2)
+    );
+    assert_eq!(
+        receipt["section_widget_counts"][UI_IR_SECTION_ASSESSMENT_WORK].as_u64(),
         Some(2)
     );
     assert_eq!(receipt["role_counts"]["role_button"].as_u64(), Some(27));
@@ -4433,13 +4464,17 @@ fn cli_can_persist_the_ui_ir_receipt_as_json() -> Result<()> {
         receipt["contract"].as_str(),
         Some("belvedere.ui_ir.elicit_ui_projection")
     );
-    assert_eq!(receipt["counts"]["section_count"].as_u64(), Some(13));
+    assert_eq!(receipt["counts"]["section_count"].as_u64(), Some(14));
     assert_eq!(
         receipt["section_widget_counts"][UI_IR_SECTION_REVIEW_WORKFLOW].as_u64(),
         Some(4)
     );
     assert_eq!(
         receipt["section_widget_counts"][UI_IR_SECTION_ASSESSMENT_HISTORY].as_u64(),
+        Some(2)
+    );
+    assert_eq!(
+        receipt["section_widget_counts"][UI_IR_SECTION_ASSESSMENT_WORK].as_u64(),
         Some(2)
     );
 
@@ -5255,7 +5290,7 @@ fn cli_can_emit_the_landscape_diff_run_certificate_as_json() -> Result<()> {
                 |stage_certificates| stage_certificates.iter().any(|stage_certificate| {
                     stage_certificate["stage"].as_str() == Some("ui_ir_projection")
                         && stage_certificate["counts"]["ui_ir_sections_populated"].as_u64()
-                            == Some(13)
+                            == Some(14)
                 })
             )
     );
