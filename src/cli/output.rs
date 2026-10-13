@@ -103,6 +103,16 @@ pub enum BelvedereCliArtifact {
     LandscapeDiff,
     /// Landscape diff receipt.
     LandscapeDiffReceipt,
+    /// Previous registry ingestion stage certificate from a diff run.
+    LandscapeDiffPreviousRegistryIngestionCertificate,
+    /// Previous assessment ingestion stage certificate from a diff run.
+    LandscapeDiffPreviousAssessmentIngestionCertificate,
+    /// Previous landscape modeling stage certificate from a diff run.
+    LandscapeDiffPreviousLandscapeModelingCertificate,
+    /// Previous auditor navigation stage certificate from a diff run.
+    LandscapeDiffPreviousAuditorNavigationCertificate,
+    /// Previous UI IR projection stage certificate from a diff run.
+    LandscapeDiffPreviousUiIrProjectionCertificate,
     /// Previous registry ingestion receipt from a diff run.
     LandscapeDiffPreviousRegistryReceipt,
     /// Previous assessment ingestion receipt from a diff run.
@@ -153,6 +163,16 @@ pub enum BelvedereCliArtifact {
     LandscapeDiffPreviousUiIrMintedStandards,
     /// Previous UI IR receipt from a diff run.
     LandscapeDiffPreviousUiIrReceipt,
+    /// Current registry ingestion stage certificate from a diff run.
+    LandscapeDiffCurrentRegistryIngestionCertificate,
+    /// Current assessment ingestion stage certificate from a diff run.
+    LandscapeDiffCurrentAssessmentIngestionCertificate,
+    /// Current landscape modeling stage certificate from a diff run.
+    LandscapeDiffCurrentLandscapeModelingCertificate,
+    /// Current auditor navigation stage certificate from a diff run.
+    LandscapeDiffCurrentAuditorNavigationCertificate,
+    /// Current UI IR projection stage certificate from a diff run.
+    LandscapeDiffCurrentUiIrProjectionCertificate,
     /// Current registry ingestion receipt from a diff run.
     LandscapeDiffCurrentRegistryReceipt,
     /// Current assessment ingestion receipt from a diff run.

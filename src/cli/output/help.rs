@@ -59,6 +59,11 @@ Diff artifacts:
       --manifest               Landscape diff run artifact manifest.
       --diff                   Certified landscape diff.
       --diff-receipt           Landscape diff receipt.
+      --previous-registry-ingestion-certificate
+      --previous-assessment-ingestion-certificate
+      --previous-landscape-modeling-certificate
+      --previous-auditor-navigation-certificate
+      --previous-ui-ir-projection-certificate
       --previous-registry-receipt
       --previous-assessment-receipt
       --previous-landscape
@@ -84,6 +89,11 @@ Diff artifacts:
       --previous-ui-ir-viewports
       --previous-ui-ir-minted-standards
       --previous-ui-ir-receipt
+      --current-registry-ingestion-certificate
+      --current-assessment-ingestion-certificate
+      --current-landscape-modeling-certificate
+      --current-auditor-navigation-certificate
+      --current-ui-ir-projection-certificate
       --current-registry-receipt
       --current-assessment-receipt
       --current-landscape

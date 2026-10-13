@@ -43,6 +43,36 @@ fn write_landscape_diff_certificate_output(
         BelvedereCliArtifact::LandscapeDiffCertificate => {
             write_json_to_sink(diff.diff_certificate(), sink, writer)?;
         }
+        BelvedereCliArtifact::LandscapeDiffPreviousRegistryIngestionCertificate => {
+            write_landscape_diff_stage_certificate(diff, 0, sink, writer)?;
+        }
+        BelvedereCliArtifact::LandscapeDiffPreviousAssessmentIngestionCertificate => {
+            write_landscape_diff_stage_certificate(diff, 1, sink, writer)?;
+        }
+        BelvedereCliArtifact::LandscapeDiffPreviousLandscapeModelingCertificate => {
+            write_landscape_diff_stage_certificate(diff, 2, sink, writer)?;
+        }
+        BelvedereCliArtifact::LandscapeDiffPreviousAuditorNavigationCertificate => {
+            write_landscape_diff_stage_certificate(diff, 3, sink, writer)?;
+        }
+        BelvedereCliArtifact::LandscapeDiffPreviousUiIrProjectionCertificate => {
+            write_landscape_diff_stage_certificate(diff, 4, sink, writer)?;
+        }
+        BelvedereCliArtifact::LandscapeDiffCurrentRegistryIngestionCertificate => {
+            write_landscape_diff_stage_certificate(diff, 5, sink, writer)?;
+        }
+        BelvedereCliArtifact::LandscapeDiffCurrentAssessmentIngestionCertificate => {
+            write_landscape_diff_stage_certificate(diff, 6, sink, writer)?;
+        }
+        BelvedereCliArtifact::LandscapeDiffCurrentLandscapeModelingCertificate => {
+            write_landscape_diff_stage_certificate(diff, 7, sink, writer)?;
+        }
+        BelvedereCliArtifact::LandscapeDiffCurrentAuditorNavigationCertificate => {
+            write_landscape_diff_stage_certificate(diff, 8, sink, writer)?;
+        }
+        BelvedereCliArtifact::LandscapeDiffCurrentUiIrProjectionCertificate => {
+            write_landscape_diff_stage_certificate(diff, 9, sink, writer)?;
+        }
         BelvedereCliArtifact::LandscapeDiffReviewCertificate => {
             write_json_to_sink(diff.diff_view_model_certificate(), sink, writer)?;
         }
@@ -64,6 +94,24 @@ fn write_landscape_diff_certificate_output(
         _ => return Ok(false),
     }
     Ok(true)
+}
+
+#[instrument(level = "debug", skip(diff, sink, writer))]
+fn write_landscape_diff_stage_certificate(
+    diff: &BelvedereLandscapeDiffRunReport,
+    source_stage_index: usize,
+    sink: &BelvedereCliOutputSink,
+    writer: impl Write,
+) -> Result<(), BelvedereError> {
+    let Some(certificate) = diff
+        .certificate()
+        .stage_certificates()
+        .get(source_stage_index)
+    else {
+        return Err(BelvedereCliUsageError::new().into());
+    };
+
+    write_json_to_sink(certificate, sink, writer)
 }
 
 #[instrument(level = "info", skip(artifact, sink, diff, writer))]

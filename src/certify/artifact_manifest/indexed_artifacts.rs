@@ -380,6 +380,11 @@ fn projection_cli_selector(role: &str) -> Option<&'static str> {
 #[instrument(level = "trace", skip(role))]
 fn snapshot_flag_suffix(role: &str) -> Option<&'static str> {
     match role {
+        "registry_ingestion_certificate" => Some("registry-ingestion-certificate"),
+        "assessment_ingestion_certificate" => Some("assessment-ingestion-certificate"),
+        "landscape_modeling_certificate" => Some("landscape-modeling-certificate"),
+        "auditor_navigation_certificate" => Some("auditor-navigation-certificate"),
+        "ui_ir_projection_certificate" => Some("ui-ir-projection-certificate"),
         "registry_receipt" => Some("registry-receipt"),
         "assessment_receipt" => Some("assessment-receipt"),
         "landscape_graph" => Some("landscape"),

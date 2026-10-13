@@ -1091,6 +1091,16 @@ fn cli_help_is_a_successful_public_output_contract() -> Result<()> {
     assert!(help.contains("--diff-review-ui-ir-certificate"));
     assert!(help.contains("--diff"));
     assert!(help.contains("--diff-receipt"));
+    assert!(help.contains("--previous-registry-ingestion-certificate"));
+    assert!(help.contains("--previous-assessment-ingestion-certificate"));
+    assert!(help.contains("--previous-landscape-modeling-certificate"));
+    assert!(help.contains("--previous-auditor-navigation-certificate"));
+    assert!(help.contains("--previous-ui-ir-projection-certificate"));
+    assert!(help.contains("--current-registry-ingestion-certificate"));
+    assert!(help.contains("--current-assessment-ingestion-certificate"));
+    assert!(help.contains("--current-landscape-modeling-certificate"));
+    assert!(help.contains("--current-auditor-navigation-certificate"));
+    assert!(help.contains("--current-ui-ir-projection-certificate"));
     assert!(help.contains("--previous-registry-receipt"));
     assert!(help.contains("--previous-assessment-receipt"));
     assert!(help.contains("--current-registry-receipt"));
@@ -3075,7 +3085,7 @@ fn assert_diff_manifest(manifest: &Value) {
     );
     assert_eq!(manifest["counts"]["input_artifacts"].as_u64(), Some(4));
     assert_eq!(manifest["counts"]["stage_certificates"].as_u64(), Some(13));
-    assert_eq!(manifest["counts"]["output_artifacts"].as_u64(), Some(86));
+    assert_eq!(manifest["counts"]["output_artifacts"].as_u64(), Some(96));
     assert_eq!(
         manifest["stage_kind_counts"]["manifest_stage_kind_registry_ingestion"].as_u64(),
         Some(2)
@@ -3117,6 +3127,10 @@ fn assert_diff_manifest(manifest: &Value) {
     assert_eq!(
         manifest["output_kind_counts"]["manifest_output_kind_elicit_ui_trace_widgets"].as_u64(),
         Some(3)
+    );
+    assert_eq!(
+        manifest["output_kind_counts"]["manifest_output_kind_stage_certificate"].as_u64(),
+        Some(13)
     );
     assert!(
         manifest["invariant_checks"]
@@ -3258,6 +3272,45 @@ fn assert_diff_manifest(manifest: &Value) {
         manifest,
         "diff_review_ui_ir_certificate",
         "--diff-review-ui-ir-certificate",
+    ));
+    assert!(manifest_output_artifact_matches(
+        manifest,
+        "previous_registry_ingestion_certificate",
+        "stage_certificate",
+        "belvedere.stage.registry_ingestion:",
+        "previous_registry_ingestion",
+        5,
+    ));
+    assert!(manifest_output_artifact_has_selector(
+        manifest,
+        "previous_registry_ingestion_certificate",
+        "--previous-registry-ingestion-certificate",
+    ));
+    assert!(manifest_output_artifact_matches(
+        manifest,
+        "previous_assessment_ingestion_certificate",
+        "stage_certificate",
+        "belvedere.stage.assessment_ingestion:",
+        "previous_assessment_ingestion",
+        0,
+    ));
+    assert!(manifest_output_artifact_has_selector(
+        manifest,
+        "previous_assessment_ingestion_certificate",
+        "--previous-assessment-ingestion-certificate",
+    ));
+    assert!(manifest_output_artifact_matches(
+        manifest,
+        "current_ui_ir_projection_certificate",
+        "stage_certificate",
+        "belvedere.stage.ui_ir_projection:",
+        "current_ui_ir_projection",
+        153,
+    ));
+    assert!(manifest_output_artifact_has_selector(
+        manifest,
+        "current_ui_ir_projection_certificate",
+        "--current-ui-ir-projection-certificate",
     ));
     assert!(manifest_output_artifact_has_selector(
         manifest,
@@ -4755,6 +4808,164 @@ fn cli_can_emit_the_landscape_diff_review_stage_certificates_as_json() -> Result
                     .iter()
                     .all(|check| check["passed"].as_bool() == Some(true)))
         );
+    }
+
+    fs::remove_file(previous_assessments_path)
+        .into_diagnostic()
+        .wrap_err("temporary empty assessment artifact should be removable")?;
+    Ok(())
+}
+
+#[test]
+fn cli_can_emit_diff_snapshot_stage_certificates_as_json() -> Result<()> {
+    belvedere::init_tracing();
+
+    let previous_assessments_path = std::env::temp_dir().join(format!(
+        "belvedere-cli-diff-snapshot-certificate-empty-assessments-{}.jsonl",
+        process::id()
+    ));
+    fs::write(&previous_assessments_path, [])
+        .into_diagnostic()
+        .wrap_err("temporary empty assessment artifact should be writable")?;
+
+    let cases = [
+        (
+            "--previous-registry-ingestion-certificate",
+            BelvedereCliArtifact::LandscapeDiffPreviousRegistryIngestionCertificate,
+            "registry_ingestion",
+            "belvedere.ingest.registry_dump",
+            "proof_records",
+            1,
+            None,
+        ),
+        (
+            "--previous-assessment-ingestion-certificate",
+            BelvedereCliArtifact::LandscapeDiffPreviousAssessmentIngestionCertificate,
+            "assessment_ingestion",
+            "belvedere.ingest.proof_assessments",
+            "assessments",
+            0,
+            None,
+        ),
+        (
+            "--previous-landscape-modeling-certificate",
+            BelvedereCliArtifact::LandscapeDiffPreviousLandscapeModelingCertificate,
+            "landscape_modeling",
+            "belvedere.model.landscape",
+            "claims",
+            3,
+            None,
+        ),
+        (
+            "--previous-auditor-navigation-certificate",
+            BelvedereCliArtifact::LandscapeDiffPreviousAuditorNavigationCertificate,
+            "auditor_navigation",
+            "belvedere.view_model.auditor_navigation",
+            "view_model_items",
+            44,
+            None,
+        ),
+        (
+            "--previous-ui-ir-projection-certificate",
+            BelvedereCliArtifact::LandscapeDiffPreviousUiIrProjectionCertificate,
+            "ui_ir_projection",
+            "belvedere.ui_ir.elicit_ui_projection",
+            "widgets",
+            44,
+            Some("ui_ir_sections_traceable"),
+        ),
+        (
+            "--current-registry-ingestion-certificate",
+            BelvedereCliArtifact::LandscapeDiffCurrentRegistryIngestionCertificate,
+            "registry_ingestion",
+            "belvedere.ingest.registry_dump",
+            "proof_records",
+            1,
+            None,
+        ),
+        (
+            "--current-assessment-ingestion-certificate",
+            BelvedereCliArtifact::LandscapeDiffCurrentAssessmentIngestionCertificate,
+            "assessment_ingestion",
+            "belvedere.ingest.proof_assessments",
+            "assessments",
+            2,
+            None,
+        ),
+        (
+            "--current-landscape-modeling-certificate",
+            BelvedereCliArtifact::LandscapeDiffCurrentLandscapeModelingCertificate,
+            "landscape_modeling",
+            "belvedere.model.landscape",
+            "claims",
+            4,
+            None,
+        ),
+        (
+            "--current-auditor-navigation-certificate",
+            BelvedereCliArtifact::LandscapeDiffCurrentAuditorNavigationCertificate,
+            "auditor_navigation",
+            "belvedere.view_model.auditor_navigation",
+            "view_model_items",
+            60,
+            None,
+        ),
+        (
+            "--current-ui-ir-projection-certificate",
+            BelvedereCliArtifact::LandscapeDiffCurrentUiIrProjectionCertificate,
+            "ui_ir_projection",
+            "belvedere.ui_ir.elicit_ui_projection",
+            "widgets",
+            60,
+            None,
+        ),
+    ];
+
+    for (flag, artifact, stage, contract, count_key, count, expected_failed_invariant) in cases {
+        let args = diff_args_with_empty_previous_assessments(&[flag], &previous_assessments_path)?;
+        let command = BelvedereCli::from_args(args.clone())
+            .into_diagnostic()
+            .wrap_err_with(|| format!("{flag} should be part of the public CLI API"))?;
+
+        assert_eq!(command.output(), stdio_output(artifact));
+
+        let mut output = Vec::new();
+        let status = run_cli_with_writer(args, &mut output);
+        assert_eq!(status, ExitCode::SUCCESS);
+
+        let certificate: Value = serde_json::from_slice(&output)
+            .into_diagnostic()
+            .wrap_err_with(|| format!("{flag} output should be parseable JSON"))?;
+        assert_eq!(
+            certificate["schema_id"].as_str(),
+            Some(BELVEDERE_STAGE_CERTIFICATE_SCHEMA_ID)
+        );
+        assert_eq!(
+            certificate["schema_version"].as_u64(),
+            Some(u64::from(BELVEDERE_STAGE_CERTIFICATE_SCHEMA_VERSION))
+        );
+        assert_eq!(certificate["stage"].as_str(), Some(stage));
+        assert_eq!(certificate["contract"].as_str(), Some(contract));
+        assert_eq!(certificate["counts"][count_key].as_u64(), Some(count));
+        let invariant_checks = certificate["invariant_checks"]
+            .as_array()
+            .ok_or_else(|| miette::miette!("{flag} should emit invariant checks"))?;
+        let failed_invariants = invariant_checks
+            .iter()
+            .filter_map(|check| {
+                (check["passed"].as_bool() == Some(false))
+                    .then(|| check["name"].as_str())
+                    .flatten()
+            })
+            .collect::<Vec<_>>();
+
+        match expected_failed_invariant {
+            Some(invariant) => assert_eq!(failed_invariants, vec![invariant]),
+            None => assert!(
+                failed_invariants.is_empty(),
+                "{flag} should not report failed invariants: {failed_invariants:?}"
+            ),
+        }
     }
 
     fs::remove_file(previous_assessments_path)

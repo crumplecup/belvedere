@@ -50,6 +50,21 @@ fn diff_artifact(flag: &str) -> Option<BelvedereCliArtifact> {
         "--manifest" => Some(BelvedereCliArtifact::LandscapeDiffManifest),
         "--diff" => Some(BelvedereCliArtifact::LandscapeDiff),
         "--diff-receipt" => Some(BelvedereCliArtifact::LandscapeDiffReceipt),
+        "--previous-registry-ingestion-certificate" => {
+            Some(BelvedereCliArtifact::LandscapeDiffPreviousRegistryIngestionCertificate)
+        }
+        "--previous-assessment-ingestion-certificate" => {
+            Some(BelvedereCliArtifact::LandscapeDiffPreviousAssessmentIngestionCertificate)
+        }
+        "--previous-landscape-modeling-certificate" => {
+            Some(BelvedereCliArtifact::LandscapeDiffPreviousLandscapeModelingCertificate)
+        }
+        "--previous-auditor-navigation-certificate" => {
+            Some(BelvedereCliArtifact::LandscapeDiffPreviousAuditorNavigationCertificate)
+        }
+        "--previous-ui-ir-projection-certificate" => {
+            Some(BelvedereCliArtifact::LandscapeDiffPreviousUiIrProjectionCertificate)
+        }
         "--previous-registry-receipt" => {
             Some(BelvedereCliArtifact::LandscapeDiffPreviousRegistryReceipt)
         }
@@ -109,6 +124,21 @@ fn diff_artifact(flag: &str) -> Option<BelvedereCliArtifact> {
             Some(BelvedereCliArtifact::LandscapeDiffPreviousUiIrMintedStandards)
         }
         "--previous-ui-ir-receipt" => Some(BelvedereCliArtifact::LandscapeDiffPreviousUiIrReceipt),
+        "--current-registry-ingestion-certificate" => {
+            Some(BelvedereCliArtifact::LandscapeDiffCurrentRegistryIngestionCertificate)
+        }
+        "--current-assessment-ingestion-certificate" => {
+            Some(BelvedereCliArtifact::LandscapeDiffCurrentAssessmentIngestionCertificate)
+        }
+        "--current-landscape-modeling-certificate" => {
+            Some(BelvedereCliArtifact::LandscapeDiffCurrentLandscapeModelingCertificate)
+        }
+        "--current-auditor-navigation-certificate" => {
+            Some(BelvedereCliArtifact::LandscapeDiffCurrentAuditorNavigationCertificate)
+        }
+        "--current-ui-ir-projection-certificate" => {
+            Some(BelvedereCliArtifact::LandscapeDiffCurrentUiIrProjectionCertificate)
+        }
         "--current-registry-receipt" => {
             Some(BelvedereCliArtifact::LandscapeDiffCurrentRegistryReceipt)
         }
