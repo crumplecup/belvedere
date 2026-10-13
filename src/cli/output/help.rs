@@ -122,9 +122,28 @@ Diff artifacts:
       --current-ui-ir-viewports
       --current-ui-ir-minted-standards
       --current-ui-ir-receipt
+      --landscape
+      --landscape-receipt
+      --view-model
       --overview
+      --backend-coverage
+      --claim-explorer
+      --claim-details
+      --filter-facets
+      --source-navigation
+      --proof-chains
+      --review-workflow
+      --assessment-history
+      --assessment-queue
+      --assessment-work
+      --witness-surface
+      --provenance-roots
+      --gaps
+      --view-model-receipt
+      --ui-ir
       --ui-ir-sections
       --ui-ir-trace-widgets
       --ui-ir-viewports
       --ui-ir-minted-standards
+      --ui-ir-receipt
 ";

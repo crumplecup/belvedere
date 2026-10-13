@@ -1075,6 +1075,10 @@ fn cli_help_is_a_successful_public_output_contract() -> Result<()> {
     let help = String::from_utf8(output)
         .into_diagnostic()
         .wrap_err("help output should be UTF-8")?;
+    let diff_help = help
+        .split_once("Diff artifacts:")
+        .map(|(_heading, section)| section)
+        .ok_or_else(|| miette::miette!("help output should include a diff artifacts section"))?;
     assert!(help.contains("usage: belvedere"));
     assert!(help.contains("belvedere diff"));
     assert!(help.contains("--stdio"));
@@ -1172,9 +1176,49 @@ fn cli_help_is_a_successful_public_output_contract() -> Result<()> {
     assert!(help.contains("--ui-ir-viewports"));
     assert!(help.contains("--ui-ir-minted-standards"));
     assert!(help.contains("--ui-ir-receipt"));
+    for flag in [
+        "--landscape",
+        "--landscape-receipt",
+        "--view-model",
+        "--overview",
+        "--backend-coverage",
+        "--claim-explorer",
+        "--claim-details",
+        "--filter-facets",
+        "--source-navigation",
+        "--proof-chains",
+        "--review-workflow",
+        "--assessment-history",
+        "--assessment-queue",
+        "--assessment-work",
+        "--witness-surface",
+        "--provenance-roots",
+        "--gaps",
+        "--view-model-receipt",
+        "--ui-ir",
+        "--ui-ir-sections",
+        "--ui-ir-trace-widgets",
+        "--ui-ir-viewports",
+        "--ui-ir-minted-standards",
+        "--ui-ir-receipt",
+    ] {
+        assert!(
+            help_section_lists_flag(diff_help, flag),
+            "diff help should list current snapshot alias {flag}"
+        );
+    }
     assert!(!help.contains("--certificate-json"));
     assert!(!help.contains("--certificate-file"));
     Ok(())
+}
+
+fn help_section_lists_flag(section: &str, flag: &str) -> bool {
+    section.lines().any(|line| {
+        let trimmed = line.trim_start();
+        trimmed
+            .strip_prefix(flag)
+            .is_some_and(|rest| rest.chars().next().is_none_or(char::is_whitespace))
+    })
 }
 
 fn assert_registry_ingestion_receipt(receipt: &Value) {
