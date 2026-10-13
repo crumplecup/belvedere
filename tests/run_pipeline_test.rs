@@ -1082,6 +1082,8 @@ fn cli_help_is_a_successful_public_output_contract() -> Result<()> {
     assert!(help.contains("--certificate"));
     assert!(help.contains("--manifest"));
     assert!(help.contains("--run-certificate"));
+    assert!(help.contains("--diff-review-certificate"));
+    assert!(help.contains("--diff-review-ui-ir-certificate"));
     assert!(help.contains("--diff"));
     assert!(help.contains("--diff-receipt"));
     assert!(help.contains("--previous-registry-receipt"));
@@ -3215,6 +3217,16 @@ fn assert_diff_manifest(manifest: &Value) {
     ));
     assert!(manifest_output_artifact_has_selector(
         manifest,
+        "diff_review_certificate",
+        "--diff-review-certificate",
+    ));
+    assert!(manifest_output_artifact_has_selector(
+        manifest,
+        "diff_review_ui_ir_certificate",
+        "--diff-review-ui-ir-certificate",
+    ));
+    assert!(manifest_output_artifact_has_selector(
+        manifest,
         "previous_ui_ir_trace_widgets",
         "--previous-ui-ir-trace-widgets",
     ));
@@ -3267,10 +3279,6 @@ fn assert_diff_manifest(manifest: &Value) {
         "belvedere.receipt.ui_ir:",
         "landscape_diff_review_ui_ir_projection",
         41,
-    ));
-    assert!(manifest_output_artifact_omits_selector(
-        manifest,
-        "diff_review_certificate",
     ));
     assert!(manifest_output_artifact_omits_selector(
         manifest,
@@ -4537,6 +4545,89 @@ fn cli_can_emit_the_landscape_diff_certificate_as_json() -> Result<()> {
     );
 
     fs::remove_file(&previous_assessments_path)
+        .into_diagnostic()
+        .wrap_err("temporary empty assessment artifact should be removable")?;
+    Ok(())
+}
+
+#[test]
+fn cli_can_emit_the_landscape_diff_review_stage_certificates_as_json() -> Result<()> {
+    belvedere::init_tracing();
+
+    let previous_assessments_path = std::env::temp_dir().join(format!(
+        "belvedere-cli-diff-review-certificate-empty-assessments-{}.jsonl",
+        process::id()
+    ));
+    fs::write(&previous_assessments_path, [])
+        .into_diagnostic()
+        .wrap_err("temporary empty assessment artifact should be writable")?;
+    let previous_assessments = previous_assessments_path
+        .to_str()
+        .ok_or_else(|| miette::miette!("temporary assessment path should be UTF-8"))?;
+
+    let cases = [
+        (
+            "--diff-review-certificate",
+            BelvedereCliArtifact::LandscapeDiffReviewCertificate,
+            "landscape_diff_review",
+            "belvedere.view_model.landscape_diff_review",
+            "total_items",
+            6,
+        ),
+        (
+            "--diff-review-ui-ir-certificate",
+            BelvedereCliArtifact::LandscapeDiffReviewUiIrCertificate,
+            "landscape_diff_review_ui_ir_projection",
+            "belvedere.ui_ir.elicit_ui_diff_review_projection",
+            "ui_ir_sections_populated",
+            3,
+        ),
+    ];
+
+    for (flag, artifact, stage, contract, count_key, count) in cases {
+        let args = [
+            "diff",
+            flag,
+            "--stdio",
+            "tests/fixtures/registry_dump.json",
+            previous_assessments,
+            "tests/fixtures/registry_dump.json",
+            "tests/fixtures/proof_assessments.jsonl",
+        ]
+        .into_iter()
+        .map(str::to_owned)
+        .collect::<Vec<_>>();
+        let command = BelvedereCli::from_args(args.clone())
+            .into_diagnostic()
+            .wrap_err_with(|| format!("{flag} should be part of the public CLI API"))?;
+
+        assert_eq!(command.output(), stdio_output(artifact));
+
+        let mut output = Vec::new();
+        let status = run_cli_with_writer(args, &mut output);
+        assert_eq!(status, ExitCode::SUCCESS);
+
+        let certificate: Value = serde_json::from_slice(&output)
+            .into_diagnostic()
+            .wrap_err_with(|| format!("{flag} output should be parseable JSON"))?;
+        assert!(
+            certificate["id"]
+                .as_str()
+                .is_some_and(|id| id.starts_with("belvedere.stage."))
+        );
+        assert_eq!(certificate["stage"].as_str(), Some(stage));
+        assert_eq!(certificate["contract"].as_str(), Some(contract));
+        assert_eq!(certificate["counts"][count_key].as_u64(), Some(count));
+        assert!(
+            certificate["invariant_checks"]
+                .as_array()
+                .is_some_and(|checks| checks
+                    .iter()
+                    .all(|check| check["passed"].as_bool() == Some(true)))
+        );
+    }
+
+    fs::remove_file(previous_assessments_path)
         .into_diagnostic()
         .wrap_err("temporary empty assessment artifact should be removable")?;
     Ok(())

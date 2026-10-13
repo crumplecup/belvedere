@@ -325,6 +325,8 @@ fn cli_selector_for_role(role: &str) -> Option<String> {
         "ui_ir_projection" => Some("--ui-ir".to_owned()),
         "ui_ir_receipt" => Some("--ui-ir-receipt".to_owned()),
         "diff_certificate" => Some("--certificate".to_owned()),
+        "diff_review_certificate" => Some("--diff-review-certificate".to_owned()),
+        "diff_review_ui_ir_certificate" => Some("--diff-review-ui-ir-certificate".to_owned()),
         "landscape_diff" => Some("--diff".to_owned()),
         "landscape_diff_receipt" => Some("--diff-receipt".to_owned()),
         "landscape_diff_review_model" => Some("--view-model".to_owned()),

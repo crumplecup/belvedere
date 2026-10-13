@@ -43,6 +43,12 @@ fn write_landscape_diff_certificate_output(
         BelvedereCliArtifact::LandscapeDiffCertificate => {
             write_json_to_sink(diff.diff_certificate(), sink, writer)?;
         }
+        BelvedereCliArtifact::LandscapeDiffReviewCertificate => {
+            write_json_to_sink(diff.diff_view_model_certificate(), sink, writer)?;
+        }
+        BelvedereCliArtifact::LandscapeDiffReviewUiIrCertificate => {
+            write_json_to_sink(diff.diff_ui_ir_certificate(), sink, writer)?;
+        }
         BelvedereCliArtifact::LandscapeDiffRunCertificate => {
             write_json_to_sink(diff.certificate(), sink, writer)?;
         }

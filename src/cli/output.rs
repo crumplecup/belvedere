@@ -195,6 +195,10 @@ pub enum BelvedereCliArtifact {
     LandscapeDiffCurrentUiIrReceipt,
     /// Landscape diff stage certificate.
     LandscapeDiffCertificate,
+    /// Landscape diff review stage certificate.
+    LandscapeDiffReviewCertificate,
+    /// Landscape diff review UI IR stage certificate.
+    LandscapeDiffReviewUiIrCertificate,
     /// Complete landscape diff run certificate.
     LandscapeDiffRunCertificate,
     /// Landscape diff run artifact manifest.

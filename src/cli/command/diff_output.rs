@@ -42,6 +42,10 @@ impl BelvedereCli {
 fn diff_artifact(flag: &str) -> Option<BelvedereCliArtifact> {
     match flag {
         "--certificate" => Some(BelvedereCliArtifact::LandscapeDiffCertificate),
+        "--diff-review-certificate" => Some(BelvedereCliArtifact::LandscapeDiffReviewCertificate),
+        "--diff-review-ui-ir-certificate" => {
+            Some(BelvedereCliArtifact::LandscapeDiffReviewUiIrCertificate)
+        }
         "--run-certificate" => Some(BelvedereCliArtifact::LandscapeDiffRunCertificate),
         "--manifest" => Some(BelvedereCliArtifact::LandscapeDiffManifest),
         "--diff" => Some(BelvedereCliArtifact::LandscapeDiff),

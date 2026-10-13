@@ -41,6 +41,10 @@ Run artifacts:
 
 Diff artifacts:
       --certificate            Landscape diff stage certificate.
+      --diff-review-certificate
+                               Landscape diff review stage certificate.
+      --diff-review-ui-ir-certificate
+                               Landscape diff review UI IR stage certificate.
       --run-certificate        Complete landscape diff run certificate.
       --manifest               Landscape diff run artifact manifest.
       --diff                   Certified landscape diff.
