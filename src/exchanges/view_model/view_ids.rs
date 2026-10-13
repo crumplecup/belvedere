@@ -52,13 +52,12 @@ pub(super) fn view_item_ids(model: &AuditorNavigationModel) -> Vec<String> {
             .iter()
             .map(|item| format!("view_model.assessment_queue:{}", item.assessment_id())),
     );
-    ids.extend(model.assessment_work().iter().map(|item| {
-        format!(
-            "view_model.assessment_work:{}:{}",
-            item.claim_id(),
-            item.queue_lane()
-        )
-    }));
+    ids.extend(
+        model
+            .assessment_work()
+            .iter()
+            .map(|item| format!("view_model.assessment_work:{}", item.work_id())),
+    );
     ids.extend(model.witness_surface().iter().map(witness_id));
     ids.extend(
         model

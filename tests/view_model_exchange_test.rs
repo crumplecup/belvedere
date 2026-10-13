@@ -958,6 +958,10 @@ fn view_model_projection_preserves_review_queues_and_traceability() -> Result<()
         })
         .ok_or_else(|| miette!("missing-assessment work should be queued"))?;
     assert_eq!(
+        missing_assessment.work_id(),
+        "assessment_work.missing_assessment:view_model.gap:belvedere::ingestion::DecodedRegistrySnapshot:missing_assessment"
+    );
+    assert_eq!(
         missing_assessment.reason(),
         "claim has proof coverage but no assessment"
     );
@@ -981,6 +985,10 @@ fn view_model_projection_preserves_review_queues_and_traceability() -> Result<()
                 && item.action() == "strengthen proof"
         })
         .ok_or_else(|| miette!("strengthening work should be queued"))?;
+    assert_eq!(
+        strengthen.work_id(),
+        "assessment_work.recommendation:assess-belvedere-ingestion-1"
+    );
     assert_eq!(strengthen.queue_lane(), "strengthening");
     assert_eq!(strengthen.resolution_label(), "strengthen current proof");
     assert!(strengthen.reason().contains("assess-belvedere-ingestion-1"));

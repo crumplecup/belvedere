@@ -120,6 +120,7 @@ impl AssessmentQueueItem {
 #[derive(Debug, Clone, PartialEq, Eq, Getters, Builder, Serialize)]
 #[builder(vis = "pub(crate)", setter(into))]
 pub struct AssessmentWorkItem {
+    work_id: String,
     claim_id: String,
     queue_lane: String,
     action: String,

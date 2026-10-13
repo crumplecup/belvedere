@@ -2451,6 +2451,11 @@ fn assert_assessment_work(items: &Value) {
     assert_eq!(items.as_array().map(Vec::len), Some(2));
     assert!(items.as_array().is_some_and(|work| {
         work.iter().any(|item| {
+            item["work_id"].as_str()
+                == Some(
+                    "assessment_work.missing_assessment:view_model.gap:belvedere::ingestion::DecodedRegistrySnapshot:missing_assessment",
+                )
+                &&
             item["claim_id"].as_str() == Some("belvedere::ingestion::DecodedRegistrySnapshot")
                 && item["queue_lane"].as_str() == Some("assessment")
                 && item["action"].as_str() == Some("assess proof coverage")

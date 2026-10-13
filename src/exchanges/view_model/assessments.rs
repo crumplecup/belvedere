@@ -112,6 +112,7 @@ pub(super) fn project_assessment_work(
         if gap.kind() == LandscapeGapKind::MissingAssessment {
             items.push(
                 AssessmentWorkItemBuilder::default()
+                    .work_id(missing_assessment_work_id(gap))
                     .claim_id(gap.claim_id())
                     .queue_lane(gap_queue_lane(gap.kind()))
                     .action("assess proof coverage")
@@ -143,6 +144,7 @@ pub(super) fn project_assessment_work(
         );
         items.push(
             AssessmentWorkItemBuilder::default()
+                .work_id(assessment_work_id(assessment))
                 .claim_id(assessment.proof_id())
                 .queue_lane(assessment_queue_lane(assessment.recommendation()))
                 .action(action)
@@ -160,6 +162,16 @@ pub(super) fn project_assessment_work(
     }
 
     Ok(items)
+}
+
+#[instrument(level = "trace", skip(gap))]
+fn missing_assessment_work_id(gap: &GapItem) -> String {
+    format!("assessment_work.missing_assessment:{}", gap.gap_id())
+}
+
+#[instrument(level = "trace", skip(assessment))]
+fn assessment_work_id(assessment: &LandscapeAssessment) -> String {
+    format!("assessment_work.recommendation:{}", assessment.id())
 }
 
 #[instrument(level = "trace", skip(recommendation))]
