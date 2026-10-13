@@ -26,6 +26,7 @@ mod assessment_widgets;
 mod diff_review;
 mod errors;
 mod receipt;
+mod trace_widgets;
 mod widgets;
 
 pub use diff_review::ElicitUiDiffReviewProjection;
@@ -33,9 +34,10 @@ pub use errors::UiIrError;
 
 use assessment_widgets::{assessment_history_widget, assessment_widget, assessment_work_widget};
 use receipt::{SourceViewModelReceipt, build_receipt};
+use trace_widgets::labeled_widget;
 use widgets::{
     backend_coverage_widget, claim_detail_widget, claim_widget, filter_widget, gap_widget,
-    labeled_widget, proof_chain_widget, provenance_root_widget, review_workflow_widget, section,
+    proof_chain_widget, provenance_root_widget, review_workflow_widget, section,
     source_navigation_widget, witness_widget,
 };
 
@@ -149,6 +151,7 @@ fn overview_section(
             model.overview().gap_count(),
             model.overview().high_priority_gap_count()
         ),
+        "belvedere::overview",
         TraceRef::new("belvedere::overview", model.source_record_ids().to_vec()),
         trace_widgets,
     )?;

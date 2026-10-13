@@ -456,6 +456,21 @@ fn landscape_diff_runner_uses_the_normal_artifact_path() -> Result<()> {
     );
     assert_eq!(report.diff_ui_ir_receipt().counts().section_count(), 3);
     assert_eq!(report.diff_projection().trace_widgets().len(), 14);
+    let diff_trace_widget_item_ids = report
+        .diff_projection()
+        .trace_widgets()
+        .iter()
+        .map(|widget| widget.item_id().to_owned())
+        .collect::<Vec<_>>();
+    assert_eq!(
+        report.diff_ui_ir_receipt().trace_widget_item_ids(),
+        &diff_trace_widget_item_ids
+    );
+    assert!(report.diff().items().iter().all(|item| {
+        diff_trace_widget_item_ids
+            .iter()
+            .any(|item_id| item_id == item.item_id())
+    }));
     assert_eq!(
         report
             .diff_receipt()

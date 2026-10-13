@@ -9,7 +9,8 @@ use crate::contracts::{
 
 use super::{
     UiIrError,
-    widgets::{count_label, labeled_widget, list_label},
+    trace_widgets::labeled_widget,
+    widgets::{count_label, list_label},
 };
 
 #[instrument(level = "debug", skip(backend, item, trace_widgets))]
@@ -33,6 +34,7 @@ pub(super) fn assessment_widget(
             item.recommendation(),
             item.proof_id()
         ),
+        item.assessment_id(),
         item.trace().clone(),
         trace_widgets,
     )
@@ -71,6 +73,7 @@ pub(super) fn assessment_history_widget(
                 "superseded assessments"
             )
         ),
+        item.proof_id(),
         item.trace().clone(),
         trace_widgets,
     )
@@ -100,6 +103,7 @@ pub(super) fn assessment_work_widget(
             item.resolution_label(),
             item.reason()
         ),
+        item.work_id(),
         item.trace().clone(),
         trace_widgets,
     )

@@ -1,25 +1,17 @@
 //! Traceable widget construction for the `elicit_ui` projection exchange.
 
-use elicit_ui::{
-    AccessKitUiBackend, ContainerId, ContrastDescriptor, LabelDescriptor, SrgbColor,
-    UiLayoutManager, WcagContrastFactory, WcagLabelFactory, WidgetId,
-};
-use sha2::{Digest as _, Sha256};
+use elicit_ui::{AccessKitUiBackend, ContainerId, UiLayoutManager, WidgetId};
 use tracing::instrument;
 
-use crate::{
-    certify::{hex_digest, update_field, update_fields},
-    contracts::{
-        AuditorFilterFacet, BackendCoverageItem, ClaimDetailItem, ClaimExplorerItem, GapItem,
-        ProofChainItem, ProvenanceRootItem, ReviewWorkflowItem, SourceNavigationItem, TraceRef,
-        TraceWidgetRef, TraceWidgetRefBuilder, UiIrSection, WitnessSurfaceItem,
-    },
+use crate::contracts::{
+    AuditorFilterFacet, BackendCoverageItem, ClaimDetailItem, ClaimExplorerItem, GapItem,
+    ProofChainItem, ProvenanceRootItem, ReviewWorkflowItem, SourceNavigationItem, TraceWidgetRef,
+    UiIrSection, WitnessSurfaceItem,
 };
 
-use super::{UiIrError, accessibility::establish_interactive_proofs};
+use super::{UiIrError, trace_widgets::labeled_widget};
 
 const ROOT_CONTAINER: ContainerId = ContainerId(0);
-const TRACE_WIDGET_SCHEMA_ID: &str = "belvedere.ui_ir.trace_widget.v1";
 
 #[instrument(level = "debug", skip(backend, item, trace_widgets))]
 pub(super) fn filter_widget(
@@ -33,6 +25,7 @@ pub(super) fn filter_widget(
         section_id,
         "checkbox",
         format!("Filter {} selects {} items", item.label(), item.count()),
+        item.facet_id(),
         item.trace().clone(),
         trace_widgets,
     )
@@ -46,6 +39,7 @@ pub(super) fn backend_coverage_widget(
     trace_widgets: &mut Vec<TraceWidgetRef>,
 ) -> Result<WidgetId, UiIrError> {
     let status = if item.covered() { "covered" } else { "missing" };
+    let item_id = backend_coverage_item_id(item);
     labeled_widget(
         backend,
         section_id,
@@ -55,6 +49,7 @@ pub(super) fn backend_coverage_widget(
             item.verifier(),
             item.claim_id()
         ),
+        &item_id,
         item.trace().clone(),
         trace_widgets,
     )
@@ -82,6 +77,7 @@ pub(super) fn claim_widget(
             count_label(item.assessment_count(), "assessment", "assessments"),
             count_label(item.gap_count(), "gap", "gaps")
         ),
+        item.claim_id(),
         item.trace().clone(),
         trace_widgets,
     )
@@ -132,6 +128,7 @@ pub(super) fn claim_detail_widget(
                 "source records"
             )
         ),
+        item.claim_id(),
         item.trace().clone(),
         trace_widgets,
     )
@@ -182,6 +179,7 @@ pub(super) fn proof_chain_widget(
             count_label(topology.chain_gap_count(), "chain gap", "chain gaps"),
             count_label(item.gap_count(), "gap", "gaps")
         ),
+        item.claim_id(),
         item.trace().clone(),
         trace_widgets,
     )
@@ -239,6 +237,7 @@ pub(super) fn review_workflow_widget(
             item.rationale(),
             count_label(item.source_count(), "source record", "source records")
         ),
+        item.task_id(),
         item.trace().clone(),
         trace_widgets,
     )
@@ -251,6 +250,7 @@ pub(super) fn witness_widget(
     item: &WitnessSurfaceItem,
     trace_widgets: &mut Vec<TraceWidgetRef>,
 ) -> Result<WidgetId, UiIrError> {
+    let item_id = witness_item_id(item);
     labeled_widget(
         backend,
         section_id,
@@ -265,6 +265,7 @@ pub(super) fn witness_widget(
             item.trusted(),
             item.opaque()
         ),
+        &item_id,
         item.trace().clone(),
         trace_widgets,
     )
@@ -298,6 +299,7 @@ pub(super) fn provenance_root_widget(
                 "source records"
             )
         ),
+        item.claim_id(),
         item.trace().clone(),
         trace_widgets,
     )
@@ -323,6 +325,7 @@ pub(super) fn gap_widget(
             item.action(),
             item.detail()
         ),
+        item.gap_id(),
         item.trace().clone(),
         trace_widgets,
     )
@@ -347,113 +350,10 @@ pub(super) fn source_navigation_widget(
             item.target(),
             item.source_locator()
         ),
+        item.source_record_id(),
         item.trace().clone(),
         trace_widgets,
     )
-}
-
-#[instrument(level = "debug", skip(backend, trace, trace_widgets))]
-pub(in crate::exchanges::ui_ir) fn labeled_widget(
-    backend: &AccessKitUiBackend,
-    section_id: &'static str,
-    role: &str,
-    label: String,
-    trace: TraceRef,
-    trace_widgets: &mut Vec<TraceWidgetRef>,
-) -> Result<WidgetId, UiIrError> {
-    let (element, _proof) = backend
-        .build_labeled_element(LabelDescriptor {
-            name: label.clone(),
-            role: role.to_owned(),
-            labelled_by: None,
-        })
-        .map_err(UiIrError::elicit_ui)?;
-    if matches!(
-        role,
-        "button" | "link" | "checkbox" | "radio" | "text-input" | "search-input"
-    ) {
-        establish_interactive_proofs(backend, element.id)?;
-    }
-    backend
-        .build_contrast_minimum(ContrastDescriptor {
-            foreground: SrgbColor::from_u8(0x11, 0x18, 0x27),
-            background: SrgbColor::from_u8(0xf8, 0xfa, 0xfc),
-            widget: Some(element.id),
-        })
-        .map_err(UiIrError::elicit_ui)?;
-    let claim_id = trace.claim_id().to_owned();
-    let trace_ref_id = trace_widget_ref_id(section_id, role, &claim_id, trace_widgets);
-    let source_record_ids = trace.source_record_ids().to_vec();
-    let trace_widget_digest = trace_widget_digest(
-        &trace_ref_id,
-        element.id.0,
-        section_id,
-        role,
-        &label,
-        &claim_id,
-        &source_record_ids,
-    );
-    let trace_widget = TraceWidgetRefBuilder::default()
-        .trace_ref_id(trace_ref_id)
-        .trace_widget_digest(trace_widget_digest)
-        .widget_id(element.id.0)
-        .section_id(section_id)
-        .role(role)
-        .label(label)
-        .claim_id(claim_id)
-        .source_record_ids(source_record_ids)
-        .build()
-        .map_err(|error| UiIrError::construction("TraceWidgetRef", error))?;
-    trace_widgets.push(trace_widget);
-    Ok(element.id)
-}
-
-#[instrument(
-    level = "trace",
-    skip(trace_ref_id, section_id, role, label, claim_id, source_record_ids)
-)]
-fn trace_widget_digest(
-    trace_ref_id: &str,
-    widget_id: u64,
-    section_id: &str,
-    role: &str,
-    label: &str,
-    claim_id: &str,
-    source_record_ids: &[String],
-) -> String {
-    let mut hasher = Sha256::new();
-    update_field(&mut hasher, TRACE_WIDGET_SCHEMA_ID);
-    update_field(&mut hasher, trace_ref_id);
-    update_field(&mut hasher, &widget_id.to_string());
-    update_field(&mut hasher, section_id);
-    update_field(&mut hasher, role);
-    update_field(&mut hasher, label);
-    update_field(&mut hasher, claim_id);
-    update_fields(&mut hasher, source_record_ids);
-    hex_digest(hasher)
-}
-
-#[instrument(level = "trace", skip(trace_widgets))]
-fn trace_widget_ref_id(
-    section_id: &str,
-    role: &str,
-    claim_id: &str,
-    trace_widgets: &[TraceWidgetRef],
-) -> String {
-    let ordinal = trace_widgets
-        .iter()
-        .filter(|widget| {
-            widget.section_id() == section_id
-                && widget.role() == role
-                && widget.claim_id() == claim_id
-        })
-        .count();
-    let base = format!("elicit_ui.trace_widget_ref:{section_id}:{role}:{claim_id}");
-    if ordinal == 0 {
-        base
-    } else {
-        format!("{base}:{ordinal}")
-    }
 }
 
 #[instrument(level = "debug", skip(backend, content))]
@@ -471,4 +371,23 @@ pub(in crate::exchanges::ui_ir) fn section(
         .add_child(ROOT_CONTAINER, WidgetId(container.0))
         .map_err(UiIrError::elicit_ui)?;
     Ok(UiIrSection::new(id, name, container.0, widget_count))
+}
+
+#[instrument(level = "trace", skip(item))]
+fn backend_coverage_item_id(item: &BackendCoverageItem) -> String {
+    format!(
+        "view_model.backend_coverage:{}:{}",
+        item.claim_id(),
+        item.verifier()
+    )
+}
+
+#[instrument(level = "trace", skip(item))]
+fn witness_item_id(item: &WitnessSurfaceItem) -> String {
+    format!(
+        "view_model.witness_surface:{}:{}:{}",
+        item.claim_id(),
+        item.verifier(),
+        item.support_kind()
+    )
 }

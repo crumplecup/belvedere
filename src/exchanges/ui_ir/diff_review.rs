@@ -22,8 +22,9 @@ use crate::{
 use super::{
     UI_IR_PRIMARY_VIEWPORT, minted_standards,
     receipt::{SourceViewModelReceipt, UiIrReceiptEvidenceBuilder, build_receipt_from_evidence},
+    trace_widgets::labeled_widget,
     verify_viewports,
-    widgets::{labeled_widget, section},
+    widgets::section,
 };
 
 /// Exchange from landscape diff review evidence into `elicit_ui` IR.
@@ -132,6 +133,7 @@ fn diff_review_summary_section(
             summary.review_items(),
             summary.informational_items()
         ),
+        "belvedere::landscape_diff_review",
         TraceRef::new(
             "belvedere::landscape_diff_review",
             model.source_record_ids().to_vec(),
@@ -185,6 +187,7 @@ fn diff_review_item_widget(
             item.diff_item_id(),
             item.summary()
         ),
+        item.diff_item_id(),
         item.trace().clone(),
         trace_widgets,
     )
@@ -205,6 +208,7 @@ fn diff_review_source_navigation_section(
                 DIFF_REVIEW_UI_IR_SECTION_SOURCE_NAVIGATION,
                 "link",
                 format!("Source record {source_record_id} contributes to landscape diff review"),
+                source_record_id,
                 TraceRef::new(
                     source_record_id.to_owned(),
                     vec![source_record_id.to_owned()],

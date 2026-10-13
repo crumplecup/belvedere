@@ -28,6 +28,7 @@ pub struct UiIrReceipt {
     section_ids: Vec<String>,
     section_root_widget_ids: Vec<u64>,
     trace_widget_ids: Vec<u64>,
+    trace_widget_item_ids: Vec<String>,
     trace_widget_ref_ids: Vec<String>,
     trace_widget_digests: Vec<String>,
     output_ids: Vec<String>,
@@ -74,6 +75,8 @@ pub(crate) struct UiIrReceiptDigestEvidence<'evidence> {
     section_root_widget_ids: &'evidence [u64],
     /// Traceable widget IDs emitted by the projection.
     trace_widget_ids: &'evidence [u64],
+    /// Stable view-model item IDs represented by traceable widgets.
+    trace_widget_item_ids: &'evidence [String],
     /// Stable trace widget reference IDs emitted by the projection.
     trace_widget_ref_ids: &'evidence [String],
     /// Stable trace widget digests emitted by the projection.
@@ -182,6 +185,7 @@ fn ui_ir_receipt_digest(evidence: UiIrReceiptDigestEvidence<'_>) -> String {
     update_fields(&mut hasher, evidence.section_ids);
     update_u64_fields(&mut hasher, evidence.section_root_widget_ids);
     update_u64_fields(&mut hasher, evidence.trace_widget_ids);
+    update_fields(&mut hasher, evidence.trace_widget_item_ids);
     update_fields(&mut hasher, evidence.trace_widget_ref_ids);
     update_fields(&mut hasher, evidence.trace_widget_digests);
     update_fields(&mut hasher, evidence.output_ids);

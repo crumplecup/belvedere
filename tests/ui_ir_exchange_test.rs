@@ -107,6 +107,12 @@ fn ui_ir_projection_mints_elicit_ui_standards_and_tree_proofs() -> Result<()> {
             .map(belvedere::TraceWidgetRef::widget_id)
             .collect::<Vec<_>>()
     );
+    let trace_widget_item_ids = projection
+        .trace_widgets()
+        .iter()
+        .map(|widget| widget.item_id().to_owned())
+        .collect::<Vec<_>>();
+    assert_eq!(receipt.trace_widget_item_ids(), &trace_widget_item_ids);
     let trace_widget_ref_ids = projection
         .trace_widgets()
         .iter()
@@ -654,6 +660,14 @@ fn ui_ir_projection_preserves_trace_widgets_for_auditor_deep_dives() -> Result<(
         coverage_widget.claim_id(),
         "belvedere::ingestion::DecodedRegistrySnapshot"
     );
+    assert_eq!(
+        coverage_widget.item_id(),
+        "view_model.backend_coverage:belvedere::ingestion::DecodedRegistrySnapshot:creusot"
+    );
+    assert_eq!(
+        coverage_widget.trace_ref_id(),
+        "elicit_ui.trace_widget_ref:belvedere.ui.section.backend_coverage:status:view_model.backend_coverage:belvedere::ingestion::DecodedRegistrySnapshot:creusot"
+    );
     let chain_widget = projection
         .trace_widgets()
         .iter()
@@ -774,6 +788,14 @@ fn ui_ir_projection_preserves_trace_widgets_for_auditor_deep_dives() -> Result<(
     assert_eq!(
         assessment_work_widget.section_id(),
         UI_IR_SECTION_ASSESSMENT_WORK
+    );
+    assert_eq!(
+        assessment_work_widget.item_id(),
+        "assessment_work.missing_assessment:view_model.gap:belvedere::ingestion::DecodedRegistrySnapshot:missing_assessment"
+    );
+    assert_eq!(
+        assessment_work_widget.trace_ref_id(),
+        "elicit_ui.trace_widget_ref:belvedere.ui.section.assessment_work:button:assessment_work.missing_assessment:view_model.gap:belvedere::ingestion::DecodedRegistrySnapshot:missing_assessment"
     );
     assert!(
         assessment_work_widget

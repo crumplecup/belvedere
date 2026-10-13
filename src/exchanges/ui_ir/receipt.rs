@@ -103,6 +103,11 @@ pub(in crate::exchanges::ui_ir) fn build_receipt_from_evidence(
         .iter()
         .map(TraceWidgetRef::widget_id)
         .collect::<Vec<_>>();
+    let receipt_trace_widget_item_ids = evidence
+        .trace_widgets
+        .iter()
+        .map(|widget| widget.item_id().to_owned())
+        .collect::<Vec<_>>();
     let receipt_trace_widget_ref_ids = evidence
         .trace_widgets
         .iter()
@@ -140,6 +145,7 @@ pub(in crate::exchanges::ui_ir) fn build_receipt_from_evidence(
         .section_ids(&receipt_section_ids)
         .section_root_widget_ids(&receipt_section_root_widget_ids)
         .trace_widget_ids(&receipt_trace_widget_ids)
+        .trace_widget_item_ids(&receipt_trace_widget_item_ids)
         .trace_widget_ref_ids(&receipt_trace_widget_ref_ids)
         .trace_widget_digests(&receipt_trace_widget_digests)
         .output_ids(&receipt_output_ids)
@@ -170,6 +176,7 @@ pub(in crate::exchanges::ui_ir) fn build_receipt_from_evidence(
         .section_ids(receipt_section_ids)
         .section_root_widget_ids(receipt_section_root_widget_ids)
         .trace_widget_ids(receipt_trace_widget_ids)
+        .trace_widget_item_ids(receipt_trace_widget_item_ids)
         .trace_widget_ref_ids(receipt_trace_widget_ref_ids)
         .trace_widget_digests(receipt_trace_widget_digests)
         .output_ids(receipt_output_ids)
