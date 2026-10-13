@@ -45,6 +45,9 @@ pub(super) fn write_run_output(
             write_json_to_sink(run.landscape_receipt(), sink, writer)
         }
         BelvedereCliArtifact::RunViewModel => write_json_to_sink(run.view_model(), sink, writer),
+        BelvedereCliArtifact::RunOverview => {
+            write_json_to_sink(run.view_model().overview(), sink, writer)
+        }
         BelvedereCliArtifact::RunBackendCoverage => {
             write_json_to_sink(run.view_model().backend_coverage(), sink, writer)
         }

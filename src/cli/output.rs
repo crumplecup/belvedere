@@ -59,6 +59,8 @@ pub enum BelvedereCliArtifact {
     RunLandscapeReceipt,
     /// Normal run auditor navigation view model.
     RunViewModel,
+    /// Normal run auditor overview summary.
+    RunOverview,
     /// Normal run backend coverage items.
     RunBackendCoverage,
     /// Normal run claim explorer items.
@@ -123,6 +125,8 @@ pub enum BelvedereCliArtifact {
     LandscapeDiffPreviousLandscapeReceipt,
     /// Previous view model from a diff run.
     LandscapeDiffPreviousViewModel,
+    /// Previous auditor overview summary from a diff run.
+    LandscapeDiffPreviousOverview,
     /// Previous backend coverage items from a diff run.
     LandscapeDiffPreviousBackendCoverage,
     /// Previous claim explorer items from a diff run.
@@ -183,6 +187,8 @@ pub enum BelvedereCliArtifact {
     LandscapeDiffCurrentLandscapeReceipt,
     /// Current view model from a diff run.
     LandscapeDiffCurrentViewModel,
+    /// Current auditor overview summary from a diff run.
+    LandscapeDiffCurrentOverview,
     /// Current backend coverage items from a diff run.
     LandscapeDiffCurrentBackendCoverage,
     /// Current claim explorer items from a diff run.
@@ -239,6 +245,8 @@ pub enum BelvedereCliArtifact {
     LandscapeDiffLandscapeReceipt,
     /// Diff review view model from a diff run.
     LandscapeDiffViewModel,
+    /// Current-snapshot auditor overview summary from a diff run.
+    LandscapeDiffOverview,
     /// Current-snapshot backend coverage items from a diff run.
     LandscapeDiffBackendCoverage,
     /// Current-snapshot claim explorer items from a diff run.

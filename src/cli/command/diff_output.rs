@@ -76,6 +76,7 @@ fn diff_artifact(flag: &str) -> Option<BelvedereCliArtifact> {
             Some(BelvedereCliArtifact::LandscapeDiffPreviousLandscapeReceipt)
         }
         "--previous-view-model" => Some(BelvedereCliArtifact::LandscapeDiffPreviousViewModel),
+        "--previous-overview" => Some(BelvedereCliArtifact::LandscapeDiffPreviousOverview),
         "--previous-backend-coverage" => {
             Some(BelvedereCliArtifact::LandscapeDiffPreviousBackendCoverage)
         }
@@ -150,6 +151,7 @@ fn diff_artifact(flag: &str) -> Option<BelvedereCliArtifact> {
             Some(BelvedereCliArtifact::LandscapeDiffCurrentLandscapeReceipt)
         }
         "--current-view-model" => Some(BelvedereCliArtifact::LandscapeDiffCurrentViewModel),
+        "--current-overview" => Some(BelvedereCliArtifact::LandscapeDiffCurrentOverview),
         "--current-backend-coverage" => {
             Some(BelvedereCliArtifact::LandscapeDiffCurrentBackendCoverage)
         }
@@ -197,6 +199,7 @@ fn diff_artifact(flag: &str) -> Option<BelvedereCliArtifact> {
         "--landscape" => Some(BelvedereCliArtifact::LandscapeDiffLandscape),
         "--landscape-receipt" => Some(BelvedereCliArtifact::LandscapeDiffLandscapeReceipt),
         "--view-model" => Some(BelvedereCliArtifact::LandscapeDiffViewModel),
+        "--overview" => Some(BelvedereCliArtifact::LandscapeDiffOverview),
         "--backend-coverage" => Some(BelvedereCliArtifact::LandscapeDiffBackendCoverage),
         "--claim-explorer" => Some(BelvedereCliArtifact::LandscapeDiffClaimExplorer),
         "--claim-details" => Some(BelvedereCliArtifact::LandscapeDiffClaimDetails),

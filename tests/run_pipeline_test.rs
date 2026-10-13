@@ -230,7 +230,7 @@ fn run_pipeline_uses_the_normal_amenable_artifact_path() -> Result<()> {
     );
     assert_eq!(report.manifest().input_artifacts().len(), 2);
     assert_eq!(report.manifest().stage_certificates().len(), 5);
-    assert_eq!(report.manifest().output_artifacts().len(), 34);
+    assert_eq!(report.manifest().output_artifacts().len(), 35);
     assert!(
         report
             .manifest()
@@ -1107,6 +1107,7 @@ fn cli_help_is_a_successful_public_output_contract() -> Result<()> {
     assert!(help.contains("--current-assessment-receipt"));
     assert!(help.contains("--previous-landscape-receipt"));
     assert!(help.contains("--previous-view-model"));
+    assert!(help.contains("--previous-overview"));
     assert!(help.contains("--previous-backend-coverage"));
     assert!(help.contains("--previous-claim-explorer"));
     assert!(help.contains("--previous-claim-details"));
@@ -1128,6 +1129,7 @@ fn cli_help_is_a_successful_public_output_contract() -> Result<()> {
     assert!(help.contains("--previous-ui-ir-minted-standards"));
     assert!(help.contains("--previous-ui-ir-receipt"));
     assert!(help.contains("--current-landscape-receipt"));
+    assert!(help.contains("--current-overview"));
     assert!(help.contains("--current-backend-coverage"));
     assert!(help.contains("--current-claim-explorer"));
     assert!(help.contains("--current-claim-details"));
@@ -1150,6 +1152,7 @@ fn cli_help_is_a_successful_public_output_contract() -> Result<()> {
     assert!(help.contains("--registry-receipt"));
     assert!(help.contains("--assessment-receipt"));
     assert!(help.contains("--landscape-receipt"));
+    assert!(help.contains("--overview"));
     assert!(help.contains("--backend-coverage"));
     assert!(help.contains("--claim-explorer"));
     assert!(help.contains("--claim-details"));
@@ -2044,6 +2047,15 @@ fn assert_auditor_navigation_model(model: &Value) {
     }));
 }
 
+fn assert_auditor_overview(overview: &Value) {
+    assert_eq!(overview["claim_count"].as_u64(), Some(4));
+    assert_eq!(overview["root_count"].as_u64(), Some(3));
+    assert_eq!(
+        overview["assessment_recency"]["current_count"].as_u64(),
+        Some(2)
+    );
+}
+
 fn assert_backend_coverage(items: &Value) {
     assert_eq!(items.as_array().map(Vec::len), Some(12));
     assert!(items.as_array().is_some_and(|coverage| {
@@ -2576,6 +2588,15 @@ fn assert_previous_auditor_navigation_model(model: &Value) {
     }));
 }
 
+fn assert_previous_auditor_overview(overview: &Value) {
+    assert_eq!(overview["claim_count"].as_u64(), Some(3));
+    assert_eq!(overview["root_count"].as_u64(), Some(2));
+    assert_eq!(
+        overview["assessment_recency"]["current_count"].as_u64(),
+        Some(0)
+    );
+}
+
 fn assert_landscape_diff_review_model(model: &Value) {
     assert_eq!(model["summary"]["added_items"].as_u64(), Some(4));
     assert_eq!(model["summary"]["removed_items"].as_u64(), Some(1));
@@ -2927,7 +2948,7 @@ fn assert_run_manifest(manifest: &Value) {
     );
     assert_eq!(manifest["counts"]["input_artifacts"].as_u64(), Some(2));
     assert_eq!(manifest["counts"]["stage_certificates"].as_u64(), Some(5));
-    assert_eq!(manifest["counts"]["output_artifacts"].as_u64(), Some(34));
+    assert_eq!(manifest["counts"]["output_artifacts"].as_u64(), Some(35));
     assert_eq!(
         manifest["input_role_counts"]["manifest_input_role_registry"].as_u64(),
         Some(1)
@@ -2942,6 +2963,10 @@ fn assert_run_manifest(manifest: &Value) {
     );
     assert_eq!(
         manifest["output_kind_counts"]["manifest_output_kind_auditor_backend_coverage"].as_u64(),
+        Some(1)
+    );
+    assert_eq!(
+        manifest["output_kind_counts"]["manifest_output_kind_auditor_overview"].as_u64(),
         Some(1)
     );
     assert_eq!(
@@ -2978,7 +3003,7 @@ fn assert_run_manifest(manifest: &Value) {
     );
     assert_eq!(
         manifest["output_artifacts"].as_array().map(Vec::len),
-        Some(34)
+        Some(35)
     );
     assert!(
         manifest["output_artifacts"]
@@ -3002,6 +3027,14 @@ fn assert_run_manifest(manifest: &Value) {
                 })
             })
     );
+    assert!(manifest_output_artifact_matches(
+        manifest,
+        "overview",
+        "auditor_overview",
+        "belvedere.receipt.view_model:",
+        "auditor_navigation",
+        1,
+    ));
     assert!(manifest_output_artifact_matches(
         manifest,
         "backend_coverage",
@@ -3050,6 +3083,11 @@ fn assert_run_manifest(manifest: &Value) {
     ));
     assert!(manifest_output_artifact_has_selector(
         manifest,
+        "overview",
+        "--overview",
+    ));
+    assert!(manifest_output_artifact_has_selector(
+        manifest,
         "ui_ir_trace_widgets",
         "--ui-ir-trace-widgets",
     ));
@@ -3085,7 +3123,7 @@ fn assert_diff_manifest(manifest: &Value) {
     );
     assert_eq!(manifest["counts"]["input_artifacts"].as_u64(), Some(4));
     assert_eq!(manifest["counts"]["stage_certificates"].as_u64(), Some(13));
-    assert_eq!(manifest["counts"]["output_artifacts"].as_u64(), Some(96));
+    assert_eq!(manifest["counts"]["output_artifacts"].as_u64(), Some(99));
     assert_eq!(
         manifest["stage_kind_counts"]["manifest_stage_kind_registry_ingestion"].as_u64(),
         Some(2)
@@ -3122,6 +3160,10 @@ fn assert_diff_manifest(manifest: &Value) {
     );
     assert_eq!(
         manifest["output_kind_counts"]["manifest_output_kind_auditor_backend_coverage"].as_u64(),
+        Some(3)
+    );
+    assert_eq!(
+        manifest["output_kind_counts"]["manifest_output_kind_auditor_overview"].as_u64(),
         Some(3)
     );
     assert_eq!(
@@ -3223,6 +3265,19 @@ fn assert_diff_manifest(manifest: &Value) {
     );
     assert!(manifest_output_artifact_matches(
         manifest,
+        "previous_overview",
+        "auditor_overview",
+        "belvedere.receipt.view_model:",
+        "previous_auditor_navigation",
+        1,
+    ));
+    assert!(manifest_output_artifact_has_selector(
+        manifest,
+        "previous_overview",
+        "--previous-overview",
+    ));
+    assert!(manifest_output_artifact_matches(
+        manifest,
         "previous_backend_coverage",
         "auditor_backend_coverage",
         "belvedere.receipt.view_model:",
@@ -3231,11 +3286,37 @@ fn assert_diff_manifest(manifest: &Value) {
     ));
     assert!(manifest_output_artifact_matches(
         manifest,
+        "current_overview",
+        "auditor_overview",
+        "belvedere.receipt.view_model:",
+        "current_auditor_navigation",
+        1,
+    ));
+    assert!(manifest_output_artifact_has_selector(
+        manifest,
+        "current_overview",
+        "--current-overview",
+    ));
+    assert!(manifest_output_artifact_matches(
+        manifest,
         "current_backend_coverage",
         "auditor_backend_coverage",
         "belvedere.receipt.view_model:",
         "current_auditor_navigation",
         12,
+    ));
+    assert!(manifest_output_artifact_matches(
+        manifest,
+        "overview",
+        "auditor_overview",
+        "belvedere.receipt.view_model:",
+        "current_auditor_navigation",
+        1,
+    ));
+    assert!(manifest_output_artifact_has_selector(
+        manifest,
+        "overview",
+        "--overview",
     ));
     assert!(manifest_output_artifact_matches(
         manifest,
@@ -3937,11 +4018,16 @@ fn cli_can_emit_the_view_model_receipt_as_json() -> Result<()> {
 fn cli_can_emit_run_projection_artifacts_as_json() -> Result<()> {
     belvedere::init_tracing();
 
-    let cases: [(&str, BelvedereCliOutput, ReceiptAssertion); 19] = [
+    let cases: [(&str, BelvedereCliOutput, ReceiptAssertion); 20] = [
         (
             "--view-model",
             stdio_output(BelvedereCliArtifact::RunViewModel),
             assert_auditor_navigation_model,
+        ),
+        (
+            "--overview",
+            stdio_output(BelvedereCliArtifact::RunOverview),
+            assert_auditor_overview,
         ),
         (
             "--backend-coverage",
@@ -6163,11 +6249,16 @@ fn cli_can_emit_previous_diff_projection_artifacts_as_json() -> Result<()> {
         .into_diagnostic()
         .wrap_err("temporary empty assessment artifact should be writable")?;
 
-    let cases: [(&str, BelvedereCliOutput, ReceiptAssertion); 19] = [
+    let cases: [(&str, BelvedereCliOutput, ReceiptAssertion); 20] = [
         (
             "--previous-view-model",
             stdio_output(BelvedereCliArtifact::LandscapeDiffPreviousViewModel),
             assert_previous_auditor_navigation_model,
+        ),
+        (
+            "--previous-overview",
+            stdio_output(BelvedereCliArtifact::LandscapeDiffPreviousOverview),
+            assert_previous_auditor_overview,
         ),
         (
             "--previous-backend-coverage",
@@ -6562,11 +6653,16 @@ fn cli_can_emit_current_diff_projection_artifacts_as_json() -> Result<()> {
         .into_diagnostic()
         .wrap_err("temporary empty assessment artifact should be writable")?;
 
-    let cases: [(&str, BelvedereCliOutput, ReceiptAssertion); 19] = [
+    let cases: [(&str, BelvedereCliOutput, ReceiptAssertion); 20] = [
         (
             "--current-view-model",
             stdio_output(BelvedereCliArtifact::LandscapeDiffCurrentViewModel),
             assert_auditor_navigation_model,
+        ),
+        (
+            "--current-overview",
+            stdio_output(BelvedereCliArtifact::LandscapeDiffCurrentOverview),
+            assert_auditor_overview,
         ),
         (
             "--current-backend-coverage",
@@ -6829,11 +6925,16 @@ fn cli_can_emit_landscape_diff_projection_artifact_aliases_as_json() -> Result<(
         .into_diagnostic()
         .wrap_err("temporary empty assessment artifact should be writable")?;
 
-    let cases: [(&str, BelvedereCliOutput, ReceiptAssertion); 19] = [
+    let cases: [(&str, BelvedereCliOutput, ReceiptAssertion); 20] = [
         (
             "--view-model",
             stdio_output(BelvedereCliArtifact::LandscapeDiffViewModel),
             assert_landscape_diff_review_model,
+        ),
+        (
+            "--overview",
+            stdio_output(BelvedereCliArtifact::LandscapeDiffOverview),
+            assert_auditor_overview,
         ),
         (
             "--backend-coverage",

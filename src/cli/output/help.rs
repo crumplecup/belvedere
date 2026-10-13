@@ -28,6 +28,7 @@ Run artifacts:
       --landscape              Landscape graph.
       --landscape-receipt      Landscape receipt.
       --view-model             Auditor navigation view model.
+      --overview               Auditor overview summary.
       --backend-coverage       Backend coverage items.
       --claim-explorer         Claim explorer items.
       --claim-details          Claim detail deep-dive items.
@@ -69,6 +70,7 @@ Diff artifacts:
       --previous-landscape
       --previous-landscape-receipt
       --previous-view-model
+      --previous-overview
       --previous-backend-coverage
       --previous-claim-explorer
       --previous-claim-details
@@ -99,6 +101,7 @@ Diff artifacts:
       --current-landscape
       --current-landscape-receipt
       --current-view-model
+      --current-overview
       --current-backend-coverage
       --current-claim-explorer
       --current-claim-details
@@ -119,6 +122,7 @@ Diff artifacts:
       --current-ui-ir-viewports
       --current-ui-ir-minted-standards
       --current-ui-ir-receipt
+      --overview
       --ui-ir-sections
       --ui-ir-trace-widgets
       --ui-ir-viewports

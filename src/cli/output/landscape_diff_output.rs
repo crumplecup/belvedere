@@ -131,6 +131,9 @@ fn write_previous_snapshot_output(
         BelvedereCliArtifact::LandscapeDiffPreviousViewModel => {
             write_json_to_sink(diff.previous_view_model(), sink, writer)?;
         }
+        BelvedereCliArtifact::LandscapeDiffPreviousOverview => {
+            write_json_to_sink(diff.previous_view_model().overview(), sink, writer)?;
+        }
         BelvedereCliArtifact::LandscapeDiffPreviousBackendCoverage => {
             write_json_to_sink(diff.previous_view_model().backend_coverage(), sink, writer)?;
         }
@@ -227,6 +230,9 @@ fn write_current_snapshot_output(
         BelvedereCliArtifact::LandscapeDiffCurrentViewModel => {
             write_json_to_sink(diff.current_view_model(), sink, writer)?;
         }
+        BelvedereCliArtifact::LandscapeDiffCurrentOverview => {
+            write_json_to_sink(diff.current_view_model().overview(), sink, writer)?;
+        }
         BelvedereCliArtifact::LandscapeDiffCurrentBackendCoverage => {
             write_json_to_sink(diff.current_view_model().backend_coverage(), sink, writer)?;
         }
@@ -318,6 +324,9 @@ fn write_current_alias_output(
         }
         BelvedereCliArtifact::LandscapeDiffViewModel => {
             write_json_to_sink(diff.diff_view_model(), sink, writer)?;
+        }
+        BelvedereCliArtifact::LandscapeDiffOverview => {
+            write_json_to_sink(diff.current_view_model().overview(), sink, writer)?;
         }
         BelvedereCliArtifact::LandscapeDiffBackendCoverage => {
             write_json_to_sink(diff.current_view_model().backend_coverage(), sink, writer)?;

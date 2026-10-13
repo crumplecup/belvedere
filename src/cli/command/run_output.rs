@@ -63,6 +63,7 @@ fn run_artifact(flag: &str) -> Option<BelvedereCliArtifact> {
         "--landscape" => Some(BelvedereCliArtifact::RunLandscape),
         "--landscape-receipt" => Some(BelvedereCliArtifact::RunLandscapeReceipt),
         "--view-model" => Some(BelvedereCliArtifact::RunViewModel),
+        "--overview" => Some(BelvedereCliArtifact::RunOverview),
         "--backend-coverage" => Some(BelvedereCliArtifact::RunBackendCoverage),
         "--claim-explorer" => Some(BelvedereCliArtifact::RunClaimExplorer),
         "--claim-details" => Some(BelvedereCliArtifact::RunClaimDetails),

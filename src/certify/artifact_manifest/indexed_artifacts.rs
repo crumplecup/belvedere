@@ -352,6 +352,7 @@ fn prefixed_cli_selector(prefix: &str, role: &str) -> Option<String> {
 #[instrument(level = "trace", skip(role))]
 fn projection_cli_selector(role: &str) -> Option<&'static str> {
     match role {
+        "overview" => Some("--overview"),
         "backend_coverage" => Some("--backend-coverage"),
         "claim_explorer" => Some("--claim-explorer"),
         "claim_details" => Some("--claim-details"),
@@ -400,6 +401,7 @@ fn snapshot_flag_suffix(role: &str) -> Option<&'static str> {
 #[instrument(level = "trace", skip(role))]
 fn projection_flag_suffix(role: &str) -> Option<&'static str> {
     match role {
+        "overview" => Some("overview"),
         "backend_coverage" => Some("backend-coverage"),
         "claim_explorer" => Some("claim-explorer"),
         "claim_details" => Some("claim-details"),

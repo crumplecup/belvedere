@@ -18,6 +18,7 @@ pub(super) fn view_model_projection_outputs(
 ) -> Vec<BelvedereManifestOutputArtifact> {
     let counts = receipt.counts();
     [
+        ("overview", "auditor_overview", 1),
         (
             "backend_coverage",
             "auditor_backend_coverage",
