@@ -230,7 +230,7 @@ fn run_pipeline_uses_the_normal_amenable_artifact_path() -> Result<()> {
     );
     assert_eq!(report.manifest().input_artifacts().len(), 2);
     assert_eq!(report.manifest().stage_certificates().len(), 5);
-    assert_eq!(report.manifest().output_artifacts().len(), 29);
+    assert_eq!(report.manifest().output_artifacts().len(), 34);
     assert!(
         report
             .manifest()
@@ -1080,6 +1080,11 @@ fn cli_help_is_a_successful_public_output_contract() -> Result<()> {
     assert!(help.contains("--stdio"));
     assert!(help.contains("--file <path>"));
     assert!(help.contains("--certificate"));
+    assert!(help.contains("--registry-ingestion-certificate"));
+    assert!(help.contains("--assessment-ingestion-certificate"));
+    assert!(help.contains("--landscape-modeling-certificate"));
+    assert!(help.contains("--auditor-navigation-certificate"));
+    assert!(help.contains("--ui-ir-projection-certificate"));
     assert!(help.contains("--manifest"));
     assert!(help.contains("--run-certificate"));
     assert!(help.contains("--diff-review-certificate"));
@@ -2912,7 +2917,7 @@ fn assert_run_manifest(manifest: &Value) {
     );
     assert_eq!(manifest["counts"]["input_artifacts"].as_u64(), Some(2));
     assert_eq!(manifest["counts"]["stage_certificates"].as_u64(), Some(5));
-    assert_eq!(manifest["counts"]["output_artifacts"].as_u64(), Some(29));
+    assert_eq!(manifest["counts"]["output_artifacts"].as_u64(), Some(34));
     assert_eq!(
         manifest["input_role_counts"]["manifest_input_role_registry"].as_u64(),
         Some(1)
@@ -2932,6 +2937,10 @@ fn assert_run_manifest(manifest: &Value) {
     assert_eq!(
         manifest["output_kind_counts"]["manifest_output_kind_elicit_ui_trace_widgets"].as_u64(),
         Some(1)
+    );
+    assert_eq!(
+        manifest["output_kind_counts"]["manifest_output_kind_stage_certificate"].as_u64(),
+        Some(5)
     );
     assert!(
         manifest["invariant_checks"]
@@ -2959,7 +2968,7 @@ fn assert_run_manifest(manifest: &Value) {
     );
     assert_eq!(
         manifest["output_artifacts"].as_array().map(Vec::len),
-        Some(29)
+        Some(34)
     );
     assert!(
         manifest["output_artifacts"]
@@ -3003,6 +3012,31 @@ fn assert_run_manifest(manifest: &Value) {
         manifest,
         "run_certificate",
         "--certificate",
+    ));
+    assert!(manifest_output_artifact_has_selector(
+        manifest,
+        "registry_ingestion_certificate",
+        "--registry-ingestion-certificate",
+    ));
+    assert!(manifest_output_artifact_has_selector(
+        manifest,
+        "assessment_ingestion_certificate",
+        "--assessment-ingestion-certificate",
+    ));
+    assert!(manifest_output_artifact_has_selector(
+        manifest,
+        "landscape_modeling_certificate",
+        "--landscape-modeling-certificate",
+    ));
+    assert!(manifest_output_artifact_has_selector(
+        manifest,
+        "auditor_navigation_certificate",
+        "--auditor-navigation-certificate",
+    ));
+    assert!(manifest_output_artifact_has_selector(
+        manifest,
+        "ui_ir_projection_certificate",
+        "--ui-ir-projection-certificate",
     ));
     assert!(manifest_output_artifact_has_selector(
         manifest,
@@ -3492,6 +3526,102 @@ fn cli_can_emit_the_run_certificate_as_json() -> Result<()> {
             .map(Vec::len),
         Some(4)
     );
+    Ok(())
+}
+
+#[test]
+fn cli_can_emit_the_normal_run_stage_certificates_as_json() -> Result<()> {
+    belvedere::init_tracing();
+
+    let cases = [
+        (
+            "--registry-ingestion-certificate",
+            BelvedereCliArtifact::RunRegistryIngestionCertificate,
+            "registry_ingestion",
+            "belvedere.ingest.registry_dump",
+            5,
+        ),
+        (
+            "--assessment-ingestion-certificate",
+            BelvedereCliArtifact::RunAssessmentIngestionCertificate,
+            "assessment_ingestion",
+            "belvedere.ingest.proof_assessments",
+            2,
+        ),
+        (
+            "--landscape-modeling-certificate",
+            BelvedereCliArtifact::RunLandscapeModelingCertificate,
+            "landscape_modeling",
+            "belvedere.model.landscape",
+            19,
+        ),
+        (
+            "--auditor-navigation-certificate",
+            BelvedereCliArtifact::RunAuditorNavigationCertificate,
+            "auditor_navigation",
+            "belvedere.view_model.auditor_navigation",
+            60,
+        ),
+        (
+            "--ui-ir-projection-certificate",
+            BelvedereCliArtifact::RunUiIrProjectionCertificate,
+            "ui_ir_projection",
+            "belvedere.ui_ir.elicit_ui_projection",
+            153,
+        ),
+    ];
+
+    for (flag, artifact, stage, contract, output_count) in cases {
+        let args = [
+            flag,
+            "--stdio",
+            "tests/fixtures/registry_dump.json",
+            "tests/fixtures/proof_assessments.jsonl",
+        ]
+        .into_iter()
+        .map(str::to_owned)
+        .collect::<Vec<_>>();
+        let command = BelvedereCli::from_args(args.clone())
+            .into_diagnostic()
+            .wrap_err_with(|| format!("{flag} should be part of the public CLI API"))?;
+
+        assert_eq!(command.output(), stdio_output(artifact));
+
+        let mut output = Vec::new();
+        let status = run_cli_with_writer(args, &mut output);
+        assert_eq!(status, ExitCode::SUCCESS);
+
+        let certificate: Value = serde_json::from_slice(&output)
+            .into_diagnostic()
+            .wrap_err_with(|| format!("{flag} output should be parseable JSON"))?;
+        assert_eq!(
+            certificate["schema_id"].as_str(),
+            Some(BELVEDERE_STAGE_CERTIFICATE_SCHEMA_ID)
+        );
+        assert_eq!(
+            certificate["schema_version"].as_u64(),
+            Some(u64::from(BELVEDERE_STAGE_CERTIFICATE_SCHEMA_VERSION))
+        );
+        assert!(
+            certificate["id"]
+                .as_str()
+                .is_some_and(|id| id.starts_with("belvedere.stage."))
+        );
+        assert_eq!(certificate["stage"].as_str(), Some(stage));
+        assert_eq!(certificate["contract"].as_str(), Some(contract));
+        assert_eq!(
+            certificate["output_ids"].as_array().map(Vec::len),
+            Some(output_count)
+        );
+        assert!(
+            certificate["invariant_checks"]
+                .as_array()
+                .is_some_and(|checks| checks
+                    .iter()
+                    .all(|check| check["passed"].as_bool() == Some(true)))
+        );
+    }
+
     Ok(())
 }
 

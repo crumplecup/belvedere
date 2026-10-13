@@ -18,6 +18,21 @@ pub(super) fn write_run_output(
 ) -> Result<(), BelvedereError> {
     match artifact {
         BelvedereCliArtifact::RunCertificate => write_json_to_sink(run.certificate(), sink, writer),
+        BelvedereCliArtifact::RunRegistryIngestionCertificate => {
+            write_run_stage_certificate(run, 0, sink, writer)
+        }
+        BelvedereCliArtifact::RunAssessmentIngestionCertificate => {
+            write_run_stage_certificate(run, 1, sink, writer)
+        }
+        BelvedereCliArtifact::RunLandscapeModelingCertificate => {
+            write_run_stage_certificate(run, 2, sink, writer)
+        }
+        BelvedereCliArtifact::RunAuditorNavigationCertificate => {
+            write_run_stage_certificate(run, 3, sink, writer)
+        }
+        BelvedereCliArtifact::RunUiIrProjectionCertificate => {
+            write_run_stage_certificate(run, 4, sink, writer)
+        }
         BelvedereCliArtifact::RunManifest => write_json_to_sink(run.manifest(), sink, writer),
         BelvedereCliArtifact::RunRegistryReceipt => {
             write_json_to_sink(run.registry_receipt(), sink, writer)
@@ -88,4 +103,22 @@ pub(super) fn write_run_output(
         }
         _ => Err(BelvedereCliUsageError::new().into()),
     }
+}
+
+#[instrument(level = "debug", skip(run, sink, writer))]
+fn write_run_stage_certificate(
+    run: &BelvedereRunReport,
+    source_stage_index: usize,
+    sink: &BelvedereCliOutputSink,
+    writer: impl Write,
+) -> Result<(), BelvedereError> {
+    let Some(certificate) = run
+        .certificate()
+        .stage_certificates()
+        .get(source_stage_index)
+    else {
+        return Err(BelvedereCliUsageError::new().into());
+    };
+
+    write_json_to_sink(certificate, sink, writer)
 }

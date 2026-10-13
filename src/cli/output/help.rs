@@ -12,6 +12,16 @@ Options:
 
 Run artifacts:
       --certificate            Complete run certificate.
+      --registry-ingestion-certificate
+                               Registry ingestion stage certificate.
+      --assessment-ingestion-certificate
+                               Assessment ingestion stage certificate.
+      --landscape-modeling-certificate
+                               Landscape modeling stage certificate.
+      --auditor-navigation-certificate
+                               Auditor navigation stage certificate.
+      --ui-ir-projection-certificate
+                               UI IR projection stage certificate.
       --manifest               Run artifact manifest.
       --registry-receipt       Registry ingestion receipt.
       --assessment-receipt     Assessment ingestion receipt.

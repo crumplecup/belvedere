@@ -37,6 +37,16 @@ pub enum BelvedereCliOutput {
 pub enum BelvedereCliArtifact {
     /// Complete normal run certificate.
     RunCertificate,
+    /// Normal run registry ingestion stage certificate.
+    RunRegistryIngestionCertificate,
+    /// Normal run assessment ingestion stage certificate.
+    RunAssessmentIngestionCertificate,
+    /// Normal run landscape modeling stage certificate.
+    RunLandscapeModelingCertificate,
+    /// Normal run auditor navigation stage certificate.
+    RunAuditorNavigationCertificate,
+    /// Normal run UI IR projection stage certificate.
+    RunUiIrProjectionCertificate,
     /// Normal run artifact manifest.
     RunManifest,
     /// Normal run registry ingestion receipt.

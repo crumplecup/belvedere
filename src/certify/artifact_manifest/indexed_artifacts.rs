@@ -316,6 +316,11 @@ fn cli_selector_for_role(role: &str) -> Option<String> {
     }
 
     match role {
+        "registry_ingestion_certificate" => Some("--registry-ingestion-certificate".to_owned()),
+        "assessment_ingestion_certificate" => Some("--assessment-ingestion-certificate".to_owned()),
+        "landscape_modeling_certificate" => Some("--landscape-modeling-certificate".to_owned()),
+        "auditor_navigation_certificate" => Some("--auditor-navigation-certificate".to_owned()),
+        "ui_ir_projection_certificate" => Some("--ui-ir-projection-certificate".to_owned()),
         "registry_receipt" => Some("--registry-receipt".to_owned()),
         "assessment_receipt" => Some("--assessment-receipt".to_owned()),
         "landscape_graph" => Some("--landscape".to_owned()),

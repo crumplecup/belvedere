@@ -42,6 +42,21 @@ impl BelvedereCli {
 fn run_artifact(flag: &str) -> Option<BelvedereCliArtifact> {
     match flag {
         "--certificate" => Some(BelvedereCliArtifact::RunCertificate),
+        "--registry-ingestion-certificate" => {
+            Some(BelvedereCliArtifact::RunRegistryIngestionCertificate)
+        }
+        "--assessment-ingestion-certificate" => {
+            Some(BelvedereCliArtifact::RunAssessmentIngestionCertificate)
+        }
+        "--landscape-modeling-certificate" => {
+            Some(BelvedereCliArtifact::RunLandscapeModelingCertificate)
+        }
+        "--auditor-navigation-certificate" => {
+            Some(BelvedereCliArtifact::RunAuditorNavigationCertificate)
+        }
+        "--ui-ir-projection-certificate" => {
+            Some(BelvedereCliArtifact::RunUiIrProjectionCertificate)
+        }
         "--manifest" => Some(BelvedereCliArtifact::RunManifest),
         "--registry-receipt" => Some(BelvedereCliArtifact::RunRegistryReceipt),
         "--assessment-receipt" => Some(BelvedereCliArtifact::RunAssessmentReceipt),
