@@ -68,7 +68,7 @@ impl BelvedereExchange<ElicitUiProjectionContract> for ElicitUiProjection {
     type Error = UiIrError;
 
     #[instrument(level = "trace", skip(self, input))]
-    fn exchange(&self, input: UiIrInput) -> Result<(UiIrProjection, UiIrReceipt), Self::Error> {
+    fn transform(&self, input: &UiIrInput) -> Result<(UiIrProjection, UiIrReceipt), Self::Error> {
         let model = input.model();
         let backend = AccessKitUiBackend::new();
         let mut trace_widgets = Vec::new();

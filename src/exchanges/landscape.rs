@@ -49,9 +49,9 @@ impl BelvedereExchange<LandscapeModelingContract> for LandscapeModeling {
     type Error = BelvedereError;
 
     #[instrument(level = "trace", skip(self, input))]
-    fn exchange(
+    fn transform(
         &self,
-        input: LandscapeInput,
+        input: &LandscapeInput,
     ) -> Result<(LandscapeGraph, LandscapeReceipt), Self::Error> {
         let mut claims = BTreeMap::new();
         let mut edges = Vec::new();

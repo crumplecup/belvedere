@@ -46,11 +46,11 @@ impl BelvedereExchange<ElicitUiMetadataProjectionContract> for ElicitUiMetadataP
     type Error = UiIrError;
 
     #[instrument(level = "trace", skip(self, input))]
-    fn exchange(
+    fn transform(
         &self,
-        input: MetadataUiIrInput,
+        input: &MetadataUiIrInput,
     ) -> Result<(UiIrProjection, MetadataUiIrReceipt), Self::Error> {
-        let input_digest = digest_input(&input);
+        let input_digest = digest_input(input);
         let backend = AccessKitUiBackend::new();
         let mut trace_widgets = Vec::new();
         let mut widgets = Vec::with_capacity(input.fields().len() + 1);

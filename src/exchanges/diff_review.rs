@@ -43,9 +43,9 @@ impl BelvedereExchange<LandscapeDiffReviewContract> for LandscapeDiffReviewProje
     type Error = BelvedereError;
 
     #[instrument(level = "trace", skip(self, input))]
-    fn exchange(
+    fn transform(
         &self,
-        input: LandscapeDiffReviewInput,
+        input: &LandscapeDiffReviewInput,
     ) -> Result<(LandscapeDiffReviewModel, LandscapeDiffReviewReceipt), Self::Error> {
         let items = input
             .diff()

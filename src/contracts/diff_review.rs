@@ -6,11 +6,14 @@ use serde::Serialize;
 use tracing::instrument;
 
 use crate::{
-    certify::{LandscapeDiffReceipt, LandscapeDiffReviewReceipt},
+    certify::{
+        BelvedereCertificationError, BelvedereStageCertificate, LandscapeDiffReceipt,
+        LandscapeDiffReviewReceipt,
+    },
     contracts::{
         BelvedereContract, LandscapeDiff, LandscapeDiffChangeKind, LandscapeDiffItem,
         LandscapeDiffReviewAction, LandscapeDiffReviewPriority, TraceRef,
-        VIEW_MODEL_FIDELITY_STANDARD_ID,
+        VIEW_MODEL_FIDELITY_STANDARD_ID, require_transition,
     },
 };
 
@@ -185,6 +188,49 @@ impl BelvedereContract for LandscapeDiffReviewContract {
     type Receipt = LandscapeDiffReviewReceipt;
 
     const NAME: &'static str = "belvedere.view_model.landscape_diff_review";
+
+    #[instrument(level = "trace", skip(input, output, receipt))]
+    fn verify_transition(
+        input: &Self::Input,
+        output: &Self::Output,
+        receipt: &Self::Receipt,
+    ) -> Result<(), BelvedereCertificationError> {
+        let items_preserved = input.diff().items().len() == output.items().len()
+            && input
+                .diff()
+                .items()
+                .iter()
+                .zip(output.items())
+                .all(|(source, item)| {
+                    item.diff_item_id() == source.item_id()
+                        && item.change_kind() == source.change_kind()
+                        && item.review_priority() == source.review_priority()
+                        && item.review_action() == source.review_action()
+                        && item.subject_kind() == source.subject_kind()
+                        && item.subject_id() == source.subject_id()
+                        && item.summary() == source.summary()
+                        && item.trace() == source.trace()
+                });
+        require_transition::<Self>([
+            ("review_items_preserve_diff", items_preserved),
+            (
+                "review_sources_preserved",
+                output.source_record_ids() == input.diff().source_record_ids(),
+            ),
+            (
+                "review_receipt_input_binding",
+                receipt.source_diff_receipt_id() == input.source_diff_receipt_id()
+                    && receipt.source_diff_receipt_digest() == input.source_diff_receipt_digest(),
+            ),
+            (
+                "review_receipt_output_binding",
+                receipt.source_record_ids() == output.source_record_ids()
+                    && receipt.counts().total_items() == output.items().len(),
+            ),
+        ])?;
+        BelvedereStageCertificate::landscape_diff_review(receipt)?;
+        Ok(())
+    }
 
     #[instrument(level = "trace")]
     fn requires() -> &'static [&'static str] {

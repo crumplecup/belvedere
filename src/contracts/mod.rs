@@ -12,6 +12,7 @@ mod ui_ir;
 mod view_model;
 
 pub use contract::BelvedereContract;
+pub(crate) use contract::require_transition;
 pub use diff::{
     LandscapeDiff, LandscapeDiffChangeKind, LandscapeDiffContract, LandscapeDiffInput,
     LandscapeDiffItem, LandscapeDiffReviewAction, LandscapeDiffReviewGuidance,

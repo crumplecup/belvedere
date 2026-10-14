@@ -6,8 +6,12 @@ use derive_getters::Getters;
 use serde::Serialize;
 use tracing::instrument;
 
-use crate::contracts::{
-    ACCESSIBILITY_BASELINE_STANDARD_ID, BelvedereContract, UI_PROJECTION_FIDELITY_STANDARD_ID,
+use crate::{
+    certify::BelvedereCertificationError,
+    contracts::{
+        ACCESSIBILITY_BASELINE_STANDARD_ID, BelvedereContract, UI_PROJECTION_FIDELITY_STANDARD_ID,
+        require_transition,
+    },
 };
 
 use super::UiIrProjection;
@@ -119,6 +123,40 @@ impl BelvedereContract for ElicitUiMetadataProjectionContract {
     type Receipt = MetadataUiIrReceipt;
 
     const NAME: &'static str = "belvedere.ui_ir.metadata_projection";
+
+    #[instrument(level = "trace", skip(input, output, receipt))]
+    fn verify_transition(
+        input: &Self::Input,
+        output: &Self::Output,
+        receipt: &Self::Receipt,
+    ) -> Result<(), BelvedereCertificationError> {
+        let widgets = output.trace_widgets();
+        let fields_preserved = widgets.len() == input.fields().len() + 1
+            && widgets.first().is_some_and(|widget| {
+                widget.label() == input.heading()
+                    && widget.source_record_ids() == &vec![input.source_id().to_owned()]
+            })
+            && input
+                .fields()
+                .iter()
+                .zip(widgets.iter().skip(1))
+                .all(|(field, widget)| {
+                    widget.label() == &format!("{}: {}", field.key(), field.value())
+                        && widget.item_id() == &format!("{}:{}", field.ordinal(), field.key())
+                        && widget.source_record_ids() == &vec![input.source_id().to_owned()]
+                });
+        require_transition::<Self>([
+            ("metadata_fields_preserved_in_order", fields_preserved),
+            (
+                "metadata_receipt_source_binding",
+                receipt.source_id() == input.source_id(),
+            ),
+            (
+                "metadata_receipt_count_binding",
+                receipt.field_count() == input.fields().len(),
+            ),
+        ])
+    }
 
     #[instrument(level = "trace")]
     fn requires() -> &'static [&'static str] {

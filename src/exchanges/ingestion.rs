@@ -8,7 +8,7 @@ use thiserror::Error;
 use tracing::instrument;
 
 use crate::{
-    certify::IngestionReceipt,
+    certify::{BelvedereCertificationError, IngestionReceipt},
     contracts::{
         AcceptedAmenableArtifactFormat, ArtifactKind, AssessmentRecord,
         AssessmentStreamIngestionContract, BelvedereContract, DecodedAssessmentStream,
@@ -94,8 +94,17 @@ impl IngestionError {
             IngestionErrorKind::WrongArtifactKind(source) => Some(source),
             IngestionErrorKind::Utf8(_)
             | IngestionErrorKind::Json(_)
-            | IngestionErrorKind::JsonLine(_) => None,
+            | IngestionErrorKind::JsonLine(_)
+            | IngestionErrorKind::Certification(_) => None,
         }
+    }
+}
+
+impl From<BelvedereCertificationError> for IngestionError {
+    #[track_caller]
+    #[instrument(level = "debug", skip(source))]
+    fn from(source: BelvedereCertificationError) -> Self {
+        Self::new(IngestionErrorKind::Certification(source))
     }
 }
 
@@ -109,6 +118,8 @@ enum IngestionErrorKind {
     Json(JsonIngestionError),
     #[error(transparent)]
     JsonLine(JsonLineIngestionError),
+    #[error(transparent)]
+    Certification(BelvedereCertificationError),
 }
 
 /// Artifact-kind mismatch details.
@@ -246,20 +257,20 @@ impl BelvedereExchange<RegistryDumpIngestionContract> for RegistryDumpIngestion 
     type Error = IngestionError;
 
     #[instrument(level = "trace", skip(self, input))]
-    fn exchange(
+    fn transform(
         &self,
-        input: RawAmenableArtifact,
+        input: &RawAmenableArtifact,
     ) -> Result<(DecodedRegistrySnapshot, IngestionReceipt), Self::Error> {
         ensure_kind::<RegistryDumpIngestionContract>(
-            &input,
+            input,
             AcceptedAmenableArtifactFormat::RegistryDumpJson,
         )?;
 
         let snapshot: DecodedRegistrySnapshot =
-            decode_json(&input, AcceptedAmenableArtifactFormat::RegistryDumpJson)?;
+            decode_json(input, AcceptedAmenableArtifactFormat::RegistryDumpJson)?;
         let receipt = IngestionReceipt::new(
             RegistryDumpIngestionContract::NAME,
-            &input,
+            input,
             AcceptedAmenableArtifactFormat::RegistryDumpJson,
             snapshot.decoded_counts(),
             snapshot.unsupported_fields(),
@@ -293,12 +304,12 @@ impl BelvedereExchange<AssessmentStreamIngestionContract> for AssessmentStreamIn
     type Error = IngestionError;
 
     #[instrument(level = "trace", skip(self, input))]
-    fn exchange(
+    fn transform(
         &self,
-        input: RawAmenableArtifact,
+        input: &RawAmenableArtifact,
     ) -> Result<(DecodedAssessmentStream, IngestionReceipt), Self::Error> {
         ensure_kind::<AssessmentStreamIngestionContract>(
-            &input,
+            input,
             AcceptedAmenableArtifactFormat::ProofAssessmentJsonLines,
         )?;
 
@@ -326,7 +337,7 @@ impl BelvedereExchange<AssessmentStreamIngestionContract> for AssessmentStreamIn
         let stream = DecodedAssessmentStream::new(assessments?);
         let receipt = IngestionReceipt::new(
             AssessmentStreamIngestionContract::NAME,
-            &input,
+            input,
             AcceptedAmenableArtifactFormat::ProofAssessmentJsonLines,
             stream.decoded_counts(),
             stream.unsupported_fields(),

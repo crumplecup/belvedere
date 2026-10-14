@@ -9,10 +9,12 @@ use serde::Serialize;
 use tracing::instrument;
 
 use crate::{
-    certify::{IngestionReceipt, LandscapeReceipt},
+    certify::{
+        BelvedereCertificationError, BelvedereStageCertificate, IngestionReceipt, LandscapeReceipt,
+    },
     contracts::{
         BelvedereContract, DecodedAssessmentStream, DecodedRegistrySnapshot,
-        GAP_SOUNDNESS_STANDARD_ID, LANDSCAPE_CONSTRUCTION_STANDARD_ID,
+        GAP_SOUNDNESS_STANDARD_ID, LANDSCAPE_CONSTRUCTION_STANDARD_ID, require_transition,
     },
 };
 
@@ -126,6 +128,51 @@ impl BelvedereContract for LandscapeModelingContract {
     type Receipt = LandscapeReceipt;
 
     const NAME: &'static str = "belvedere.model.landscape";
+
+    #[instrument(level = "trace", skip(input, output, receipt))]
+    fn verify_transition(
+        input: &Self::Input,
+        output: &Self::Output,
+        receipt: &Self::Receipt,
+    ) -> Result<(), BelvedereCertificationError> {
+        let expected_edges = input
+            .registry()
+            .evidence_links()
+            .iter()
+            .map(|link| ClaimEdge::new(link.name(), link.basis(), link.index()))
+            .collect::<Vec<_>>();
+        let expected_sources = input
+            .registry()
+            .source_record_ids()
+            .into_iter()
+            .chain(input.assessments().source_record_ids())
+            .collect::<Vec<_>>();
+        require_transition::<Self>([
+            (
+                "landscape_edges_complete",
+                output.edges() == &expected_edges,
+            ),
+            (
+                "landscape_source_occurrences_complete",
+                output.source_record_ids() == &expected_sources,
+            ),
+            (
+                "landscape_receipt_source_binding",
+                receipt.source_receipt_ids() == input.source_receipt_ids()
+                    && receipt.source_receipt_digests() == input.source_receipt_digests(),
+            ),
+            (
+                "landscape_receipt_output_binding",
+                receipt.source_record_ids() == output.source_record_ids()
+                    && receipt.claim_count() == output.claims().len()
+                    && receipt.edge_count() == output.edges().len()
+                    && receipt.assessment_count() == output.assessments().len()
+                    && receipt.gap_count() == output.gaps().len(),
+            ),
+        ])?;
+        BelvedereStageCertificate::landscape_modeling(receipt)?;
+        Ok(())
+    }
 
     #[instrument(level = "trace")]
     fn requires() -> &'static [&'static str] {

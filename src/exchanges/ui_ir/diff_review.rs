@@ -51,9 +51,9 @@ impl BelvedereExchange<ElicitUiDiffReviewProjectionContract> for ElicitUiDiffRev
     type Error = UiIrError;
 
     #[instrument(level = "trace", skip(self, input))]
-    fn exchange(
+    fn transform(
         &self,
-        input: DiffReviewUiIrInput,
+        input: &DiffReviewUiIrInput,
     ) -> Result<(UiIrProjection, UiIrReceipt), Self::Error> {
         let model = input.model();
         let backend = AccessKitUiBackend::new();

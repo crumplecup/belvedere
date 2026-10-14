@@ -1,15 +1,20 @@
 //! Landscape snapshot diff contracts and evidence types.
 
+use std::collections::BTreeSet;
+
 use derive_getters::Getters;
 use derive_new::new;
 use serde::Serialize;
 use tracing::instrument;
 
 use crate::{
-    certify::{LandscapeDiffReceipt, LandscapeReceipt},
+    certify::{
+        BelvedereCertificationError, BelvedereStageCertificate, LandscapeDiffReceipt,
+        LandscapeReceipt,
+    },
     contracts::{
         BelvedereContract, LANDSCAPE_DIFF_FIDELITY_STANDARD_ID, LandscapeGraph,
-        REPORT_REPRODUCIBILITY_STANDARD_ID, TraceRef,
+        REPORT_REPRODUCIBILITY_STANDARD_ID, TraceRef, require_transition,
     },
 };
 
@@ -207,6 +212,50 @@ impl BelvedereContract for LandscapeDiffContract {
     type Receipt = LandscapeDiffReceipt;
 
     const NAME: &'static str = "belvedere.diff.landscape";
+
+    #[instrument(level = "trace", skip(input, output, receipt))]
+    fn verify_transition(
+        input: &Self::Input,
+        output: &Self::Output,
+        receipt: &Self::Receipt,
+    ) -> Result<(), BelvedereCertificationError> {
+        let sources = input
+            .previous()
+            .source_record_ids()
+            .iter()
+            .chain(input.current().source_record_ids())
+            .cloned()
+            .collect::<BTreeSet<_>>();
+        let item_ids = output
+            .items()
+            .iter()
+            .map(|item| item.item_id().clone())
+            .collect::<Vec<_>>();
+        require_transition::<Self>([
+            (
+                "diff_source_binding",
+                output.source_record_ids() == &sources.into_iter().collect::<Vec<_>>(),
+            ),
+            (
+                "diff_receipt_input_binding",
+                receipt.source_landscape_receipt_ids() == input.source_landscape_receipt_ids()
+                    && receipt.source_landscape_receipt_digests()
+                        == input.source_landscape_receipt_digests(),
+            ),
+            (
+                "diff_receipt_output_binding",
+                receipt.source_record_ids() == output.source_record_ids()
+                    && receipt.diff_item_ids() == &item_ids
+                    && receipt.counts().total_items() == output.items().len(),
+            ),
+            (
+                "diff_item_identity_unique",
+                item_ids.iter().collect::<BTreeSet<_>>().len() == item_ids.len(),
+            ),
+        ])?;
+        BelvedereStageCertificate::landscape_diff(receipt)?;
+        Ok(())
+    }
 
     #[instrument(level = "trace")]
     fn requires() -> &'static [&'static str] {

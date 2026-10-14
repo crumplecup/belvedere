@@ -67,9 +67,9 @@ impl BelvedereExchange<AuditorNavigationContract> for AuditorNavigationProjectio
     type Error = BelvedereError;
 
     #[instrument(level = "trace", skip(self, input))]
-    fn exchange(
+    fn transform(
         &self,
-        input: ViewModelInput,
+        input: &ViewModelInput,
     ) -> Result<(AuditorNavigationModel, ViewModelReceipt), Self::Error> {
         let landscape = input.landscape();
         let source_record_ids = landscape.source_record_ids().to_vec();

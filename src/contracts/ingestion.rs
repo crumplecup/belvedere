@@ -11,8 +11,11 @@ use sha2::{Digest as _, Sha256};
 use tracing::instrument;
 
 use crate::{
-    certify::IngestionReceipt,
-    contracts::{BelvedereContract, INPUT_FIDELITY_STANDARD_ID, SCHEMA_HONESTY_STANDARD_ID},
+    certify::{BelvedereCertificationError, BelvedereStageCertificate, IngestionReceipt},
+    contracts::{
+        BelvedereContract, INPUT_FIDELITY_STANDARD_ID, SCHEMA_HONESTY_STANDARD_ID,
+        require_transition,
+    },
 };
 
 mod assessment;
@@ -143,6 +146,40 @@ impl BelvedereContract for RegistryDumpIngestionContract {
 
     const NAME: &'static str = "belvedere.ingest.registry_dump";
 
+    #[instrument(level = "trace", skip(input, output, receipt))]
+    fn verify_transition(
+        input: &Self::Input,
+        output: &Self::Output,
+        receipt: &Self::Receipt,
+    ) -> Result<(), BelvedereCertificationError> {
+        let parsed = serde_json::from_slice::<DecodedRegistrySnapshot>(input.bytes());
+        require_transition::<Self>([
+            (
+                "registry_input_kind",
+                input.kind() == ArtifactKind::RegistryDump,
+            ),
+            (
+                "registry_decoded_payload_fidelity",
+                parsed.is_ok_and(|value| value == *output),
+            ),
+            (
+                "registry_receipt_binding",
+                *receipt
+                    == IngestionReceipt::new(
+                        Self::NAME,
+                        input,
+                        AcceptedAmenableArtifactFormat::RegistryDumpJson,
+                        output.decoded_counts(),
+                        output.unsupported_fields(),
+                        Vec::new(),
+                        output.source_record_ids(),
+                    ),
+            ),
+        ])?;
+        BelvedereStageCertificate::registry_ingestion(receipt)?;
+        Ok(())
+    }
+
     #[instrument(level = "trace")]
     fn requires() -> &'static [&'static str] {
         &[
@@ -178,6 +215,52 @@ impl BelvedereContract for AssessmentStreamIngestionContract {
     type Receipt = IngestionReceipt;
 
     const NAME: &'static str = "belvedere.ingest.proof_assessments";
+
+    #[instrument(level = "trace", skip(input, output, receipt))]
+    fn verify_transition(
+        input: &Self::Input,
+        output: &Self::Output,
+        receipt: &Self::Receipt,
+    ) -> Result<(), BelvedereCertificationError> {
+        let parsed = std::str::from_utf8(input.bytes()).ok().map(|source| {
+            source
+                .lines()
+                .enumerate()
+                .filter(|(_, line)| !line.trim().is_empty())
+                .map(|(index, line)| {
+                    serde_json::from_str::<AssessmentRecord>(line)
+                        .map(|record| record.with_source_line(index + 1))
+                })
+                .collect::<Result<Vec<_>, _>>()
+        });
+        require_transition::<Self>([
+            (
+                "assessment_input_kind",
+                input.kind() == ArtifactKind::ProofAssessments,
+            ),
+            (
+                "assessment_decoded_payload_fidelity",
+                parsed.is_some_and(|result| {
+                    result.is_ok_and(|records| records == *output.assessments())
+                }),
+            ),
+            (
+                "assessment_receipt_binding",
+                *receipt
+                    == IngestionReceipt::new(
+                        Self::NAME,
+                        input,
+                        AcceptedAmenableArtifactFormat::ProofAssessmentJsonLines,
+                        output.decoded_counts(),
+                        output.unsupported_fields(),
+                        Vec::new(),
+                        output.source_record_ids(),
+                    ),
+            ),
+        ])?;
+        BelvedereStageCertificate::assessment_ingestion(receipt)?;
+        Ok(())
+    }
 
     #[instrument(level = "trace")]
     fn requires() -> &'static [&'static str] {

@@ -1,5 +1,7 @@
 //! UI-neutral auditor navigation view-model contracts.
 
+use std::collections::BTreeSet;
+
 use derive_builder::Builder;
 use derive_getters::Getters;
 use derive_new::new;
@@ -7,8 +9,12 @@ use serde::Serialize;
 use tracing::instrument;
 
 use crate::{
-    certify::{LandscapeReceipt, ViewModelReceipt},
-    contracts::{BelvedereContract, LandscapeGraph, VIEW_MODEL_FIDELITY_STANDARD_ID},
+    certify::{
+        BelvedereCertificationError, BelvedereStageCertificate, LandscapeReceipt, ViewModelReceipt,
+    },
+    contracts::{
+        BelvedereContract, LandscapeGraph, VIEW_MODEL_FIDELITY_STANDARD_ID, require_transition,
+    },
 };
 
 mod items;
@@ -212,6 +218,50 @@ impl BelvedereContract for AuditorNavigationContract {
     type Receipt = ViewModelReceipt;
 
     const NAME: &'static str = "belvedere.view_model.auditor_navigation";
+
+    #[instrument(level = "trace", skip(input, output, receipt))]
+    fn verify_transition(
+        input: &Self::Input,
+        output: &Self::Output,
+        receipt: &Self::Receipt,
+    ) -> Result<(), BelvedereCertificationError> {
+        let expected_claims = input
+            .landscape()
+            .claims()
+            .keys()
+            .cloned()
+            .collect::<BTreeSet<_>>();
+        let actual_claims = output
+            .claim_explorer()
+            .iter()
+            .map(|item| item.claim_id().clone())
+            .collect::<BTreeSet<_>>();
+        require_transition::<Self>([
+            (
+                "view_claims_complete",
+                expected_claims == actual_claims
+                    && output.claim_explorer().len() == expected_claims.len(),
+            ),
+            (
+                "view_source_occurrences_complete",
+                output.source_record_ids() == input.landscape().source_record_ids(),
+            ),
+            (
+                "view_receipt_source_binding",
+                receipt.source_landscape_receipt_id() == input.source_landscape_receipt_id()
+                    && receipt.source_landscape_receipt_digest()
+                        == input.source_landscape_receipt_digest(),
+            ),
+            (
+                "view_receipt_output_binding",
+                receipt.source_record_ids() == output.source_record_ids()
+                    && receipt.counts().claim_cards() == output.claim_explorer().len()
+                    && receipt.counts().source_items() == output.source_navigation().len(),
+            ),
+        ])?;
+        BelvedereStageCertificate::auditor_navigation(receipt)?;
+        Ok(())
+    }
 
     #[instrument(level = "trace")]
     fn requires() -> &'static [&'static str] {

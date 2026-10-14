@@ -48,12 +48,12 @@ impl BelvedereExchange<LandscapeDiffContract> for LandscapeDiffing {
     type Error = BelvedereError;
 
     #[instrument(level = "trace", skip(self, input))]
-    fn exchange(
+    fn transform(
         &self,
-        input: LandscapeDiffInput,
+        input: &LandscapeDiffInput,
     ) -> Result<(LandscapeDiff, LandscapeDiffReceipt), Self::Error> {
-        let source_record_ids = merged_source_record_ids(&input);
-        let items = diff_items(&input, &source_record_ids);
+        let source_record_ids = merged_source_record_ids(input);
+        let items = diff_items(input, &source_record_ids);
 
         let counts = diff_counts(&items);
         let diff = LandscapeDiff::new(items, source_record_ids.clone());

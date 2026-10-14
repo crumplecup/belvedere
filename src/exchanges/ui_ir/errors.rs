@@ -5,7 +5,7 @@ use std::{error::Error as StdError, panic::Location};
 use thiserror::Error;
 use tracing::instrument;
 
-use crate::error::BelvedereConstructionError;
+use crate::{certify::BelvedereCertificationError, error::BelvedereConstructionError};
 
 /// Errors raised while projecting into `elicit_ui`.
 #[derive(Debug, Error)]
@@ -49,12 +49,22 @@ impl UiIrError {
     }
 }
 
+impl From<BelvedereCertificationError> for UiIrError {
+    #[track_caller]
+    #[instrument(level = "debug", skip(source))]
+    fn from(source: BelvedereCertificationError) -> Self {
+        Self::new(UiIrErrorKind::Certification(source))
+    }
+}
+
 #[derive(Debug, Error)]
 enum UiIrErrorKind {
     #[error(transparent)]
     ElicitUi(ElicitUiProjectionError),
     #[error(transparent)]
     Construction(BelvedereConstructionError),
+    #[error(transparent)]
+    Certification(BelvedereCertificationError),
 }
 
 #[derive(Debug, Error)]
