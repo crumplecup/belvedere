@@ -1,3 +1,5 @@
+use std::collections::BTreeSet;
+
 use belvedere::{
     ArtifactKind, AssessmentStreamIngestion, AuditorNavigationProjection, GapSeverity,
     LandscapeGapKind, LandscapeInput, LandscapeModeling, RawAmenableArtifact,
@@ -839,6 +841,15 @@ fn view_model_projection_builds_auditor_filter_facets() -> Result<()> {
     assert_eq!(verifier.value(), "kani");
     assert_eq!(verifier.count(), 2);
     assert_eq!(verifier.trace().claim_id(), verifier.facet_id());
+    let verifier_sources = model
+        .claim_explorer()
+        .iter()
+        .filter(|item| item.verifiers().contains(&"kani".to_owned()))
+        .flat_map(|item| item.trace().source_record_ids().iter().cloned())
+        .collect::<BTreeSet<_>>()
+        .into_iter()
+        .collect::<Vec<_>>();
+    assert_eq!(verifier.trace().source_record_ids(), &verifier_sources);
 
     let claim_family = model
         .filter_facets()
@@ -912,6 +923,15 @@ fn view_model_projection_builds_auditor_filter_facets() -> Result<()> {
         .ok_or_else(|| miette!("high-priority facet should be available"))?;
     assert_eq!(priority.label(), "Priority high");
     assert_eq!(priority.count(), 3);
+    let priority_sources = model
+        .gaps()
+        .iter()
+        .filter(|item| item.high_priority())
+        .flat_map(|item| item.trace().source_record_ids().iter().cloned())
+        .collect::<BTreeSet<_>>()
+        .into_iter()
+        .collect::<Vec<_>>();
+    assert_eq!(priority.trace().source_record_ids(), &priority_sources);
     Ok(())
 }
 

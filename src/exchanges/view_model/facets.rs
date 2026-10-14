@@ -14,7 +14,27 @@ use crate::{
 
 use super::{assessments::assessment_queue_grouping, trace, traces::trace_assessment};
 
-type LabeledFacetCount = (String, usize, BTreeSet<String>);
+#[derive(Default)]
+struct FacetTally {
+    count: usize,
+    source_record_ids: BTreeSet<String>,
+}
+
+impl FacetTally {
+    #[instrument(level = "trace", skip(self, item_trace))]
+    fn include(&mut self, item_trace: &TraceRef) {
+        self.count += 1;
+        self.source_record_ids
+            .extend(item_trace.source_record_ids().iter().cloned());
+    }
+
+    #[instrument(level = "trace", skip(self))]
+    fn into_trace(self, facet_id: &str) -> TraceRef {
+        TraceRef::new(facet_id, self.source_record_ids.into_iter().collect())
+    }
+}
+
+type LabeledFacetTally = (String, FacetTally);
 
 #[instrument(level = "debug", skip(claims, assessments, gaps))]
 pub(super) fn project_filter_facets<'a>(
@@ -29,18 +49,23 @@ pub(super) fn project_filter_facets<'a>(
     let mut package_counts = BTreeMap::new();
     let mut proof_status_counts = BTreeMap::new();
     for claim in claims {
+        let claim_trace = trace(claim.id(), source_record_ids);
         let family = claim_family(claim.id());
-        increment_count(&mut claim_family_counts, &family);
+        increment_tally(&mut claim_family_counts, &family, &claim_trace);
         for verifier in claim.proofs() {
-            increment_count(&mut verifier_counts, verifier);
+            increment_tally(&mut verifier_counts, verifier, &claim_trace);
         }
         for witness in claim.witness_surfaces() {
-            increment_count(&mut support_kind_counts, witness.support_kind());
+            increment_tally(
+                &mut support_kind_counts,
+                witness.support_kind(),
+                &claim_trace,
+            );
         }
         for proof in claim.kani_proofs() {
-            increment_count(&mut package_counts, proof.package());
+            increment_tally(&mut package_counts, proof.package(), &claim_trace);
             if !proof.provides_coverage() {
-                increment_count(&mut proof_status_counts, proof.status_label());
+                increment_tally(&mut proof_status_counts, proof.status_label(), &claim_trace);
             }
         }
     }
@@ -48,45 +73,46 @@ pub(super) fn project_filter_facets<'a>(
     let mut recommendation_counts = BTreeMap::new();
     let mut assessment_queue_group_counts = BTreeMap::new();
     for assessment in assessments {
-        increment_count(
+        let assessment_trace = trace_assessment(assessment, source_record_ids);
+        increment_tally(
             &mut recommendation_counts,
             &format!("{:?}", assessment.recommendation()),
+            &assessment_trace,
         );
         let grouping = assessment_queue_grouping(assessment);
-        increment_labeled_count(
+        increment_labeled_tally(
             &mut assessment_queue_group_counts,
             grouping.group_id(),
             &format!("Assessment queue group {}", grouping.group_label()),
-            trace_assessment(assessment, source_record_ids).source_record_ids(),
+            &assessment_trace,
         );
     }
 
     let mut gap_kind_counts = BTreeMap::new();
+    let mut priority_tally = FacetTally::default();
     for gap in gaps {
-        increment_count(&mut gap_kind_counts, &format!("{:?}", gap.kind()));
+        increment_tally(
+            &mut gap_kind_counts,
+            &format!("{:?}", gap.kind()),
+            gap.trace(),
+        );
+        if gap.high_priority() {
+            priority_tally.include(gap.trace());
+        }
     }
-    let high_priority_count = gaps.iter().filter(|gap| gap.high_priority()).count();
 
     let mut facets = Vec::new();
     push_facets(
         "claim_family",
         "Claim family",
         claim_family_counts,
-        source_record_ids,
         &mut facets,
     )?;
-    push_facets(
-        "verifier",
-        "Verifier",
-        verifier_counts,
-        source_record_ids,
-        &mut facets,
-    )?;
+    push_facets("verifier", "Verifier", verifier_counts, &mut facets)?;
     push_facets(
         "recommendation",
         "Recommendation",
         recommendation_counts,
-        source_record_ids,
         &mut facets,
     )?;
     push_labeled_facets(
@@ -98,31 +124,17 @@ pub(super) fn project_filter_facets<'a>(
         "support_kind",
         "Support kind",
         support_kind_counts,
-        source_record_ids,
         &mut facets,
     )?;
-    push_facets(
-        "package",
-        "Package",
-        package_counts,
-        source_record_ids,
-        &mut facets,
-    )?;
+    push_facets("package", "Package", package_counts, &mut facets)?;
     push_facets(
         "proof_status",
         "Proof status",
         proof_status_counts,
-        source_record_ids,
         &mut facets,
     )?;
-    push_facets(
-        "gap_kind",
-        "Gap kind",
-        gap_kind_counts,
-        source_record_ids,
-        &mut facets,
-    )?;
-    push_priority_facet(high_priority_count, source_record_ids, &mut facets)?;
+    push_facets("gap_kind", "Gap kind", gap_kind_counts, &mut facets)?;
+    push_priority_facet(priority_tally, &mut facets)?;
 
     Ok(facets)
 }
@@ -134,35 +146,37 @@ fn claim_family(claim_id: &str) -> String {
         .map_or_else(|| claim_id.to_owned(), |(family, _claim)| family.to_owned())
 }
 
-#[instrument(level = "trace", skip(counts))]
-fn increment_count(counts: &mut BTreeMap<String, usize>, value: &str) {
-    *counts.entry(value.to_owned()).or_default() += 1;
+#[instrument(level = "trace", skip(counts, item_trace))]
+fn increment_tally(counts: &mut BTreeMap<String, FacetTally>, value: &str, item_trace: &TraceRef) {
+    counts
+        .entry(value.to_owned())
+        .or_default()
+        .include(item_trace);
 }
 
-#[instrument(level = "trace", skip(counts))]
-fn increment_labeled_count(
-    counts: &mut BTreeMap<String, LabeledFacetCount>,
+#[instrument(level = "trace", skip(counts, item_trace))]
+fn increment_labeled_tally(
+    counts: &mut BTreeMap<String, LabeledFacetTally>,
     value: &str,
     label: &str,
-    item_source_record_ids: &[String],
+    item_trace: &TraceRef,
 ) {
-    let (_label, count, source_record_ids) = counts
+    let (_label, tally) = counts
         .entry(value.to_owned())
-        .or_insert_with(|| (label.to_owned(), 0, BTreeSet::new()));
-    *count += 1;
-    source_record_ids.extend(item_source_record_ids.iter().cloned());
+        .or_insert_with(|| (label.to_owned(), FacetTally::default()));
+    tally.include(item_trace);
 }
 
 #[instrument(level = "debug", skip(counts, facets))]
 fn push_facets(
     group: &'static str,
     label_prefix: &'static str,
-    counts: BTreeMap<String, usize>,
-    source_record_ids: &[String],
+    counts: BTreeMap<String, FacetTally>,
     facets: &mut Vec<AuditorFilterFacet>,
 ) -> Result<(), BelvedereConstructionError> {
-    for (value, count) in counts {
+    for (value, tally) in counts {
         let facet_id = format!("belvedere.filter.{group}:{value}");
+        let count = tally.count;
         facets.push(
             AuditorFilterFacetBuilder::default()
                 .facet_id(facet_id.clone())
@@ -170,7 +184,7 @@ fn push_facets(
                 .value(value.clone())
                 .label(format!("{label_prefix} {value}"))
                 .count(count)
-                .trace(trace(&facet_id, source_record_ids))
+                .trace(tally.into_trace(&facet_id))
                 .build()
                 .map_err(|error| BelvedereConstructionError::new("AuditorFilterFacet", error))?,
         );
@@ -181,11 +195,12 @@ fn push_facets(
 #[instrument(level = "debug", skip(counts, facets))]
 fn push_labeled_facets(
     group: &'static str,
-    counts: BTreeMap<String, LabeledFacetCount>,
+    counts: BTreeMap<String, LabeledFacetTally>,
     facets: &mut Vec<AuditorFilterFacet>,
 ) -> Result<(), BelvedereConstructionError> {
-    for (value, (label, count, source_record_ids)) in counts {
+    for (value, (label, tally)) in counts {
         let facet_id = format!("belvedere.filter.{group}:{value}");
+        let count = tally.count;
         facets.push(
             AuditorFilterFacetBuilder::default()
                 .facet_id(facet_id.clone())
@@ -193,10 +208,7 @@ fn push_labeled_facets(
                 .value(value.clone())
                 .label(label)
                 .count(count)
-                .trace(TraceRef::new(
-                    &facet_id,
-                    source_record_ids.into_iter().collect(),
-                ))
+                .trace(tally.into_trace(&facet_id))
                 .build()
                 .map_err(|error| BelvedereConstructionError::new("AuditorFilterFacet", error))?,
         );
@@ -204,24 +216,24 @@ fn push_labeled_facets(
     Ok(())
 }
 
-#[instrument(level = "debug", skip(source_record_ids, facets))]
+#[instrument(level = "debug", skip(tally, facets))]
 fn push_priority_facet(
-    high_priority_count: usize,
-    source_record_ids: &[String],
+    tally: FacetTally,
     facets: &mut Vec<AuditorFilterFacet>,
 ) -> Result<(), BelvedereConstructionError> {
-    if high_priority_count == 0 {
+    if tally.count == 0 {
         return Ok(());
     }
     let facet_id = "belvedere.filter.priority:high".to_owned();
+    let count = tally.count;
     facets.push(
         AuditorFilterFacetBuilder::default()
             .facet_id(facet_id.clone())
             .group("priority")
             .value("high")
             .label("Priority high")
-            .count(high_priority_count)
-            .trace(trace(&facet_id, source_record_ids))
+            .count(count)
+            .trace(tally.into_trace(&facet_id))
             .build()
             .map_err(|error| BelvedereConstructionError::new("AuditorFilterFacet", error))?,
     );
