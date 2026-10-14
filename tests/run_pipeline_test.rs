@@ -2590,11 +2590,11 @@ fn assert_previous_source_navigation_map(map: &Value) {
     assert!(map.as_array().is_some_and(|items| {
         items.iter().any(|item| {
             item["source_record_id"].as_str()
-                == Some("kani_proof:belvedere::ingestion::record_identity_is_preserved")
+                == Some("kani_proof:belvedere::ingestion::record_identity_is_preserved@belvedere:verify_record_identity_is_preserved")
                 && item["source_kind"].as_str() == Some("kani_proof")
                 && item["source_locator"].as_str()
                     == Some(
-                        "registry_dump.kani_proofs[id=belvedere::ingestion::record_identity_is_preserved]",
+                        "registry_dump.kani_proofs[id=belvedere::ingestion::record_identity_is_preserved, package=belvedere, harness=verify_record_identity_is_preserved]",
                     )
         })
     }));

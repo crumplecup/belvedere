@@ -283,7 +283,7 @@ fn landscape_diff_surfaces_snapshot_changes_for_auditors() -> Result<()> {
         assessment
             .trace()
             .source_record_ids()
-            .contains(&"kani_proof:belvedere::ingestion::record_identity_is_preserved".to_owned())
+            .contains(&"kani_proof:belvedere::ingestion::record_identity_is_preserved@belvedere:verify_record_identity_is_preserved".to_owned())
     );
     assert!(
         !assessment.trace().source_record_ids().contains(
@@ -320,7 +320,7 @@ fn landscape_diff_surfaces_snapshot_changes_for_auditors() -> Result<()> {
         claim
             .trace()
             .source_record_ids()
-            .contains(&"kani_proof:belvedere::ingestion::record_identity_is_preserved".to_owned())
+            .contains(&"kani_proof:belvedere::ingestion::record_identity_is_preserved@belvedere:verify_record_identity_is_preserved".to_owned())
     );
     assert!(
         !claim
@@ -352,7 +352,7 @@ fn landscape_diff_surfaces_snapshot_changes_for_auditors() -> Result<()> {
     );
     assert_eq!(
         removed_gap.trace().source_record_ids(),
-        &["kani_proof:belvedere::ingestion::record_identity_is_preserved".to_owned()]
+        &["kani_proof:belvedere::ingestion::record_identity_is_preserved@belvedere:verify_record_identity_is_preserved".to_owned()]
     );
 
     let unsupported_claim = diff
@@ -415,7 +415,7 @@ fn landscape_diff_traces_replacement_gap_to_its_assessment() -> Result<()> {
     assert!(
         gap.trace()
             .source_record_ids()
-            .contains(&"kani_proof:belvedere::ingestion::record_identity_is_preserved".to_owned())
+            .contains(&"kani_proof:belvedere::ingestion::record_identity_is_preserved@belvedere:verify_record_identity_is_preserved".to_owned())
     );
     Ok(())
 }

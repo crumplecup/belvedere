@@ -7,6 +7,33 @@ use belvedere::{
 use miette::{IntoDiagnostic, Result, WrapErr, miette};
 
 #[test]
+fn registry_ingestion_distinguishes_kani_registrations_for_one_proof() -> Result<()> {
+    belvedere::init_tracing();
+
+    let mut registry: serde_json::Value =
+        serde_json::from_slice(include_bytes!("fixtures/registry_dump.json")).into_diagnostic()?;
+    let proofs = registry["kani_proofs"]
+        .as_array_mut()
+        .ok_or_else(|| miette!("Kani proof fixture should be an array"))?;
+    let mut second = proofs[0].clone();
+    second["harness"] = "verify_secondary".into();
+    proofs.push(second);
+    let artifact = RawAmenableArtifact::new(
+        "tests/fixtures/registry_dump.json",
+        ArtifactKind::RegistryDump,
+        serde_json::to_vec(&registry).into_diagnostic()?,
+    );
+
+    let (snapshot, receipt) = RegistryDumpIngestion.ingest(artifact).into_diagnostic()?;
+    let ids = snapshot.source_record_ids();
+    assert_eq!(snapshot.kani_proofs().len(), 2);
+    assert!(ids.contains(&"kani_proof:belvedere::ingestion::record_identity_is_preserved@belvedere:verify_record_identity_is_preserved".to_owned()));
+    assert!(ids.contains(&"kani_proof:belvedere::ingestion::record_identity_is_preserved@belvedere:verify_secondary".to_owned()));
+    assert_eq!(receipt.source_record_ids(), &ids);
+    Ok(())
+}
+
+#[test]
 fn registry_ingestion_preserves_record_identity_and_unknown_fields() -> Result<()> {
     belvedere::init_tracing();
 

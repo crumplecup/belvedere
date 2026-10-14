@@ -896,7 +896,7 @@ fn ui_ir_projection_preserves_trace_widgets_for_auditor_deep_dives() -> Result<(
         .iter()
         .find(|widget| {
             widget.label()
-                == "Kani proof belvedere::ingestion::record_identity_is_preserved opens registry_dump kani_proof target belvedere::ingestion::record_identity_is_preserved locator registry_dump.kani_proofs[id=belvedere::ingestion::record_identity_is_preserved]"
+                == "Kani proof belvedere::ingestion::record_identity_is_preserved@belvedere:verify_record_identity_is_preserved opens registry_dump kani_proof target belvedere::ingestion::record_identity_is_preserved locator registry_dump.kani_proofs[id=belvedere::ingestion::record_identity_is_preserved, package=belvedere, harness=verify_record_identity_is_preserved]"
         })
         .ok_or_else(|| miette!("Kani proof source navigation should be projected"))?;
     assert_eq!(proof_source_widget.source_record_ids().len(), 1);

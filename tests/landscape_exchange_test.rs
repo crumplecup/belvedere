@@ -68,7 +68,7 @@ fn landscape_modeling_maps_decoded_records_into_a_review_graph() -> Result<()> {
     assert!(
         receipt
             .source_record_ids()
-            .contains(&"kani_proof:belvedere::ingestion::record_identity_is_preserved".to_owned())
+            .contains(&"kani_proof:belvedere::ingestion::record_identity_is_preserved@belvedere:verify_record_identity_is_preserved".to_owned())
     );
     assert_landscape_receipt_identity(&receipt);
     assert_eq!(receipt.source_receipt_ids().len(), 2);

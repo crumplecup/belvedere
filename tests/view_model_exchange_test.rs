@@ -8,6 +8,64 @@ use belvedere::{
 use miette::{IntoDiagnostic, Result, WrapErr, miette};
 
 #[test]
+fn kani_registrations_keep_distinct_source_navigation_and_gap_ids() -> Result<()> {
+    belvedere::init_tracing();
+
+    let mut registry: serde_json::Value =
+        serde_json::from_slice(include_bytes!("fixtures/registry_dump.json")).into_diagnostic()?;
+    let proofs = registry["kani_proofs"]
+        .as_array_mut()
+        .ok_or_else(|| miette!("Kani proof fixture should be an array"))?;
+    for harness in ["verify_secondary", "verify_tertiary"] {
+        let mut proof = proofs[0].clone();
+        proof["harness"] = harness.into();
+        proof["status"] = "failed".into();
+        proofs.push(proof);
+    }
+    let input = fixture_input_with_artifacts(
+        serde_json::to_vec(&registry).into_diagnostic()?,
+        include_bytes!("fixtures/proof_assessments.jsonl").to_vec(),
+    )?;
+    let (model, _) = AuditorNavigationProjection
+        .project(input)
+        .into_diagnostic()?;
+    let source_records = model
+        .source_navigation()
+        .iter()
+        .filter(|source| source.source_kind() == "kani_proof")
+        .collect::<Vec<_>>();
+    assert_eq!(source_records.len(), 3);
+    assert!(
+        source_records
+            .iter()
+            .any(|source| source.source_locator().contains("harness=verify_secondary"))
+    );
+    assert!(
+        source_records
+            .iter()
+            .any(|source| source.source_locator().contains("harness=verify_tertiary"))
+    );
+    let gap_ids = model
+        .gaps()
+        .iter()
+        .filter(|gap| gap.kind() == LandscapeGapKind::ProofExecutionUnresolved)
+        .map(|gap| gap.gap_id().as_str())
+        .collect::<BTreeSet<_>>();
+    assert_eq!(gap_ids.len(), 2);
+    assert!(
+        gap_ids
+            .iter()
+            .any(|id| id.ends_with("belvedere@verify_secondary"))
+    );
+    assert!(
+        gap_ids
+            .iter()
+            .any(|id| id.ends_with("belvedere@verify_tertiary"))
+    );
+    Ok(())
+}
+
+#[test]
 fn witness_gaps_keep_distinct_origin_ids_through_navigation() -> Result<()> {
     belvedere::init_tracing();
 
@@ -843,7 +901,7 @@ fn view_model_projection_builds_source_navigation_items() -> Result<()> {
         .iter()
         .find(|item| {
             item.source_record_id()
-                == "kani_proof:belvedere::ingestion::record_identity_is_preserved"
+                == "kani_proof:belvedere::ingestion::record_identity_is_preserved@belvedere:verify_record_identity_is_preserved"
         })
         .ok_or_else(|| miette!("Kani proof source record should be navigable"))?;
     assert_eq!(kani_proof.source_kind(), "kani_proof");
@@ -853,7 +911,7 @@ fn view_model_projection_builds_source_navigation_items() -> Result<()> {
     );
     assert_eq!(
         kani_proof.source_locator(),
-        "registry_dump.kani_proofs[id=belvedere::ingestion::record_identity_is_preserved]"
+        "registry_dump.kani_proofs[id=belvedere::ingestion::record_identity_is_preserved, package=belvedere, harness=verify_record_identity_is_preserved]"
     );
     Ok(())
 }
@@ -1103,7 +1161,7 @@ fn view_model_projection_preserves_review_queues_and_traceability() -> Result<()
         assessment
             .trace()
             .source_record_ids()
-            .contains(&"kani_proof:belvedere::ingestion::record_identity_is_preserved".to_owned())
+            .contains(&"kani_proof:belvedere::ingestion::record_identity_is_preserved@belvedere:verify_record_identity_is_preserved".to_owned())
     );
 
     let history = model
@@ -1260,7 +1318,7 @@ fn view_model_projection_preserves_review_queues_and_traceability() -> Result<()
     assert!(
         proof_root
             .source_record_ids()
-            .contains(&"kani_proof:belvedere::ingestion::record_identity_is_preserved".to_owned())
+            .contains(&"kani_proof:belvedere::ingestion::record_identity_is_preserved@belvedere:verify_record_identity_is_preserved".to_owned())
     );
     Ok(())
 }

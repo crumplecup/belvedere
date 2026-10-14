@@ -98,11 +98,24 @@ fn source_record(source_record_id: &str) -> SourceRecordNavigation {
             format!("Witness export {rest}"),
         )
     } else if let Some(rest) = source_record_id.strip_prefix("kani_proof:") {
+        let (target, locator) = rest
+            .split_once('@')
+            .and_then(|(proof_id, registration)| {
+                registration.split_once(':').map(|(package, harness)| {
+                    (
+                        proof_id,
+                        format!(
+                            "registry_dump.kani_proofs[id={proof_id}, package={package}, harness={harness}]"
+                        ),
+                    )
+                })
+            })
+            .unwrap_or_else(|| (rest, format!("registry_dump.kani_proofs[id={rest}]")));
         SourceRecordNavigation::new(
             ArtifactKind::RegistryDump,
             "kani_proof",
-            rest,
-            format!("registry_dump.kani_proofs[id={rest}]"),
+            target,
+            locator,
             format!("Kani proof {rest}"),
         )
     } else if let Some(rest) = source_record_id.strip_prefix("assessment:") {

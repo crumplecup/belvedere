@@ -53,11 +53,12 @@ impl DecodedRegistrySnapshot {
                 record.evidence, record.verifier, record.destination_module
             )
         }));
-        ids.extend(
-            self.kani_proofs
-                .iter()
-                .map(|record| format!("kani_proof:{}", record.id)),
-        );
+        ids.extend(self.kani_proofs.iter().map(|record| {
+            format!(
+                "kani_proof:{}@{}:{}",
+                record.id, record.package, record.harness
+            )
+        }));
         ids
     }
 
