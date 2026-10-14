@@ -79,7 +79,7 @@ impl BelvedereStageCertificate {
         let mut additional_invariant_checks = ui_ir_trace_invariant_checks(
             receipt.counts().widget_count(),
             receipt.counts().trace_ref_count(),
-            receipt.section_population_counts(),
+            receipt.section_widget_counts(),
             receipt.section_trace_counts(),
             receipt.trace_source_counts(),
             receipt.source_record_ids(),

@@ -411,6 +411,18 @@ fn ui_ir_projection_mints_elicit_ui_standards_and_tree_proofs() -> Result<()> {
             .get("ui_ir_section_unassigned_trace_widgets"),
         Some(&0)
     );
+    for (section_id, widget_count) in receipt.section_widget_counts() {
+        let source_widgets = receipt
+            .section_trace_counts()
+            .get(&format!("ui_ir_section_trace_widgets:{section_id}"))
+            .copied()
+            .unwrap_or_default();
+        assert_eq!(
+            *widget_count > 0,
+            source_widgets > 0,
+            "section {section_id} has mismatched source traces"
+        );
+    }
     let trace_widgets_with_sources = projection
         .trace_widgets()
         .iter()
