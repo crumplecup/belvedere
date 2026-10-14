@@ -191,6 +191,62 @@ fn landscape_rejects_replaced_source_link_despite_equal_counts() -> Result<()> {
 }
 
 #[test]
+fn landscape_rejects_altered_assessment_with_preserved_identity() -> Result<()> {
+    belvedere::init_tracing();
+    let (registry, registry_receipt) = RegistryDumpIngestion
+        .ingest(fixture_artifact())
+        .into_diagnostic()?;
+    let source = include_str!("fixtures/proof_assessments.jsonl");
+    let (assessments, assessment_receipt) = AssessmentStreamIngestion
+        .ingest(RawAmenableArtifact::new(
+            "tests/fixtures/proof_assessments.jsonl",
+            ArtifactKind::ProofAssessments,
+            source.as_bytes().to_vec(),
+        ))
+        .into_diagnostic()?;
+    let intact_input = LandscapeInput::from_ingestion(
+        registry.clone(),
+        &registry_receipt,
+        assessments,
+        &assessment_receipt,
+    );
+    let (output, receipt) = LandscapeModeling.model(intact_input).into_diagnostic()?;
+
+    let mut lines = source.lines();
+    let mut first: serde_json::Value =
+        serde_json::from_str(lines.next().ok_or_else(|| miette!("missing assessment"))?)
+            .into_diagnostic()?;
+    first["reviewer"] = "different-reviewer".into();
+    let mutated = format!(
+        "{}\n{}\n",
+        serde_json::to_string(&first).into_diagnostic()?,
+        lines.collect::<Vec<_>>().join("\n")
+    );
+    let (altered_assessments, altered_receipt) = AssessmentStreamIngestion
+        .ingest(RawAmenableArtifact::new(
+            "tests/fixtures/proof_assessments.jsonl",
+            ArtifactKind::ProofAssessments,
+            mutated.into_bytes(),
+        ))
+        .into_diagnostic()?;
+    let altered_input = LandscapeInput::from_ingestion(
+        registry,
+        &registry_receipt,
+        altered_assessments,
+        &altered_receipt,
+    );
+    let error = LandscapeModelingContract::verify_transition(&altered_input, &output, &receipt)
+        .err()
+        .ok_or_else(|| miette!("changed reviewer should fail landscape verification"))?;
+    assert!(
+        error
+            .to_string()
+            .contains("landscape_assessment_payloads_preserved")
+    );
+    Ok(())
+}
+
+#[test]
 fn exchange_rejects_altered_field_with_preserved_record_identity() -> Result<()> {
     belvedere::init_tracing();
     let input = fixture_artifact();

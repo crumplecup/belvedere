@@ -131,6 +131,8 @@ impl BelvedereContract for LandscapeModelingContract {
     const NAME: &'static str = "belvedere.model.landscape";
     const ASSERTION_NAMES: &'static [&'static str] = &[
         "landscape_claim_payloads_preserved",
+        "landscape_assessment_payloads_preserved",
+        "landscape_gap_dispositions_sound",
         "landscape_edges_complete",
         "landscape_source_occurrences_complete",
         "landscape_receipt_source_binding",
@@ -159,6 +161,14 @@ impl BelvedereContract for LandscapeModelingContract {
             (
                 "landscape_claim_payloads_preserved",
                 assertions::claims_match_input(input, output),
+            ),
+            (
+                "landscape_assessment_payloads_preserved",
+                assertions::assessments_match_input(input, output),
+            ),
+            (
+                "landscape_gap_dispositions_sound",
+                assertions::gaps_match_input(input, output),
             ),
             (
                 "landscape_edges_complete",
