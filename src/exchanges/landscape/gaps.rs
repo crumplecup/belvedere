@@ -115,7 +115,7 @@ fn latest_assessment<'a>(
         .assessment_ids()
         .iter()
         .filter_map(|id| assessments_by_id.get(id.as_str()).copied())
-        .max_by_key(|assessment| assessment.timestamp())
+        .max_by_key(|assessment| (assessment.timestamp(), assessment.id()))
 }
 
 #[instrument(level = "debug", skip(assessment, gaps))]

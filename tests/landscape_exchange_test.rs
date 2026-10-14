@@ -321,6 +321,30 @@ fn landscape_modeling_marks_superseded_assessments() -> Result<()> {
     Ok(())
 }
 
+#[test]
+fn tied_assessment_timestamps_use_the_current_review_for_gaps() -> Result<()> {
+    belvedere::init_tracing();
+
+    let (landscape, _) = LandscapeModeling
+        .model(fixture_input_with_assessments(
+            include_bytes!("fixtures/tied_assessments.jsonl").to_vec(),
+        )?)
+        .into_diagnostic()?;
+    let current = landscape
+        .assessments()
+        .iter()
+        .find(|assessment| assessment.id() == "assess-replace")
+        .ok_or_else(|| miette!("replacement review should be modeled"))?;
+    assert!(current.current());
+    let gap = landscape
+        .gaps()
+        .iter()
+        .find(|gap| gap.kind() == LandscapeGapKind::ReplacementRecommended)
+        .ok_or_else(|| miette!("current replacement review should produce a gap"))?;
+    assert_eq!(gap.triggering_assessment_id(), Some("assess-replace"));
+    Ok(())
+}
+
 fn fixture_input() -> Result<LandscapeInput> {
     fixture_input_with_assessments(include_bytes!("fixtures/proof_assessments.jsonl").to_vec())
 }

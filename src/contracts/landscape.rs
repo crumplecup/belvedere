@@ -146,6 +146,7 @@ impl BelvedereContract for LandscapeModelingContract {
             "Kani proof registrations remain addressable as proof claims",
             "assessment events attach by proof ID without losing reviewer vocabulary",
             "latest and superseded assessment events are distinguished per proof ID",
+            "equal assessment timestamps use assessment ID as the deterministic recency tie-break for current status and gaps",
             "missing proofs, missing assessments, replacement, retirement, and trusted or opaque support remain visible as gaps",
             "replacement and retirement gaps identify the assessment whose recommendation caused them",
             "repeatable witness and unresolved-proof gaps retain stable origin identities",

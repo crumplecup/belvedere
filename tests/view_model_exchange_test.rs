@@ -1415,6 +1415,32 @@ fn view_model_projection_exposes_assessment_recency() -> Result<()> {
     Ok(())
 }
 
+#[test]
+fn tied_assessment_history_uses_the_recency_tie_break() -> Result<()> {
+    belvedere::init_tracing();
+
+    let input =
+        fixture_input_with_assessments(include_bytes!("fixtures/tied_assessments.jsonl").to_vec())?;
+    let (model, _) = AuditorNavigationProjection
+        .project(input)
+        .into_diagnostic()?;
+    let history = model
+        .assessment_history()
+        .iter()
+        .find(|item| item.proof_id() == "belvedere::ingestion::record_identity_is_preserved")
+        .ok_or_else(|| miette!("tied assessments should have a history"))?;
+    assert_eq!(history.current_assessment_id(), "assess-replace");
+    assert_eq!(
+        history.assessment_ids(),
+        &vec!["assess-old".to_owned(), "assess-replace".to_owned()]
+    );
+    assert_eq!(
+        history.recommendation_flow(),
+        &vec!["Accept".to_owned(), "Replace".to_owned()]
+    );
+    Ok(())
+}
+
 fn fixture_input() -> Result<ViewModelInput> {
     fixture_input_with_assessments(include_bytes!("fixtures/proof_assessments.jsonl").to_vec())
 }

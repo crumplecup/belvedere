@@ -39,7 +39,7 @@ pub(super) fn project_assessment_history(
 
     let mut items = Vec::new();
     for (proof_id, mut proof_assessments) in assessments_by_proof {
-        proof_assessments.sort_by_key(|assessment| assessment.timestamp());
+        proof_assessments.sort_by_key(|assessment| (assessment.timestamp(), assessment.id()));
         let Some(current) = current_assessment(&proof_assessments) else {
             continue;
         };

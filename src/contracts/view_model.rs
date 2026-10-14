@@ -234,6 +234,7 @@ impl BelvedereContract for AuditorNavigationContract {
             "proof-chain entries retain direct bases, resolved roots, subject verifier coverage, chain backend completeness, topology metrics, review state, next action, gaps, and trace IDs",
             "review workflow entries consolidate proof-chain, gap, and assessment-work signals into stable auditor tasks",
             "assessment history entries group reviews by proof ID with current review, superseded reviews, reviewer vocabulary, recommendation flow, weak dimensions, comments, and trace IDs",
+            "assessment history order follows the same timestamp-and-ID recency rule as landscape gaps",
             "assessment queue entries preserve recommendation lanes, explicit recommendation-and-weakness groups, resolution, recency vocabulary, and supersession links",
             "assessment work entries expose queue lanes, missing reviews, current reviewer actions, resolution labels, and trace IDs",
             "receipts count proof-chain review states, gap severities, and high-priority assessment work",
