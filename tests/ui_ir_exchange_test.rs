@@ -305,7 +305,7 @@ fn ui_ir_projection_mints_elicit_ui_standards_and_tree_proofs() -> Result<()> {
     }
     assert!(receipt.counts().node_count() >= projection.trace_widgets().len());
     assert_eq!(receipt.role_counts().get("role_button"), Some(&27));
-    assert_eq!(receipt.role_counts().get("role_checkbox"), Some(&10));
+    assert_eq!(receipt.role_counts().get("role_checkbox"), Some(&12));
     assert_eq!(receipt.role_counts().get("role_link"), Some(&10));
     assert_eq!(receipt.role_counts().get("role_region"), Some(&1));
     assert_eq!(receipt.role_counts().get("role_status"), Some(&12));
@@ -646,6 +646,11 @@ fn ui_ir_projection_preserves_trace_widgets_for_auditor_deep_dives() -> Result<(
         &projection,
         "Filter Priority high selects 3 items",
         "belvedere.filter.priority:high",
+    )?;
+    assert_filter_widget(
+        &projection,
+        "Filter Assessment queue group strengthening / assertion_strength, adversarial_coverage selects 1 items",
+        "belvedere.filter.assessment_queue_group:assessment_queue.strengthening:assertion_strength+adversarial_coverage",
     )?;
     let coverage_widget = projection
         .trace_widgets()

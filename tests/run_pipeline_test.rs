@@ -56,7 +56,7 @@ fn run_pipeline_uses_the_normal_amenable_artifact_path() -> Result<()> {
     assert_eq!(report.assessment_receipt().source_record_ids().len(), 2);
     assert_eq!(report.landscape_receipt().claim_count(), 4);
     assert_eq!(report.view_model_receipt().counts().claim_cards(), 4);
-    assert_eq!(report.view_model_receipt().counts().filter_facets(), 10);
+    assert_eq!(report.view_model_receipt().counts().filter_facets(), 12);
     assert_eq!(
         report
             .view_model_receipt()
@@ -472,6 +472,18 @@ fn run_pipeline_uses_the_normal_amenable_artifact_path() -> Result<()> {
             .stage_certificates()
             .iter()
             .any(|certificate| certificate.counts().get("facet_group_gap_kind") == Some(&3))
+    );
+    assert!(
+        report
+            .certificate()
+            .stage_certificates()
+            .iter()
+            .any(|certificate| {
+                certificate
+                    .counts()
+                    .get("facet_group_assessment_queue_group")
+                    == Some(&2)
+            })
     );
     assert!(
         report
@@ -1681,7 +1693,7 @@ fn assert_auditor_navigation_receipt(receipt: &Value) {
         receipt["item_kind_counts"]["view_model_item_kind_source"].as_u64(),
         Some(7)
     );
-    assert_eq!(receipt["view_item_ids"].as_array().map(Vec::len), Some(60));
+    assert_eq!(receipt["view_item_ids"].as_array().map(Vec::len), Some(62));
     assert_eq!(
         receipt["review_workflow_task_digests"]
             .as_array()
@@ -1873,7 +1885,7 @@ fn assert_ui_ir_receipt(receipt: &Value) {
         receipt["source_locator_counts"]["ui_ir_source_locator_widgets"].as_u64(),
         Some(7)
     );
-    assert_eq!(receipt["output_ids"].as_array().map(Vec::len), Some(155));
+    assert_eq!(receipt["output_ids"].as_array().map(Vec::len), Some(159));
     assert_eq!(
         receipt["output_kind_counts"]["ui_ir_output_kind_minted_standard"].as_u64(),
         Some(4)
@@ -1892,16 +1904,16 @@ fn assert_ui_ir_receipt(receipt: &Value) {
     );
     assert_eq!(
         receipt["output_kind_counts"]["ui_ir_output_kind_trace_widget"].as_u64(),
-        Some(60)
+        Some(62)
     );
     assert_eq!(
         receipt["output_kind_counts"]["ui_ir_output_kind_trace_widget_ref"].as_u64(),
-        Some(60)
+        Some(62)
     );
     assert!(
         receipt["trace_widget_digests"]
             .as_array()
-            .is_some_and(|digests| { digests.len() == 60 && digests.iter().all(is_hex_digest) })
+            .is_some_and(|digests| { digests.len() == 62 && digests.iter().all(is_hex_digest) })
     );
     assert!(
         receipt["section_ids"]
@@ -2086,7 +2098,7 @@ fn assert_auditor_navigation_model(model: &Value) {
         model["overview"]["assessment_recency"]["current_count"].as_u64(),
         Some(2)
     );
-    assert_eq!(model["filter_facets"].as_array().map(Vec::len), Some(10));
+    assert_eq!(model["filter_facets"].as_array().map(Vec::len), Some(12));
     assert_eq!(model["backend_coverage"].as_array().map(Vec::len), Some(12));
     assert_eq!(model["claim_explorer"].as_array().map(Vec::len), Some(4));
     assert_eq!(model["proof_chains"].as_array().map(Vec::len), Some(4));
@@ -2193,7 +2205,7 @@ fn assert_previous_claim_explorer(items: &Value) {
 }
 
 fn assert_filter_facets(facets: &Value) {
-    assert_eq!(facets.as_array().map(Vec::len), Some(10));
+    assert_eq!(facets.as_array().map(Vec::len), Some(12));
     assert!(facets.as_array().is_some_and(|items| {
         items.iter().all(|facet| {
             facet["facet_id"]
@@ -2228,6 +2240,24 @@ fn assert_filter_facets(facets: &Value) {
                 && facet["group"].as_str() == Some("priority")
                 && facet["value"].as_str() == Some("high")
                 && facet["count"].as_u64() == Some(3)
+        })
+    }));
+    assert!(facets.as_array().is_some_and(|items| {
+        items.iter().any(|facet| {
+            facet["facet_id"].as_str()
+                == Some(
+                    "belvedere.filter.assessment_queue_group:assessment_queue.strengthening:assertion_strength+adversarial_coverage",
+                )
+                && facet["group"].as_str() == Some("assessment_queue_group")
+                && facet["value"].as_str()
+                    == Some(
+                        "assessment_queue.strengthening:assertion_strength+adversarial_coverage",
+                    )
+                && facet["label"].as_str()
+                    == Some(
+                        "Assessment queue group strengthening / assertion_strength, adversarial_coverage",
+                    )
+                && facet["count"].as_u64() == Some(1)
         })
     }));
 }
@@ -2744,7 +2774,7 @@ fn assert_ui_ir_projection(projection: &Value) {
     assert_eq!(projection["sections"].as_array().map(Vec::len), Some(14));
     assert_eq!(
         projection["trace_widgets"].as_array().map(Vec::len),
-        Some(60)
+        Some(62)
     );
     assert!(
         projection["trace_widgets"]
@@ -2820,7 +2850,7 @@ fn assert_ui_ir_sections(sections: &Value) {
 }
 
 fn assert_ui_ir_trace_widgets(widgets: &Value) {
-    assert_eq!(widgets.as_array().map(Vec::len), Some(60));
+    assert_eq!(widgets.as_array().map(Vec::len), Some(62));
     assert!(widgets.as_array().is_some_and(|widgets| {
         widgets
             .iter()
@@ -3146,7 +3176,7 @@ fn assert_run_manifest(manifest: &Value) {
         "elicit_ui_trace_widgets",
         "belvedere.receipt.ui_ir:",
         "ui_ir_projection",
-        60,
+        62,
     ));
     assert!(manifest_output_artifact_has_selector(
         manifest,
@@ -3194,7 +3224,7 @@ fn assert_run_manifest(manifest: &Value) {
         "elicit_ui_outputs",
         "belvedere.receipt.ui_ir:",
         "ui_ir_projection",
-        155,
+        159,
     ));
     assert!(manifest_output_artifact_omits_selector(
         manifest,
@@ -3483,7 +3513,7 @@ fn assert_diff_manifest(manifest: &Value) {
         "stage_certificate",
         "belvedere.stage.ui_ir_projection:",
         "current_ui_ir_projection",
-        155,
+        159,
     ));
     assert!(manifest_output_artifact_has_selector(
         manifest,
@@ -3509,7 +3539,7 @@ fn assert_diff_manifest(manifest: &Value) {
         "elicit_ui_trace_widgets",
         "belvedere.receipt.ui_ir:",
         "current_ui_ir_projection",
-        60,
+        62,
     ));
     assert!(manifest_output_artifact_has_selector(
         manifest,
@@ -3522,7 +3552,7 @@ fn assert_diff_manifest(manifest: &Value) {
         "elicit_ui_outputs",
         "belvedere.receipt.ui_ir:",
         "current_ui_ir_projection",
-        155,
+        159,
     ));
     assert!(manifest_output_artifact_matches(
         manifest,
@@ -3810,14 +3840,14 @@ fn cli_can_emit_the_normal_run_stage_certificates_as_json() -> Result<()> {
             BelvedereCliArtifact::RunAuditorNavigationCertificate,
             "auditor_navigation",
             "belvedere.view_model.auditor_navigation",
-            60,
+            62,
         ),
         (
             "--ui-ir-projection-certificate",
             BelvedereCliArtifact::RunUiIrProjectionCertificate,
             "ui_ir_projection",
             "belvedere.ui_ir.elicit_ui_projection",
-            155,
+            159,
         ),
     ];
 
@@ -5117,7 +5147,7 @@ fn cli_can_emit_diff_snapshot_stage_certificates_as_json() -> Result<()> {
             "auditor_navigation",
             "belvedere.view_model.auditor_navigation",
             "view_model_items",
-            60,
+            62,
             None,
         ),
         (
@@ -5126,7 +5156,7 @@ fn cli_can_emit_diff_snapshot_stage_certificates_as_json() -> Result<()> {
             "ui_ir_projection",
             "belvedere.ui_ir.elicit_ui_projection",
             "widgets",
-            60,
+            62,
             None,
         ),
     ];

@@ -226,7 +226,7 @@ impl BelvedereContract for AuditorNavigationContract {
     fn ensures() -> &'static [&'static str] {
         &[
             "overview totals are derived from landscape counts",
-            "filter facets expose deterministic claim-family, verifier, recommendation, support, package, gap, and priority axes with trace IDs",
+            "filter facets expose deterministic claim-family, verifier, recommendation, assessment queue group, support, package, gap, and priority axes with trace IDs",
             "backend coverage entries expose Kani, Creusot, and Verus status per claim",
             "claim explorer entries retain bases, verifier coverage, filter memberships, contracts, assessments, gaps, and trace IDs",
             "claim detail entries consolidate direct bases, resolved roots, verifier coverage, contracts, assessments, gaps, review state, next action, source counts, and trace IDs",

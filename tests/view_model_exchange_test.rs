@@ -27,7 +27,7 @@ fn view_model_projection_builds_auditor_navigation_evidence() -> Result<()> {
 
     assert_eq!(receipt.counts().claim_cards(), 4);
     assert_eq!(receipt.counts().claim_detail_items(), 4);
-    assert_eq!(receipt.counts().filter_facets(), 10);
+    assert_eq!(receipt.counts().filter_facets(), 12);
     assert_eq!(receipt.counts().backend_coverage_items(), 12);
     assert_eq!(receipt.counts().proof_chain_items(), 4);
     assert_eq!(receipt.counts().review_workflow_items(), 4);
@@ -279,7 +279,7 @@ fn view_model_projection_builds_auditor_navigation_evidence() -> Result<()> {
         receipt
             .trace_kind_counts()
             .get("view_model_trace_kind_filter_facet"),
-        Some(&10)
+        Some(&12)
     );
     assert_eq!(
         receipt
@@ -357,13 +357,13 @@ fn view_model_projection_builds_auditor_navigation_evidence() -> Result<()> {
         receipt
             .trace_source_counts()
             .get("view_model_traceable_items"),
-        Some(&59)
+        Some(&61)
     );
     assert_eq!(
         receipt
             .trace_source_counts()
             .get("view_model_trace_items_with_sources"),
-        Some(&59)
+        Some(&61)
     );
     assert_eq!(
         receipt
@@ -397,7 +397,7 @@ fn view_model_projection_builds_auditor_navigation_evidence() -> Result<()> {
             .get("view_model_item_kind_source"),
         Some(&7)
     );
-    assert_eq!(receipt.view_item_ids().len(), 60);
+    assert_eq!(receipt.view_item_ids().len(), 62);
     assert!(
         receipt
             .view_item_ids()
@@ -823,6 +823,12 @@ fn view_model_projection_builds_auditor_filter_facets() -> Result<()> {
             .get("facet_group_recommendation"),
         Some(&2)
     );
+    assert_eq!(
+        receipt
+            .facet_group_counts()
+            .get("facet_group_assessment_queue_group"),
+        Some(&2)
+    );
 
     let verifier = model
         .filter_facets()
@@ -850,6 +856,21 @@ fn view_model_projection_builds_auditor_filter_facets() -> Result<()> {
         .ok_or_else(|| miette!("strengthen recommendation facet should be available"))?;
     assert_eq!(strengthen.label(), "Recommendation Strengthen");
     assert_eq!(strengthen.count(), 1);
+
+    let strengthening_group = model
+        .filter_facets()
+        .iter()
+        .find(|facet| {
+            facet.facet_id()
+                == "belvedere.filter.assessment_queue_group:assessment_queue.strengthening:assertion_strength+adversarial_coverage"
+        })
+        .ok_or_else(|| miette!("strengthening assessment queue group facet should be available"))?;
+    assert_eq!(strengthening_group.group(), "assessment_queue_group");
+    assert_eq!(
+        strengthening_group.label(),
+        "Assessment queue group strengthening / assertion_strength, adversarial_coverage"
+    );
+    assert_eq!(strengthening_group.count(), 1);
 
     let missing_proof = model
         .filter_facets()

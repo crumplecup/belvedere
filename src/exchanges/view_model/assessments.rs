@@ -2,6 +2,7 @@
 
 use std::collections::{BTreeMap, BTreeSet};
 
+use derive_getters::Getters;
 use tracing::instrument;
 
 use crate::{
@@ -14,6 +15,14 @@ use crate::{
 };
 
 use super::{gaps::gap_queue_lane, traces::trace_assessment};
+
+#[derive(Getters)]
+pub(super) struct AssessmentQueueGrouping {
+    queue_lane: String,
+    group_id: String,
+    group_label: String,
+    weak_dimensions: Vec<String>,
+}
 
 #[instrument(level = "debug", skip(assessments, source_record_ids))]
 pub(super) fn project_assessment_history(
@@ -79,10 +88,7 @@ pub(super) fn project_assessment_queue(
     assessments
         .iter()
         .map(|assessment| {
-            let weak_dimensions = weak_dimensions(assessment.rubric());
-            let queue_lane = assessment_queue_lane(assessment.recommendation());
-            let (queue_group_id, queue_group_label) =
-                assessment_queue_group(queue_lane, &weak_dimensions);
+            let grouping = assessment_queue_grouping(assessment);
             AssessmentQueueItemBuilder::default()
                 .assessment_id(assessment.id())
                 .proof_id(assessment.proof_id())
@@ -95,11 +101,11 @@ pub(super) fn project_assessment_queue(
                 )
                 .superseded_by(assessment.superseded_by().map(ToOwned::to_owned))
                 .recommendation(assessment.recommendation())
-                .queue_lane(queue_lane)
-                .queue_group_id(queue_group_id)
-                .queue_group_label(queue_group_label)
+                .queue_lane(grouping.queue_lane)
+                .queue_group_id(grouping.group_id)
+                .queue_group_label(grouping.group_label)
                 .resolution_path(assessment.resolution_path())
-                .weak_dimensions(weak_dimensions)
+                .weak_dimensions(grouping.weak_dimensions)
                 .trace(trace_assessment(assessment, source_record_ids))
                 .build()
                 .map_err(|error| BelvedereConstructionError::new("AssessmentQueueItem", error))
@@ -178,6 +184,21 @@ fn missing_assessment_work_id(gap: &GapItem) -> String {
 #[instrument(level = "trace", skip(assessment))]
 fn assessment_work_id(assessment: &LandscapeAssessment) -> String {
     format!("assessment_work.recommendation:{}", assessment.id())
+}
+
+#[instrument(level = "trace", skip(assessment))]
+pub(super) fn assessment_queue_grouping(
+    assessment: &LandscapeAssessment,
+) -> AssessmentQueueGrouping {
+    let weak_dimensions = weak_dimensions(assessment.rubric());
+    let queue_lane = assessment_queue_lane(assessment.recommendation());
+    let (group_id, group_label) = assessment_queue_group(queue_lane, &weak_dimensions);
+    AssessmentQueueGrouping {
+        queue_lane: queue_lane.to_owned(),
+        group_id,
+        group_label,
+        weak_dimensions,
+    }
 }
 
 #[instrument(level = "trace", skip(weak_dimensions))]

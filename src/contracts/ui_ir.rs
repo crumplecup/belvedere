@@ -126,7 +126,7 @@ impl BelvedereContract for ElicitUiProjectionContract {
             "the emitted tree is an elicit_ui VerifiedTree",
             "top-level auditor sections are represented as named UI regions",
             "top-level auditor sections carry stable section IDs in projection receipts",
-            "auditor filter facets are represented as traceable UI controls",
+            "auditor filter facets, including assessment queue groups, are represented as traceable UI controls",
             "backend coverage status is represented as traceable UI controls",
             "claim detail widgets preserve direct bases, resolved roots, verifier coverage, contracts, assessments, gaps, review state, next action, source counts, and trace IDs",
             "proof-chain widgets preserve chain topology and backend completeness labels",

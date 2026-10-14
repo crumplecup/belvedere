@@ -11,7 +11,7 @@ use crate::{
     error::BelvedereConstructionError,
 };
 
-use super::trace;
+use super::{assessments::assessment_queue_grouping, trace};
 
 #[instrument(level = "debug", skip(claims, assessments, gaps))]
 pub(super) fn project_filter_facets<'a>(
@@ -43,10 +43,17 @@ pub(super) fn project_filter_facets<'a>(
     }
 
     let mut recommendation_counts = BTreeMap::new();
+    let mut assessment_queue_group_counts = BTreeMap::new();
     for assessment in assessments {
         increment_count(
             &mut recommendation_counts,
             &format!("{:?}", assessment.recommendation()),
+        );
+        let grouping = assessment_queue_grouping(assessment);
+        increment_labeled_count(
+            &mut assessment_queue_group_counts,
+            grouping.group_id(),
+            &format!("Assessment queue group {}", grouping.group_label()),
         );
     }
 
@@ -75,6 +82,12 @@ pub(super) fn project_filter_facets<'a>(
         "recommendation",
         "Recommendation",
         recommendation_counts,
+        source_record_ids,
+        &mut facets,
+    )?;
+    push_labeled_facets(
+        "assessment_queue_group",
+        assessment_queue_group_counts,
         source_record_ids,
         &mut facets,
     )?;
@@ -123,6 +136,18 @@ fn increment_count(counts: &mut BTreeMap<String, usize>, value: &str) {
     *counts.entry(value.to_owned()).or_default() += 1;
 }
 
+#[instrument(level = "trace", skip(counts))]
+fn increment_labeled_count(
+    counts: &mut BTreeMap<String, (String, usize)>,
+    value: &str,
+    label: &str,
+) {
+    let (_label, count) = counts
+        .entry(value.to_owned())
+        .or_insert_with(|| (label.to_owned(), 0));
+    *count += 1;
+}
+
 #[instrument(level = "debug", skip(counts, facets))]
 fn push_facets(
     group: &'static str,
@@ -139,6 +164,30 @@ fn push_facets(
                 .group(group)
                 .value(value.clone())
                 .label(format!("{label_prefix} {value}"))
+                .count(count)
+                .trace(trace(&facet_id, source_record_ids))
+                .build()
+                .map_err(|error| BelvedereConstructionError::new("AuditorFilterFacet", error))?,
+        );
+    }
+    Ok(())
+}
+
+#[instrument(level = "debug", skip(counts, facets))]
+fn push_labeled_facets(
+    group: &'static str,
+    counts: BTreeMap<String, (String, usize)>,
+    source_record_ids: &[String],
+    facets: &mut Vec<AuditorFilterFacet>,
+) -> Result<(), BelvedereConstructionError> {
+    for (value, (label, count)) in counts {
+        let facet_id = format!("belvedere.filter.{group}:{value}");
+        facets.push(
+            AuditorFilterFacetBuilder::default()
+                .facet_id(facet_id.clone())
+                .group(group)
+                .value(value.clone())
+                .label(label)
                 .count(count)
                 .trace(trace(&facet_id, source_record_ids))
                 .build()
