@@ -18,6 +18,7 @@ use crate::{
     },
 };
 
+mod assertions;
 mod claims;
 mod gaps;
 
@@ -148,6 +149,10 @@ impl BelvedereContract for LandscapeModelingContract {
             .chain(input.assessments().source_record_ids())
             .collect::<Vec<_>>();
         require_transition::<Self>([
+            (
+                "landscape_claim_payloads_preserved",
+                assertions::claims_match_input(input, output),
+            ),
             (
                 "landscape_edges_complete",
                 output.edges() == &expected_edges,

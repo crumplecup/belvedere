@@ -136,6 +136,7 @@ pub struct WitnessSurfaceSummary {
     trusted: usize,
     #[getter(skip)]
     opaque: usize,
+    artifact: serde_json::Value,
 }
 
 impl WitnessSurfaceSummary {
@@ -151,6 +152,7 @@ impl WitnessSurfaceSummary {
             checked: record.checked(),
             trusted: record.trusted(),
             opaque: record.opaque(),
+            artifact: record.artifact().clone(),
         }
     }
 
