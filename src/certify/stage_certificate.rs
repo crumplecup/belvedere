@@ -8,7 +8,8 @@ use tracing::instrument;
 
 use crate::certify::{
     BELVEDERE_STAGE_CERTIFICATE_SCHEMA_ID, BELVEDERE_STAGE_CERTIFICATE_SCHEMA_VERSION,
-    BelvedereInvariantCheck, BelvederePipelineStage, stage_invariant_checks,
+    BelvedereCertificationError, BelvedereInvariantCheck, BelvederePipelineStage,
+    stage_invariant_checks,
 };
 
 mod digest;
@@ -63,7 +64,7 @@ impl BelvedereStageCertificate {
     }
 
     #[instrument(level = "debug", skip(evidence))]
-    fn new(evidence: StageCertificateEvidence) -> Self {
+    fn new(evidence: StageCertificateEvidence) -> Result<Self, BelvedereCertificationError> {
         let mut invariant_checks = stage_invariant_checks(
             &evidence.requires,
             &evidence.ensures,
@@ -72,9 +73,13 @@ impl BelvedereStageCertificate {
             evidence.warning_count,
         );
         invariant_checks.extend(evidence.additional_invariant_checks.iter().cloned());
+        BelvedereCertificationError::require_passing(
+            evidence.stage.to_string(),
+            &invariant_checks,
+        )?;
         let digest = stage_digest(&evidence, &invariant_checks);
         let id = format!("belvedere.stage.{}:{digest}", evidence.stage);
-        Self {
+        Ok(Self {
             schema_id: BELVEDERE_STAGE_CERTIFICATE_SCHEMA_ID.to_owned(),
             schema_version: BELVEDERE_STAGE_CERTIFICATE_SCHEMA_VERSION,
             id,
@@ -90,6 +95,6 @@ impl BelvedereStageCertificate {
             invariant_checks,
             warning_count: evidence.warning_count,
             digest,
-        }
+        })
     }
 }

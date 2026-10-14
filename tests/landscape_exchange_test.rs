@@ -114,7 +114,9 @@ fn landscape_modeling_maps_decoded_records_into_a_review_graph() -> Result<()> {
         )
     );
 
-    let certificate = BelvedereStageCertificate::landscape_modeling(&receipt);
+    let certificate = BelvedereStageCertificate::landscape_modeling(&receipt)
+        .into_diagnostic()
+        .wrap_err("landscape receipt should satisfy required checks")?;
     assert_eq!(
         certificate.stage(),
         BelvederePipelineStage::LandscapeModeling

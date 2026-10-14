@@ -1,6 +1,6 @@
 use belvedere::{
     AcceptedAmenableArtifactFormat, ArtifactKind, AssessmentStreamIngestion,
-    BelvedereStageCertificate, INPUT_FIDELITY_STANDARD_ID, ProofExecutionStatus,
+    BelvedereStageCertificate, INPUT_FIDELITY_STANDARD_ID, IngestionReceipt, ProofExecutionStatus,
     RawAmenableArtifact, Recommendation, RegistryDumpIngestion, ResolutionPath,
     SCHEMA_HONESTY_STANDARD_ID,
 };
@@ -150,7 +150,9 @@ fn registry_ingestion_preserves_record_identity_and_unknown_fields() -> Result<(
         Some(&1)
     );
 
-    let certificate = BelvedereStageCertificate::registry_ingestion(&receipt);
+    let certificate = BelvedereStageCertificate::registry_ingestion(&receipt)
+        .into_diagnostic()
+        .wrap_err("registry receipt should satisfy required checks")?;
     assert_eq!(
         certificate.input_digests(),
         &vec![receipt.digest().to_owned()]
@@ -191,6 +193,42 @@ fn registry_ingestion_preserves_record_identity_and_unknown_fields() -> Result<(
                 |check| check.name() == "ingestion_decoded_counts_match_source_records"
                     && check.passed()
             )
+    );
+    Ok(())
+}
+
+#[test]
+fn failed_required_ingestion_check_refuses_success_certificate() -> Result<()> {
+    belvedere::init_tracing();
+
+    let artifact = RawAmenableArtifact::new(
+        "tests/fixtures/registry_dump.json",
+        ArtifactKind::RegistryDump,
+        include_bytes!("fixtures/registry_dump.json").to_vec(),
+    );
+    let (snapshot, _) = RegistryDumpIngestion
+        .ingest(artifact.clone())
+        .into_diagnostic()?;
+    let mut incorrect_counts = snapshot.decoded_counts();
+    *incorrect_counts
+        .get_mut("kani_proofs")
+        .ok_or_else(|| miette!("Kani count should be present"))? += 1;
+    let receipt = IngestionReceipt::new(
+        "belvedere.ingest.registry_dump",
+        &artifact,
+        AcceptedAmenableArtifactFormat::RegistryDumpJson,
+        incorrect_counts,
+        snapshot.unsupported_fields(),
+        Vec::new(),
+        snapshot.source_record_ids(),
+    );
+
+    let error = BelvedereStageCertificate::registry_ingestion(&receipt)
+        .expect_err("a failed required check must refuse the certificate");
+    assert!(
+        error
+            .to_string()
+            .contains("ingestion_decoded_counts_match_source_records")
     );
     Ok(())
 }
@@ -254,7 +292,9 @@ fn assessment_ingestion_preserves_current_and_legacy_shapes() -> Result<()> {
         Some(&1)
     );
 
-    let certificate = BelvedereStageCertificate::assessment_ingestion(&receipt);
+    let certificate = BelvedereStageCertificate::assessment_ingestion(&receipt)
+        .into_diagnostic()
+        .wrap_err("assessment receipt should satisfy required checks")?;
     assert_eq!(
         certificate.input_digests(),
         &vec![receipt.digest().to_owned()]

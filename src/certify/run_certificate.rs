@@ -9,10 +9,11 @@ use tracing::instrument;
 
 use crate::certify::{
     BELVEDERE_RUN_CERTIFICATE_SCHEMA_ID, BELVEDERE_RUN_CERTIFICATE_SCHEMA_VERSION,
-    BelvedereInvariantCheck, BelvedereInvocationCommand, BelvedereRunInvocation,
-    BelvedereStageCertificate, IngestionReceipt, LandscapeReceipt, RunInputArtifactEvidence,
-    RunInvariantEvidence, RunInvocationEvidence, RunStageCertificateEvidence, UiIrReceipt,
-    ViewModelReceipt, hex_digest, run_invariant_checks, update_field, update_fields,
+    BelvedereCertificationError, BelvedereInvariantCheck, BelvedereInvocationCommand,
+    BelvedereRunInvocation, BelvedereStageCertificate, IngestionReceipt, LandscapeReceipt,
+    RunInputArtifactEvidence, RunInvariantEvidence, RunInvocationEvidence,
+    RunStageCertificateEvidence, UiIrReceipt, ViewModelReceipt, hex_digest, run_invariant_checks,
+    update_field, update_fields,
 };
 use crate::contracts::{
     BelvederePipelineClaim, REPORT_REPRODUCIBILITY_STANDARD_ID,
@@ -42,6 +43,10 @@ pub struct BelvedereRunCertificate {
 
 impl BelvedereRunCertificate {
     /// Build a run certificate from the receipts emitted by each stage.
+    ///
+    /// # Errors
+    ///
+    /// Refuses a success certificate when a stage or run check fails.
     #[instrument(
         level = "debug",
         skip(
@@ -52,14 +57,13 @@ impl BelvedereRunCertificate {
             ui_ir_receipt
         )
     )]
-    #[must_use]
     pub fn from_receipts(
         registry_receipt: &IngestionReceipt,
         assessment_receipt: &IngestionReceipt,
         landscape_receipt: &LandscapeReceipt,
         view_model_receipt: &ViewModelReceipt,
         ui_ir_receipt: &UiIrReceipt,
-    ) -> Self {
+    ) -> Result<Self, BelvedereCertificationError> {
         Self::from_receipts_with_invocation(
             BelvedereRunInvocation::library(),
             registry_receipt,
@@ -71,6 +75,10 @@ impl BelvedereRunCertificate {
     }
 
     /// Build a run certificate from a recorded invocation and stage receipts.
+    ///
+    /// # Errors
+    ///
+    /// Refuses a success certificate when a stage or run check fails.
     #[instrument(
         level = "debug",
         skip(
@@ -82,7 +90,6 @@ impl BelvedereRunCertificate {
             ui_ir_receipt
         )
     )]
-    #[must_use]
     pub fn from_receipts_with_invocation(
         invocation: BelvedereRunInvocation,
         registry_receipt: &IngestionReceipt,
@@ -90,13 +97,13 @@ impl BelvedereRunCertificate {
         landscape_receipt: &LandscapeReceipt,
         view_model_receipt: &ViewModelReceipt,
         ui_ir_receipt: &UiIrReceipt,
-    ) -> Self {
+    ) -> Result<Self, BelvedereCertificationError> {
         let stage_certificates = vec![
-            BelvedereStageCertificate::registry_ingestion(registry_receipt),
-            BelvedereStageCertificate::assessment_ingestion(assessment_receipt),
-            BelvedereStageCertificate::landscape_modeling(landscape_receipt),
-            BelvedereStageCertificate::auditor_navigation(view_model_receipt),
-            BelvedereStageCertificate::ui_ir_projection(ui_ir_receipt),
+            BelvedereStageCertificate::registry_ingestion(registry_receipt)?,
+            BelvedereStageCertificate::assessment_ingestion(assessment_receipt)?,
+            BelvedereStageCertificate::landscape_modeling(landscape_receipt)?,
+            BelvedereStageCertificate::auditor_navigation(view_model_receipt)?,
+            BelvedereStageCertificate::ui_ir_projection(ui_ir_receipt)?,
         ];
         let input_artifact_ids = vec![
             artifact_id_with_role("registry", registry_receipt),
@@ -128,7 +135,7 @@ impl BelvedereRunCertificate {
         input_artifact_ids: Vec<String>,
         input_artifact_digests: Vec<String>,
         stage_certificates: Vec<BelvedereStageCertificate>,
-    ) -> Self {
+    ) -> Result<Self, BelvedereCertificationError> {
         let stage_certificate_ids = stage_certificates
             .iter()
             .map(|certificate| certificate.id().to_owned())
@@ -169,6 +176,7 @@ impl BelvedereRunCertificate {
                 stage_certificate_digest_matches,
             ),
         ));
+        BelvedereCertificationError::require_passing("run", &invariant_checks)?;
         let digest = run_digest(RunDigestEvidence {
             belvedere_version: &belvedere_version,
             component_versions: &component_versions,
@@ -183,7 +191,7 @@ impl BelvedereRunCertificate {
             invariant_checks: &invariant_checks,
         });
         let id = format!("belvedere.run:{digest}");
-        Self {
+        Ok(Self {
             schema_id: BELVEDERE_RUN_CERTIFICATE_SCHEMA_ID.to_owned(),
             schema_version: BELVEDERE_RUN_CERTIFICATE_SCHEMA_VERSION,
             id,
@@ -200,7 +208,7 @@ impl BelvedereRunCertificate {
             stage_kind_counts,
             invariant_checks,
             digest,
-        }
+        })
     }
 }
 

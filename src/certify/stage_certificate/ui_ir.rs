@@ -6,8 +6,9 @@ use tracing::instrument;
 
 use crate::{
     certify::{
-        BelvederePipelineStage, UiIrReceipt, ui_ir_output_invariant_checks,
-        ui_ir_source_locator_invariant_checks, ui_ir_trace_invariant_checks,
+        BelvedereCertificationError, BelvederePipelineStage, UiIrReceipt,
+        ui_ir_output_invariant_checks, ui_ir_source_locator_invariant_checks,
+        ui_ir_trace_invariant_checks,
     },
     contracts::{
         BelvedereContract, ElicitUiDiffReviewProjectionContract, ElicitUiProjectionContract,
@@ -21,9 +22,12 @@ use crate::certify::contract_metadata::{
 
 impl BelvedereStageCertificate {
     /// Certificate the `elicit_ui` projection stage.
+    ///
+    /// # Errors
+    ///
+    /// Refuses a success certificate when a required check fails.
     #[instrument(level = "debug", skip(receipt))]
-    #[must_use]
-    pub fn ui_ir_projection(receipt: &UiIrReceipt) -> Self {
+    pub fn ui_ir_projection(receipt: &UiIrReceipt) -> Result<Self, BelvedereCertificationError> {
         Self::ui_ir_projection_for::<ElicitUiProjectionContract>(
             BelvederePipelineStage::UiIrProjection,
             receipt,
@@ -31,9 +35,14 @@ impl BelvedereStageCertificate {
     }
 
     /// Certificate the landscape diff review `elicit_ui` projection stage.
+    ///
+    /// # Errors
+    ///
+    /// Refuses a success certificate when a required check fails.
     #[instrument(level = "debug", skip(receipt))]
-    #[must_use]
-    pub fn diff_review_ui_ir_projection(receipt: &UiIrReceipt) -> Self {
+    pub fn diff_review_ui_ir_projection(
+        receipt: &UiIrReceipt,
+    ) -> Result<Self, BelvedereCertificationError> {
         Self::ui_ir_projection_for::<ElicitUiDiffReviewProjectionContract>(
             BelvederePipelineStage::LandscapeDiffReviewUiIrProjection,
             receipt,
@@ -44,7 +53,7 @@ impl BelvedereStageCertificate {
     fn ui_ir_projection_for<C: BelvedereContract>(
         stage: BelvederePipelineStage,
         receipt: &UiIrReceipt,
-    ) -> Self {
+    ) -> Result<Self, BelvedereCertificationError> {
         let mut counts = BTreeMap::from([
             (
                 "minted_standards".to_owned(),
@@ -70,6 +79,7 @@ impl BelvedereStageCertificate {
         let mut additional_invariant_checks = ui_ir_trace_invariant_checks(
             receipt.counts().widget_count(),
             receipt.counts().trace_ref_count(),
+            receipt.section_population_counts(),
             receipt.section_trace_counts(),
             receipt.trace_source_counts(),
             receipt.source_record_ids(),

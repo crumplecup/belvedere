@@ -6,8 +6,9 @@ use tracing::instrument;
 
 use crate::{
     certify::{
-        BelvederePipelineStage, ViewModelReceipt, view_model_item_invariant_checks,
-        view_model_source_navigation_invariant_checks, view_model_trace_invariant_checks,
+        BelvedereCertificationError, BelvederePipelineStage, ViewModelReceipt,
+        view_model_item_invariant_checks, view_model_source_navigation_invariant_checks,
+        view_model_trace_invariant_checks,
     },
     contracts::AuditorNavigationContract,
 };
@@ -19,9 +20,14 @@ use crate::certify::contract_metadata::{
 
 impl BelvedereStageCertificate {
     /// Certificate the auditor navigation view-model stage.
+    ///
+    /// # Errors
+    ///
+    /// Refuses a success certificate when a required check fails.
     #[instrument(level = "debug", skip(receipt))]
-    #[must_use]
-    pub fn auditor_navigation(receipt: &ViewModelReceipt) -> Self {
+    pub fn auditor_navigation(
+        receipt: &ViewModelReceipt,
+    ) -> Result<Self, BelvedereCertificationError> {
         let mut counts = BTreeMap::from([
             (
                 "assessment_history_items".to_owned(),

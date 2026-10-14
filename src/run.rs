@@ -158,7 +158,7 @@ pub fn run_belvedere_pipeline(
         &snapshot.landscape_receipt,
         &snapshot.view_model_receipt,
         &snapshot.ui_ir_receipt,
-    );
+    )?;
     let manifest = BelvedereArtifactManifest::normal_run(
         &certificate,
         &snapshot.registry_receipt,
@@ -214,33 +214,33 @@ pub fn run_belvedere_landscape_diff(
             current_landscape.clone(),
             &current.landscape_receipt,
         ))?;
-    let diff_certificate = BelvedereStageCertificate::landscape_diff(&diff_receipt);
+    let diff_certificate = BelvedereStageCertificate::landscape_diff(&diff_receipt)?;
     let (diff_view_model, diff_view_model_receipt) = LandscapeDiffReviewProjection.project(
         LandscapeDiffReviewInput::from_diff(diff.clone(), &diff_receipt),
     )?;
     let diff_view_model_certificate =
-        BelvedereStageCertificate::landscape_diff_review(&diff_view_model_receipt);
+        BelvedereStageCertificate::landscape_diff_review(&diff_view_model_receipt)?;
     let (diff_projection, diff_ui_ir_receipt) =
         ElicitUiDiffReviewProjection.project(DiffReviewUiIrInput::from_diff_review_model(
             diff_view_model.clone(),
             &diff_view_model_receipt,
         ))?;
     let diff_ui_ir_certificate =
-        BelvedereStageCertificate::diff_review_ui_ir_projection(&diff_ui_ir_receipt);
+        BelvedereStageCertificate::diff_review_ui_ir_projection(&diff_ui_ir_receipt)?;
     let certificate = BelvedereRunCertificate::from_stage_certificates(
         invocation,
         input_artifact_ids,
         input_artifact_digests,
-        auditor_stage_certificates(&previous)
+        auditor_stage_certificates(&previous)?
             .into_iter()
-            .chain(auditor_stage_certificates(&current))
+            .chain(auditor_stage_certificates(&current)?)
             .chain([
                 diff_certificate.clone(),
                 diff_view_model_certificate.clone(),
                 diff_ui_ir_certificate.clone(),
             ])
             .collect(),
-    );
+    )?;
     let manifest = BelvedereArtifactManifest::landscape_diff_run(
         &certificate,
         BelvedereDiffManifestReceipts::new(
@@ -361,23 +361,25 @@ fn build_landscape_snapshot(
 #[instrument(level = "debug", skip(snapshot))]
 fn landscape_snapshot_stage_certificates(
     snapshot: &AuditorRunSnapshot,
-) -> Vec<BelvedereStageCertificate> {
-    vec![
-        BelvedereStageCertificate::registry_ingestion(&snapshot.registry_receipt),
-        BelvedereStageCertificate::assessment_ingestion(&snapshot.assessment_receipt),
-        BelvedereStageCertificate::landscape_modeling(&snapshot.landscape_receipt),
-    ]
+) -> Result<Vec<BelvedereStageCertificate>, BelvedereError> {
+    Ok(vec![
+        BelvedereStageCertificate::registry_ingestion(&snapshot.registry_receipt)?,
+        BelvedereStageCertificate::assessment_ingestion(&snapshot.assessment_receipt)?,
+        BelvedereStageCertificate::landscape_modeling(&snapshot.landscape_receipt)?,
+    ])
 }
 
 #[instrument(level = "debug", skip(snapshot))]
-fn auditor_stage_certificates(snapshot: &AuditorRunSnapshot) -> Vec<BelvedereStageCertificate> {
-    landscape_snapshot_stage_certificates(snapshot)
+fn auditor_stage_certificates(
+    snapshot: &AuditorRunSnapshot,
+) -> Result<Vec<BelvedereStageCertificate>, BelvedereError> {
+    Ok(landscape_snapshot_stage_certificates(snapshot)?
         .into_iter()
         .chain([
-            BelvedereStageCertificate::auditor_navigation(&snapshot.view_model_receipt),
-            BelvedereStageCertificate::ui_ir_projection(&snapshot.ui_ir_receipt),
+            BelvedereStageCertificate::auditor_navigation(&snapshot.view_model_receipt)?,
+            BelvedereStageCertificate::ui_ir_projection(&snapshot.ui_ir_receipt)?,
         ])
-        .collect()
+        .collect())
 }
 
 #[instrument(level = "debug", skip(previous, current))]

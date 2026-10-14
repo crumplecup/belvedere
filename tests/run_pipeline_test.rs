@@ -5076,7 +5076,6 @@ fn cli_can_emit_diff_snapshot_stage_certificates_as_json() -> Result<()> {
             "belvedere.ingest.registry_dump",
             "proof_records",
             1,
-            None,
         ),
         (
             "--previous-assessment-ingestion-certificate",
@@ -5085,7 +5084,6 @@ fn cli_can_emit_diff_snapshot_stage_certificates_as_json() -> Result<()> {
             "belvedere.ingest.proof_assessments",
             "assessments",
             0,
-            None,
         ),
         (
             "--previous-landscape-modeling-certificate",
@@ -5094,7 +5092,6 @@ fn cli_can_emit_diff_snapshot_stage_certificates_as_json() -> Result<()> {
             "belvedere.model.landscape",
             "claims",
             3,
-            None,
         ),
         (
             "--previous-auditor-navigation-certificate",
@@ -5103,7 +5100,6 @@ fn cli_can_emit_diff_snapshot_stage_certificates_as_json() -> Result<()> {
             "belvedere.view_model.auditor_navigation",
             "view_model_items",
             44,
-            None,
         ),
         (
             "--previous-ui-ir-projection-certificate",
@@ -5112,7 +5108,6 @@ fn cli_can_emit_diff_snapshot_stage_certificates_as_json() -> Result<()> {
             "belvedere.ui_ir.elicit_ui_projection",
             "widgets",
             44,
-            Some("ui_ir_sections_traceable"),
         ),
         (
             "--current-registry-ingestion-certificate",
@@ -5121,7 +5116,6 @@ fn cli_can_emit_diff_snapshot_stage_certificates_as_json() -> Result<()> {
             "belvedere.ingest.registry_dump",
             "proof_records",
             1,
-            None,
         ),
         (
             "--current-assessment-ingestion-certificate",
@@ -5130,7 +5124,6 @@ fn cli_can_emit_diff_snapshot_stage_certificates_as_json() -> Result<()> {
             "belvedere.ingest.proof_assessments",
             "assessments",
             2,
-            None,
         ),
         (
             "--current-landscape-modeling-certificate",
@@ -5139,7 +5132,6 @@ fn cli_can_emit_diff_snapshot_stage_certificates_as_json() -> Result<()> {
             "belvedere.model.landscape",
             "claims",
             4,
-            None,
         ),
         (
             "--current-auditor-navigation-certificate",
@@ -5148,7 +5140,6 @@ fn cli_can_emit_diff_snapshot_stage_certificates_as_json() -> Result<()> {
             "belvedere.view_model.auditor_navigation",
             "view_model_items",
             62,
-            None,
         ),
         (
             "--current-ui-ir-projection-certificate",
@@ -5157,11 +5148,10 @@ fn cli_can_emit_diff_snapshot_stage_certificates_as_json() -> Result<()> {
             "belvedere.ui_ir.elicit_ui_projection",
             "widgets",
             62,
-            None,
         ),
     ];
 
-    for (flag, artifact, stage, contract, count_key, count, expected_failed_invariant) in cases {
+    for (flag, artifact, stage, contract, count_key, count) in cases {
         let args = diff_args_with_empty_previous_assessments(&[flag], &previous_assessments_path)?;
         let command = BelvedereCli::from_args(args.clone())
             .into_diagnostic()
@@ -5199,13 +5189,10 @@ fn cli_can_emit_diff_snapshot_stage_certificates_as_json() -> Result<()> {
             })
             .collect::<Vec<_>>();
 
-        match expected_failed_invariant {
-            Some(invariant) => assert_eq!(failed_invariants, vec![invariant]),
-            None => assert!(
-                failed_invariants.is_empty(),
-                "{flag} should not report failed invariants: {failed_invariants:?}"
-            ),
-        }
+        assert!(
+            failed_invariants.is_empty(),
+            "{flag} should not report failed invariants: {failed_invariants:?}"
+        );
     }
 
     fs::remove_file(previous_assessments_path)

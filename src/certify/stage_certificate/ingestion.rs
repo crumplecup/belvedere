@@ -3,7 +3,10 @@
 use tracing::instrument;
 
 use crate::{
-    certify::{BelvederePipelineStage, IngestionReceipt, ingestion_record_invariant_checks},
+    certify::{
+        BelvedereCertificationError, BelvederePipelineStage, IngestionReceipt,
+        ingestion_record_invariant_checks,
+    },
     contracts::{
         AssessmentStreamIngestionContract, BelvedereContract, RegistryDumpIngestionContract,
     },
@@ -16,9 +19,14 @@ use crate::certify::contract_metadata::{
 
 impl BelvedereStageCertificate {
     /// Certificate the registry dump ingestion stage.
+    ///
+    /// # Errors
+    ///
+    /// Refuses a success certificate when a required check fails.
     #[instrument(level = "debug", skip(receipt))]
-    #[must_use]
-    pub fn registry_ingestion(receipt: &IngestionReceipt) -> Self {
+    pub fn registry_ingestion(
+        receipt: &IngestionReceipt,
+    ) -> Result<Self, BelvedereCertificationError> {
         Self::ingestion::<RegistryDumpIngestionContract>(
             BelvederePipelineStage::RegistryIngestion,
             receipt,
@@ -26,9 +34,14 @@ impl BelvedereStageCertificate {
     }
 
     /// Certificate the assessment stream ingestion stage.
+    ///
+    /// # Errors
+    ///
+    /// Refuses a success certificate when a required check fails.
     #[instrument(level = "debug", skip(receipt))]
-    #[must_use]
-    pub fn assessment_ingestion(receipt: &IngestionReceipt) -> Self {
+    pub fn assessment_ingestion(
+        receipt: &IngestionReceipt,
+    ) -> Result<Self, BelvedereCertificationError> {
         Self::ingestion::<AssessmentStreamIngestionContract>(
             BelvederePipelineStage::AssessmentIngestion,
             receipt,
@@ -39,7 +52,7 @@ impl BelvedereStageCertificate {
     fn ingestion<C: BelvedereContract>(
         stage: BelvederePipelineStage,
         receipt: &IngestionReceipt,
-    ) -> Self {
+    ) -> Result<Self, BelvedereCertificationError> {
         let mut counts = receipt.decoded_counts().clone();
         counts.extend(receipt.source_record_kind_counts().clone());
         counts.extend(receipt.unsupported_field_record_counts().clone());

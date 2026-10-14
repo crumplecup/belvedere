@@ -6,6 +6,7 @@ use thiserror::Error;
 use tracing::instrument;
 
 use crate::{
+    certify::BelvedereCertificationError,
     cli::{BelvedereCliOutputError, BelvedereCliUsageError},
     collect::ArtifactReadError,
     exchanges::{IngestionError, UiIrError},
@@ -39,6 +40,13 @@ impl From<IngestionError> for BelvedereError {
     #[track_caller]
     fn from(source: IngestionError) -> Self {
         Self::new(BelvedereErrorKind::Ingestion(source))
+    }
+}
+
+impl From<BelvedereCertificationError> for BelvedereError {
+    #[track_caller]
+    fn from(source: BelvedereCertificationError) -> Self {
+        Self::new(BelvedereErrorKind::Certification(source))
     }
 }
 
@@ -84,6 +92,8 @@ enum BelvedereErrorKind {
     ArtifactRead(ArtifactReadError),
     #[error(transparent)]
     Ingestion(IngestionError),
+    #[error(transparent)]
+    Certification(BelvedereCertificationError),
     #[error(transparent)]
     UiIr(UiIrError),
     #[error(transparent)]

@@ -6,6 +6,7 @@ mod certificate_schema;
 mod contract_metadata;
 mod diff;
 mod diff_review;
+mod error;
 mod invariant;
 mod landscape;
 mod receipt;
@@ -39,6 +40,7 @@ pub(crate) use diff_review::{
     LandscapeDiffReviewReceiptBuilder, LandscapeDiffReviewReceiptDigestEvidenceBuilder,
     landscape_diff_review_receipt_identity,
 };
+pub use error::BelvedereCertificationError;
 pub use invariant::BelvedereInvariantCheck;
 pub(crate) use invariant::{
     RunInputArtifactEvidence, RunInvariantEvidence, RunInvocationEvidence,

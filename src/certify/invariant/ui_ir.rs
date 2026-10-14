@@ -8,11 +8,17 @@ use super::{BelvedereInvariantCheck, count_value, unique_string_count};
 
 #[instrument(
     level = "trace",
-    skip(section_trace_counts, trace_source_counts, source_record_ids)
+    skip(
+        section_population_counts,
+        section_trace_counts,
+        trace_source_counts,
+        source_record_ids
+    )
 )]
 pub(crate) fn ui_ir_trace_invariant_checks(
     trace_widget_count: usize,
     trace_ref_count: usize,
+    section_population_counts: &BTreeMap<String, usize>,
     section_trace_counts: &BTreeMap<String, usize>,
     trace_source_counts: &BTreeMap<String, usize>,
     source_record_ids: &[String],
@@ -25,6 +31,7 @@ pub(crate) fn ui_ir_trace_invariant_checks(
         section_trace_counts,
         "ui_ir_sections_without_source_widgets",
     );
+    let empty_sections = count_value(section_population_counts, "ui_ir_sections_empty");
     let section_source_links_total = count_value(
         section_trace_counts,
         "ui_ir_section_trace_source_links_total",
@@ -55,8 +62,10 @@ pub(crate) fn ui_ir_trace_invariant_checks(
         ),
         BelvedereInvariantCheck::new(
             "ui_ir_sections_traceable".to_owned(),
-            trace_widget_count > 0 && sections_without_source_widgets == 0,
-            format!("{sections_without_source_widgets} UI IR sections lack sourced widgets"),
+            trace_widget_count > 0 && sections_without_source_widgets == empty_sections,
+            format!(
+                "{sections_without_source_widgets} UI IR sections lack sourced widgets; {empty_sections} are empty"
+            ),
         ),
         BelvedereInvariantCheck::new(
             "ui_ir_input_sources_reachable".to_owned(),

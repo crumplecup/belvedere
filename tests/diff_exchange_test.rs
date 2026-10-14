@@ -175,7 +175,9 @@ fn landscape_diff_surfaces_snapshot_changes_for_auditors() -> Result<()> {
             .is_some_and(|count| *count > 0)
     );
 
-    let certificate = BelvedereStageCertificate::landscape_diff(&receipt);
+    let certificate = BelvedereStageCertificate::landscape_diff(&receipt)
+        .into_diagnostic()
+        .wrap_err("diff receipt should satisfy required checks")?;
     assert_eq!(certificate.stage(), BelvederePipelineStage::LandscapeDiff);
     assert_eq!(certificate.contract(), "belvedere.diff.landscape");
     assert!(certificate.input_digests().is_empty());

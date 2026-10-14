@@ -6,8 +6,9 @@ use tracing::instrument;
 
 use crate::{
     certify::{
-        BelvederePipelineStage, LandscapeDiffReceipt, LandscapeDiffReviewReceipt, LandscapeReceipt,
-        diff_item_invariant_checks, diff_review_invariant_checks, diff_trace_invariant_checks,
+        BelvedereCertificationError, BelvederePipelineStage, LandscapeDiffReceipt,
+        LandscapeDiffReviewReceipt, LandscapeReceipt, diff_item_invariant_checks,
+        diff_review_invariant_checks, diff_trace_invariant_checks,
         landscape_model_invariant_checks,
     },
     contracts::{LandscapeDiffContract, LandscapeDiffReviewContract, LandscapeModelingContract},
@@ -20,9 +21,14 @@ use crate::certify::contract_metadata::{
 
 impl BelvedereStageCertificate {
     /// Certificate the landscape modeling stage.
+    ///
+    /// # Errors
+    ///
+    /// Refuses a success certificate when a required check fails.
     #[instrument(level = "debug", skip(receipt))]
-    #[must_use]
-    pub fn landscape_modeling(receipt: &LandscapeReceipt) -> Self {
+    pub fn landscape_modeling(
+        receipt: &LandscapeReceipt,
+    ) -> Result<Self, BelvedereCertificationError> {
         let mut counts = BTreeMap::from([
             ("assessments".to_owned(), receipt.assessment_count()),
             ("claims".to_owned(), receipt.claim_count()),
@@ -64,9 +70,14 @@ impl BelvedereStageCertificate {
     }
 
     /// Certificate the landscape snapshot diff stage.
+    ///
+    /// # Errors
+    ///
+    /// Refuses a success certificate when a required check fails.
     #[instrument(level = "debug", skip(receipt))]
-    #[must_use]
-    pub fn landscape_diff(receipt: &LandscapeDiffReceipt) -> Self {
+    pub fn landscape_diff(
+        receipt: &LandscapeDiffReceipt,
+    ) -> Result<Self, BelvedereCertificationError> {
         let mut counts = BTreeMap::from([
             ("added_items".to_owned(), receipt.counts().added_items()),
             ("changed_items".to_owned(), receipt.counts().changed_items()),
@@ -123,9 +134,14 @@ impl BelvedereStageCertificate {
     }
 
     /// Certificate the landscape diff review-model stage.
+    ///
+    /// # Errors
+    ///
+    /// Refuses a success certificate when a required check fails.
     #[instrument(level = "debug", skip(receipt))]
-    #[must_use]
-    pub fn landscape_diff_review(receipt: &LandscapeDiffReviewReceipt) -> Self {
+    pub fn landscape_diff_review(
+        receipt: &LandscapeDiffReviewReceipt,
+    ) -> Result<Self, BelvedereCertificationError> {
         let mut counts = BTreeMap::from([
             (
                 "blocking_items".to_owned(),
