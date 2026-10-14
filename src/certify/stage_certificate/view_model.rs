@@ -10,7 +10,7 @@ use crate::{
         view_model_item_invariant_checks, view_model_source_navigation_invariant_checks,
         view_model_trace_invariant_checks,
     },
-    contracts::AuditorNavigationContract,
+    contracts::{AuditorNavigationContract, BelvedereContract},
 };
 
 use super::{BelvedereStageCertificate, StageCertificateEvidence};
@@ -102,6 +102,15 @@ impl BelvedereStageCertificate {
             output_ids: receipt.view_item_ids().clone(),
             counts,
             additional_invariant_checks,
+            transition_checks: receipt.transition_checks().to_vec(),
+            expected_transition_names: AuditorNavigationContract::ASSERTION_NAMES
+                .iter()
+                .map(ToString::to_string)
+                .collect(),
+            expected_precondition_names: AuditorNavigationContract::PRECONDITION_NAMES
+                .iter()
+                .map(ToString::to_string)
+                .collect(),
             warning_count: receipt.warnings().len(),
         })
     }

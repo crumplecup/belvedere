@@ -38,7 +38,10 @@ impl BelvedereCertificationError {
         scope: impl Into<String> + std::fmt::Debug,
         checks: &[BelvedereInvariantCheck],
     ) -> Result<(), Self> {
-        if let Some(check) = checks.iter().find(|check| !check.passed()) {
+        if let Some(check) = checks
+            .iter()
+            .find(|check| check.required() && !check.passed())
+        {
             return Err(Self::new(
                 scope.into(),
                 check.name().clone(),

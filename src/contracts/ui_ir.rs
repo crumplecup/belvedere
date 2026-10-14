@@ -119,22 +119,31 @@ impl BelvedereContract for ElicitUiProjectionContract {
     type Receipt = UiIrReceipt;
 
     const NAME: &'static str = "belvedere.ui_ir.elicit_ui_projection";
+    const ASSERTION_NAMES: &'static [&'static str] = &[
+        "ui_ir_source_occurrences_preserved",
+        "ui_ir_receipt_input_binding",
+        "ui_ir_receipt_trace_binding",
+        "ui_ir_receipt_section_binding",
+    ];
 
     #[instrument(level = "trace", skip(input, output, receipt))]
     fn verify_transition(
         input: &Self::Input,
         output: &Self::Output,
         receipt: &Self::Receipt,
-    ) -> Result<(), BelvedereCertificationError> {
+    ) -> Result<Vec<crate::certify::BelvedereInvariantCheck>, BelvedereCertificationError> {
         verify_projection::<Self>(
             input.model().source_record_ids(),
             input.source_view_model_receipt_id(),
             input.source_view_model_receipt_digest(),
             output,
             receipt,
-        )?;
-        BelvedereStageCertificate::ui_ir_projection(receipt)?;
-        Ok(())
+        )
+    }
+
+    #[instrument(level = "trace", skip(receipt))]
+    fn verify_receipt(receipt: &Self::Receipt) -> Result<(), BelvedereCertificationError> {
+        BelvedereStageCertificate::ui_ir_projection(receipt).map(|_| ())
     }
 
     #[instrument(level = "trace")]
@@ -187,22 +196,26 @@ impl BelvedereContract for ElicitUiDiffReviewProjectionContract {
     type Receipt = UiIrReceipt;
 
     const NAME: &'static str = "belvedere.ui_ir.elicit_ui_diff_review_projection";
+    const ASSERTION_NAMES: &'static [&'static str] = ElicitUiProjectionContract::ASSERTION_NAMES;
 
     #[instrument(level = "trace", skip(input, output, receipt))]
     fn verify_transition(
         input: &Self::Input,
         output: &Self::Output,
         receipt: &Self::Receipt,
-    ) -> Result<(), BelvedereCertificationError> {
+    ) -> Result<Vec<crate::certify::BelvedereInvariantCheck>, BelvedereCertificationError> {
         verify_projection::<Self>(
             input.model().source_record_ids(),
             input.source_view_model_receipt_id(),
             input.source_view_model_receipt_digest(),
             output,
             receipt,
-        )?;
-        BelvedereStageCertificate::diff_review_ui_ir_projection(receipt)?;
-        Ok(())
+        )
+    }
+
+    #[instrument(level = "trace", skip(receipt))]
+    fn verify_receipt(receipt: &Self::Receipt) -> Result<(), BelvedereCertificationError> {
+        BelvedereStageCertificate::diff_review_ui_ir_projection(receipt).map(|_| ())
     }
 
     #[instrument(level = "trace")]
@@ -245,7 +258,7 @@ fn verify_projection<C: BelvedereContract<Output = UiIrProjection, Receipt = UiI
     source_receipt_digest: &str,
     output: &UiIrProjection,
     receipt: &UiIrReceipt,
-) -> Result<(), BelvedereCertificationError> {
+) -> Result<Vec<crate::certify::BelvedereInvariantCheck>, BelvedereCertificationError> {
     let trace_widget_ids = output
         .trace_widgets()
         .iter()

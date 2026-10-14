@@ -8,9 +8,9 @@ use serde::Serialize;
 use sha2::{Digest as _, Sha256};
 use tracing::instrument;
 
-use crate::certify::{hex_digest, update_field, update_fields};
+use crate::certify::{BelvedereInvariantCheck, hex_digest, update_field, update_fields};
 
-const LANDSCAPE_RECEIPT_SCHEMA_ID: &str = "belvedere.receipts.landscape.v1";
+const LANDSCAPE_RECEIPT_SCHEMA_ID: &str = "belvedere.receipts.landscape.v2";
 const LANDSCAPE_RECEIPT_ID_PREFIX: &str = "belvedere.receipt.landscape";
 
 /// Audit receipt emitted by a landscape modeling exchange.
@@ -30,7 +30,11 @@ pub struct LandscapeReceipt {
     source_receipt_digests: Vec<String>,
     source_record_ids: Vec<String>,
     warnings: Vec<String>,
+    #[builder(default)]
+    transition_checks: Vec<BelvedereInvariantCheck>,
 }
+
+crate::certify::transition::impl_attested_receipt!(LandscapeReceipt);
 
 impl LandscapeReceipt {
     /// Number of claims in the landscape.

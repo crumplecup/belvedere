@@ -212,13 +212,19 @@ impl BelvedereContract for LandscapeDiffContract {
     type Receipt = LandscapeDiffReceipt;
 
     const NAME: &'static str = "belvedere.diff.landscape";
+    const ASSERTION_NAMES: &'static [&'static str] = &[
+        "diff_source_binding",
+        "diff_receipt_input_binding",
+        "diff_receipt_output_binding",
+        "diff_item_identity_unique",
+    ];
 
     #[instrument(level = "trace", skip(input, output, receipt))]
     fn verify_transition(
         input: &Self::Input,
         output: &Self::Output,
         receipt: &Self::Receipt,
-    ) -> Result<(), BelvedereCertificationError> {
+    ) -> Result<Vec<crate::certify::BelvedereInvariantCheck>, BelvedereCertificationError> {
         let sources = input
             .previous()
             .source_record_ids()
@@ -252,9 +258,12 @@ impl BelvedereContract for LandscapeDiffContract {
                 "diff_item_identity_unique",
                 item_ids.iter().collect::<BTreeSet<_>>().len() == item_ids.len(),
             ),
-        ])?;
-        BelvedereStageCertificate::landscape_diff(receipt)?;
-        Ok(())
+        ])
+    }
+
+    #[instrument(level = "trace", skip(receipt))]
+    fn verify_receipt(receipt: &Self::Receipt) -> Result<(), BelvedereCertificationError> {
+        BelvedereStageCertificate::landscape_diff(receipt).map(|_| ())
     }
 
     #[instrument(level = "trace")]

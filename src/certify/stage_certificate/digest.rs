@@ -36,6 +36,7 @@ pub(super) fn stage_digest(
     for check in invariant_checks {
         update_field(&mut hasher, check.name());
         update_field(&mut hasher, &check.passed().to_string());
+        update_field(&mut hasher, check.kind().as_str());
         update_field(&mut hasher, check.detail());
     }
     hex_digest(hasher)

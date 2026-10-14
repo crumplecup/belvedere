@@ -185,6 +185,7 @@ fn manifest_digest(evidence: ManifestDigestEvidence<'_>) -> String {
     for check in evidence.invariant_checks {
         update_field(&mut hasher, check.name());
         update_field(&mut hasher, &check.passed().to_string());
+        update_field(&mut hasher, check.kind().as_str());
         update_field(&mut hasher, check.detail());
     }
     for artifact in evidence.input_artifacts {

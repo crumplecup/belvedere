@@ -218,13 +218,19 @@ impl BelvedereContract for AuditorNavigationContract {
     type Receipt = ViewModelReceipt;
 
     const NAME: &'static str = "belvedere.view_model.auditor_navigation";
+    const ASSERTION_NAMES: &'static [&'static str] = &[
+        "view_claims_complete",
+        "view_source_occurrences_complete",
+        "view_receipt_source_binding",
+        "view_receipt_output_binding",
+    ];
 
     #[instrument(level = "trace", skip(input, output, receipt))]
     fn verify_transition(
         input: &Self::Input,
         output: &Self::Output,
         receipt: &Self::Receipt,
-    ) -> Result<(), BelvedereCertificationError> {
+    ) -> Result<Vec<crate::certify::BelvedereInvariantCheck>, BelvedereCertificationError> {
         let expected_claims = input
             .landscape()
             .claims()
@@ -258,9 +264,12 @@ impl BelvedereContract for AuditorNavigationContract {
                     && receipt.counts().claim_cards() == output.claim_explorer().len()
                     && receipt.counts().source_items() == output.source_navigation().len(),
             ),
-        ])?;
-        BelvedereStageCertificate::auditor_navigation(receipt)?;
-        Ok(())
+        ])
+    }
+
+    #[instrument(level = "trace", skip(receipt))]
+    fn verify_receipt(receipt: &Self::Receipt) -> Result<(), BelvedereCertificationError> {
+        BelvedereStageCertificate::auditor_navigation(receipt).map(|_| ())
     }
 
     #[instrument(level = "trace")]

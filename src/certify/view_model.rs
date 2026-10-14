@@ -8,9 +8,9 @@ use serde::Serialize;
 use sha2::{Digest as _, Sha256};
 use tracing::instrument;
 
-use crate::certify::{hex_digest, update_field, update_fields};
+use crate::certify::{BelvedereInvariantCheck, hex_digest, update_field, update_fields};
 
-const VIEW_MODEL_RECEIPT_SCHEMA_ID: &str = "belvedere.receipts.view_model.v1";
+const VIEW_MODEL_RECEIPT_SCHEMA_ID: &str = "belvedere.receipts.view_model.v2";
 const VIEW_MODEL_RECEIPT_ID_PREFIX: &str = "belvedere.receipt.view_model";
 
 /// Audit receipt emitted by a view-model exchange.
@@ -39,7 +39,11 @@ pub struct ViewModelReceipt {
     view_item_ids: Vec<String>,
     source_record_ids: Vec<String>,
     warnings: Vec<String>,
+    #[builder(default)]
+    transition_checks: Vec<BelvedereInvariantCheck>,
 }
+
+crate::certify::transition::impl_attested_receipt!(ViewModelReceipt);
 
 impl ViewModelReceipt {
     /// Modeled view counts.

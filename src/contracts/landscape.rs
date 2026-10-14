@@ -129,13 +129,20 @@ impl BelvedereContract for LandscapeModelingContract {
     type Receipt = LandscapeReceipt;
 
     const NAME: &'static str = "belvedere.model.landscape";
+    const ASSERTION_NAMES: &'static [&'static str] = &[
+        "landscape_claim_payloads_preserved",
+        "landscape_edges_complete",
+        "landscape_source_occurrences_complete",
+        "landscape_receipt_source_binding",
+        "landscape_receipt_output_binding",
+    ];
 
     #[instrument(level = "trace", skip(input, output, receipt))]
     fn verify_transition(
         input: &Self::Input,
         output: &Self::Output,
         receipt: &Self::Receipt,
-    ) -> Result<(), BelvedereCertificationError> {
+    ) -> Result<Vec<crate::certify::BelvedereInvariantCheck>, BelvedereCertificationError> {
         let expected_edges = input
             .registry()
             .evidence_links()
@@ -174,9 +181,12 @@ impl BelvedereContract for LandscapeModelingContract {
                     && receipt.assessment_count() == output.assessments().len()
                     && receipt.gap_count() == output.gaps().len(),
             ),
-        ])?;
-        BelvedereStageCertificate::landscape_modeling(receipt)?;
-        Ok(())
+        ])
+    }
+
+    #[instrument(level = "trace", skip(receipt))]
+    fn verify_receipt(receipt: &Self::Receipt) -> Result<(), BelvedereCertificationError> {
+        BelvedereStageCertificate::landscape_modeling(receipt).map(|_| ())
     }
 
     #[instrument(level = "trace")]

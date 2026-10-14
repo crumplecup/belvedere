@@ -14,6 +14,7 @@ mod run_certificate;
 mod run_invocation;
 mod stage;
 mod stage_certificate;
+mod transition;
 mod ui_ir;
 mod view_model;
 
@@ -41,7 +42,7 @@ pub(crate) use diff_review::{
     landscape_diff_review_receipt_identity,
 };
 pub use error::BelvedereCertificationError;
-pub use invariant::BelvedereInvariantCheck;
+pub use invariant::{BelvedereCheckKind, BelvedereInvariantCheck};
 pub(crate) use invariant::{
     RunInputArtifactEvidence, RunInvariantEvidence, RunInvocationEvidence,
     RunStageCertificateEvidence, diff_item_invariant_checks, diff_review_invariant_checks,
@@ -62,6 +63,8 @@ pub use run_invocation::{
 };
 pub use stage::BelvederePipelineStage;
 pub use stage_certificate::BelvedereStageCertificate;
+pub use transition::BelvedereTransitionReceipt;
+pub(crate) use transition::require_transition_checks;
 pub use ui_ir::{UiIrReceipt, UiIrReceiptCounts};
 pub(crate) use ui_ir::{
     UiIrReceiptBuilder, UiIrReceiptDigestEvidenceBuilder, ui_ir_receipt_identity,

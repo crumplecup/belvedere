@@ -8,8 +8,8 @@ use tracing::instrument;
 
 use crate::certify::{
     BELVEDERE_STAGE_CERTIFICATE_SCHEMA_ID, BELVEDERE_STAGE_CERTIFICATE_SCHEMA_VERSION,
-    BelvedereCertificationError, BelvedereInvariantCheck, BelvederePipelineStage,
-    stage_invariant_checks,
+    BelvedereCertificationError, BelvedereCheckKind, BelvedereInvariantCheck,
+    BelvederePipelineStage, stage_invariant_checks,
 };
 
 mod digest;
@@ -53,6 +53,9 @@ struct StageCertificateEvidence {
     output_ids: Vec<String>,
     counts: BTreeMap<String, usize>,
     additional_invariant_checks: Vec<BelvedereInvariantCheck>,
+    transition_checks: Vec<BelvedereInvariantCheck>,
+    expected_transition_names: Vec<String>,
+    expected_precondition_names: Vec<String>,
     warning_count: usize,
 }
 
@@ -77,6 +80,34 @@ impl BelvedereStageCertificate {
             evidence.stage.to_string(),
             &invariant_checks,
         )?;
+        crate::certify::transition::require_transition_checks(&evidence.transition_checks)?;
+        let observed_names = evidence
+            .transition_checks
+            .iter()
+            .map(|check| check.name().clone())
+            .collect::<Vec<_>>();
+        let classes_match = evidence.transition_checks.iter().all(|check| {
+            check.kind()
+                == if evidence.expected_precondition_names.contains(check.name()) {
+                    BelvedereCheckKind::Precondition
+                } else {
+                    BelvedereCheckKind::Postcondition
+                }
+        });
+        let assertion_set_check = BelvedereInvariantCheck::new(
+            "transition_assertion_set_complete".to_owned(),
+            observed_names == evidence.expected_transition_names && classes_match,
+            format!(
+                "expected {:?}; observed {observed_names:?}",
+                evidence.expected_transition_names
+            ),
+        );
+        BelvedereCertificationError::require_passing(
+            evidence.stage.to_string(),
+            std::slice::from_ref(&assertion_set_check),
+        )?;
+        invariant_checks.push(assertion_set_check);
+        invariant_checks.extend(evidence.transition_checks.iter().cloned());
         let digest = stage_digest(&evidence, &invariant_checks);
         let id = format!("belvedere.stage.{}:{digest}", evidence.stage);
         Ok(Self {

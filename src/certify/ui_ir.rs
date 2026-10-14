@@ -8,9 +8,9 @@ use serde::Serialize;
 use sha2::{Digest as _, Sha256};
 use tracing::instrument;
 
-use crate::certify::{hex_digest, update_field, update_fields};
+use crate::certify::{BelvedereInvariantCheck, hex_digest, update_field, update_fields};
 
-const UI_IR_RECEIPT_SCHEMA_ID: &str = "belvedere.receipts.ui_ir.v1";
+const UI_IR_RECEIPT_SCHEMA_ID: &str = "belvedere.receipts.ui_ir.v2";
 const UI_IR_RECEIPT_ID_PREFIX: &str = "belvedere.receipt.ui_ir";
 
 /// Audit receipt emitted by an `elicit_ui` projection exchange.
@@ -45,7 +45,11 @@ pub struct UiIrReceipt {
     minted_prop_counts: BTreeMap<String, usize>,
     proof_token_counts: BTreeMap<String, usize>,
     minted_standards: Vec<String>,
+    #[builder(default)]
+    transition_checks: Vec<BelvedereInvariantCheck>,
 }
+
+crate::certify::transition::impl_attested_receipt!(UiIrReceipt);
 
 impl UiIrReceipt {
     /// UI IR projection counts.

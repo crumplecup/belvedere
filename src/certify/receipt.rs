@@ -8,13 +8,13 @@ use sha2::{Digest as _, Sha256};
 use tracing::instrument;
 
 use crate::{
-    certify::{hex_digest, update_field},
+    certify::{BelvedereInvariantCheck, hex_digest, update_field},
     contracts::{
         AcceptedAmenableArtifactFormat, ArtifactKind, RawAmenableArtifact, UnsupportedField,
     },
 };
 
-const INGESTION_RECEIPT_SCHEMA_ID: &str = "belvedere.receipts.ingestion.v1";
+const INGESTION_RECEIPT_SCHEMA_ID: &str = "belvedere.receipts.ingestion.v2";
 const INGESTION_RECEIPT_ID_PREFIX: &str = "belvedere.receipt.ingestion";
 
 /// Audit receipt emitted by an ingestion exchange.
@@ -36,9 +36,29 @@ pub struct IngestionReceipt {
     unsupported_fields: Vec<UnsupportedField>,
     warnings: Vec<String>,
     source_record_ids: Vec<String>,
+    transition_checks: Vec<BelvedereInvariantCheck>,
 }
 
 impl IngestionReceipt {
+    /// Whether this is the expected raw receipt or its correctly attested form.
+    #[must_use]
+    #[instrument(level = "trace", skip(self, expected))]
+    pub fn matches_expected_transition(&self, expected: &Self) -> bool {
+        if self.transition_checks.is_empty() {
+            return self == expected;
+        }
+        let (receipt_id, receipt_digest) = crate::certify::transition::transition_identity(
+            &expected.receipt_id,
+            &expected.receipt_digest,
+            &self.transition_checks,
+        );
+        let mut attested = expected.clone();
+        attested.receipt_id = receipt_id;
+        attested.receipt_digest = receipt_digest;
+        attested.transition_checks = self.transition_checks.clone();
+        self == &attested
+    }
+
     /// Build a receipt for a successful ingestion exchange.
     #[must_use]
     #[instrument(
@@ -87,6 +107,7 @@ impl IngestionReceipt {
             unsupported_fields,
             warnings,
             source_record_ids,
+            transition_checks: Vec::new(),
         }
     }
 
@@ -102,6 +123,8 @@ impl IngestionReceipt {
         self.format
     }
 }
+
+crate::certify::transition::impl_attested_receipt!(IngestionReceipt);
 
 #[derive(Debug, Clone, Copy)]
 struct IngestionReceiptDigestEvidence<'evidence> {

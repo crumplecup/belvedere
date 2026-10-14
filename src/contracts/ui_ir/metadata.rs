@@ -104,6 +104,25 @@ pub struct MetadataUiIrReceipt {
     output_digest: String,
     #[getter(skip)]
     field_count: usize,
+    #[builder(default)]
+    transition_checks: Vec<crate::certify::BelvedereInvariantCheck>,
+}
+
+impl crate::certify::BelvedereTransitionReceipt for MetadataUiIrReceipt {
+    #[instrument(level = "trace", skip(self))]
+    fn transition_checks(&self) -> &[crate::certify::BelvedereInvariantCheck] {
+        &self.transition_checks
+    }
+
+    #[instrument(level = "trace", skip(self, checks))]
+    fn record_transition_checks(
+        &mut self,
+        checks: Vec<crate::certify::BelvedereInvariantCheck>,
+    ) -> Result<(), BelvedereCertificationError> {
+        crate::certify::require_transition_checks(&checks)?;
+        self.transition_checks = checks;
+        Ok(())
+    }
 }
 
 impl MetadataUiIrReceipt {
@@ -123,13 +142,18 @@ impl BelvedereContract for ElicitUiMetadataProjectionContract {
     type Receipt = MetadataUiIrReceipt;
 
     const NAME: &'static str = "belvedere.ui_ir.metadata_projection";
+    const ASSERTION_NAMES: &'static [&'static str] = &[
+        "metadata_fields_preserved_in_order",
+        "metadata_receipt_source_binding",
+        "metadata_receipt_count_binding",
+    ];
 
     #[instrument(level = "trace", skip(input, output, receipt))]
     fn verify_transition(
         input: &Self::Input,
         output: &Self::Output,
         receipt: &Self::Receipt,
-    ) -> Result<(), BelvedereCertificationError> {
+    ) -> Result<Vec<crate::certify::BelvedereInvariantCheck>, BelvedereCertificationError> {
         let widgets = output.trace_widgets();
         let fields_preserved = widgets.len() == input.fields().len() + 1
             && widgets.first().is_some_and(|widget| {
@@ -156,6 +180,11 @@ impl BelvedereContract for ElicitUiMetadataProjectionContract {
                 receipt.field_count() == input.fields().len(),
             ),
         ])
+    }
+
+    #[instrument(level = "trace", skip(receipt))]
+    fn verify_receipt(receipt: &Self::Receipt) -> Result<(), BelvedereCertificationError> {
+        crate::certify::require_transition_checks(receipt.transition_checks())
     }
 
     #[instrument(level = "trace")]

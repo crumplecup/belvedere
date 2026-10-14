@@ -103,6 +103,12 @@ impl BelvedereStageCertificate {
             output_ids: receipt.output_ids().clone(),
             counts,
             additional_invariant_checks,
+            transition_checks: receipt.transition_checks().to_vec(),
+            expected_transition_names: C::ASSERTION_NAMES.iter().map(ToString::to_string).collect(),
+            expected_precondition_names: C::PRECONDITION_NAMES
+                .iter()
+                .map(ToString::to_string)
+                .collect(),
             warning_count: 0,
         })
     }

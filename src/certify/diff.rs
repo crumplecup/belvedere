@@ -8,9 +8,9 @@ use serde::Serialize;
 use sha2::{Digest as _, Sha256};
 use tracing::instrument;
 
-use crate::certify::{hex_digest, update_field, update_fields};
+use crate::certify::{BelvedereInvariantCheck, hex_digest, update_field, update_fields};
 
-const LANDSCAPE_DIFF_RECEIPT_SCHEMA_ID: &str = "belvedere.receipts.landscape_diff.v1";
+const LANDSCAPE_DIFF_RECEIPT_SCHEMA_ID: &str = "belvedere.receipts.landscape_diff.v2";
 const LANDSCAPE_DIFF_RECEIPT_ID_PREFIX: &str = "belvedere.receipt.landscape_diff";
 
 /// Audit receipt emitted by a landscape diff exchange.
@@ -35,7 +35,11 @@ pub struct LandscapeDiffReceipt {
     source_landscape_receipt_digests: Vec<String>,
     source_record_ids: Vec<String>,
     warnings: Vec<String>,
+    #[builder(default)]
+    transition_checks: Vec<BelvedereInvariantCheck>,
 }
+
+crate::certify::transition::impl_attested_receipt!(LandscapeDiffReceipt);
 
 impl LandscapeDiffReceipt {
     /// Modeled diff counts.

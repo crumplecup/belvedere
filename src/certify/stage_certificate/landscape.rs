@@ -11,7 +11,10 @@ use crate::{
         diff_review_invariant_checks, diff_trace_invariant_checks,
         landscape_model_invariant_checks,
     },
-    contracts::{LandscapeDiffContract, LandscapeDiffReviewContract, LandscapeModelingContract},
+    contracts::{
+        BelvedereContract, LandscapeDiffContract, LandscapeDiffReviewContract,
+        LandscapeModelingContract,
+    },
 };
 
 use super::{BelvedereStageCertificate, StageCertificateEvidence};
@@ -65,6 +68,15 @@ impl BelvedereStageCertificate {
             output_ids: receipt.landscape_item_ids().clone(),
             counts,
             additional_invariant_checks,
+            transition_checks: receipt.transition_checks().to_vec(),
+            expected_transition_names: LandscapeModelingContract::ASSERTION_NAMES
+                .iter()
+                .map(ToString::to_string)
+                .collect(),
+            expected_precondition_names: LandscapeModelingContract::PRECONDITION_NAMES
+                .iter()
+                .map(ToString::to_string)
+                .collect(),
             warning_count: receipt.warnings().len(),
         })
     }
@@ -129,6 +141,15 @@ impl BelvedereStageCertificate {
             output_ids: receipt.diff_item_ids().clone(),
             counts,
             additional_invariant_checks,
+            transition_checks: receipt.transition_checks().to_vec(),
+            expected_transition_names: LandscapeDiffContract::ASSERTION_NAMES
+                .iter()
+                .map(ToString::to_string)
+                .collect(),
+            expected_precondition_names: LandscapeDiffContract::PRECONDITION_NAMES
+                .iter()
+                .map(ToString::to_string)
+                .collect(),
             warning_count: receipt.warnings().len(),
         })
     }
@@ -181,6 +202,15 @@ impl BelvedereStageCertificate {
             output_ids: receipt.review_item_ids().clone(),
             counts,
             additional_invariant_checks,
+            transition_checks: receipt.transition_checks().to_vec(),
+            expected_transition_names: LandscapeDiffReviewContract::ASSERTION_NAMES
+                .iter()
+                .map(ToString::to_string)
+                .collect(),
+            expected_precondition_names: LandscapeDiffReviewContract::PRECONDITION_NAMES
+                .iter()
+                .map(ToString::to_string)
+                .collect(),
             warning_count: receipt.warnings().len(),
         })
     }

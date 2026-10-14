@@ -3,7 +3,6 @@
 use std::collections::{BTreeMap, BTreeSet};
 
 use derive_getters::Getters;
-use derive_new::new;
 use serde::Serialize;
 use tracing::instrument;
 
@@ -28,20 +27,94 @@ pub(crate) use ui_ir::{
     ui_ir_trace_invariant_checks,
 };
 
+/// Whether an assertion blocks certification and which boundary it governs.
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize)]
+#[serde(rename_all = "snake_case")]
+pub enum BelvedereCheckKind {
+    /// A required condition on evidence accepted by the exchange.
+    Precondition,
+    /// A required assertion about the emitted evidence.
+    Postcondition,
+    /// A recorded observation that does not block certification.
+    Diagnostic,
+}
+
+impl BelvedereCheckKind {
+    /// Stable digest spelling for the check class.
+    #[must_use]
+    pub const fn as_str(self) -> &'static str {
+        match self {
+            Self::Precondition => "precondition",
+            Self::Postcondition => "postcondition",
+            Self::Diagnostic => "diagnostic",
+        }
+    }
+}
+
 /// Named invariant result included in a stage certificate.
-#[derive(Debug, Clone, PartialEq, Eq, Getters, Serialize, new)]
+#[derive(Debug, Clone, PartialEq, Eq, Getters, Serialize)]
 pub struct BelvedereInvariantCheck {
     name: String,
     #[getter(skip)]
     passed: bool,
     detail: String,
+    #[getter(skip)]
+    kind: BelvedereCheckKind,
 }
 
 impl BelvedereInvariantCheck {
+    /// Build a required postcondition check.
+    #[must_use]
+    #[instrument(level = "debug", fields(name = name))]
+    pub fn new(name: String, passed: bool, detail: String) -> Self {
+        Self {
+            name,
+            passed,
+            detail,
+            kind: BelvedereCheckKind::Postcondition,
+        }
+    }
+
+    /// Build a required precondition check.
+    #[must_use]
+    #[instrument(level = "debug")]
+    pub fn precondition(name: String, passed: bool, detail: String) -> Self {
+        Self {
+            name,
+            passed,
+            detail,
+            kind: BelvedereCheckKind::Precondition,
+        }
+    }
+
+    /// Build a nonblocking diagnostic observation.
+    #[must_use]
+    #[instrument(level = "debug")]
+    pub fn diagnostic(name: String, passed: bool, detail: String) -> Self {
+        Self {
+            name,
+            passed,
+            detail,
+            kind: BelvedereCheckKind::Diagnostic,
+        }
+    }
+
     /// Whether the invariant passed.
     #[must_use]
     pub const fn passed(&self) -> bool {
         self.passed
+    }
+
+    /// The assertion's enforcement class.
+    #[must_use]
+    pub const fn kind(&self) -> BelvedereCheckKind {
+        self.kind
+    }
+
+    /// Whether a failed result blocks a success certificate.
+    #[must_use]
+    pub const fn required(&self) -> bool {
+        !matches!(self.kind, BelvedereCheckKind::Diagnostic)
     }
 }
 

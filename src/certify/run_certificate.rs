@@ -293,6 +293,7 @@ fn run_digest(evidence: RunDigestEvidence<'_>) -> String {
     for check in evidence.invariant_checks {
         update_field(&mut hasher, check.name());
         update_field(&mut hasher, &check.passed().to_string());
+        update_field(&mut hasher, check.kind().as_str());
         update_field(&mut hasher, check.detail());
     }
     hex_digest(hasher)
