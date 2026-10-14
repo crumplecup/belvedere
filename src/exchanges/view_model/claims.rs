@@ -14,7 +14,7 @@ use crate::{
     error::BelvedereConstructionError,
 };
 
-use super::{coverage::TARGET_VERIFIERS, trace};
+use super::{assessments::assessment_queue_grouping, coverage::TARGET_VERIFIERS, trace};
 
 #[instrument(level = "debug", skip(claims, assessments, gaps))]
 pub(super) fn project_claim_explorer<'a>(
@@ -161,6 +161,11 @@ fn claim_filter_ids(
                 &mut ids,
                 "recommendation",
                 &format!("{:?}", assessment.recommendation()),
+            );
+            insert_filter_id(
+                &mut ids,
+                "assessment_queue_group",
+                assessment_queue_grouping(assessment).group_id(),
             );
         }
     }

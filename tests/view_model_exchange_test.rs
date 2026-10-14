@@ -570,6 +570,15 @@ fn view_model_projection_builds_auditor_navigation_evidence() -> Result<()> {
             .filter_ids()
             .contains(&"belvedere.filter.recommendation:Strengthen".to_owned())
     );
+    let proof_assessment = model
+        .assessment_queue()
+        .iter()
+        .find(|item| item.proof_id() == proof_item.claim_id())
+        .ok_or_else(|| miette!("proof claim should have an assessment queue entry"))?;
+    assert!(proof_item.filter_ids().contains(&format!(
+        "belvedere.filter.assessment_queue_group:{}",
+        proof_assessment.queue_group_id()
+    )));
     let proof_detail = model
         .claim_details()
         .iter()
@@ -811,6 +820,20 @@ fn view_model_projection_builds_auditor_filter_facets() -> Result<()> {
         receipt.counts().filter_facets(),
         model.filter_facets().len()
     );
+    let facet_ids = model
+        .filter_facets()
+        .iter()
+        .map(|facet| facet.facet_id().as_str())
+        .collect::<BTreeSet<_>>();
+    for claim in model.claim_explorer() {
+        for filter_id in claim.filter_ids() {
+            assert!(
+                facet_ids.contains(filter_id.as_str()),
+                "claim {} refers to missing facet {filter_id}",
+                claim.claim_id()
+            );
+        }
+    }
     assert_eq!(
         receipt.facet_group_counts().get("facet_group_claim_family"),
         Some(&1)
