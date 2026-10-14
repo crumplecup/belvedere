@@ -25,12 +25,14 @@ mod accessibility;
 mod assessment_widgets;
 mod diff_review;
 mod errors;
+mod metadata;
 mod receipt;
 mod trace_widgets;
 mod widgets;
 
 pub use diff_review::ElicitUiDiffReviewProjection;
 pub use errors::UiIrError;
+pub use metadata::ElicitUiMetadataProjection;
 
 use assessment_widgets::{assessment_history_widget, assessment_widget, assessment_work_widget};
 use receipt::{SourceViewModelReceipt, build_receipt};

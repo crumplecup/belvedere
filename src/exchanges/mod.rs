@@ -17,5 +17,7 @@ pub use ingestion::{
     AssessmentStreamIngestion, IngestionError, RegistryDumpIngestion, WrongArtifactKindError,
 };
 pub use landscape::LandscapeModeling;
-pub use ui_ir::{ElicitUiDiffReviewProjection, ElicitUiProjection, UiIrError};
+pub use ui_ir::{
+    ElicitUiDiffReviewProjection, ElicitUiMetadataProjection, ElicitUiProjection, UiIrError,
+};
 pub use view_model::AuditorNavigationProjection;

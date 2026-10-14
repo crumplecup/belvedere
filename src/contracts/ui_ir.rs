@@ -12,8 +12,15 @@ use crate::{
     },
 };
 
+mod metadata;
 mod projection;
 mod standards;
+
+pub(crate) use metadata::MetadataUiIrReceiptBuilder;
+pub use metadata::{
+    ElicitUiMetadataProjectionContract, MetadataUiField, MetadataUiIrInput, MetadataUiIrReceipt,
+    UI_IR_SECTION_CERTIFICATE_METADATA,
+};
 
 pub use projection::{
     DIFF_REVIEW_UI_IR_SECTION_ITEMS, DIFF_REVIEW_UI_IR_SECTION_SOURCE_NAVIGATION,
