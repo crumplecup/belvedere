@@ -85,12 +85,14 @@ pub(super) fn landscape_item_ids(graph: &LandscapeGraph) -> Vec<String> {
             .iter()
             .map(|assessment| format!("landscape.assessment:{}", assessment.id())),
     );
-    ids.extend(graph.gaps().iter().enumerate().map(|(index, gap)| {
+    ids.extend(graph.gaps().iter().map(|gap| {
+        let origin = gap
+            .origin_key()
+            .map_or_else(String::new, |key| format!(":{key}"));
         format!(
-            "landscape.gap:{}:{}:{}",
+            "landscape.gap:{}:{}{origin}",
             gap.claim_id(),
-            gap_kind_id(gap.kind()),
-            index
+            gap_kind_id(gap.kind())
         )
     }));
 

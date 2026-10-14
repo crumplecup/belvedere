@@ -109,7 +109,7 @@ fn landscape_modeling_maps_decoded_records_into_a_review_graph() -> Result<()> {
     );
     assert!(
         receipt.landscape_item_ids().contains(
-            &"landscape.gap:belvedere::ingestion::DecodedRegistrySnapshot:missing_assessment:0"
+            &"landscape.gap:belvedere::ingestion::DecodedRegistrySnapshot:missing_assessment"
                 .to_owned()
         )
     );

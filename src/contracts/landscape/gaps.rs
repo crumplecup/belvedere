@@ -6,17 +6,26 @@ use serde::Serialize;
 use tracing::instrument;
 
 /// Conservative review gap surfaced by landscape modeling.
-#[derive(Debug, Clone, PartialEq, Eq, Getters, new, Serialize)]
+#[derive(Debug, Clone, PartialEq, Eq, Getters, new, derive_setters::Setters, Serialize)]
+#[setters(prefix = "with_", strip_option, into)]
 pub struct LandscapeGap {
+    #[setters(skip)]
     #[new(into)]
     claim_id: String,
+    #[setters(skip)]
     #[getter(skip)]
     kind: LandscapeGapKind,
+    #[setters(skip)]
     #[new(into)]
     detail: String,
+    #[setters(skip)]
     #[getter(skip)]
     #[new(default)]
     triggering_assessment_id: Option<String>,
+    #[setters(doc = "Set the stable origin of a repeatable gap kind.")]
+    #[getter(skip)]
+    #[new(default)]
+    origin_key: Option<String>,
 }
 
 impl LandscapeGap {
@@ -31,6 +40,13 @@ impl LandscapeGap {
     #[must_use]
     pub fn triggering_assessment_id(&self) -> Option<&str> {
         self.triggering_assessment_id.as_deref()
+    }
+
+    /// Stable origin of a repeatable gap kind.
+    #[instrument(level = "trace", skip(self))]
+    #[must_use]
+    pub fn origin_key(&self) -> Option<&str> {
+        self.origin_key.as_deref()
     }
 
     #[instrument(level = "trace", skip(self))]

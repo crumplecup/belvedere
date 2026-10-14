@@ -225,6 +225,7 @@ impl BelvedereContract for LandscapeDiffContract {
             "each diff item receives a deterministic auditor review priority and action category",
             "each diff item preserves the source identities available from the compared snapshots",
             "gap diff traces retain source identities for the assessment that caused a replacement or retirement gap",
+            "repeatable gaps are compared by their stable origin identities",
         ]
     }
 

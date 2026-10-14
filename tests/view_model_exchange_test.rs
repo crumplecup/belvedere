@@ -8,6 +8,57 @@ use belvedere::{
 use miette::{IntoDiagnostic, Result, WrapErr, miette};
 
 #[test]
+fn witness_gaps_keep_distinct_origin_ids_through_navigation() -> Result<()> {
+    belvedere::init_tracing();
+
+    let mut registry: serde_json::Value =
+        serde_json::from_slice(include_bytes!("fixtures/registry_dump.json")).into_diagnostic()?;
+    let witnesses = registry["witness_export_records"]
+        .as_array_mut()
+        .ok_or_else(|| miette!("witness fixture should be an array"))?;
+    let mut second = witnesses[0].clone();
+    second["destination_module"] = "belvedere::proofs::secondary".into();
+    witnesses.push(second);
+    let input = fixture_input_with_artifacts(
+        serde_json::to_vec(&registry).into_diagnostic()?,
+        include_bytes!("fixtures/proof_assessments.jsonl").to_vec(),
+    )?;
+    let landscape_gaps = input
+        .landscape()
+        .gaps()
+        .iter()
+        .filter(|gap| gap.kind() == LandscapeGapKind::TrustedOrOpaqueWitnessSupport)
+        .collect::<Vec<_>>();
+    assert_eq!(landscape_gaps.len(), 2);
+    assert_ne!(
+        landscape_gaps[0].origin_key(),
+        landscape_gaps[1].origin_key()
+    );
+
+    let (model, _) = AuditorNavigationProjection
+        .project(input)
+        .into_diagnostic()?;
+    let gap_ids = model
+        .gaps()
+        .iter()
+        .filter(|gap| gap.kind() == LandscapeGapKind::TrustedOrOpaqueWitnessSupport)
+        .map(|gap| gap.gap_id().as_str())
+        .collect::<BTreeSet<_>>();
+    assert_eq!(gap_ids.len(), 2);
+    assert!(
+        gap_ids
+            .iter()
+            .any(|id| id.ends_with("kani@belvedere::proofs::ingestion"))
+    );
+    assert!(
+        gap_ids
+            .iter()
+            .any(|id| id.ends_with("kani@belvedere::proofs::secondary"))
+    );
+    Ok(())
+}
+
+#[test]
 fn view_model_projection_builds_auditor_navigation_evidence() -> Result<()> {
     belvedere::init_tracing();
 
@@ -623,7 +674,7 @@ fn view_model_projection_builds_auditor_navigation_evidence() -> Result<()> {
         )
     );
     assert!(decoded_task.gap_ids().contains(
-        &"view_model.gap:belvedere::ingestion::DecodedRegistrySnapshot:trusted_or_opaque_witness_support"
+        &"view_model.gap:belvedere::ingestion::DecodedRegistrySnapshot:trusted_or_opaque_witness_support:kani@belvedere::proofs::ingestion"
             .to_owned()
     ));
     assert_eq!(decoded_task.gap_ids().len(), 2);
@@ -1276,10 +1327,20 @@ fn fixture_input() -> Result<ViewModelInput> {
 }
 
 fn fixture_input_with_assessments(assessment_bytes: Vec<u8>) -> Result<ViewModelInput> {
+    fixture_input_with_artifacts(
+        include_bytes!("fixtures/registry_dump.json").to_vec(),
+        assessment_bytes,
+    )
+}
+
+fn fixture_input_with_artifacts(
+    registry_bytes: Vec<u8>,
+    assessment_bytes: Vec<u8>,
+) -> Result<ViewModelInput> {
     let registry_artifact = RawAmenableArtifact::new(
         "tests/fixtures/registry_dump.json",
         ArtifactKind::RegistryDump,
-        include_bytes!("fixtures/registry_dump.json").to_vec(),
+        registry_bytes,
     );
     let assessment_artifact = RawAmenableArtifact::new(
         "tests/fixtures/proof_assessments.jsonl",

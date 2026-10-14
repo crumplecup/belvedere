@@ -320,6 +320,7 @@ dependencies = [
  "derive-getters",
  "derive-new",
  "derive_builder",
+ "derive_setters",
  "elicit_ui",
  "elicitation",
  "inventory",

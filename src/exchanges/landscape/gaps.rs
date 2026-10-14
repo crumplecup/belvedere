@@ -56,15 +56,22 @@ pub(super) fn model_gaps(
 
         for witness in claim.witness_surfaces() {
             if witness.trusted() > 0 || witness.opaque() > 0 {
-                gaps.push(LandscapeGap::new(
-                    claim.id(),
-                    LandscapeGapKind::TrustedOrOpaqueWitnessSupport,
-                    format!(
-                        "witness support includes {} trusted and {} opaque obligations",
-                        witness.trusted(),
-                        witness.opaque()
-                    ),
-                ));
+                gaps.push(
+                    LandscapeGap::new(
+                        claim.id(),
+                        LandscapeGapKind::TrustedOrOpaqueWitnessSupport,
+                        format!(
+                            "witness support includes {} trusted and {} opaque obligations",
+                            witness.trusted(),
+                            witness.opaque()
+                        ),
+                    )
+                    .with_origin_key(format!(
+                        "{}@{}",
+                        witness.verifier(),
+                        witness.destination_module()
+                    )),
+                );
             }
         }
 
@@ -77,16 +84,23 @@ pub(super) fn model_gaps(
                 || "no backend reason reported".to_owned(),
                 ToOwned::to_owned,
             );
-            gaps.push(LandscapeGap::new(
-                claim.id(),
-                LandscapeGapKind::ProofExecutionUnresolved,
-                format!(
-                    "Kani proof {} is {} in scope {}: {reason}",
-                    proof.harness(),
-                    proof.status_label(),
-                    proof.scope()
-                ),
-            ));
+            gaps.push(
+                LandscapeGap::new(
+                    claim.id(),
+                    LandscapeGapKind::ProofExecutionUnresolved,
+                    format!(
+                        "Kani proof {} is {} in scope {}: {reason}",
+                        proof.harness(),
+                        proof.status_label(),
+                        proof.scope()
+                    ),
+                )
+                .with_origin_key(format!(
+                    "{}@{}",
+                    proof.package(),
+                    proof.harness()
+                )),
+            );
         }
     }
     gaps

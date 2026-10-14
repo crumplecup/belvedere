@@ -17,7 +17,7 @@ pub(super) fn project_gaps(
         .map(|gap| {
             let severity = gap_severity(gap.kind());
             GapItemBuilder::default()
-                .gap_id(stable_gap_id(gap.claim_id(), gap.kind()))
+                .gap_id(stable_gap_id(gap))
                 .claim_id(gap.claim_id())
                 .kind(gap.kind())
                 .severity(severity)
@@ -35,9 +35,16 @@ pub(super) fn project_gaps(
         .collect()
 }
 
-#[instrument(level = "debug", skip(kind))]
-fn stable_gap_id(claim_id: &str, kind: LandscapeGapKind) -> String {
-    format!("view_model.gap:{claim_id}:{}", gap_kind_id(kind))
+#[instrument(level = "debug", skip(gap))]
+fn stable_gap_id(gap: &LandscapeGap) -> String {
+    let origin = gap
+        .origin_key()
+        .map_or_else(String::new, |key| format!(":{key}"));
+    format!(
+        "view_model.gap:{}:{}{origin}",
+        gap.claim_id(),
+        gap_kind_id(gap.kind())
+    )
 }
 
 #[instrument(level = "debug", skip(kind))]

@@ -206,6 +206,11 @@ fn assessments_by_id(
 #[instrument(level = "debug", skip(gaps))]
 fn gaps_by_key(gaps: &[LandscapeGap]) -> BTreeMap<String, &LandscapeGap> {
     gaps.iter()
-        .map(|gap| (format!("{}:{:?}", gap.claim_id(), gap.kind()), gap))
+        .map(|gap| {
+            let origin = gap
+                .origin_key()
+                .map_or_else(String::new, |key| format!(":{key}"));
+            (format!("{}:{:?}{origin}", gap.claim_id(), gap.kind()), gap)
+        })
         .collect()
 }

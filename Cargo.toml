@@ -12,6 +12,7 @@ amenable_core = { path = "../amenable/crates/amenable_core", version = "0.1.0" }
 amenable_derive = { path = "../amenable/crates/amenable_derive", version = "0.1.0" }
 derive-getters = "0.5.0"
 derive-new = "0.7.0"
+derive_setters = "0.1.9"
 derive_builder = "0.20.2"
 elicitation = { path = "../elicitation/crates/elicitation" }
 elicit_ui = { path = "../elicitation/crates/elicit_ui" }

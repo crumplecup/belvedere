@@ -11,6 +11,40 @@ use belvedere::{
 use miette::{IntoDiagnostic, Result, WrapErr, miette};
 
 #[test]
+fn second_witness_gap_is_an_addition_in_landscape_diff() -> Result<()> {
+    belvedere::init_tracing();
+
+    let assessments = include_bytes!("fixtures/proof_assessments.jsonl").to_vec();
+    let previous = fixture_landscape(assessments.clone())?;
+    let mut registry: serde_json::Value =
+        serde_json::from_slice(include_bytes!("fixtures/registry_dump.json")).into_diagnostic()?;
+    let witnesses = registry["witness_export_records"]
+        .as_array_mut()
+        .ok_or_else(|| miette!("witness fixture should be an array"))?;
+    let mut second = witnesses[0].clone();
+    second["destination_module"] = "belvedere::proofs::secondary".into();
+    witnesses.push(second);
+    let current = fixture_landscape_with_registry(
+        serde_json::to_vec(&registry).into_diagnostic()?,
+        assessments,
+    )?;
+
+    let (diff, _) = LandscapeDiffing
+        .diff(LandscapeDiffInput::new(previous, current))
+        .into_diagnostic()?;
+    let added_gap = diff.items().iter().find(|item| {
+        item.change_kind() == LandscapeDiffChangeKind::Added
+            && item.subject_kind() == "gap"
+            && item.item_id().contains("kani@belvedere::proofs::secondary")
+    });
+    assert!(
+        added_gap.is_some(),
+        "second witness gap should remain distinct"
+    );
+    Ok(())
+}
+
+#[test]
 fn landscape_diff_surfaces_snapshot_changes_for_auditors() -> Result<()> {
     belvedere::init_tracing();
 
@@ -950,10 +984,20 @@ fn trace_source_record_ids(items: &[belvedere::LandscapeDiffItem]) -> Vec<String
 }
 
 fn fixture_landscape(assessment_bytes: Vec<u8>) -> Result<belvedere::LandscapeGraph> {
+    fixture_landscape_with_registry(
+        include_bytes!("fixtures/registry_dump.json").to_vec(),
+        assessment_bytes,
+    )
+}
+
+fn fixture_landscape_with_registry(
+    registry_bytes: Vec<u8>,
+    assessment_bytes: Vec<u8>,
+) -> Result<belvedere::LandscapeGraph> {
     let registry_artifact = RawAmenableArtifact::new(
         "tests/fixtures/registry_dump.json",
         ArtifactKind::RegistryDump,
-        include_bytes!("fixtures/registry_dump.json").to_vec(),
+        registry_bytes,
     );
     let assessment_artifact = RawAmenableArtifact::new(
         "tests/fixtures/proof_assessments.jsonl",

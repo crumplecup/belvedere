@@ -148,6 +148,7 @@ impl BelvedereContract for LandscapeModelingContract {
             "latest and superseded assessment events are distinguished per proof ID",
             "missing proofs, missing assessments, replacement, retirement, and trusted or opaque support remain visible as gaps",
             "replacement and retirement gaps identify the assessment whose recommendation caused them",
+            "repeatable witness and unresolved-proof gaps retain stable origin identities",
         ]
     }
 
