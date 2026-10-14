@@ -10,6 +10,7 @@ mod invariant;
 mod landscape;
 mod receipt;
 mod run_certificate;
+mod run_invocation;
 mod stage;
 mod stage_certificate;
 mod ui_ir;
@@ -40,10 +41,11 @@ pub(crate) use diff_review::{
 };
 pub use invariant::BelvedereInvariantCheck;
 pub(crate) use invariant::{
-    RunInputArtifactEvidence, RunInvariantEvidence, RunStageCertificateEvidence,
-    diff_item_invariant_checks, diff_review_invariant_checks, diff_trace_invariant_checks,
-    ingestion_record_invariant_checks, landscape_model_invariant_checks, run_invariant_checks,
-    stage_invariant_checks, ui_ir_output_invariant_checks, ui_ir_source_locator_invariant_checks,
+    RunInputArtifactEvidence, RunInvariantEvidence, RunInvocationEvidence,
+    RunStageCertificateEvidence, diff_item_invariant_checks, diff_review_invariant_checks,
+    diff_trace_invariant_checks, ingestion_record_invariant_checks,
+    landscape_model_invariant_checks, run_invariant_checks, stage_invariant_checks,
+    ui_ir_output_invariant_checks, ui_ir_source_locator_invariant_checks,
     ui_ir_trace_invariant_checks, view_model_item_invariant_checks,
     view_model_source_navigation_invariant_checks, view_model_trace_invariant_checks,
 };
@@ -52,8 +54,9 @@ pub(crate) use landscape::{
     LandscapeReceiptBuilder, LandscapeReceiptDigestEvidenceBuilder, landscape_receipt_identity,
 };
 pub use receipt::IngestionReceipt;
-pub use run_certificate::{
-    BelvedereInvocationSurface, BelvedereRunCertificate, BelvedereRunInvocation,
+pub use run_certificate::BelvedereRunCertificate;
+pub use run_invocation::{
+    BelvedereInvocationCommand, BelvedereInvocationSurface, BelvedereRunInvocation,
 };
 pub use stage::BelvederePipelineStage;
 pub use stage_certificate::BelvedereStageCertificate;

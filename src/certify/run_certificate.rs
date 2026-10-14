@@ -9,70 +9,15 @@ use tracing::instrument;
 
 use crate::certify::{
     BELVEDERE_RUN_CERTIFICATE_SCHEMA_ID, BELVEDERE_RUN_CERTIFICATE_SCHEMA_VERSION,
-    BelvedereInvariantCheck, BelvedereStageCertificate, IngestionReceipt, LandscapeReceipt,
-    RunInputArtifactEvidence, RunInvariantEvidence, RunStageCertificateEvidence, UiIrReceipt,
+    BelvedereInvariantCheck, BelvedereInvocationCommand, BelvedereRunInvocation,
+    BelvedereStageCertificate, IngestionReceipt, LandscapeReceipt, RunInputArtifactEvidence,
+    RunInvariantEvidence, RunInvocationEvidence, RunStageCertificateEvidence, UiIrReceipt,
     ViewModelReceipt, hex_digest, run_invariant_checks, update_field, update_fields,
 };
 use crate::contracts::{
     BelvederePipelineClaim, REPORT_REPRODUCIBILITY_STANDARD_ID,
     belvedere_pipeline_claims_for_standard_ids,
 };
-
-/// Public invocation surface that produced a Belvedere run.
-#[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash, Serialize)]
-#[serde(rename_all = "snake_case")]
-pub enum BelvedereInvocationSurface {
-    /// Belvedere was called through the library API.
-    Library,
-    /// Belvedere was called through the command-line API.
-    Cli,
-}
-
-impl BelvedereInvocationSurface {
-    /// Stable invocation surface identifier.
-    #[must_use]
-    pub const fn as_str(self) -> &'static str {
-        match self {
-            Self::Library => "library",
-            Self::Cli => "cli",
-        }
-    }
-}
-
-/// Invocation provenance recorded in a run certificate.
-#[derive(Debug, Clone, PartialEq, Eq, Getters, Serialize)]
-pub struct BelvedereRunInvocation {
-    #[getter(skip)]
-    surface: BelvedereInvocationSurface,
-    arguments: Vec<String>,
-}
-
-impl BelvedereRunInvocation {
-    /// Invocation provenance for direct library calls.
-    #[must_use]
-    pub const fn library() -> Self {
-        Self {
-            surface: BelvedereInvocationSurface::Library,
-            arguments: Vec::new(),
-        }
-    }
-
-    /// Invocation provenance for command-line calls.
-    #[instrument(level = "debug", skip(args))]
-    #[must_use]
-    pub fn cli(args: impl IntoIterator<Item = String>) -> Self {
-        Self {
-            surface: BelvedereInvocationSurface::Cli,
-            arguments: args.into_iter().collect(),
-        }
-    }
-
-    /// Public surface that produced the run.
-    #[must_use]
-    pub const fn surface(&self) -> BelvedereInvocationSurface {
-        self.surface
-    }
-}
 
 /// Certificate for a complete Belvedere pipeline run.
 #[derive(Debug, Clone, PartialEq, Eq, Getters, Serialize)]
@@ -207,8 +152,13 @@ impl BelvedereRunCertificate {
         let component_versions = component_versions(&belvedere_version);
         let invariant_checks = run_invariant_checks(RunInvariantEvidence::new(
             &component_versions,
-            invocation.surface().as_str(),
-            invocation.arguments(),
+            RunInvocationEvidence::new(
+                invocation.surface().as_str(),
+                invocation.command().map(BelvedereInvocationCommand::as_str),
+                invocation.output_artifact().as_deref(),
+                invocation.output_sink().as_deref(),
+                invocation.arguments(),
+            ),
             &pipeline_claim_ids,
             &pipeline_claim_phase_counts,
             RunInputArtifactEvidence::new(&input_artifact_ids, &input_artifact_digests),
@@ -293,6 +243,26 @@ fn run_digest(evidence: RunDigestEvidence<'_>) -> String {
         update_field(&mut hasher, version);
     }
     update_field(&mut hasher, evidence.invocation.surface().as_str());
+    update_field(
+        &mut hasher,
+        evidence
+            .invocation
+            .command()
+            .map(BelvedereInvocationCommand::as_str)
+            .unwrap_or(""),
+    );
+    update_field(
+        &mut hasher,
+        evidence
+            .invocation
+            .output_artifact()
+            .as_deref()
+            .unwrap_or(""),
+    );
+    update_field(
+        &mut hasher,
+        evidence.invocation.output_sink().as_deref().unwrap_or(""),
+    );
     update_fields(&mut hasher, evidence.invocation.arguments());
     for claim in evidence.pipeline_claims {
         update_field(&mut hasher, claim.claim_id());

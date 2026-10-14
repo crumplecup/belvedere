@@ -304,6 +304,59 @@ impl BelvedereCliOutput {
     pub const fn artifact(artifact: BelvedereCliArtifact, sink: BelvedereCliOutputSink) -> Self {
         Self::Artifact { artifact, sink }
     }
+
+    #[instrument(level = "trace", skip(self))]
+    pub(in crate::cli) fn invocation_artifact(&self) -> Option<String> {
+        match self {
+            Self::Artifact { artifact, .. } => Some(artifact.invocation_id()),
+            Self::Help | Self::LogSummary => None,
+        }
+    }
+
+    #[instrument(level = "trace", skip(self))]
+    pub(in crate::cli) fn invocation_sink(&self) -> Option<String> {
+        match self {
+            Self::Artifact { sink, .. } => Some(sink.as_str().to_owned()),
+            Self::LogSummary => Some("log_summary".to_owned()),
+            Self::Help => Some("help".to_owned()),
+        }
+    }
+}
+
+impl BelvedereCliArtifact {
+    /// Snake-case artifact identifier recorded in invocation evidence.
+    #[must_use]
+    #[instrument(level = "debug", skip(self))]
+    pub fn invocation_id(self) -> String {
+        debug_name_to_snake_case(&format!("{self:?}"))
+    }
+}
+
+impl BelvedereCliOutputSink {
+    /// Stable sink identifier used in invocation evidence.
+    #[must_use]
+    pub const fn as_str(&self) -> &'static str {
+        match self {
+            Self::Stdio => "stdio",
+            Self::File(_) => "file",
+        }
+    }
+}
+
+#[instrument(level = "trace")]
+fn debug_name_to_snake_case(name: &str) -> String {
+    let mut output = String::new();
+    for (index, character) in name.chars().enumerate() {
+        if character.is_ascii_uppercase() {
+            if index > 0 {
+                output.push('_');
+            }
+            output.push(character.to_ascii_lowercase());
+        } else {
+            output.push(character);
+        }
+    }
+    output
 }
 
 #[instrument(level = "info", skip(output, report, writer))]

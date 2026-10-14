@@ -9,14 +9,15 @@ use belvedere::{
     BELVEDERE_RUN_CERTIFICATE_SCHEMA_ID, BELVEDERE_RUN_CERTIFICATE_SCHEMA_VERSION,
     BELVEDERE_STAGE_CERTIFICATE_SCHEMA_ID, BELVEDERE_STAGE_CERTIFICATE_SCHEMA_VERSION,
     BelvedereCli, BelvedereCliArtifact, BelvedereCliOutput, BelvedereCliOutputSink,
-    BelvedereInvocationSurface, BelvederePipelineStage, BelvedereRunInput,
-    DIFF_REVIEW_UI_IR_SECTION_ITEMS, DIFF_REVIEW_UI_IR_SECTION_SOURCE_NAVIGATION,
-    DIFF_REVIEW_UI_IR_SECTION_SUMMARY, INPUT_FIDELITY_STANDARD_ID,
-    REPORT_REPRODUCIBILITY_STANDARD_ID, UI_IR_SECTION_ASSESSMENT_HISTORY,
-    UI_IR_SECTION_ASSESSMENT_QUEUE, UI_IR_SECTION_ASSESSMENT_WORK, UI_IR_SECTION_BACKEND_COVERAGE,
-    UI_IR_SECTION_CLAIM_DETAIL, UI_IR_SECTION_FILTERS, UI_IR_SECTION_PROOF_CHAINS,
-    UI_IR_SECTION_REVIEW_WORKFLOW, UI_IR_SECTION_SOURCE_NAVIGATION,
-    VIEW_MODEL_FIDELITY_STANDARD_ID, run_belvedere_pipeline, run_cli_with_writer,
+    BelvedereInvocationCommand, BelvedereInvocationSurface, BelvederePipelineStage,
+    BelvedereRunInput, DIFF_REVIEW_UI_IR_SECTION_ITEMS,
+    DIFF_REVIEW_UI_IR_SECTION_SOURCE_NAVIGATION, DIFF_REVIEW_UI_IR_SECTION_SUMMARY,
+    INPUT_FIDELITY_STANDARD_ID, REPORT_REPRODUCIBILITY_STANDARD_ID,
+    UI_IR_SECTION_ASSESSMENT_HISTORY, UI_IR_SECTION_ASSESSMENT_QUEUE,
+    UI_IR_SECTION_ASSESSMENT_WORK, UI_IR_SECTION_BACKEND_COVERAGE, UI_IR_SECTION_CLAIM_DETAIL,
+    UI_IR_SECTION_FILTERS, UI_IR_SECTION_PROOF_CHAINS, UI_IR_SECTION_REVIEW_WORKFLOW,
+    UI_IR_SECTION_SOURCE_NAVIGATION, VIEW_MODEL_FIDELITY_STANDARD_ID, run_belvedere_pipeline,
+    run_cli_with_writer,
 };
 use miette::{IntoDiagnostic, Result, WrapErr};
 use serde_json::Value;
@@ -974,6 +975,9 @@ fn run_certificate_is_reproducible_portable_evidence() -> Result<()> {
         first.certificate().invocation().surface(),
         BelvedereInvocationSurface::Library
     );
+    assert_eq!(first.certificate().invocation().command(), None);
+    assert_eq!(first.certificate().invocation().output_artifact(), &None);
+    assert_eq!(first.certificate().invocation().output_sink(), &None);
     assert_eq!(
         first
             .certificate()
@@ -1048,6 +1052,7 @@ fn run_certificate_is_reproducible_portable_evidence() -> Result<()> {
     assert!(encoded.contains("contract_obligations_named"));
     assert!(encoded.contains("run_stage_certificate_digests_match"));
     assert!(encoded.contains("run_stage_certificate_kinds_classified"));
+    assert!(encoded.contains("run_cli_contract_recorded"));
     assert!(encoded.contains("run_pipeline_claim_phases_classified"));
     assert!(encoded.contains("pipeline_claim_phase_counts"));
     assert!(encoded.contains("stage_kind_counts"));
@@ -3616,6 +3621,25 @@ fn cli_can_emit_the_run_certificate_as_json() -> Result<()> {
     assert_eq!(
         certificate["schema_version"].as_u64(),
         Some(u64::from(BELVEDERE_RUN_CERTIFICATE_SCHEMA_VERSION))
+    );
+    assert_eq!(certificate["invocation"]["surface"].as_str(), Some("cli"));
+    assert_eq!(
+        certificate["invocation"]["command"].as_str(),
+        Some(BelvedereInvocationCommand::Run.as_str())
+    );
+    assert_eq!(
+        certificate["invocation"]["output_artifact"].as_str(),
+        Some("run_certificate")
+    );
+    assert_eq!(
+        certificate["invocation"]["output_sink"].as_str(),
+        Some("stdio")
+    );
+    assert_eq!(
+        certificate["invocation"]["arguments"]
+            .as_array()
+            .map(Vec::len),
+        Some(4)
     );
     assert_eq!(
         certificate["stage_certificates"].as_array().map(Vec::len),

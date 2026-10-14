@@ -20,8 +20,8 @@ pub(crate) use model::{
     view_model_source_navigation_invariant_checks, view_model_trace_invariant_checks,
 };
 pub(crate) use run::{
-    RunInputArtifactEvidence, RunInvariantEvidence, RunStageCertificateEvidence,
-    run_invariant_checks,
+    RunInputArtifactEvidence, RunInvariantEvidence, RunInvocationEvidence,
+    RunStageCertificateEvidence, run_invariant_checks,
 };
 pub(crate) use ui_ir::{
     ui_ir_output_invariant_checks, ui_ir_source_locator_invariant_checks,

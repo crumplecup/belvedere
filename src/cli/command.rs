@@ -86,14 +86,20 @@ impl BelvedereCli {
         if paths.next().is_some() {
             return Err(BelvedereCliUsageError::new().into());
         }
+        let output = Self::output_from_parts(artifact, sink)?;
+        let invocation = BelvedereRunInvocation::cli_run(
+            arguments,
+            output.invocation_artifact(),
+            output.invocation_sink(),
+        );
         Ok(Self {
             command: BelvedereCliCommand::Run {
                 input: BelvedereRunInput::with_invocation(
                     registry_path,
                     assessments_path,
-                    BelvedereRunInvocation::cli(arguments),
+                    invocation,
                 ),
-                output: Self::output_from_parts(artifact, sink)?,
+                output,
             },
         })
     }
@@ -135,7 +141,12 @@ impl BelvedereCli {
             return Err(BelvedereCliUsageError::new().into());
         }
 
-        let invocation = BelvedereRunInvocation::cli(arguments);
+        let output = Self::output_from_parts(artifact, sink)?;
+        let invocation = BelvedereRunInvocation::cli_landscape_diff(
+            arguments,
+            output.invocation_artifact(),
+            output.invocation_sink(),
+        );
         Ok(Self {
             command: BelvedereCliCommand::Diff {
                 input: BelvedereLandscapeDiffRunInput::new(
@@ -150,7 +161,7 @@ impl BelvedereCli {
                         invocation,
                     ),
                 ),
-                output: Self::output_from_parts(artifact, sink)?,
+                output,
             },
         })
     }

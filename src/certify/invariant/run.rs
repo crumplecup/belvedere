@@ -11,12 +11,21 @@ use super::{BelvedereInvariantCheck, unique_string_count};
 #[derive(Debug, Clone, Copy, new)]
 pub(crate) struct RunInvariantEvidence<'evidence> {
     component_versions: &'evidence BTreeMap<String, String>,
-    invocation_surface: &'evidence str,
-    invocation_arguments: &'evidence [String],
+    invocation: RunInvocationEvidence<'evidence>,
     pipeline_claim_ids: &'evidence [String],
     pipeline_claim_phase_counts: &'evidence BTreeMap<String, usize>,
     input_artifacts: RunInputArtifactEvidence<'evidence>,
     stage_certificates: RunStageCertificateEvidence<'evidence>,
+}
+
+/// Evidence for run invocation provenance.
+#[derive(Debug, Clone, Copy, new)]
+pub(crate) struct RunInvocationEvidence<'evidence> {
+    surface: &'evidence str,
+    command: Option<&'evidence str>,
+    output_artifact: Option<&'evidence str>,
+    output_sink: Option<&'evidence str>,
+    arguments: &'evidence [String],
 }
 
 /// Evidence for run input artifact accounting.
@@ -53,11 +62,26 @@ pub(crate) fn run_invariant_checks(
         ),
         BelvedereInvariantCheck::new(
             "run_invocation_recorded".to_owned(),
-            !evidence.invocation_surface.is_empty(),
+            !evidence.invocation.surface.is_empty(),
             format!(
-                "surface={} argument_count={}",
-                evidence.invocation_surface,
-                evidence.invocation_arguments.len()
+                "surface={} command={} output_artifact={} output_sink={} argument_count={}",
+                evidence.invocation.surface,
+                evidence.invocation.command.unwrap_or("none"),
+                evidence.invocation.output_artifact.unwrap_or("none"),
+                evidence.invocation.output_sink.unwrap_or("none"),
+                evidence.invocation.arguments.len()
+            ),
+        ),
+        BelvedereInvariantCheck::new(
+            "run_cli_contract_recorded".to_owned(),
+            evidence.invocation.surface != "cli"
+                || (evidence.invocation.command.is_some()
+                    && evidence.invocation.output_sink.is_some()),
+            format!(
+                "surface={} command={} output_sink={}",
+                evidence.invocation.surface,
+                evidence.invocation.command.unwrap_or("none"),
+                evidence.invocation.output_sink.unwrap_or("none")
             ),
         ),
         BelvedereInvariantCheck::new(
