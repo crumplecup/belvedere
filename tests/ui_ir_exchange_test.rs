@@ -860,6 +860,11 @@ fn ui_ir_projection_preserves_trace_widgets_for_auditor_deep_dives() -> Result<(
             .contains("gaps MissingProof blocking: establish modeled proof coverage")
     );
     assert!(
+        root_widget.label().contains(
+            "source records evidence_link:belvedere::ingestion::DecodedRegistrySnapshot#0"
+        )
+    );
+    assert!(
         root_widget
             .label()
             .contains("next action: establish modeled proof coverage")

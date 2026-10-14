@@ -548,6 +548,10 @@ fn view_model_projection_builds_auditor_navigation_evidence() -> Result<()> {
         raw_root.source_record_count(),
         raw_root.trace().source_record_ids().len()
     );
+    assert_eq!(
+        raw_root.source_record_ids(),
+        raw_root.trace().source_record_ids()
+    );
 
     let proof_item = model
         .claim_explorer()
@@ -1050,6 +1054,15 @@ fn view_model_projection_preserves_review_queues_and_traceability() -> Result<()
     assert_eq!(raw_root.verifier_count(), 0);
     assert_eq!(raw_root.assessment_count(), 0);
     assert_eq!(raw_root.gap_count(), 1);
+    assert_eq!(
+        raw_root.source_record_ids(),
+        raw_root.trace().source_record_ids()
+    );
+    assert!(
+        raw_root
+            .source_record_ids()
+            .contains(&"evidence_link:belvedere::ingestion::DecodedRegistrySnapshot#0".to_owned())
+    );
 
     let proof_root = model
         .provenance_roots()
@@ -1060,6 +1073,11 @@ fn view_model_projection_preserves_review_queues_and_traceability() -> Result<()
     assert_eq!(proof_root.verifier_count(), 1);
     assert_eq!(proof_root.assessment_count(), 1);
     assert_eq!(proof_root.gap_count(), 0);
+    assert!(
+        proof_root
+            .source_record_ids()
+            .contains(&"kani_proof:belvedere::ingestion::record_identity_is_preserved".to_owned())
+    );
     Ok(())
 }
 

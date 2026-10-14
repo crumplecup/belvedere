@@ -281,12 +281,13 @@ pub(super) fn provenance_root_widget(
     let verifiers = list_label(item.verifiers(), "no verifier proofs");
     let assessments = list_label(item.assessment_ids(), "no assessments");
     let gaps = list_label(item.gap_summaries(), "no gaps");
+    let source_records = list_label(item.source_record_ids(), "no source records");
     labeled_widget(
         backend,
         section_id,
         "link",
         format!(
-            "Provenance root {} is {}; verifier proofs {verifiers}; assessments {assessments}; gaps {gaps}; next action: {}; {}, {}, {}, {}",
+            "Provenance root {} is {}; verifier proofs {verifiers}; assessments {assessments}; gaps {gaps}; source records {source_records}; next action: {}; {}, {}, {}, {}",
             item.claim_id(),
             item.root_kind(),
             item.next_action(),

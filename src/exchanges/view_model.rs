@@ -285,6 +285,7 @@ fn project_provenance_roots(
                 .verifiers(claim.proofs().iter().cloned().collect::<Vec<_>>())
                 .assessment_ids(claim.assessment_ids().to_vec())
                 .gap_summaries(gap_summaries.clone())
+                .source_record_ids(trace.source_record_ids().to_vec())
                 .next_action(provenance_next_action(claim.id(), gaps))
                 .verifier_count(claim.proofs().len())
                 .assessment_count(claim.assessment_ids().len())

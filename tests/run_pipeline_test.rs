@@ -2490,6 +2490,16 @@ fn assert_provenance_roots(items: &Value) {
                 && item["root_kind"].as_str() == Some("unmodeled_root")
                 && item["next_action"].as_str() == Some("establish modeled proof coverage")
                 && item["gap_count"].as_u64() == Some(1)
+                && item["source_record_ids"]
+                    .as_array()
+                    .is_some_and(|source_record_ids| {
+                        source_record_ids.iter().any(|source_record_id| {
+                            source_record_id.as_str()
+                                == Some(
+                                    "evidence_link:belvedere::ingestion::DecodedRegistrySnapshot#0",
+                                )
+                        })
+                    })
         })
     }));
 }

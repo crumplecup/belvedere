@@ -171,6 +171,7 @@ pub struct ProvenanceRootItem {
     verifiers: Vec<String>,
     assessment_ids: Vec<String>,
     gap_summaries: Vec<String>,
+    source_record_ids: Vec<String>,
     next_action: String,
     #[getter(skip)]
     verifier_count: usize,
