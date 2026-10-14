@@ -1,5 +1,8 @@
 # Belvedere Strategic Plan
 
+For the current implementation checklist and completion gates, see the
+[Belvedere Completion Plan](BELVEDERE_COMPLETION_PLAN.md).
+
 Belvedere is the view layer for systems whose defensive posture is described by
 Amenable. Its job is to help a user inspect the landscape they have built:
 certificates, provenance, proof chains, proof assessments, backend coverage,
@@ -71,10 +74,13 @@ Core concepts:
 - `BelvedereExchange`: a proof-bearing transformation from one certified
   pipeline state to the next.
 - `Claim`: a named evidence/proposition node.
-- `Root`: a claim whose basis is itself and whose support comes from explicit
-  provenance/certification rather than a prior proof edge.
-- `Proof`: a backend-specific proof record for a claim.
-- `BackendCoverage`: the verifier set attached to a claim or chain.
+- `Root`: a claim with an explicit self-basis registration; any certificate
+  support is a separate, explicitly bound fact.
+- `ProofRegistration`: a backend-specific registered proof or harness.
+- `VerifierResult`: a recorded execution outcome, with its source-binding
+  strength stated separately from the registration.
+- `BackendCoverage`: registered verifier coverage, distinct from successful
+  execution coverage.
 - `Assessment`: a human review event over a proof or proof harness.
 - `Recommendation`: accept, strengthen, replace, or retire.
 - `ResolutionPath`: the concrete work implied by a recommendation.
@@ -107,6 +113,20 @@ Every phase should declare:
 The implementation behind a phase may be simple Rust code. The public design
 surface should still be Amenable-shaped: named evidence, explicit roots,
 contracts, exchanges, certificates, proofs, and assessments.
+
+Each exchange must assert completeness from input to output: every accepted
+occurrence is represented or has a permitted, reviewable disposition. It must
+also assert fidelity from output back to input: every claim retains its source
+identity and meaning, or names a checked derivation. Granularity is a third
+obligation: summarizing an artifact must not erase its fields, nested
+structure, order, or repeated values from reviewer inspection. Belvedere
+judges the artifacts it receives; it does not prove the audited codebase.
+Unsupported upgrades in evidentiary strength fail the exchange. Required
+`Ensures` must be executable assertions over the actual input, output, and
+accounting evidence, not only descriptive clauses. A failed assertion cannot
+produce a successful stage certificate. The
+[completion plan](BELVEDERE_COMPLETION_PLAN.md) specifies these obligations
+boundary by boundary.
 
 ### 1. Collection
 
