@@ -70,6 +70,8 @@ pub struct AssessmentQueueItem {
     #[getter(skip)]
     recommendation: Recommendation,
     queue_lane: String,
+    queue_group_id: String,
+    queue_group_label: String,
     #[getter(skip)]
     resolution_path: Option<ResolutionPath>,
     weak_dimensions: Vec<String>,

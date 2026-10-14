@@ -79,6 +79,10 @@ pub(super) fn project_assessment_queue(
     assessments
         .iter()
         .map(|assessment| {
+            let weak_dimensions = weak_dimensions(assessment.rubric());
+            let queue_lane = assessment_queue_lane(assessment.recommendation());
+            let (queue_group_id, queue_group_label) =
+                assessment_queue_group(queue_lane, &weak_dimensions);
             AssessmentQueueItemBuilder::default()
                 .assessment_id(assessment.id())
                 .proof_id(assessment.proof_id())
@@ -91,9 +95,11 @@ pub(super) fn project_assessment_queue(
                 )
                 .superseded_by(assessment.superseded_by().map(ToOwned::to_owned))
                 .recommendation(assessment.recommendation())
-                .queue_lane(assessment_queue_lane(assessment.recommendation()))
+                .queue_lane(queue_lane)
+                .queue_group_id(queue_group_id)
+                .queue_group_label(queue_group_label)
                 .resolution_path(assessment.resolution_path())
-                .weak_dimensions(weak_dimensions(assessment.rubric()))
+                .weak_dimensions(weak_dimensions)
                 .trace(trace_assessment(assessment, source_record_ids))
                 .build()
                 .map_err(|error| BelvedereConstructionError::new("AssessmentQueueItem", error))
@@ -172,6 +178,22 @@ fn missing_assessment_work_id(gap: &GapItem) -> String {
 #[instrument(level = "trace", skip(assessment))]
 fn assessment_work_id(assessment: &LandscapeAssessment) -> String {
     format!("assessment_work.recommendation:{}", assessment.id())
+}
+
+#[instrument(level = "trace", skip(weak_dimensions))]
+fn assessment_queue_group(queue_lane: &str, weak_dimensions: &[String]) -> (String, String) {
+    if weak_dimensions.is_empty() {
+        (
+            format!("assessment_queue.{queue_lane}:no_weak_dimensions"),
+            format!("{queue_lane} / no weak dimensions"),
+        )
+    } else {
+        let dimension_key = weak_dimensions.join("+");
+        (
+            format!("assessment_queue.{queue_lane}:{dimension_key}"),
+            format!("{queue_lane} / {}", weak_dimensions.join(", ")),
+        )
+    }
 }
 
 #[instrument(level = "trace", skip(recommendation))]

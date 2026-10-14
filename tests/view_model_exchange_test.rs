@@ -903,6 +903,14 @@ fn view_model_projection_preserves_review_queues_and_traceability() -> Result<()
         "belvedere::ingestion::record_identity_is_preserved"
     );
     assert_eq!(assessment.queue_lane(), "strengthening");
+    assert_eq!(
+        assessment.queue_group_id(),
+        "assessment_queue.strengthening:assertion_strength+adversarial_coverage"
+    );
+    assert_eq!(
+        assessment.queue_group_label(),
+        "strengthening / assertion_strength, adversarial_coverage"
+    );
     assert!(
         assessment
             .weak_dimensions()

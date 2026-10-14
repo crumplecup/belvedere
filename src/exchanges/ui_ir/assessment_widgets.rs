@@ -28,9 +28,10 @@ pub(super) fn assessment_widget(
         section_id,
         "button",
         format!(
-            "Assessment {} ({recency}) lane {} recommends {:?} for {}; resolution: {resolution}; {weaknesses}",
+            "Assessment {} ({recency}) lane {} group {} recommends {:?} for {}; resolution: {resolution}; {weaknesses}",
             item.assessment_id(),
             item.queue_lane(),
+            item.queue_group_label(),
             item.recommendation(),
             item.proof_id()
         ),

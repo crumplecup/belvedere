@@ -2444,6 +2444,12 @@ fn assert_assessment_queue(items: &Value) {
                     == Some("belvedere::ingestion::record_identity_is_preserved")
                 && item["current"].as_bool() == Some(true)
                 && item["queue_lane"].as_str() == Some("strengthening")
+                && item["queue_group_id"].as_str()
+                    == Some(
+                        "assessment_queue.strengthening:assertion_strength+adversarial_coverage",
+                    )
+                && item["queue_group_label"].as_str()
+                    == Some("strengthening / assertion_strength, adversarial_coverage")
         })
     }));
 }
