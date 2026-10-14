@@ -3,13 +3,12 @@
 use tracing::instrument;
 
 use crate::{
-    contracts::{GapItem, GapItemBuilder, GapSeverity, LandscapeGap, LandscapeGapKind},
+    contracts::{GapItem, GapItemBuilder, GapSeverity, LandscapeGap, LandscapeGapKind, TraceRef},
     error::BelvedereConstructionError,
+    exchanges::source_records::subject_source_record_ids_for_gap,
 };
 
-use super::trace;
-
-#[instrument(level = "debug", skip(gaps))]
+#[instrument(level = "debug", skip(gaps, source_record_ids))]
 pub(super) fn project_gaps(
     gaps: &[LandscapeGap],
     source_record_ids: &[String],
@@ -26,7 +25,10 @@ pub(super) fn project_gaps(
                 .action(gap_action(gap.kind()))
                 .detail(gap.detail())
                 .high_priority(severity.high_priority())
-                .trace(trace(gap.claim_id(), source_record_ids))
+                .trace(TraceRef::new(
+                    gap.claim_id(),
+                    subject_source_record_ids_for_gap(gap, source_record_ids),
+                ))
                 .build()
                 .map_err(|error| BelvedereConstructionError::new("GapItem", error))
         })

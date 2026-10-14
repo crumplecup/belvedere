@@ -7,7 +7,7 @@ use tracing::instrument;
 use crate::contracts::{LandscapeAssessment, LandscapeClaim, LandscapeGap};
 use crate::exchanges::source_records::{
     subject_source_record_ids_for_assessment, subject_source_record_ids_for_claim,
-    subject_source_record_ids_for_claim_id,
+    subject_source_record_ids_for_gap,
 };
 
 #[instrument(level = "debug", skip(previous, current, source_record_ids))]
@@ -48,10 +48,10 @@ pub(super) fn changed_gap_source_record_ids(
     current: &LandscapeGap,
     source_record_ids: &[String],
 ) -> Vec<String> {
-    let ids = subject_source_record_ids_for_claim_id(previous.claim_id(), source_record_ids)
+    let ids = subject_source_record_ids_for_gap(previous, source_record_ids)
         .into_iter()
-        .chain(subject_source_record_ids_for_claim_id(
-            current.claim_id(),
+        .chain(subject_source_record_ids_for_gap(
+            current,
             source_record_ids,
         ))
         .collect::<BTreeSet<_>>();

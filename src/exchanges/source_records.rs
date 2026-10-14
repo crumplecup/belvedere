@@ -4,7 +4,7 @@ use std::collections::BTreeSet;
 
 use tracing::instrument;
 
-use crate::contracts::{LandscapeAssessment, LandscapeClaim};
+use crate::contracts::{LandscapeAssessment, LandscapeClaim, LandscapeGap};
 
 #[instrument(level = "debug", skip(claim, source_record_ids))]
 pub(crate) fn subject_source_record_ids_for_claim(
@@ -48,6 +48,22 @@ pub(crate) fn subject_source_record_ids_for_assessment(
         assessment.proof_id(),
         source_record_ids,
     ));
+    nonempty_subject_source_record_ids(ids, source_record_ids)
+}
+
+#[instrument(level = "debug", skip(gap, source_record_ids))]
+pub(crate) fn subject_source_record_ids_for_gap(
+    gap: &LandscapeGap,
+    source_record_ids: &[String],
+) -> Vec<String> {
+    let mut ids = source_record_ids_for_claim_id(gap.claim_id(), source_record_ids);
+    if let Some(assessment_id) = gap.triggering_assessment_id() {
+        extend_subject_source_record_ids(
+            &mut ids,
+            assessment_source_record_id(assessment_id),
+            source_record_ids,
+        );
+    }
     nonempty_subject_source_record_ids(ids, source_record_ids)
 }
 

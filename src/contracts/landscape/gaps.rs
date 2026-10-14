@@ -3,6 +3,7 @@
 use derive_getters::Getters;
 use derive_new::new;
 use serde::Serialize;
+use tracing::instrument;
 
 /// Conservative review gap surfaced by landscape modeling.
 #[derive(Debug, Clone, PartialEq, Eq, Getters, new, Serialize)]
@@ -13,6 +14,9 @@ pub struct LandscapeGap {
     kind: LandscapeGapKind,
     #[new(into)]
     detail: String,
+    #[getter(skip)]
+    #[new(default)]
+    triggering_assessment_id: Option<String>,
 }
 
 impl LandscapeGap {
@@ -20,6 +24,19 @@ impl LandscapeGap {
     #[must_use]
     pub const fn kind(&self) -> LandscapeGapKind {
         self.kind
+    }
+
+    /// Assessment whose recommendation caused this gap, when applicable.
+    #[instrument(level = "trace", skip(self))]
+    #[must_use]
+    pub fn triggering_assessment_id(&self) -> Option<&str> {
+        self.triggering_assessment_id.as_deref()
+    }
+
+    #[instrument(level = "trace", skip(self))]
+    pub(crate) fn with_triggering_assessment(mut self, assessment_id: &str) -> Self {
+        self.triggering_assessment_id = Some(assessment_id.to_owned());
+        self
     }
 }
 

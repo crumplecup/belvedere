@@ -959,6 +959,57 @@ fn view_model_projection_builds_auditor_filter_facets() -> Result<()> {
 }
 
 #[test]
+fn replacement_gap_traces_the_assessment_that_caused_it() -> Result<()> {
+    belvedere::init_tracing();
+
+    let input = fixture_input_with_assessments(
+        include_bytes!("fixtures/replacement_assessments.jsonl").to_vec(),
+    )?;
+    let landscape_gap = input
+        .landscape()
+        .gaps()
+        .iter()
+        .find(|gap| gap.kind() == LandscapeGapKind::ReplacementRecommended)
+        .ok_or_else(|| miette!("replacement assessment should produce a landscape gap"))?;
+    assert_eq!(
+        landscape_gap.triggering_assessment_id(),
+        Some("assess-replace")
+    );
+
+    let (model, _) = AuditorNavigationProjection
+        .project(input)
+        .into_diagnostic()
+        .wrap_err("replacement gap should project into auditor navigation")?;
+    let gap = model
+        .gaps()
+        .iter()
+        .find(|gap| gap.kind() == LandscapeGapKind::ReplacementRecommended)
+        .ok_or_else(|| miette!("replacement gap should be visible"))?;
+    assert!(gap.high_priority());
+    assert!(
+        gap.trace()
+            .source_record_ids()
+            .contains(&"assessment:assess-replace".to_owned())
+    );
+    assert!(
+        !gap.trace()
+            .source_record_ids()
+            .contains(&"assessment:assess-old".to_owned())
+    );
+
+    let facet = model
+        .filter_facets()
+        .iter()
+        .find(|facet| facet.facet_id() == "belvedere.filter.gap_kind:ReplacementRecommended")
+        .ok_or_else(|| miette!("replacement gap facet should be visible"))?;
+    assert_eq!(
+        facet.trace().source_record_ids(),
+        gap.trace().source_record_ids()
+    );
+    Ok(())
+}
+
+#[test]
 fn view_model_projection_preserves_review_queues_and_traceability() -> Result<()> {
     belvedere::init_tracing();
 

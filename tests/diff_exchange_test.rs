@@ -349,6 +349,43 @@ fn landscape_diff_surfaces_snapshot_changes_for_auditors() -> Result<()> {
     Ok(())
 }
 
+#[test]
+fn landscape_diff_traces_replacement_gap_to_its_assessment() -> Result<()> {
+    belvedere::init_tracing();
+
+    let previous = fixture_landscape(Vec::new())?;
+    let current =
+        fixture_landscape(include_bytes!("fixtures/replacement_assessments.jsonl").to_vec())?;
+    let (diff, _) = LandscapeDiffing
+        .diff(LandscapeDiffInput::new(previous, current))
+        .into_diagnostic()
+        .wrap_err("replacement gap should appear in the landscape diff")?;
+    let gap = diff
+        .items()
+        .iter()
+        .find(|item| {
+            item.item_id()
+                == "belvedere.diff.Added.gap:belvedere::ingestion::record_identity_is_preserved:ReplacementRecommended"
+        })
+        .ok_or_else(|| miette!("replacement gap should be added"))?;
+    assert!(
+        gap.trace()
+            .source_record_ids()
+            .contains(&"assessment:assess-replace".to_owned())
+    );
+    assert!(
+        !gap.trace()
+            .source_record_ids()
+            .contains(&"assessment:assess-old".to_owned())
+    );
+    assert!(
+        gap.trace()
+            .source_record_ids()
+            .contains(&"kani_proof:belvedere::ingestion::record_identity_is_preserved".to_owned())
+    );
+    Ok(())
+}
+
 fn assert_landscape_diff_receipt_identity(receipt: &belvedere::LandscapeDiffReceipt) {
     assert!(
         receipt

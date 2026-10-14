@@ -112,16 +112,22 @@ fn push_recommendation_gap(
 ) {
     match assessment.recommendation() {
         Recommendation::Accept | Recommendation::Strengthen => {}
-        Recommendation::Replace => gaps.push(LandscapeGap::new(
-            claim_id,
-            LandscapeGapKind::ReplacementRecommended,
-            resolution_detail("latest assessment recommends replacement", assessment),
-        )),
-        Recommendation::Retire => gaps.push(LandscapeGap::new(
-            claim_id,
-            LandscapeGapKind::RetirementRecommended,
-            resolution_detail("latest assessment recommends retirement", assessment),
-        )),
+        Recommendation::Replace => gaps.push(
+            LandscapeGap::new(
+                claim_id,
+                LandscapeGapKind::ReplacementRecommended,
+                resolution_detail("latest assessment recommends replacement", assessment),
+            )
+            .with_triggering_assessment(assessment.id()),
+        ),
+        Recommendation::Retire => gaps.push(
+            LandscapeGap::new(
+                claim_id,
+                LandscapeGapKind::RetirementRecommended,
+                resolution_detail("latest assessment recommends retirement", assessment),
+            )
+            .with_triggering_assessment(assessment.id()),
+        ),
     }
 }
 

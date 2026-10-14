@@ -22,7 +22,7 @@ use crate::{
         },
         source_records::{
             subject_source_record_ids_for_assessment, subject_source_record_ids_for_claim,
-            subject_source_record_ids_for_claim_id,
+            subject_source_record_ids_for_gap,
         },
     },
 };
@@ -154,7 +154,7 @@ fn diff_gaps(
                 gap_key,
                 gap,
                 "added gap",
-                subject_source_record_ids_for_claim_id(gap.claim_id(), source_record_ids),
+                subject_source_record_ids_for_gap(gap, source_record_ids),
             ),
             (Some(gap), None) => push_gap_item(
                 items,
@@ -162,7 +162,7 @@ fn diff_gaps(
                 gap_key,
                 gap,
                 "removed gap",
-                subject_source_record_ids_for_claim_id(gap.claim_id(), source_record_ids),
+                subject_source_record_ids_for_gap(gap, source_record_ids),
             ),
             (Some(previous_gap), Some(current_gap)) if previous_gap != current_gap => {
                 push_gap_item(
