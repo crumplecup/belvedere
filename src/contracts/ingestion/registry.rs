@@ -43,8 +43,11 @@ impl DecodedRegistrySnapshot {
         );
         ids.extend(self.contract_records.iter().map(|record| {
             format!(
-                "contract_record:{}@{}:{}",
-                record.evidence, record.verifier, record.kind
+                "contract_record:{}@{}:{}#{}",
+                record.evidence,
+                record.verifier,
+                record.kind,
+                super::sha256_hex(record.fragment.as_bytes())
             )
         }));
         ids.extend(self.witness_export_records.iter().map(|record| {

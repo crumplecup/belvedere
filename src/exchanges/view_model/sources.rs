@@ -62,22 +62,35 @@ fn source_record(source_record_id: &str) -> SourceRecordNavigation {
             format!("Proof record {rest}"),
         )
     } else if let Some(rest) = source_record_id.strip_prefix("contract_record:") {
-        let locator = rest
+        let (locator, label) = rest
             .split_once('@')
-            .and_then(|(evidence, rest)| {
-                rest.split_once(':').map(|(verifier, kind)| {
-                    format!(
-                        "registry_dump.contract_records[evidence={evidence}, verifier={verifier}, kind={kind}]"
-                    )
+            .and_then(|(evidence, registration)| {
+                registration.split_once(':').and_then(|(verifier, kind_and_digest)| {
+                    kind_and_digest.split_once('#').map(|(kind, digest)| {
+                        (
+                            format!(
+                                "registry_dump.contract_records[evidence={evidence}, verifier={verifier}, kind={kind}, fragment_sha256={digest}]"
+                            ),
+                            format!(
+                                "Contract record {evidence}@{verifier}:{kind} ({})",
+                                digest.get(..12).unwrap_or(digest)
+                            ),
+                        )
+                    })
                 })
             })
-            .unwrap_or_else(|| format!("registry_dump.contract_records[id={rest}]"));
+            .unwrap_or_else(|| {
+                (
+                    format!("registry_dump.contract_records[id={rest}]"),
+                    format!("Contract record {rest}"),
+                )
+            });
         SourceRecordNavigation::new(
             ArtifactKind::RegistryDump,
             "contract_record",
             rest,
             locator,
-            format!("Contract record {rest}"),
+            label,
         )
     } else if let Some(rest) = source_record_id.strip_prefix("witness_export:") {
         let locator = rest

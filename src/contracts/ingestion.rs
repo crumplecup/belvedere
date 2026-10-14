@@ -157,7 +157,7 @@ impl BelvedereContract for RegistryDumpIngestionContract {
         &[
             "decoded evidence links preserve name, basis, and index",
             "decoded proof records preserve evidence and verifier identity",
-            "decoded contract records preserve evidence, verifier, kind, and fragment",
+            "decoded contract records preserve evidence, verifier, kind, fragment, and fragment-distinct source identity",
             "decoded witness and Kani registrations retain stable source identities including their distinct origins",
             "unsupported fields are preserved in the ingestion receipt",
         ]

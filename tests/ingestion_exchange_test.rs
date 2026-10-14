@@ -7,6 +7,42 @@ use belvedere::{
 use miette::{IntoDiagnostic, Result, WrapErr, miette};
 
 #[test]
+fn registry_ingestion_distinguishes_contract_fragments_of_one_kind() -> Result<()> {
+    belvedere::init_tracing();
+
+    let mut registry: serde_json::Value =
+        serde_json::from_slice(include_bytes!("fixtures/registry_dump.json")).into_diagnostic()?;
+    let contracts = registry["contract_records"]
+        .as_array_mut()
+        .ok_or_else(|| miette!("contract fixture should be an array"))?;
+    let mut second = contracts[0].clone();
+    second["fragment"] = "second_obligation".into();
+    contracts.push(second);
+    let artifact = RawAmenableArtifact::new(
+        "tests/fixtures/registry_dump.json",
+        ArtifactKind::RegistryDump,
+        serde_json::to_vec(&registry).into_diagnostic()?,
+    );
+
+    let (snapshot, receipt) = RegistryDumpIngestion.ingest(artifact).into_diagnostic()?;
+    let contract_ids = snapshot
+        .source_record_ids()
+        .into_iter()
+        .filter(|id| id.starts_with("contract_record:"))
+        .collect::<std::collections::BTreeSet<_>>();
+    assert_eq!(contract_ids.len(), 2);
+    assert_eq!(
+        receipt
+            .source_record_ids()
+            .iter()
+            .filter(|id| id.starts_with("contract_record:"))
+            .count(),
+        2
+    );
+    Ok(())
+}
+
+#[test]
 fn registry_ingestion_distinguishes_kani_registrations_for_one_proof() -> Result<()> {
     belvedere::init_tracing();
 

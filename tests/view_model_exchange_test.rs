@@ -8,6 +8,41 @@ use belvedere::{
 use miette::{IntoDiagnostic, Result, WrapErr, miette};
 
 #[test]
+fn contract_fragments_keep_distinct_source_navigation() -> Result<()> {
+    belvedere::init_tracing();
+
+    let mut registry: serde_json::Value =
+        serde_json::from_slice(include_bytes!("fixtures/registry_dump.json")).into_diagnostic()?;
+    let contracts = registry["contract_records"]
+        .as_array_mut()
+        .ok_or_else(|| miette!("contract fixture should be an array"))?;
+    let mut second = contracts[0].clone();
+    second["fragment"] = "second_obligation".into();
+    contracts.push(second);
+    let input = fixture_input_with_artifacts(
+        serde_json::to_vec(&registry).into_diagnostic()?,
+        include_bytes!("fixtures/proof_assessments.jsonl").to_vec(),
+    )?;
+    let (model, _) = AuditorNavigationProjection
+        .project(input)
+        .into_diagnostic()?;
+    let sources = model
+        .source_navigation()
+        .iter()
+        .filter(|source| source.source_kind() == "contract_record")
+        .collect::<Vec<_>>();
+    assert_eq!(sources.len(), 2);
+    assert_ne!(sources[0].source_record_id(), sources[1].source_record_id());
+    assert_ne!(sources[0].source_locator(), sources[1].source_locator());
+    assert!(
+        sources
+            .iter()
+            .all(|source| source.source_locator().contains("fragment_sha256="))
+    );
+    Ok(())
+}
+
+#[test]
 fn kani_registrations_keep_distinct_source_navigation_and_gap_ids() -> Result<()> {
     belvedere::init_tracing();
 
@@ -550,7 +585,7 @@ fn view_model_projection_builds_auditor_navigation_evidence() -> Result<()> {
     assert_eq!(decoded_item.gap_count(), 2);
     assert_eq!(decoded_item.trace().source_record_ids().len(), 4);
     assert!(decoded_item.trace().source_record_ids().contains(
-        &"contract_record:belvedere::ingestion::DecodedRegistrySnapshot@kani:ensures".to_owned()
+        &"contract_record:belvedere::ingestion::DecodedRegistrySnapshot@kani:ensures#8d167c786f51bd7c6bda8f92cb93b0baca7efb9204fea0d4d018fbf75c54126c".to_owned()
     ));
     assert!(
         decoded_item
