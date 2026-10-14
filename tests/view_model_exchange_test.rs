@@ -871,6 +871,16 @@ fn view_model_projection_builds_auditor_filter_facets() -> Result<()> {
         "Assessment queue group strengthening / assertion_strength, adversarial_coverage"
     );
     assert_eq!(strengthening_group.count(), 1);
+    let strengthening_assessment = model
+        .assessment_queue()
+        .iter()
+        .find(|item| item.queue_group_id() == strengthening_group.value())
+        .ok_or_else(|| miette!("strengthening group should select an assessment"))?;
+    assert_eq!(
+        strengthening_group.trace().source_record_ids(),
+        strengthening_assessment.trace().source_record_ids()
+    );
+    assert_eq!(strengthening_group.trace().source_record_ids().len(), 2);
 
     let missing_proof = model
         .filter_facets()
