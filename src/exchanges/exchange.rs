@@ -1,7 +1,9 @@
 //! Shared exchange interface for proof-bearing Belvedere transformations.
 
 use crate::{
-    certify::{BelvedereCertificationError, BelvedereTransitionReceipt},
+    certify::{
+        BelvedereCertificationError, BelvedereTransitionWriter, BelvedereVerifiedTransition,
+    },
     contracts::BelvedereContract,
 };
 
@@ -24,7 +26,7 @@ where
     fn exchange(&self, input: C::Input) -> Result<(C::Output, C::Receipt), Self::Error> {
         let (output, mut receipt) = self.transform(&input)?;
         let checks = C::verify_transition(&input, &output, &receipt)?;
-        receipt.record_transition_checks(checks)?;
+        receipt.record_transition_checks(BelvedereVerifiedTransition::new(checks)?)?;
         C::verify_receipt(&receipt)?;
         Ok((output, receipt))
     }

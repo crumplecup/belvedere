@@ -25,9 +25,10 @@ pub use certify::{
     BelvedereManifestInputArtifact, BelvedereManifestOutputArtifact,
     BelvedereManifestStageCertificate, BelvederePipelineStage, BelvedereRunCertificate,
     BelvedereRunInvocation, BelvedereStageCertificate, BelvedereTransitionReceipt,
-    IngestionReceipt, LandscapeDiffReceipt, LandscapeDiffReceiptCounts, LandscapeDiffReviewReceipt,
-    LandscapeDiffReviewReceiptCounts, LandscapeReceipt, LandscapeReceiptCounts, UiIrReceipt,
-    UiIrReceiptCounts, ViewModelReceipt, ViewModelReceiptCounts,
+    BelvedereTransitionWriter, BelvedereVerifiedTransition, IngestionReceipt, LandscapeDiffReceipt,
+    LandscapeDiffReceiptCounts, LandscapeDiffReviewReceipt, LandscapeDiffReviewReceiptCounts,
+    LandscapeReceipt, LandscapeReceiptCounts, UiIrReceipt, UiIrReceiptCounts, ViewModelReceipt,
+    ViewModelReceiptCounts,
 };
 pub use cli::{
     BelvedereCli, BelvedereCliArtifact, BelvedereCliOutput, BelvedereCliOutputError,

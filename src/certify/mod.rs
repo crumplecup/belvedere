@@ -65,6 +65,7 @@ pub use stage::BelvederePipelineStage;
 pub use stage_certificate::BelvedereStageCertificate;
 pub use transition::BelvedereTransitionReceipt;
 pub(crate) use transition::require_transition_checks;
+pub use transition::{BelvedereTransitionWriter, BelvedereVerifiedTransition};
 pub use ui_ir::{UiIrReceipt, UiIrReceiptCounts};
 pub(crate) use ui_ir::{
     UiIrReceiptBuilder, UiIrReceiptDigestEvidenceBuilder, ui_ir_receipt_identity,

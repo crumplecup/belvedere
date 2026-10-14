@@ -1,9 +1,8 @@
 use belvedere::{
     AcceptedAmenableArtifactFormat, ArtifactKind, AssessmentStreamIngestion, BelvedereContract,
-    BelvedereExchange, BelvedereInvariantCheck, BelvedereStageCertificate,
-    BelvedereTransitionReceipt, DecodedRegistrySnapshot, IngestionError, IngestionReceipt,
-    LandscapeInput, LandscapeModeling, LandscapeModelingContract, RawAmenableArtifact,
-    RegistryDumpIngestion, RegistryDumpIngestionContract,
+    BelvedereExchange, BelvedereStageCertificate, DecodedRegistrySnapshot, IngestionError,
+    IngestionReceipt, LandscapeInput, LandscapeModeling, LandscapeModelingContract,
+    RawAmenableArtifact, RegistryDumpIngestion, RegistryDumpIngestionContract,
 };
 use miette::{IntoDiagnostic, Result, miette};
 
@@ -48,7 +47,7 @@ fn unverified_registry_receipt() -> Result<IngestionReceipt> {
 }
 
 #[test]
-fn stage_certificate_requires_complete_passing_transition_assertions() -> Result<()> {
+fn stage_certificate_requires_verified_transition_assertions() -> Result<()> {
     belvedere::init_tracing();
     let raw = unverified_registry_receipt()?;
     let missing = BelvedereStageCertificate::registry_ingestion(&raw)
@@ -60,30 +59,6 @@ fn stage_certificate_requires_complete_passing_transition_assertions() -> Result
             .contains("transition_assertions_present")
     );
 
-    let mut failed = raw.clone();
-    let false_check = BelvedereInvariantCheck::new(
-        "registry_input_kind".to_owned(),
-        false,
-        "input kind differs".to_owned(),
-    );
-    assert!(failed.record_transition_checks(vec![false_check]).is_err());
-
-    let mut partial = raw;
-    partial
-        .record_transition_checks(vec![BelvedereInvariantCheck::new(
-            "registry_input_kind".to_owned(),
-            true,
-            "kind matched".to_owned(),
-        )])
-        .into_diagnostic()?;
-    let incomplete = BelvedereStageCertificate::registry_ingestion(&partial)
-        .err()
-        .ok_or_else(|| miette!("partial assertion set should not certify"))?;
-    assert!(
-        incomplete
-            .to_string()
-            .contains("transition_assertion_set_complete")
-    );
     Ok(())
 }
 

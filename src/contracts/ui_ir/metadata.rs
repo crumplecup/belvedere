@@ -113,13 +113,24 @@ impl crate::certify::BelvedereTransitionReceipt for MetadataUiIrReceipt {
     fn transition_checks(&self) -> &[crate::certify::BelvedereInvariantCheck] {
         &self.transition_checks
     }
+}
 
-    #[instrument(level = "trace", skip(self, checks))]
+impl crate::certify::BelvedereTransitionWriter for MetadataUiIrReceipt {
+    #[instrument(level = "trace", skip(self, verified))]
     fn record_transition_checks(
         &mut self,
-        checks: Vec<crate::certify::BelvedereInvariantCheck>,
+        verified: crate::certify::BelvedereVerifiedTransition,
     ) -> Result<(), BelvedereCertificationError> {
+        let checks = verified.into_checks();
         crate::certify::require_transition_checks(&checks)?;
+        BelvedereCertificationError::require_passing(
+            "metadata_ui_ir_transition",
+            &[crate::certify::BelvedereInvariantCheck::new(
+                "transition_assertions_recorded_once".to_owned(),
+                self.transition_checks.is_empty(),
+                "transition assertions already recorded".to_owned(),
+            )],
+        )?;
         self.transition_checks = checks;
         Ok(())
     }

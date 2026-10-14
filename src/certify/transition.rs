@@ -6,20 +6,45 @@ use crate::certify::{
     BelvedereCertificationError, BelvedereInvariantCheck, hex_digest, update_field,
 };
 
-/// A receipt that records the assertions checked against its actual transition.
-pub trait BelvedereTransitionReceipt {
+/// A receipt that exposes assertions checked against its actual transition.
+pub trait BelvedereTransitionReceipt: BelvedereTransitionWriter {
     /// Required assertions recorded by the exchange.
     fn transition_checks(&self) -> &[BelvedereInvariantCheck];
+}
 
-    /// Bind passing assertions to this receipt's identity.
+/// Bind a verified transition to a receipt.
+pub trait BelvedereTransitionWriter {
+    /// Record the checks exactly once.
     ///
     /// # Errors
     ///
-    /// Rejects empty, failed, or previously recorded assertions.
+    /// Rejects absent, failed, or previously recorded checks.
     fn record_transition_checks(
         &mut self,
-        checks: Vec<BelvedereInvariantCheck>,
+        verified: BelvedereVerifiedTransition,
     ) -> Result<(), BelvedereCertificationError>;
+}
+
+/// A successful set of checks minted by an exchange after contract verification.
+pub struct BelvedereVerifiedTransition {
+    checks: Vec<BelvedereInvariantCheck>,
+}
+
+impl BelvedereVerifiedTransition {
+    #[tracing::instrument(level = "debug", skip(checks))]
+    pub(crate) fn new(
+        checks: Vec<BelvedereInvariantCheck>,
+    ) -> Result<Self, BelvedereCertificationError> {
+        require_transition_checks(&checks)?;
+        Ok(Self { checks })
+    }
+
+    /// Consume the verified transition into its assertion evidence.
+    #[must_use]
+    #[tracing::instrument(level = "debug", skip(self))]
+    pub fn into_checks(self) -> Vec<BelvedereInvariantCheck> {
+        self.checks
+    }
 }
 
 #[tracing::instrument(level = "trace", skip(stored, digest, id, checks))]
@@ -92,16 +117,18 @@ macro_rules! impl_attested_receipt {
             fn transition_checks(&self) -> &[crate::certify::BelvedereInvariantCheck] {
                 &self.transition_checks
             }
+        }
 
+        impl crate::certify::BelvedereTransitionWriter for $receipt {
             fn record_transition_checks(
                 &mut self,
-                checks: Vec<crate::certify::BelvedereInvariantCheck>,
+                verified: crate::certify::BelvedereVerifiedTransition,
             ) -> Result<(), crate::certify::BelvedereCertificationError> {
                 crate::certify::transition::bind_transition_checks(
                     &mut self.transition_checks,
                     &mut self.receipt_digest,
                     &mut self.receipt_id,
-                    checks,
+                    verified.into_checks(),
                 )
             }
         }
